@@ -1,3 +1,4 @@
 # Micro java samples.
 
-* SES
+* BDD - Behaviour Driven Development
+* SES - Simple Event System

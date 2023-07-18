@@ -18,8 +18,9 @@
 
     <modules>
 <!--        <module>linker</module>-->
+        <module>bdd</module>
         <module>ses</module>
-<!--        <module>soap2rest</module>-->
+        <!--        <module>soap2rest</module>-->
 <!--        <module>xsd2model</module>-->
     </modules>
 

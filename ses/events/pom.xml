@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>my.javacraft.ses</groupId>
-    <artifactId>events</artifactId>
+    <artifactId>ses-events</artifactId>
 
 
 </project>

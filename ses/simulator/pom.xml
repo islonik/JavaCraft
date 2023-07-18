@@ -12,12 +12,12 @@
     </parent>
 
     <groupId>my.javacraft.ses</groupId>
-    <artifactId>simulator</artifactId>
+    <artifactId>ses-simulator</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>my.javacraft.ses</groupId>
-            <artifactId>events</artifactId>
+            <artifactId>ses-events</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
