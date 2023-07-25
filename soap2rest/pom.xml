@@ -10,8 +10,10 @@
 
     <artifactId>soap2rest</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>utils</module>
+        <module>rest</module>
     </modules>
 
     <properties>
@@ -43,4 +45,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
 </project>
