@@ -7,7 +7,9 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class JsonServices {
 
     private static final ObjectMapper mapper = ((Supplier<ObjectMapper>) () -> {

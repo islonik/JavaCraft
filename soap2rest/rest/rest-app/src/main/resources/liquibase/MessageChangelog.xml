@@ -1,0 +1,115 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.create_table" author="nikilipa">
+        <createTable tableName="s2r_messages">
+            <column name="id" type="number(4,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="message" type="varchar2(256)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_1" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">1</column>
+            <column name="message">Java in your eyes!</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_2" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">2</column>
+            <column name="message">SQL injections in your mind!</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_3" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">3</column>
+            <column name="message">Black magic of Java</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_4" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">4</column>
+            <column name="message">Let objects rocks: live fast, die young</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_5" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">5</column>
+            <column name="message">MAKING SQL QUERIES IN CAPITAL LETTERS MAKES DATABASE TO SENSE URGENCY AND RUN
+                FASTER
+            </column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_6" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">6</column>
+            <column name="message">Java 1 was of the 90's. Java 5 generics came from the 70's. Java 8 lambdas come from
+                the 40's. Java 20 will have a steam regulator.
+            </column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_7" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">7</column>
+            <column name="message">J2ME: Write once - debug everywhere.</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_8" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">8</column>
+            <column name="message">BAKA!!!</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_9" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">9</column>
+            <column name="message">Make jar not war</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_10" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">10</column>
+            <column name="message">Code in Java: Be an enterprise hipster.</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_11" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">11</column>
+            <column name="message">Observation: when your language is fucked up, and linked lists are the only simple
+                data structure, you start to believe hash tables are bad.
+            </column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_12" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">12</column>
+            <column name="message">I'm the best, fuck the rest!</column>
+        </insert>
+    </changeSet>
+
+    <changeSet logicalFilePath="MessageChangelog.xml" id="s2r.rest.message.insert_13" author="nikilipa">
+        <insert tableName="s2r_messages">
+            <column name="id">13</column>
+            <column name="message">Deus Vult!</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

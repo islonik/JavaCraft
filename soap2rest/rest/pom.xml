@@ -15,6 +15,7 @@
 
     <modules>
         <module>rest-api</module>
+        <module>rest-app</module>
     </modules>
 
 </project>
