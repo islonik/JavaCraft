@@ -1,0 +1,70 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet author="inikilipa"
+               logicalFilePath="MessageChangelog.xml"
+               id="create_table_message" >
+        <createTable tableName="message">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="message" type="varchar2(256)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="inikilipa"
+               logicalFilePath="MessageChangelog.xml"
+               id="add_initial_messages">
+        <insert tableName="message">
+            <column name="message">Java in your eyes!</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">SQL injections in your mind!</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Black magic of Java</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Let objects rocks: live fast, die young</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">MAKING SQL QUERIES IN CAPITAL LETTERS MAKES DATABASE TO SENSE URGENCY AND RUN
+                FASTER
+            </column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Java 1 was of the 90's. Java 5 generics came from the 70's. Java 8 lambdas come from
+                the 40's. Java 20 will have a steam regulator.
+            </column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">J2ME: Write once - debug everywhere.</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">BAKA!!!</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Make jar not war</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Code in Java: Be an enterprise hipster.</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Observation: when your language is fucked up, and linked lists are the only simple
+                data structure, you start to believe hash tables are bad.
+            </column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">I'm the best, fuck the rest!</column>
+        </insert>
+        <insert tableName="message">
+            <column name="message">Deus Vult!</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

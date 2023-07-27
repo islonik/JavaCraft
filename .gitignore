@@ -35,6 +35,7 @@ replay_pid*
 
 #Maven
 /target/
+/surefire-report/
 
 ### Eclipse ###
 .apt_generated

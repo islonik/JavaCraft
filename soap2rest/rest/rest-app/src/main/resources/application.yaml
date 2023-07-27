@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: meme-keeper
+  datasource:
+    url: jdbc:h2:mem:soap2rest
+    username: sa
+    password: sa # don't keep password like that for PROD stage
+    driverClassName: org.h2.Driver
+  liquibase:
+    enabled: true
+    change-log: classpath:/liquibase/message.xml
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true # provides pretty output
+  jpa:
+    hibernate:
+      ddl-auto: none
+      database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        use_sql_comments: true
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /console
