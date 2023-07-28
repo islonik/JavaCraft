@@ -1,0 +1,121 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet author="inikilipa"
+               logicalFilePath="metrics.xml"
+               id="metrics_create_tables" >
+        <createTable tableName="account">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="meter">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="manufacturer" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_meter_to_account_id" references="account(id)"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="gas_metric">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="meter_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_gas_to_meter_id" references="meter(id)"/>
+            </column>
+            <column name="reading" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="date">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="electric_metric">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="meter_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_electric_to_meter_id" references="meter(id)"/>
+            </column>
+            <column name="reading" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="date">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+<!--        <createTable tableName="metrics">-->
+<!--            <column name="account_id" type="BIGINT">-->
+<!--                <constraints nullable="false" foreignKeyName="fk_metrics_account_id" references="account(id)"/>-->
+<!--            </column>-->
+<!--            <column name="gas_reading" type="BIGINT">-->
+<!--                <constraints nullable="false" foreignKeyName="fk_gas_metric" references="gas_metric(id)"/>-->
+<!--            </column>-->
+<!--            <column name="electric_reading" type="BIGINT">-->
+<!--                <constraints nullable="false" foreignKeyName="fk_electric_metric" references="electric_metric(id)"/>-->
+<!--            </column>-->
+<!--        </createTable>-->
+    </changeSet>
+
+    <changeSet author="inikilipa"
+               logicalFilePath="metrics.xml"
+               id="metrics_add_values">
+        <insert tableName="account">
+            <column name="name">inikilipa</column>
+        </insert>
+
+        <insert tableName="meter">
+            <column name="id">100</column>
+            <column name="account_id">1</column>
+            <column name="manufacturer">Landis + Gyr</column>
+        </insert>
+        <insert tableName="meter">
+            <column name="id">200</column>
+            <column name="account_id">1</column>
+            <column name="manufacturer">Siemens</column>
+        </insert>
+
+        <insert tableName="gas_metric">
+            <column name="meter_id">100</column>
+            <column name="reading">444.555</column>
+            <column name="date">2023-06-15</column>
+        </insert>
+        <insert tableName="electric_metric">
+            <column name="meter_id">200</column>
+            <column name="reading">2333.333</column>
+            <column name="date">2023-06-15</column>
+        </insert>
+
+        <insert tableName="electric_metric">
+            <column name="meter_id">200</column>
+            <column name="reading">2444.444</column>
+            <column name="date">2023-07-01</column>
+        </insert>
+
+        <insert tableName="gas_metric">
+            <column name="meter_id">100</column>
+            <column name="reading">555.666</column>
+            <column name="date">2023-07-15</column>
+        </insert>
+        <insert tableName="electric_metric">
+            <column name="meter_id">200</column>
+            <column name="reading">2555.555</column>
+            <column name="date">2023-07-15</column>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -5,15 +5,17 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "message")
-public class Message {
+@Table(name = "meter")
+public class Meter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "message")
-    private String message;
+    @Column(name = "manufacturer")
+    private String manufacturer;
+
+    @Column(name = "account_id")
+    private Long accountId;
 
 }
-
