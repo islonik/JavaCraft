@@ -34,7 +34,7 @@ public class ElectricResource {
         List<Meter> meterList = meterDao.findByAccountId(id);
 
         return ResponseEntity
-                .ok(electricMetricDao.findByAccountId(meterList
+                .ok(electricMetricDao.findByMeterIds(meterList
                         .stream()
                         .map(Meter::getId)
                         .toList()

@@ -28,8 +28,8 @@ public class MetricsDao {
 
         Metrics metrics = new Metrics();
         metrics.setAccountId(id);
-        metrics.setElectricReadings(electricMetricDao.findByAccountId(meterIdList));
-        metrics.setGasReadings(gasMetricDao.findByAccountId(meterIdList));
+        metrics.setElectricReadings(electricMetricDao.findByMeterIds(meterIdList));
+        metrics.setGasReadings(gasMetricDao.findByMeterIds(meterIdList));
 
         return metrics;
     }

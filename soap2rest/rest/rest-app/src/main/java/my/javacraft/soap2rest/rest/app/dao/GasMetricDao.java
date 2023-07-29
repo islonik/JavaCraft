@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface GasMetricDao extends JpaRepository<GasMetric, Long> {
 
     @Query(value = "SELECT g FROM GasMetric g WHERE g.meterId IN :ids")
-    List<GasMetric> findByAccountId(@Param("ids") List<Long> ids);
+    List<GasMetric> findByMeterIds(@Param("ids") List<Long> ids);
 
     GasMetric findTopByMeterIdInOrderByDateDesc(List<Long> ids);
 }

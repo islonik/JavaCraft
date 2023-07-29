@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface ElectricMetricDao extends JpaRepository<ElectricMetric, Long> {
 
     @Query(value = "SELECT e FROM ElectricMetric e WHERE e.meterId IN :ids")
-    List<ElectricMetric> findByAccountId(@Param("ids") List<Long> ids);
+    List<ElectricMetric> findByMeterIds(@Param("ids") List<Long> ids);
 
     ElectricMetric findTopByMeterIdInOrderByDateDesc(List<Long> ids);
 }
