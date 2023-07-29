@@ -1,19 +1,17 @@
 package my.javacraft.soap2rest.rest.app.service;
 
-import java.util.Collections;
 import java.util.List;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.Metric;
 import my.javacraft.soap2rest.rest.app.dao.entity.Metrics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class MetricsService {
+public class SmartService {
 
     @Autowired
     private MetricValidationService metricValidationService;

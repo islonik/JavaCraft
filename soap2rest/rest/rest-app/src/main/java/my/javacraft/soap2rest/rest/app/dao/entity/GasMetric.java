@@ -23,5 +23,4 @@ public class GasMetric implements Metric {
     @Column(name = "date")
     private Date date;
 
-
 }
