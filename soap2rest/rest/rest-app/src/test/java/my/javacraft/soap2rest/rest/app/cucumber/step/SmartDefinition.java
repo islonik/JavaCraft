@@ -15,6 +15,7 @@ import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.Metric;
 import my.javacraft.soap2rest.rest.app.dao.entity.Metrics;
+import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import my.javacraft.soap2rest.rest.app.service.SmartService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,8 @@ public class SmartDefinition {
     @Given("the account {string} doesn't have any metrics")
     public void cleanGasMetrics(String account) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
         RestTemplate restTemplate = new RestTemplate();
 
@@ -62,14 +65,13 @@ public class SmartDefinition {
         Metrics metrics = data2Metrics(account, table);
 
         ObjectMapper mapper = new ObjectMapper();
-
         String jsonBody = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(metrics);
 
         log.info(jsonBody);
 
-
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 

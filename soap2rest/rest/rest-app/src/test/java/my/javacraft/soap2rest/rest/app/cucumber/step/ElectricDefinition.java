@@ -9,6 +9,7 @@ import java.util.List;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
+import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -35,6 +36,8 @@ public class ElectricDefinition {
     @Given("the account {string} doesn't have electric metrics")
     public void cleanElectricMetrics(String account) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
         RestTemplate restTemplate = new RestTemplate();
 
@@ -61,6 +64,7 @@ public class ElectricDefinition {
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
