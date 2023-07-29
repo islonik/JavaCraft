@@ -33,4 +33,9 @@ public class GasService {
 
         return gasMetric;
     }
+
+    public boolean deleteAll() {
+        gasMetricDao.deleteAll();
+        return true;
+    }
 }

@@ -33,4 +33,9 @@ public class ElectricService {
 
         return electricMetric;
     }
+
+    public boolean deleteAll() {
+        electricMetricDao.deleteAll();
+        return true;
+    }
 }

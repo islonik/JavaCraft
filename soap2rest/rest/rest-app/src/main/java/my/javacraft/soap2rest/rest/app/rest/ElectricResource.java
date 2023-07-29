@@ -58,11 +58,22 @@ public class ElectricResource {
     @ExecutionTime
     @PutMapping(value = "/{id}/electric",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ElectricMetric> putMessage(@RequestBody ElectricMetric metric) {
+    public ResponseEntity<ElectricMetric> putNewElectricMetric(
+            @RequestBody ElectricMetric metric) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(electricService.submit(metric));
+    }
+
+    @ExecutionTime
+    @DeleteMapping(value = "/{id}/electric",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> deleteAllElectricMetrics() {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(electricService.deleteAll());
     }
 
 }

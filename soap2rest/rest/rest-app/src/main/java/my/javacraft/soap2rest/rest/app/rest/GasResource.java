@@ -58,10 +58,21 @@ public class GasResource {
     @ExecutionTime
     @PutMapping(value = "/{id}/gas",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GasMetric> putMessage(@RequestBody GasMetric gasMetric) {
+    public ResponseEntity<GasMetric> putNewGasMetric(
+            @RequestBody GasMetric gasMetric) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(gasService.submit(gasMetric));
+    }
+
+    @ExecutionTime
+    @DeleteMapping(value = "/{id}/gas",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> deleteAllGasMetrics() {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(gasService.deleteAll());
     }
 }
