@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 
 @Slf4j
-public class BMIStepDeninition {
+public class BMIStepDefinition {
 
     @Autowired
     BMIService bmiService;
