@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/api/v1/smart")
+@RequestMapping(path = "/api/v1/smart/{id}")
 public class SmartResource {
 
     @Autowired
@@ -22,15 +22,14 @@ public class SmartResource {
     private SmartService smartService;
 
     @ExecutionTime
-    @GetMapping(value = "/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metrics> getMetrics(@PathVariable Long id) {
         return ResponseEntity
                 .ok(metricsDao.findByAccountId(id));
     }
 
     @ExecutionTime
-    @GetMapping(value = "/{id}/latest",
+    @GetMapping(value = "/latest",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metrics> getLatestMetrics(@PathVariable Long id) {
         return ResponseEntity
@@ -38,13 +37,21 @@ public class SmartResource {
     }
 
     @ExecutionTime
-    @PutMapping(value = "/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> putMessage(@RequestBody Metrics metrics) {
+    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> putMetrics(@RequestBody Metrics metrics) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(smartService.submit(metrics));
+    }
+
+    @ExecutionTime
+    @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> deleteAllGasMetrics() {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(smartService.deleteAll());
     }
 
 }

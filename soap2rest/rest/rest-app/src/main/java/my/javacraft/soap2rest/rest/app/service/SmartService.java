@@ -34,11 +34,16 @@ public class SmartService {
         List<ElectricMetric> electricMetricList = metrics.getElectricReadings();
 
         for (GasMetric gasMetric : gasMetricList) {
-            electricService.submit(gasMetric);
+            gasService.submit(gasMetric);
         }
         for (ElectricMetric electricMetric : electricMetricList) {
             electricService.submit(electricMetric);
         }
         return true;
+    }
+
+    @Transactional
+    public boolean deleteAll() {
+        return gasService.deleteAll() && electricService.deleteAll();
     }
 }

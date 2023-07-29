@@ -5,8 +5,10 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
+import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -75,7 +77,7 @@ public class ElectricDefinition {
         Assertions.assertNotNull(httpResponse.getBody());
     }
 
-    @Then("the latest electric reading for the meterId = {string} is equal = {string}")
+    @Then("check the latest electric reading for the meterId = {string} is equal = {string}")
     public void checkLatestElectricReading(String meterId, String reading) {
         ElectricMetric latestMetric = electricMetricDao.findTopByMeterIdInOrderByDateDesc(
                 Collections.singletonList(Long.parseLong(meterId))
@@ -84,6 +86,14 @@ public class ElectricDefinition {
                 .getReading()
                 .compareTo(new BigDecimal(reading))
         );
+    }
+
+    @Then("check there is no electric readings for the meterId = {string}")
+    public void checkNoElectricMetric(String meterId) {
+        List<ElectricMetric> metrics = electricMetricDao.findByMeterIds(
+                Collections.singletonList(Long.parseLong(meterId))
+        );
+        Assertions.assertEquals(0, metrics.size());
     }
 
 }
