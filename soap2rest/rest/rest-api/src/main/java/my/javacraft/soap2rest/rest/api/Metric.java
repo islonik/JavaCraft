@@ -9,16 +9,34 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Metric {
 
+    /**
+     * Metric unique id, i.e a unique id for this record.
+     */
     private Long id;
 
+    /**
+     * Meter unique id, i.e a unique id for a physical meter.
+     */
     private Long meterId;
 
+    /**
+     * Metric value equal to a value in DB, i.e DECIMAL(20,3).
+     */
     private BigDecimal reading;
 
+    /**
+     * Date in '2023-15-28' format
+     */
     private Date date;
 
+    /**
+     Usage since the previous time.
+     */
     private BigDecimal usageSinceLastRead;
 
+    /**
+     Days since the last reading time.
+     */
     private Long periodSinceLastRead;
 
 }
