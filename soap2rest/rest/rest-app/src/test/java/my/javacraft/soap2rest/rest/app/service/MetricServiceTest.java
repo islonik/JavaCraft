@@ -20,15 +20,15 @@ public class MetricServiceTest {
         metric1.setDate(Date.valueOf("2023-04-01"));
         metricList.add(metric1);
         Metric metric2 = new Metric();
-        metric2.setReading(new BigDecimal("75"));
+        metric2.setReading(new BigDecimal("110"));
         metric2.setDate(Date.valueOf("2023-05-01"));
         metricList.add(metric2);
         Metric metric3 = new Metric();
-        metric3.setReading(new BigDecimal("125"));
+        metric3.setReading(new BigDecimal("220"));
         metric3.setDate(Date.valueOf("2023-06-01"));
         metricList.add(metric3);
         Metric metric4 = new Metric();
-        metric4.setReading(new BigDecimal("140"));
+        metric4.setReading(new BigDecimal("450"));
         metric4.setDate(Date.valueOf("2023-07-01"));
         metricList.add(metric4);
 
@@ -36,12 +36,18 @@ public class MetricServiceTest {
 
         Assertions.assertNull(metricList.get(0).getUsageSinceLastRead());
         Assertions.assertNull(metricList.get(0).getPeriodSinceLastRead());
+        Assertions.assertNull(metricList.get(0).getAvgDailyUsage());
 
-        Assertions.assertEquals("25", metricList.get(1).getUsageSinceLastRead().toString());
+        Assertions.assertEquals("60", metricList.get(1).getUsageSinceLastRead().toString());
         Assertions.assertEquals(30L, metricList.get(1).getPeriodSinceLastRead());
-        Assertions.assertEquals("50", metricList.get(2).getUsageSinceLastRead().toString());
+        Assertions.assertEquals("2.000", metricList.get(1).getAvgDailyUsage().toString());
+
+        Assertions.assertEquals("110", metricList.get(2).getUsageSinceLastRead().toString());
         Assertions.assertEquals(31L, metricList.get(2).getPeriodSinceLastRead());
-        Assertions.assertEquals("15", metricList.get(3).getUsageSinceLastRead().toString());
+        Assertions.assertEquals("2.787", metricList.get(2).getAvgDailyUsage().toString());
+
+        Assertions.assertEquals("230", metricList.get(3).getUsageSinceLastRead().toString());
         Assertions.assertEquals(30L, metricList.get(3).getPeriodSinceLastRead());
+        Assertions.assertEquals("4.396", metricList.get(3).getAvgDailyUsage().toString());
     }
 }

@@ -10,17 +10,17 @@ import lombok.Data;
 public class Metric {
 
     /**
-     * Metric unique id, i.e a unique id for this record.
+     * Metric unique id, i.e. a unique id for this record.
      */
     private Long id;
 
     /**
-     * Meter unique id, i.e a unique id for a physical meter.
+     * Meter unique id, i.e. a unique id for a physical meter.
      */
     private Long meterId;
 
     /**
-     * Metric value equal to a value in DB, i.e DECIMAL(20,3).
+     * Metric value equal to a value in DB, i.e. DECIMAL(20,3).
      */
     private BigDecimal reading;
 
@@ -38,5 +38,10 @@ public class Metric {
      Days since the last reading time.
      */
     private Long periodSinceLastRead;
+
+    /**
+     Average daily usage taking into account all data.
+     */
+    private BigDecimal avgDailyUsage;
 
 }
