@@ -92,6 +92,32 @@ public class ElectricDefinition {
         );
     }
 
+    @Then("check the latest electric reading for the account = {long} extra values: {bigdecimal}, {long}, {bigdecimal}")
+    public void checkLatestGasReadingForExtraValues(
+            Long accountId, BigDecimal usageSince, Long periodSince, BigDecimal avgUsage) {
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<Metric> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/v1/smart/%s/electric/latest".formatted(port, accountId),
+                HttpMethod.GET,
+                entity,
+                Metric.class
+        );
+
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+
+        Metric response = httpResponse.getBody();
+        Assertions.assertEquals(usageSince, response.getUsageSinceLastRead());
+        Assertions.assertEquals(periodSince, response.getPeriodSinceLastRead());
+        Assertions.assertEquals(avgUsage, response.getAvgDailyUsage());
+    }
+
     @Then("check there is no electric readings for the meterId = {long}")
     public void checkNoElectricMetric(Long meterId) {
         List<Metric> metrics = electricMetricDao.findByMeterIds(

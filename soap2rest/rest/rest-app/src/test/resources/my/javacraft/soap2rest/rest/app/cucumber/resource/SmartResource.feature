@@ -7,7 +7,9 @@ Feature: SmartResource
       | ele | 200 | 2345.505 | 2023-07-17 |
       | ele | 200 | 2536.708 | 2023-07-20 |
     Then check the latest gas reading for the meterId = 100 is equal = 700.502
+    Then check the latest gas reading for the account = 1 extra values: 13.836, 3, 4.612
     Then check the latest electric reading for the meterId = 200 is equal = 2536.708
+    Then check the latest electric reading for the account = 1 extra values: 191.203, 3, 63.734
 
   Scenario: insert two types of two values, validation fails, transaction rollouts
     Given the account 1 doesn't have any metrics
