@@ -2,10 +2,9 @@ package my.javacraft.soap2rest.rest.app.rest;
 
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.MeterDao;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.Meter;
 import my.javacraft.soap2rest.rest.app.service.GasService;
 import my.javacraft.soap2rest.utils.interceptor.ExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/api/v1/smart")
+@RequestMapping(path = "/api/v1/smart/{id}/gas")
 public class GasResource {
 
     @Autowired
@@ -28,38 +27,28 @@ public class GasResource {
     private GasService gasService;
 
     @ExecutionTime
-    @GetMapping(value = "/{id}/gas",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<GasMetric>> getGasMetrics(@PathVariable Long id) {
-        List<Meter> meterList = meterDao.findByAccountId(id);
-
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Metric>> getGasMetrics(@PathVariable Long id) {
         return ResponseEntity
-                .ok(gasMetricDao.findByMeterIds(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                ));
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(gasService.findMetrics(id));
     }
 
     @ExecutionTime
-    @GetMapping(value = "/{id}/gas/latest",
+    @GetMapping(value = "/latest",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GasMetric> getLatestGasMetric(@PathVariable Long id) {
-        List<Meter> meterList = meterDao.findByAccountId(id);
-
+    public ResponseEntity<Metric> getLatestGasMetric(@PathVariable Long id) {
         return ResponseEntity
-                .ok(gasMetricDao.findTopByMeterIdInOrderByDateDesc(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                ));
+                .ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(gasService.findLatestMetric(id));
     }
 
     @ExecutionTime
-    @PutMapping(value = "/{id}/gas",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GasMetric> putNewGasMetric(
-            @RequestBody GasMetric gasMetric) {
+    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Metric> putNewGasMetric(
+            @RequestBody Metric gasMetric) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,8 +56,7 @@ public class GasResource {
     }
 
     @ExecutionTime
-    @DeleteMapping(value = "/{id}/gas",
-            produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Boolean> deleteAllGasMetrics() {
         return ResponseEntity
                 .ok()

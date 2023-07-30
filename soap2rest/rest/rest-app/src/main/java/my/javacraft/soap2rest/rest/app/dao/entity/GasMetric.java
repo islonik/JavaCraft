@@ -4,11 +4,12 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Date;
 import lombok.Data;
+import my.javacraft.soap2rest.rest.api.Metric;
 
 @Data
 @Entity
 @Table(name = "gas_metric")
-public class GasMetric implements Metric {
+public class GasMetric {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,4 +24,12 @@ public class GasMetric implements Metric {
     @Column(name = "date")
     private Date date;
 
+    public Metric toApiMetric() {
+        Metric metric = new Metric();
+        metric.setId(id);
+        metric.setMeterId(meterId);
+        metric.setReading(reading);
+        metric.setDate(date);
+        return metric;
+    }
 }

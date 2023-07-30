@@ -6,6 +6,7 @@ import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
@@ -83,9 +84,9 @@ public class GasDefinition {
 
     @Then("check the latest gas reading for the meterId = {string} is equal = {string}")
     public void checkLatestGasReading(String meterId, String reading) {
-        GasMetric latestMetric = gasMetricDao.findTopByMeterIdInOrderByDateDesc(
+        Metric latestMetric = gasMetricDao.findTopByMeterIdInOrderByDateDesc(
                 Collections.singletonList(Long.parseLong(meterId))
-        );
+        ).toApiMetric();
         Assertions.assertEquals(0, latestMetric
                 .getReading()
                 .compareTo(new BigDecimal(reading))
@@ -94,9 +95,9 @@ public class GasDefinition {
 
     @Then("check there is no gas readings for the meterId = {string}")
     public void checkNoGasMetric(String meterId) {
-        List<GasMetric> metrics = gasMetricDao.findByMeterIds(
+        List<Metric> metrics = gasMetricDao.findByMeterIds(
                 Collections.singletonList(Long.parseLong(meterId))
-        );
+        ).stream().map(GasMetric::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }
 }

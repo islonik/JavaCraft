@@ -1,11 +1,10 @@
 package my.javacraft.soap2rest.rest.app.service;
 
 import java.util.List;
+import my.javacraft.soap2rest.rest.api.Metric;
+import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
-import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.Metrics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,13 +29,13 @@ public class SmartService {
 
     @Transactional
     public boolean submit(Metrics metrics) {
-        List<GasMetric> gasMetricList = metrics.getGasReadings();
-        List<ElectricMetric> electricMetricList = metrics.getElectricReadings();
+        List<Metric> gasMetricList = metrics.getGasReadings().stream().map(e -> (Metric)e).toList();
+        List<Metric> electricMetricList = metrics.getElectricReadings().stream().map(e -> (Metric)e).toList();
 
-        for (GasMetric gasMetric : gasMetricList) {
+        for (Metric gasMetric : gasMetricList) {
             gasService.submit(gasMetric);
         }
-        for (ElectricMetric electricMetric : electricMetricList) {
+        for (Metric electricMetric : electricMetricList) {
             electricService.submit(electricMetric);
         }
         return true;

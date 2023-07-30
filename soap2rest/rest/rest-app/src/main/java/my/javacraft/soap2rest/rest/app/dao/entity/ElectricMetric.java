@@ -1,15 +1,15 @@
 package my.javacraft.soap2rest.rest.app.dao.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Date;
 import lombok.Data;
+import my.javacraft.soap2rest.rest.api.Metric;
 
 @Data
 @Entity
 @Table(name = "electric_metric")
-public class ElectricMetric implements Metric {
+public class ElectricMetric {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,5 +23,14 @@ public class ElectricMetric implements Metric {
 
     @Column(name = "date")
     private Date date;
+
+    public Metric toApiMetric() {
+        Metric metric = new Metric();
+        metric.setId(id);
+        metric.setMeterId(meterId);
+        metric.setReading(reading);
+        metric.setDate(date);
+        return metric;
+    }
 
 }

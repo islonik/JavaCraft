@@ -1,6 +1,6 @@
 package my.javacraft.soap2rest.rest.app.service;
 
-import my.javacraft.soap2rest.rest.app.dao.entity.Metric;
+import my.javacraft.soap2rest.rest.api.Metric;
 import org.springframework.stereotype.Service;
 
 @Service

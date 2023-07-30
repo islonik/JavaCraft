@@ -1,8 +1,8 @@
 package my.javacraft.soap2rest.rest.app.rest;
 
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.rest.app.dao.MetricsDao;
-import my.javacraft.soap2rest.rest.app.dao.entity.Metrics;
 import my.javacraft.soap2rest.rest.app.service.SmartService;
 import my.javacraft.soap2rest.utils.interceptor.ExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;

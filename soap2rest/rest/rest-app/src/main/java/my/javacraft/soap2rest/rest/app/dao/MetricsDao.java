@@ -2,8 +2,9 @@ package my.javacraft.soap2rest.rest.app.dao;
 
 import java.util.Collections;
 import java.util.List;
-import my.javacraft.soap2rest.rest.app.dao.entity.Meter;
-import my.javacraft.soap2rest.rest.app.dao.entity.Metrics;
+import java.util.stream.Stream;
+import my.javacraft.soap2rest.rest.api.Metrics;
+import my.javacraft.soap2rest.rest.app.dao.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -28,8 +29,8 @@ public class MetricsDao {
 
         Metrics metrics = new Metrics();
         metrics.setAccountId(id);
-        metrics.setElectricReadings(electricMetricDao.findByMeterIds(meterIdList));
-        metrics.setGasReadings(gasMetricDao.findByMeterIds(meterIdList));
+        metrics.setElectricReadings(electricMetricDao.findByMeterIds(meterIdList).stream().map(ElectricMetric::toApiMetric).toList());
+        metrics.setGasReadings(gasMetricDao.findByMeterIds(meterIdList).stream().map(GasMetric::toApiMetric).toList());
 
         return metrics;
     }
@@ -44,12 +45,12 @@ public class MetricsDao {
 
         Metrics metrics = new Metrics();
         metrics.setAccountId(id);
-        metrics.setElectricReadings(Collections.singletonList(
+        metrics.setElectricReadings(Stream.of(
                 electricMetricDao.findTopByMeterIdInOrderByDateDesc(meterIdList)
-        ));
-        metrics.setGasReadings(Collections.singletonList(
+        ).map(ElectricMetric::toApiMetric).toList());
+        metrics.setGasReadings(Stream.of(
                 gasMetricDao.findTopByMeterIdInOrderByDateDesc(meterIdList)
-        ));
+        ).map(GasMetric::toApiMetric).toList());
 
         return metrics;
     }

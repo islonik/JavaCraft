@@ -6,6 +6,7 @@ import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
@@ -83,9 +84,9 @@ public class ElectricDefinition {
 
     @Then("check the latest electric reading for the meterId = {string} is equal = {string}")
     public void checkLatestElectricReading(String meterId, String reading) {
-        ElectricMetric latestMetric = electricMetricDao.findTopByMeterIdInOrderByDateDesc(
+        Metric latestMetric = electricMetricDao.findTopByMeterIdInOrderByDateDesc(
                 Collections.singletonList(Long.parseLong(meterId))
-        );
+        ).toApiMetric();
         Assertions.assertEquals(0, latestMetric
                 .getReading()
                 .compareTo(new BigDecimal(reading))
@@ -94,9 +95,9 @@ public class ElectricDefinition {
 
     @Then("check there is no electric readings for the meterId = {string}")
     public void checkNoElectricMetric(String meterId) {
-        List<ElectricMetric> metrics = electricMetricDao.findByMeterIds(
+        List<Metric> metrics = electricMetricDao.findByMeterIds(
                 Collections.singletonList(Long.parseLong(meterId))
-        );
+        ).stream().map(ElectricMetric::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }
 
