@@ -10,6 +10,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GasMetricDao extends JpaRepository<GasMetric, Long> {
 
+    @Query(value = """
+            SELECT g FROM Account a, Meter m, GasMetric g 
+            WHERE a.id = m.accountId AND m.id = g.meterId AND a.id = :id
+            ORDER by g.date ASC
+            """)
+    List<GasMetric> findByAccountId(@Param("id") Long id);
+
     @Query(value = "SELECT g FROM GasMetric g WHERE g.meterId IN :ids")
     List<GasMetric> findByMeterIds(@Param("ids") List<Long> ids);
 

@@ -33,8 +33,8 @@ public class GasDefinition {
     @Autowired
     private GasMetricDao gasMetricDao;
 
-    @Given("the account {string} doesn't have gas metrics")
-    public void cleanGasMetrics(String account) {
+    @Given("the account {long} doesn't have gas metrics")
+    public void cleanGasMetrics(Long accountId) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
@@ -42,7 +42,7 @@ public class GasDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, account),
+                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
                 Boolean.class
@@ -52,9 +52,9 @@ public class GasDefinition {
         Assertions.assertNotNull(httpResponse.getBody());
     }
 
-    @When("the account {string} submits a PUT request with a new gas reading: {string}, {string}, {string}")
+    @When("the account {long} submits a PUT request with a new gas reading: {long}, {bigdecimal}, {string}")
     public void applyPutRequestWithGasReading(
-            String account, String meterId, String reading, String date) {
+            Long accountId, Long meterId, BigDecimal reading, String date) {
        String jsonBody = """
         { 
             "meterId": %s, 
@@ -72,7 +72,7 @@ public class GasDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<GasMetric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, account),
+                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, accountId),
                 HttpMethod.PUT,
                 entity,
                 GasMetric.class
@@ -82,21 +82,21 @@ public class GasDefinition {
         Assertions.assertNotNull(httpResponse.getBody());
     }
 
-    @Then("check the latest gas reading for the meterId = {string} is equal = {string}")
-    public void checkLatestGasReading(String meterId, String reading) {
+    @Then("check the latest gas reading for the meterId = {long} is equal = {bigdecimal}")
+    public void checkLatestGasReading(Long meterId, BigDecimal reading) {
         Metric latestMetric = gasMetricDao.findTopByMeterIdInOrderByDateDesc(
-                Collections.singletonList(Long.parseLong(meterId))
+                Collections.singletonList(meterId)
         ).toApiMetric();
         Assertions.assertEquals(0, latestMetric
                 .getReading()
-                .compareTo(new BigDecimal(reading))
+                .compareTo(reading)
         );
     }
 
-    @Then("check there is no gas readings for the meterId = {string}")
-    public void checkNoGasMetric(String meterId) {
+    @Then("check there is no gas readings for the meterId = {long}")
+    public void checkNoGasMetric(Long meterId) {
         List<Metric> metrics = gasMetricDao.findByMeterIds(
-                Collections.singletonList(Long.parseLong(meterId))
+                Collections.singletonList(meterId)
         ).stream().map(GasMetric::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }

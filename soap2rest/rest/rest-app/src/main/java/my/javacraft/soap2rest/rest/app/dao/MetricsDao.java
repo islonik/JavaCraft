@@ -1,10 +1,9 @@
 package my.javacraft.soap2rest.rest.app.dao;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
 import my.javacraft.soap2rest.rest.api.Metrics;
-import my.javacraft.soap2rest.rest.app.dao.entity.*;
+import my.javacraft.soap2rest.rest.app.service.ElectricService;
+import my.javacraft.soap2rest.rest.app.service.GasService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -12,45 +11,25 @@ import org.springframework.stereotype.Repository;
 public class MetricsDao {
 
     @Autowired
-    private MeterDao meterDao;
+    private ElectricService electricService;
 
     @Autowired
-    private ElectricMetricDao electricMetricDao;
-    @Autowired
-    private GasMetricDao gasMetricDao;
+    private GasService gasService;
 
-    public Metrics findByAccountId(Long id) {
-        List<Meter> meterList = meterDao.findByAccountId(id);
-
-        List<Long> meterIdList = meterList
-                .stream()
-                .map(Meter::getId)
-                .toList();
-
+    public Metrics findByAccountId(Long accountId) {
         Metrics metrics = new Metrics();
-        metrics.setAccountId(id);
-        metrics.setElectricReadings(electricMetricDao.findByMeterIds(meterIdList).stream().map(ElectricMetric::toApiMetric).toList());
-        metrics.setGasReadings(gasMetricDao.findByMeterIds(meterIdList).stream().map(GasMetric::toApiMetric).toList());
+        metrics.setAccountId(accountId);
+        metrics.setElectricReadings(electricService.findMetrics(accountId));
+        metrics.setGasReadings(gasService.findMetrics(accountId));
 
         return metrics;
     }
 
-    public Metrics findLatestMetrics(Long id) {
-        List<Meter> meterList = meterDao.findByAccountId(id);
-
-        List<Long> meterIdList = meterList
-                .stream()
-                .map(Meter::getId)
-                .toList();
-
+    public Metrics findLatestMetrics(Long accountId) {
         Metrics metrics = new Metrics();
-        metrics.setAccountId(id);
-        metrics.setElectricReadings(Stream.of(
-                electricMetricDao.findTopByMeterIdInOrderByDateDesc(meterIdList)
-        ).map(ElectricMetric::toApiMetric).toList());
-        metrics.setGasReadings(Stream.of(
-                gasMetricDao.findTopByMeterIdInOrderByDateDesc(meterIdList)
-        ).map(GasMetric::toApiMetric).toList());
+        metrics.setAccountId(accountId);
+        metrics.setElectricReadings(Collections.singletonList(electricService.findLatestMetric(accountId)));
+        metrics.setGasReadings(Collections.singletonList(gasService.findLatestMetric(accountId)));
 
         return metrics;
     }

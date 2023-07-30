@@ -11,8 +11,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.api.Metrics;
-import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import my.javacraft.soap2rest.rest.app.service.SmartService;
 import org.junit.jupiter.api.Assertions;
@@ -39,8 +37,8 @@ public class SmartDefinition {
     @Autowired
     private SmartService gasMetricDao;
 
-    @Given("the account {string} doesn't have any metrics")
-    public void cleanGasMetrics(String account) {
+    @Given("the account {long} doesn't have any metrics")
+    public void cleanGasMetrics(Long accountId) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
@@ -48,7 +46,7 @@ public class SmartDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s".formatted(port, account),
+                "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
                 Boolean.class
@@ -58,9 +56,9 @@ public class SmartDefinition {
         Assertions.assertNotNull(httpResponse.getBody());
     }
 
-    @When("the account {string} submits a PUT request with new metrics")
-    public void applyPutRequestWithGasReading(String account, DataTable table) throws Exception {
-        Metrics metrics = data2Metrics(account, table);
+    @When("the account {long} submits a PUT request with new metrics")
+    public void applyPutRequestWithGasReading(Long accountId, DataTable table) throws Exception {
+        Metrics metrics = data2Metrics(accountId, table);
 
         ObjectMapper mapper = new ObjectMapper();
         String jsonBody = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(metrics);
@@ -77,7 +75,7 @@ public class SmartDefinition {
 
         try {
             HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                    "http://localhost:%s/api/v1/smart/%s".formatted(port, account),
+                    "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
                     HttpMethod.PUT,
                     entity,
                     Boolean.class
@@ -90,9 +88,9 @@ public class SmartDefinition {
         }
     }
 
-    private Metrics data2Metrics(String accountId, DataTable table) {
+    private Metrics data2Metrics(Long accountId, DataTable table) {
         Metrics metrics = new Metrics();
-        metrics.setAccountId(Long.parseLong(accountId));
+        metrics.setAccountId(accountId);
 
         List<Metric> gasMetricList = new ArrayList<>();
         List<Metric> electricMetricsList = new ArrayList<>();

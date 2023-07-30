@@ -3,8 +3,6 @@ package my.javacraft.soap2rest.rest.app.rest;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metric;
-import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
-import my.javacraft.soap2rest.rest.app.dao.MeterDao;
 import my.javacraft.soap2rest.rest.app.service.GasService;
 import my.javacraft.soap2rest.utils.interceptor.ExecutionTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/v1/smart/{id}/gas")
 public class GasResource {
-
-    @Autowired
-    private MeterDao meterDao;
-
-    @Autowired
-    private GasMetricDao gasMetricDao;
 
     @Autowired
     private GasService gasService;

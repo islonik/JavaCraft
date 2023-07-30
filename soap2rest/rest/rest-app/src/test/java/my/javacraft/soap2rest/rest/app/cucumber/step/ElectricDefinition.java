@@ -9,7 +9,6 @@ import java.util.List;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +33,8 @@ public class ElectricDefinition {
     @Autowired
     private ElectricMetricDao electricMetricDao;
 
-    @Given("the account {string} doesn't have electric metrics")
-    public void cleanElectricMetrics(String account) {
+    @Given("the account {long} doesn't have electric metrics")
+    public void cleanElectricMetrics(Long accountId) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
@@ -43,7 +42,7 @@ public class ElectricDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/electric".formatted(port, account),
+                "http://localhost:%s/api/v1/smart/%s/electric".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
                 Boolean.class
@@ -52,9 +51,9 @@ public class ElectricDefinition {
         Assertions.assertNotNull(httpResponse);
         Assertions.assertNotNull(httpResponse.getBody());
     }
-    @When("an account {string} submits a PUT request with a new electric reading: {string}, {string}, {string}")
+    @When("an account {long} submits a PUT request with a new electric reading: {long}, {bigdecimal}, {string}")
     public void applyPutRequestWithElectricReading(
-            String account, String meterId, String reading, String date) {
+            Long accountId, Long meterId, BigDecimal reading, String date) {
         String jsonBody = """
         { 
             "meterId": %s, 
@@ -72,7 +71,7 @@ public class ElectricDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<ElectricMetric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/electric".formatted(port, account),
+                "http://localhost:%s/api/v1/smart/%s/electric".formatted(port, accountId),
                 HttpMethod.PUT,
                 entity,
                 ElectricMetric.class
@@ -82,21 +81,21 @@ public class ElectricDefinition {
         Assertions.assertNotNull(httpResponse.getBody());
     }
 
-    @Then("check the latest electric reading for the meterId = {string} is equal = {string}")
-    public void checkLatestElectricReading(String meterId, String reading) {
+    @Then("check the latest electric reading for the meterId = {long} is equal = {bigdecimal}")
+    public void checkLatestElectricReading(Long meterId, BigDecimal reading) {
         Metric latestMetric = electricMetricDao.findTopByMeterIdInOrderByDateDesc(
-                Collections.singletonList(Long.parseLong(meterId))
+                Collections.singletonList(meterId)
         ).toApiMetric();
         Assertions.assertEquals(0, latestMetric
                 .getReading()
-                .compareTo(new BigDecimal(reading))
+                .compareTo(reading)
         );
     }
 
-    @Then("check there is no electric readings for the meterId = {string}")
-    public void checkNoElectricMetric(String meterId) {
+    @Then("check there is no electric readings for the meterId = {long}")
+    public void checkNoElectricMetric(Long meterId) {
         List<Metric> metrics = electricMetricDao.findByMeterIds(
-                Collections.singletonList(Long.parseLong(meterId))
+                Collections.singletonList(meterId)
         ).stream().map(ElectricMetric::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }

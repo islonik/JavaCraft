@@ -5,18 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
-import my.javacraft.soap2rest.rest.app.dao.MeterDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.Meter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ElectricService {
-
-    @Autowired
-    private MeterDao meterDao;
 
     @Autowired
     private MetricService metricService;
@@ -28,26 +22,18 @@ public class ElectricService {
     private ElectricMetricDao electricMetricDao;
 
     public List<Metric> findMetrics(Long accountId) {
-        List<Meter> meterList = meterDao.findByAccountId(accountId);
-
-        return metricService.calculateExtraFields(
-                electricMetricDao.findByMeterIds(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                ).stream().map(ElectricMetric::toApiMetric).toList()
-        );
+        return metricService.calculateExtraFields(electricMetricDao
+                .findByAccountId(accountId)
+                .stream()
+                .map(ElectricMetric::toApiMetric)
+                .toList());
     }
 
     public Metric findLatestMetric(Long accountId) {
-        List<Meter> meterList = meterDao.findByAccountId(accountId);
-
-        return Optional.ofNullable(
-                electricMetricDao.findTopByMeterIdInOrderByDateDesc(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                )).map(ElectricMetric::toApiMetric).orElse(null);
+        return Optional.of(findMetrics(accountId))
+                .filter(l -> !l.isEmpty())
+                .map(l -> l.get(l.size() - 1))
+                .orElse(null);
     }
 
     public Metric submit(Metric submittedMetric) {

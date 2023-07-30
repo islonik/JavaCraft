@@ -1,11 +1,10 @@
-package my.javacraft.soap2rest.rest.app.service;
+package my.javacraft.soap2rest.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import my.javacraft.soap2rest.rest.api.Metrics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class SmartServiceTest {
+public class MetricsTest {
 
     String json = """
     {
@@ -29,4 +28,5 @@ public class SmartServiceTest {
         Metrics metrics = mapper.readValue(json, Metrics.class);
         Assertions.assertNotNull(metrics);
     }
+
 }

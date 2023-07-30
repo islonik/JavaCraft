@@ -5,18 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
-import my.javacraft.soap2rest.rest.app.dao.MeterDao;
-import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.Meter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GasService {
-
-    @Autowired
-    private MeterDao meterDao;
 
     @Autowired
     private MetricService metricService;
@@ -28,26 +22,18 @@ public class GasService {
     private GasMetricDao gasMetricDao;
 
     public List<Metric> findMetrics(Long accountId) {
-        List<Meter> meterList = meterDao.findByAccountId(accountId);
-
-        return metricService.calculateExtraFields(
-                gasMetricDao.findByMeterIds(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                ).stream().map(GasMetric::toApiMetric).toList()
-        );
+        return metricService.calculateExtraFields(gasMetricDao
+                .findByAccountId(accountId)
+                .stream()
+                .map(GasMetric::toApiMetric)
+                .toList());
     }
 
     public Metric findLatestMetric(Long accountId) {
-        List<Meter> meterList = meterDao.findByAccountId(accountId);
-
-        return Optional.ofNullable(
-                gasMetricDao.findTopByMeterIdInOrderByDateDesc(meterList
-                        .stream()
-                        .map(Meter::getId)
-                        .toList()
-                )).map(GasMetric::toApiMetric).orElse(null);
+        return Optional.of(findMetrics(accountId))
+                .filter(l -> !l.isEmpty())
+                .map(l -> l.get(l.size() - 1))
+                .orElse(null);
     }
 
     public Metric submit(Metric submittedMetric) {

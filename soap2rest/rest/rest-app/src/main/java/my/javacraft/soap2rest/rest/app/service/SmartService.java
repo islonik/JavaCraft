@@ -29,8 +29,8 @@ public class SmartService {
 
     @Transactional
     public boolean submit(Metrics metrics) {
-        List<Metric> gasMetricList = metrics.getGasReadings().stream().map(e -> (Metric)e).toList();
-        List<Metric> electricMetricList = metrics.getElectricReadings().stream().map(e -> (Metric)e).toList();
+        List<Metric> gasMetricList = metrics.getGasReadings();
+        List<Metric> electricMetricList = metrics.getElectricReadings();
 
         for (Metric gasMetric : gasMetricList) {
             gasService.submit(gasMetric);
