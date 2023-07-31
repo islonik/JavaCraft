@@ -42,7 +42,7 @@ public class GasDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, accountId),
+                "http://localhost:%s/api/smart/reads/%s/gas".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
                 Boolean.class
@@ -72,7 +72,7 @@ public class GasDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<GasMetric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, accountId),
+                "http://localhost:%s/api/smart/reads/%s/gas".formatted(port, accountId),
                 HttpMethod.PUT,
                 entity,
                 GasMetric.class
@@ -104,7 +104,7 @@ public class GasDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Metric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas/latest".formatted(port, accountId),
+                "http://localhost:%s/api/smart/reads/%s/gas/latest".formatted(port, accountId),
                 HttpMethod.GET,
                 entity,
                 Metric.class

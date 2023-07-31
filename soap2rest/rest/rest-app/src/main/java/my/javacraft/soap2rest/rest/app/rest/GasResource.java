@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/api/v1/smart/{id}/gas")
+@RequestMapping(path = "/api/smart/reads/{id}/gas")
 public class GasResource {
 
     @Autowired

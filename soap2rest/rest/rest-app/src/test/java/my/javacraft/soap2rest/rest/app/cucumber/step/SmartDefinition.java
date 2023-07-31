@@ -46,7 +46,7 @@ public class SmartDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
+                "http://localhost:%s/api/smart/reads/%s".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
                 Boolean.class
@@ -75,7 +75,7 @@ public class SmartDefinition {
 
         try {
             HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                    "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
+                    "http://localhost:%s/api/smart/reads/%s".formatted(port, accountId),
                     HttpMethod.PUT,
                     entity,
                     Boolean.class
