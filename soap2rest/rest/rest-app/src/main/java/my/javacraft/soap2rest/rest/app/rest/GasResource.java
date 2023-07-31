@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/api/smart/reads/{id}/gas")
+@RequestMapping(path = "/api/smart/reads/{id}/gas") // TODO: return v1 & remove reads after the review
 public class GasResource {
 
     @Autowired
