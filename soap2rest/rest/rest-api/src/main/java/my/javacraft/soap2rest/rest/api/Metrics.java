@@ -10,5 +10,5 @@ public class Metrics {
 
     private List<Metric> gasReadings;
 
-    private List<Metric> electricReadings;
+    private List<Metric> elecReadings;
 }

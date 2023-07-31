@@ -112,7 +112,7 @@ public class SmartDefinition {
         }
 
         metrics.setGasReadings(gasMetricList);
-        metrics.setElectricReadings(electricMetricsList);
+        metrics.setElecReadings(electricMetricsList);
 
         return metrics;
     }

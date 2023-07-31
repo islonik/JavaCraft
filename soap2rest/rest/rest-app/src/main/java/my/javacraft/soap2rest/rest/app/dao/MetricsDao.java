@@ -19,7 +19,7 @@ public class MetricsDao {
     public Metrics findByAccountId(Long accountId) {
         Metrics metrics = new Metrics();
         metrics.setAccountId(accountId);
-        metrics.setElectricReadings(electricService.findMetrics(accountId));
+        metrics.setElecReadings(electricService.findMetrics(accountId));
         metrics.setGasReadings(gasService.findMetrics(accountId));
 
         return metrics;
@@ -28,7 +28,7 @@ public class MetricsDao {
     public Metrics findLatestMetrics(Long accountId) {
         Metrics metrics = new Metrics();
         metrics.setAccountId(accountId);
-        metrics.setElectricReadings(Collections.singletonList(electricService.findLatestMetric(accountId)));
+        metrics.setElecReadings(Collections.singletonList(electricService.findLatestMetric(accountId)));
         metrics.setGasReadings(Collections.singletonList(gasService.findLatestMetric(accountId)));
 
         return metrics;

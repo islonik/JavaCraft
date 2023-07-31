@@ -30,7 +30,7 @@ public class SmartService {
     @Transactional
     public boolean submit(Metrics metrics) {
         List<Metric> gasMetricList = metrics.getGasReadings();
-        List<Metric> electricMetricList = metrics.getElectricReadings();
+        List<Metric> electricMetricList = metrics.getElecReadings();
 
         for (Metric gasMetric : gasMetricList) {
             gasService.submit(gasMetric);
