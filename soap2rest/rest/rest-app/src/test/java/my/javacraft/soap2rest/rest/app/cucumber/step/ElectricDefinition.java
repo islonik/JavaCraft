@@ -9,6 +9,7 @@ import java.util.List;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
+import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,7 +123,7 @@ public class ElectricDefinition {
     public void checkNoElectricMetric(Long meterId) {
         List<Metric> metrics = electricMetricDao.findByMeterIds(
                 Collections.singletonList(meterId)
-        ).stream().map(ElectricMetric::toApiMetric).toList();
+        ).stream().map(MetricEntity::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }
 

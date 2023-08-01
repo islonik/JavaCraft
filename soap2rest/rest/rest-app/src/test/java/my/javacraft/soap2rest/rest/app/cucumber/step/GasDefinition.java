@@ -9,6 +9,7 @@ import java.util.List;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
+import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,7 +124,7 @@ public class GasDefinition {
     public void checkNoGasMetric(Long meterId) {
         List<Metric> metrics = gasMetricDao.findByMeterIds(
                 Collections.singletonList(meterId)
-        ).stream().map(GasMetric::toApiMetric).toList();
+        ).stream().map(MetricEntity::toApiMetric).toList();
         Assertions.assertEquals(0, metrics.size());
     }
 }

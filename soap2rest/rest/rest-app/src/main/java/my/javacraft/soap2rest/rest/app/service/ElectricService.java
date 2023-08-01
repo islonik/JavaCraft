@@ -6,6 +6,7 @@ import java.util.Optional;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
+import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class ElectricService {
         return metricService.calculateExtraFields(electricMetricDao
                 .findByAccountId(accountId)
                 .stream()
-                .map(ElectricMetric::toApiMetric)
+                .map(MetricEntity::toApiMetric)
                 .toList());
     }
 
@@ -40,7 +41,7 @@ public class ElectricService {
         Metric latestMetric = Optional.ofNullable(electricMetricDao
                 .findTopByMeterIdInOrderByDateDesc(
                         Collections.singletonList(submittedMetric.getMeterId())
-                )).map(ElectricMetric::toApiMetric).orElse(null);
+                )).map(MetricEntity::toApiMetric).orElse(null);
 
         metricValidationService.validate(latestMetric, submittedMetric);
 

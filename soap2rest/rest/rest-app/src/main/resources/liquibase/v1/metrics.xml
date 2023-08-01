@@ -6,6 +6,11 @@
     <changeSet author="inikilipa"
                logicalFilePath="metrics.xml"
                id="metrics_create_tables" >
+        <createSequence
+                startValue="1"
+                incrementBy="1"
+                sequenceName="metric_seq"/>
+
         <createTable tableName="account">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>

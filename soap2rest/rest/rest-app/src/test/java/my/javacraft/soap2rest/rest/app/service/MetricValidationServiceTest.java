@@ -3,7 +3,6 @@ package my.javacraft.soap2rest.rest.app.service;
 import java.math.BigDecimal;
 import java.sql.Date;
 import my.javacraft.soap2rest.rest.api.Metric;
-import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
