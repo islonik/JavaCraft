@@ -9,7 +9,7 @@
         <createSequence
                 startValue="1"
                 incrementBy="1"
-                sequenceName="metric_seq"/>
+                sequenceName="metric_entity_seq"/>
 
         <createTable tableName="account">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -94,28 +94,33 @@
         </insert>
 
         <insert tableName="gas_metric">
+            <column name="id" valueComputed="metric_entity_seq.NEXTVAL"/>
             <column name="meter_id">100</column>
             <column name="reading">444.555</column>
             <column name="date">2023-06-15</column>
         </insert>
         <insert tableName="electric_metric">
+            <column name="id" valueComputed="metric_entity_seq.NEXTVAL"/>
             <column name="meter_id">200</column>
             <column name="reading">2333.333</column>
             <column name="date">2023-06-15</column>
         </insert>
 
         <insert tableName="electric_metric">
+            <column name="id" valueComputed="metric_entity_seq.NEXTVAL"/>
             <column name="meter_id">200</column>
             <column name="reading">2444.444</column>
             <column name="date">2023-07-01</column>
         </insert>
 
         <insert tableName="gas_metric">
+            <column name="id" valueComputed="metric_entity_seq.NEXTVAL"/>
             <column name="meter_id">100</column>
             <column name="reading">555.666</column>
             <column name="date">2023-07-15</column>
         </insert>
         <insert tableName="electric_metric">
+            <column name="id" valueComputed="metric_entity_seq.NEXTVAL"/>
             <column name="meter_id">200</column>
             <column name="reading">2555.555</column>
             <column name="date">2023-07-15</column>

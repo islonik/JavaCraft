@@ -15,8 +15,8 @@ import my.javacraft.soap2rest.rest.api.Metric;
 public class MetricEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "metric_seq")
-    @SequenceGenerator(name = "metric_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "metric_entity_seq")
+    @SequenceGenerator(name = "metric_entity_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "meter_id")

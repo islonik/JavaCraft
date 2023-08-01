@@ -4,7 +4,7 @@ spring:
   application:
     name: meme-keeper
   datasource:
-    url: jdbc:h2:mem:soap2rest
+    url: jdbc:h2:mem:soap2rest;MODE=Oracle;
     username: sa
     password: sa # don't keep password like that for PROD stage
     driverClassName: org.h2.Driver
