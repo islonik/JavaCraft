@@ -22,16 +22,12 @@ public class GasService {
     @Autowired
     private GasMetricDao gasMetricDao;
 
-    public List<Metric> findMetrics(Long accountId) {
-        return metricService.calculateExtraFields(gasMetricDao
-                .findByAccountId(accountId)
-                .stream()
-                .map(MetricEntity::toApiMetric)
-                .toList());
+    public List<Metric> getMetricsByAccountId(Long accountId) {
+        return metricService.calculateExtraFields(gasMetricDao.findMetrics(accountId));
     }
 
     public Metric findLatestMetric(Long accountId) {
-        return Optional.of(findMetrics(accountId))
+        return Optional.of(getMetricsByAccountId(accountId))
                 .filter(l -> !l.isEmpty())
                 .map(l -> l.get(l.size() - 1))
                 .orElse(null);

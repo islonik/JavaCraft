@@ -24,7 +24,7 @@ public class GasResource {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(gasService.findMetrics(id));
+                .body(gasService.getMetricsByAccountId(id));
     }
 
     @ExecutionTime

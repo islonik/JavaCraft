@@ -24,7 +24,7 @@ public class ElectricResource {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(electricService.findMetrics(id));
+                .body(electricService.getMetricsByAccountId(id));
     }
 
     @ExecutionTime

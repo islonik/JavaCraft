@@ -19,8 +19,8 @@ public class MetricsDao {
     public Metrics findByAccountId(Long accountId) {
         Metrics metrics = new Metrics();
         metrics.setAccountId(accountId);
-        metrics.setElecReadings(electricService.findMetrics(accountId));
-        metrics.setGasReadings(gasService.findMetrics(accountId));
+        metrics.setElecReadings(electricService.getMetricsByAccountId(accountId));
+        metrics.setGasReadings(gasService.getMetricsByAccountId(accountId));
 
         return metrics;
     }
