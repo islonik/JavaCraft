@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -17,13 +20,8 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -37,23 +35,22 @@ public class SmartDefinition {
     @Autowired
     private SmartService gasMetricDao;
 
+    private RequestSpecification prepareBaseRequest(Long accountId) {
+        RequestSpecification request = RestAssured.given();
+        request.baseUri("http://localhost:%s/api/smart/reads/%s".formatted(port, accountId));
+        request.header(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+
+        return request;
+    }
+
     @Given("the account {long} doesn't have any metrics")
     public void cleanGasMetrics(Long accountId) {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+        RequestSpecification request = prepareBaseRequest(accountId);
 
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
-        RestTemplate restTemplate = new RestTemplate();
+        Response response = request.delete();
 
-        HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/smart/reads/%s".formatted(port, accountId),
-                HttpMethod.DELETE,
-                entity,
-                Boolean.class
-        );
-
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
+        String result = response.asString();
+        Assertions.assertEquals("true", result);
     }
 
     @When("the account {long} submits a PUT request with new metrics")
@@ -65,24 +62,13 @@ public class SmartDefinition {
 
         log.info(jsonBody);
 
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
-
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
+        RequestSpecification request = prepareBaseRequest(accountId);
+        request.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         try {
-            HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                    "http://localhost:%s/api/smart/reads/%s".formatted(port, accountId),
-                    HttpMethod.PUT,
-                    entity,
-                    Boolean.class
-            );
+            Metrics response = request.body(jsonBody).put().as(Metrics.class);
 
-            Assertions.assertNotNull(httpResponse);
-            Assertions.assertNotNull(httpResponse.getBody());
+            Assertions.assertNotNull(response);
         } catch (Exception e) {
             log.error(e.getMessage());
         }

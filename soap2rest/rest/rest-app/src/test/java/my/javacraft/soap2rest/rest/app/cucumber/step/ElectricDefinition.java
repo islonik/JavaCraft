@@ -25,6 +25,9 @@ import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
+/**
+ * This test shows how to create HTTP requests <b>without</b> <i>io.rest-assured:rest-assured</i> library.
+ */
 @Scope(SCOPE_CUCUMBER_GLUE)
 public class ElectricDefinition {
 
@@ -50,16 +53,16 @@ public class ElectricDefinition {
         );
 
         Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(true, httpResponse.getBody());
     }
     @When("an account {long} submits a PUT request with a new electric reading: {long}, {bigdecimal}, {string}")
     public void applyPutRequestWithElectricReading(
             Long accountId, Long meterId, BigDecimal reading, String date) {
         String jsonBody = """
-        { 
-            "meterId": %s, 
-            "reading":"%s", 
-            "date": "%s" 
+        {
+            "meterId": %s,
+            "reading":"%s",
+            "date": "%s"
         }
         """.formatted(meterId, reading, date);
 
@@ -80,6 +83,9 @@ public class ElectricDefinition {
 
         Assertions.assertNotNull(httpResponse);
         Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(meterId, httpResponse.getBody().getMeterId());
+        Assertions.assertEquals(reading, httpResponse.getBody().getReading());
+        Assertions.assertEquals(date, httpResponse.getBody().getDate().toString());
     }
 
     @Then("check the latest electric reading for the meterId = {long} is equal = {bigdecimal}")
