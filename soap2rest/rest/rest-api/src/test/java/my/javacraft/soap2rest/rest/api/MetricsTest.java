@@ -14,7 +14,7 @@ public class MetricsTest {
         "reading" : 700.502,
         "date" : 1689807600000
       } ],
-      "electricReadings" : [ {
+      "elecReadings" : [ {
         "meterId" : 200,
         "reading" : 2536.708,
         "date" : 1689807600000
