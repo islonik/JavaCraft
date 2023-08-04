@@ -84,4 +84,26 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- Generate a build-info.properties file based on the content of the current MavenProject. -->
+                            <goal>build-info</goal>
+
+                            <!-- Repackage existing JAR and WAR archives so that they can be executed from the command line using java -jar.
+                            With layout=NONE can also be used simply to package a JAR with nested dependencies (and no main class, so not executable).-->
+<!--                            <goal>repackage</goal>-->
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -1,0 +1,156 @@
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:ns1="http://www.nikilipa.org/SoapServiceRequest/v01"
+                  xmlns:ns2="http://www.nikilipa.org/SoapServiceResponse/v01"
+                  xmlns:tns="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS"
+                  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+                  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  targetNamespace="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS">
+
+    <plnk:partnerLinkType xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype"
+                          name="DS_Routing_link">
+        <plnk:role name="nikilipa" portType="tns:handleRequest_PortType"/>
+    </plnk:partnerLinkType>
+
+    <wsdl:types>
+        <xs:schema xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01"
+                   attributeFormDefault="unqualified"
+                   elementFormDefault="qualified"
+                   targetNamespace="http://www.nikilipa.org/Common/MessageHeader/v01"
+                   version="v01">
+
+            <xs:complexType name="messageHeaderType">
+                <xs:sequence>
+                    <xs:element name="messageId" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="conversationId" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="statusType">
+                <xs:sequence>
+                    <xs:element name="code" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <xs:element name="desc" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="result" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="keyValuesType">
+                <xs:sequence>
+                    <xs:element name="key" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <xs:element name="value" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="Header" nillable="false" type="header:messageHeaderType"/>
+        </xs:schema>
+
+        <xs:schema xmlns:tns="http://www.nikilipa.org/SoapServiceRequest/v01"
+                   xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01"
+                   attributeFormDefault="unqualified"
+                   elementFormDefault="qualified"
+                   targetNamespace="http://www.nikilipa.org/SoapServiceRequest/v01"
+                   version="v01">
+            <xs:import namespace="http://www.nikilipa.org/Common/MessageHeader/v01"/>
+
+            <xs:element name="DSRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Header" type="header:messageHeaderType"/>
+                        <xs:element name="Body">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="ServiceOrder" type="tns:ServiceOrder"/>
+                                    <xs:element name="AsyncronousResponse" type="xs:string"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:complexType name="ServiceOrder">
+                <xs:sequence>
+                    <xs:element name="ServiceOrderID" type="xs:string"/>
+                    <xs:element name="ServiceName" type="xs:string"/>
+                    <xs:element name="ServiceType" type="xs:string"/>
+                    <xs:element name="Params" type="header:keyValuesType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:complexType>
+
+        </xs:schema>
+
+        <xs:schema xmlns:tns="http://www.nikilipa.org/SoapServiceResponse/v01"
+                   xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01"
+                   attributeFormDefault="unqualified"
+                   elementFormDefault="qualified"
+                   targetNamespace="http://www.nikilipa.org/SoapServiceResponse/v01"
+                   version="v01">
+            <xs:import namespace="http://www.nikilipa.org/Common/MessageHeader/v01"/>
+
+            <xs:complexType name="ServiceOrderStatus">
+                <xs:sequence>
+                    <xs:element name="ServiceOrderID" type="xs:string"/>
+                    <xs:element name="statusType" type="header:statusType"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:element name="DSResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Header" type="header:messageHeaderType"/>
+                        <xs:element name="Body">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="ServiceOrderStatus" type="tns:ServiceOrderStatus"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS"/>
+    </wsdl:types>
+
+    <wsdl:message name="handleResponse">
+        <wsdl:part element="ns2:DSResponse" name="parameter"/>
+    </wsdl:message>
+
+    <wsdl:message name="handleRequest">
+        <wsdl:part element="ns1:DSRequest" name="parameter"/>
+    </wsdl:message>
+
+    <wsdl:portType name="handleRequest_PortType">
+        <wsdl:operation name="handleRequest">
+            <wsdl:input message="tns:handleRequest"/>
+            <wsdl:output message="tns:handleResponse"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding
+            name="DeliverServiceWS_Binder"
+            type="tns:handleRequest_PortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="handleRequest">
+            <soap:operation
+                    soapAction="DeliverServiceWS_Binder_handleRequest"
+                    style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <wsdl:service name="DeliverServiceWS">
+        <wsdl:port
+                binding="tns:DeliverServiceWS_Binder"
+                name="DeliverServiceWS_Port">
+            <soap:address
+                    location="http://XXX.nikilipa.org:8078/ws/DeliverService.v01.webService:DeliverServiceWS"/>
+        </wsdl:port>
+    </wsdl:service>
+
+</wsdl:definitions>
