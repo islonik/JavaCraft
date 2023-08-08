@@ -37,7 +37,7 @@ public class SmartDefinition {
 
     private RequestSpecification prepareBaseRequest(Long accountId) {
         RequestSpecification request = RestAssured.given();
-        request.baseUri("http://localhost:%s/api/smart/reads/%s".formatted(port, accountId));
+        request.baseUri("http://localhost:%s/api/v1/smart/%s".formatted(port, accountId));
         request.header(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
         return request;
