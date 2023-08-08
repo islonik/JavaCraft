@@ -1,37 +1,29 @@
 package my.javacraft.soap2rest.soap.service;
 
-import java.util.Optional;
-import my.javacraft.soap2rest.soap.generated.ds.ws.DSRequest;
-import my.javacraft.soap2rest.soap.generated.ds.ws.DSResponse;
-import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrderStatus;
-import my.javacraft.soap2rest.soap.generated.ds.ws.StatusType;
+import my.javacraft.soap2rest.soap.generated.ds.ws.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EndpointService {
 
-    public DSResponse getDSResponse(DSRequest dsRequest, String code, String message) {
-        DSResponse dsResponse = new DSResponse();
-        dsResponse.setHeader(dsRequest.getHeader());
+    @Autowired
+    private AsyncService asyncService;
+    @Autowired
+    private DSRequestService dsRequestService;
+    @Autowired
+    private SyncService syncService;
 
-        DSResponse.Body body = new DSResponse.Body();
-        dsResponse.setBody(body);
+    public DSResponse executeDsRequest(DSRequest dsRequest) {
+        if (isAsync(dsRequest)) {
+            return dsRequestService.getDSResponse(dsRequest, "501", "Async Service is not implemented yet!");
+        }
 
-        ServiceOrderStatus sos = new ServiceOrderStatus();
-        body.setServiceOrderStatus(sos);
-
-        Optional<String> orderId = Optional.ofNullable(dsRequest
-                .getBody()
-                .getServiceOrder()
-                .getServiceOrderID()
-        );
-        orderId.ifPresent(sos::setServiceOrderID);
-
-        StatusType statusType = new StatusType();
-        sos.setStatusType(statusType);
-        statusType.setCode(code);
-        statusType.setDesc(message);
-
-        return dsResponse;
+        return dsRequestService.getDSResponse(dsRequest, "501", "Sync Service is not implemented yet!");
     }
+
+    boolean isAsync(DSRequest dsRequest) {
+        return Boolean.parseBoolean(dsRequest.getBody().getAsyncronousResponse());
+    }
+
 }

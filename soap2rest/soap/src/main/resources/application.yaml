@@ -3,3 +3,6 @@ server:
 spring:
   application:
     name: soap-application
+soap:
+  host: http://localhost
+  port: 8081

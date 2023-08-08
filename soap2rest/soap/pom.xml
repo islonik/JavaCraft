@@ -17,6 +17,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>my.javacraft</groupId>
+            <artifactId>soap2rest-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>my.javacraft.rest</groupId>
+            <artifactId>rest-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>${jakarta.xml.version}</version>

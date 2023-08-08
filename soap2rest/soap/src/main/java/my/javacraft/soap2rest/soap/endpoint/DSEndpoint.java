@@ -17,13 +17,12 @@ public class DSEndpoint {
     @Autowired
     EndpointService endpointService;
 
-
     @PayloadRoot(
             namespace = NAMESPACE,
             localPart = "DSRequest")
     @ResponsePayload
-    public DSResponse getCountry(@RequestPayload DSRequest request) {
+    public DSResponse getCountry(@RequestPayload DSRequest dsRequest) {
 
-        return endpointService.getDSResponse(request, "501", "Not Implemented yet!");
+        return endpointService.executeDsRequest(dsRequest);
     }
 }
