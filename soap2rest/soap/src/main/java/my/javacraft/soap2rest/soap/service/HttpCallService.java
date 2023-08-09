@@ -13,12 +13,12 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class HttpCallService {
 
-    private static final String AUTH_TOKEN_HEADER_NAME = "X-API-KEY";
+    public static final String AUTH_TOKEN_HEADER_NAME = "X-API-KEY";
 
-    @Value("soap.host")
+    @Value("${rest-app.host}")
     String host;
 
-    @Value("soap.port")
+    @Value("${rest-app.port}")
     String port;
 
     public String baseHost() {
@@ -36,8 +36,10 @@ public class HttpCallService {
 
         RestTemplate restTemplate = new RestTemplate();
 
+        // like that http://localhost:8081/api/v1/smart/1/gas
+        String url = "%s%s".formatted(baseHost(), methodUrl);
         return restTemplate.exchange(
-                "%s/%s".formatted(baseHost(), methodUrl),
+                url,
                 HttpMethod.PUT,
                 entity,
                 Metric.class

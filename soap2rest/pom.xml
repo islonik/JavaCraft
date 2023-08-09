@@ -78,6 +78,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring.boot}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -115,6 +116,18 @@
                 <version>1.9.3</version>
                 <scope>test</scope>
             </dependency>
+
+            <!--
+            WireMock Java is distributed in two flavours:
+            1) a standard JAR containing just WireMock
+            2) a standalone uber JAR containing WireMock plus all its dependencies.
+            -->
+            <dependency>
+                <groupId>com.github.tomakehurst</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>2.27.2</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -130,6 +143,18 @@
                     <encoding>UTF-8</encoding>
                     <showDeprecation>true</showDeprecation>
                     <maxmem>512m</maxmem>
+                </configuration>
+            </plugin>
+
+            <!-- makes cucumber tests run in maven -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/CucumberRunnerTest.java</include>
+                    </includes>
                 </configuration>
             </plugin>
         </plugins>
