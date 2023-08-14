@@ -21,7 +21,8 @@
 <!--        <module>linker</module>-->
         <module>ses</module>
         <module>soap2rest</module>
-<!--        <module>xsd2model</module>-->
+        <module>translation</module>
+        <!--        <module>xsd2model</module>-->
     </modules>
 
 

@@ -1,0 +1,65 @@
+Amazon Kinesis Data Streams is a serverless streaming data service that makes it easy to capture, process, and store data streams at any scale.
+
+Q: What is a shard?
+Shard is the base throughput unit of a Kinesis stream. One shard provides a capacity of 1MB/sec data input and 2MB/sec data output. One shard can support up to 1000 PUT records per second. You will specify the number of shards needed when you create a stream. For example, you can create a stream with two shards. This stream has a throughput of 2MB/sec data input and 4MB/sec data output, and allows up to 2000 PUT records per second. You can dynamically add or remove shards from your stream as your data throughput changes via resharding.
+
+Q: What is a record?
+A record is the unit of data stored in a Kinesis stream. A record is composed of a sequence number, partition key and data blob. Data blob is the data of interest your data producer adds to a stream. The maximum size of a data blob (the data payload before Base64-encoding) is 1 megabyte (MB).
+
+Q: What is a partition key?
+A partition key is used to group data by shard within a stream.
+Kinesis Data Streams segregates the data records belonging to a stream into multiple shards. It uses the partition key that is associated with each data record to determine which shard a given data record belongs to. Partition keys are Unicode strings, with a maximum length limit of 256 characters for each key. An MD5 hash function is used to map partition keys to 128-bit integer values and to map associated data records to shards using the hash key ranges of the shards. When an application puts data into a stream, it must specify a partition key.
+
+Q: What is a sequence number?
+A sequence number is a unique identifier for each record. Sequence number is assigned by Amazon Kinesis Data Streams when a data producer calls PutRecord or PutRecords operation to add data to a Kinesis stream. Sequence numbers for the same partition key generally increase over time; the longer the time period between PutRecord or PutRecords requests, the larger the sequence numbers become.
+
+Five possible starting positions for getting Data Records out of a Kinesis Data Stream:
+AT_SEQUENCE_NUMBER - will start reading at a specific position in the Data Stream.
+AFTER_SEQUENCE_NUMBER - will start reading right after the position specified.
+AT_TIMESTAMP - will start reading from the Data Stream at the specified time.
+TRIM_HORIZON - as I've recently mentioned--starts at the oldest record in the shard.
+LATEST - starts with the most recent record put into the shard.
+Producers put Data Records into a Kinesis Data Stream.
+Kinesis Producers can be created using the AWS SDKs, the Kinesis Agent, the Kinesis APIs, or the Kinesis Producer Library, KPL.
+Originally, the Kinesis Agent was only for Linux. However, AWS has released the Kinesis Agent for Windows.
+
+A Kinesis Data Stream is a set of Shards. A single shard can ingest up to 1 MB of data per second.
+
+A shard contains a sequence of Data Records. Data Records are composed of a Sequence Number, a Partition Key, and a Data Blob, and they are stored as an immutable sequence of bytes.
+Kinesis cannot guarantee the order of data across multiple shards. It is possible only in a single shard.
+
+A Kinesis Data Streams stores records for 24 hours by default.
+In Amazon Kinesis, Kinesis Data Streams is a stream storage layer.
+A Kinesis Data Streams doesn't support auto scaling.
+
+There are 2 types of consumers for Amazon Kinesis Data Streams: the original shared-throughput consumer and Enhanced Fan-Out.
+The Standard Consumer uses a polling method to get data from a stream. For reads, each shard can support up to 5 API calls per second, return up to 2 megabytes per second, to a total of 10,000 records per second.
+Enhanced Fan-Out uses a push mechanism to send data to Consumers.  There can be up to 20 Consumer Applications registered to a stream and each Consumer gets 2 megabytes per second per shard of throughput.  This throughput comes at a cost.  Be aware.
+Kinesis Producer Library (KPL)
+The KPL has retry logic built into it. When a failure or exception is returned from a putRecords() call, the KPL will automatically retry.
+
+Kinesis Client Library (KCL)
+One of the methods of developing custom consumer applications that can process data from KDS data streams is to use the Kinesis Client Library (KCL).
+
+KCL helps you consume and process data from a Kinesis data stream by taking care of many of the complex tasks associated with distributed computing. These include load balancing across multiple consumer application instances, responding to consumer application instance failures, checkpointing processed records, and reacting to resharding. The KCL takes care of all of these subtasks so that you can focus your efforts on writing your custom record-processing logic.
+
+The KCL is different from the Kinesis Data Streams APIs that are available in the AWS SDKs. The Kinesis Data Streams APIs help you manage many aspects of Kinesis Data Streams, including creating streams, resharding, and putting and getting records.
+
+The KCL acts as an intermediary between your record processing logic and Kinesis Data Streams.
+
+The KCL is a Java library.
+
+Resharding
+Shards could be split if they are hot (performance issue) and merged if they are cold (waste of money).
+
+Shard can have 3 states:
+Open State - Parent shard before resharding, Data records can be both added to and retrieved from the shard
+Closed State - Parent shard after resharding, Data records are still available until it expires.
+Expired State - Parent stream's retention period is expired, Data records are no longer accessible.
+After resharding, data records could be out of order.
+
+Kinesis Agent
+The Kinesis Agent is a pre-fabricated Java application, which once installed and configured, collects and sends data to your Kinesis Data Stream. You can install the Kinesis Agent on Linux systems for web servers, log servers, and database servers. The agent is also available on GitHub.
+
+Encryption
+Kinesis Data Stream can automatically encrypt data as a producer delivers it onto a stream. It uses AWS KMS master keys for encryption.
