@@ -21,11 +21,8 @@ public class WordCounterService {
         this.translateService = translateService;
     }
 
-    public void addWords(String words) {
-        List<String> wordList = Arrays.stream(words
-                .replaceAll("[.,!:?;]", "")
-                .split(" ")
-        ).collect(Collectors.toList());
+    public void addWords(String text) {
+        List<String> wordList = splitText(text);
 
         for (String word : wordList) {
             if (containsNonAlphabeticCharacters(word)) {
@@ -50,8 +47,15 @@ public class WordCounterService {
                 .orElse(0);
     }
 
-    boolean containsNonAlphabeticCharacters(String word) {
+    static boolean containsNonAlphabeticCharacters(String word) {
         Pattern p = Pattern.compile("^[a-zA-Z]{1,}$");
         return !p.matcher(word).find();
+    }
+
+    static List<String> splitText(String text) {
+        return Arrays.stream(text
+                .replaceAll("[.,!:?;]", "")
+                .split(" ")
+        ).collect(Collectors.toList());
     }
 }

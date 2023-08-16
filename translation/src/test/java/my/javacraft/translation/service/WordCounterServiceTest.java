@@ -133,10 +133,7 @@ public class WordCounterServiceTest {
 
         List<String> wordList = new ArrayList<>();
         for (String line : lineList) {
-            wordList.addAll(Arrays.stream(line
-                    .replaceAll("[.,!:?;]", "")
-                    .split(" ")
-            ).collect(Collectors.toList()));
+            wordList.addAll(WordCounterService.splitText(line));
         }
         return wordList;
     }
