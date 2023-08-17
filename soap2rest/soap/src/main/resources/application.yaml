@@ -6,3 +6,6 @@ spring:
 rest-app:
   host: http://localhost
   port: 8081
+logging:
+  level:
+    root: INFO

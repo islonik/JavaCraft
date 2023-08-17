@@ -23,21 +23,10 @@ public class MetricService {
     private HttpCallService httpCallService;
 
     public ServiceOrderStatus process(ServiceOrder serviceOrder) throws JsonProcessingException {
-        ServiceOrderStatus sos = new ServiceOrderStatus();
-        List<KeyValuesType> paramsList = serviceOrder.getParams();
+        String type = serviceOrder.getServiceType();
+        String accountId = serviceOrder.getServiceOrderID();
+        Metric metric = toMetric(serviceOrder.getParams());
 
-        Metric metric = new Metric();
-        String accountId = null;
-        String type = null;
-        for (KeyValuesType key : paramsList) {
-            switch (key.getKey()) {
-                case "accountId" -> accountId = key.getValue();
-                case "type" -> type = key.getValue();
-                case "meterId" -> metric.setMeterId(Long.parseLong(key.getValue()));
-                case "reading" -> metric.setReading(new BigDecimal(key.getValue()));
-                case "date" -> metric.setDate(Date.valueOf(key.getValue()));
-            }
-        }
         ResponseEntity<Metric> httpEntity;
         // http call
         if (type.startsWith("gas")) {
@@ -46,11 +35,25 @@ public class MetricService {
             httpEntity = httpCallService.put("/api/v1/smart/%s/electric".formatted(accountId), metric);
         }
         StatusType statusType = new StatusType();
+        statusType.setResult("OK");
         statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
-        statusType.setResult("Ok");
 
+        ServiceOrderStatus sos = new ServiceOrderStatus();
         sos.setStatusType(statusType);
-
         return sos;
     }
+
+    private Metric toMetric(List<KeyValuesType> paramsList) {
+        Metric metric = new Metric();
+        for (KeyValuesType key : paramsList) {
+            switch (key.getKey()) {
+                case "meterId" -> metric.setMeterId(Long.parseLong(key.getValue()));
+                case "reading" -> metric.setReading(new BigDecimal(key.getValue()));
+                case "date" -> metric.setDate(Date.valueOf(key.getValue()));
+            }
+        }
+        return metric;
+    }
+
+
 }

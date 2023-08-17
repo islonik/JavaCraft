@@ -3,17 +3,20 @@ package my.javacraft.soap2rest.soap.cucumber.step;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.cucumber.java.en.When;
+import jakarta.xml.soap.MessageFactory;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.soap2rest.soap.generated.ds.ws.KeyValuesType;
-import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrder;
-import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrderStatus;
+import my.javacraft.soap2rest.soap.generated.ds.ws.*;
+import my.javacraft.soap2rest.soap.generated.ds.ws.DSRequest.Body;
 import my.javacraft.soap2rest.soap.service.HttpCallService;
 import my.javacraft.soap2rest.soap.service.order.MetricService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
+import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.ws.soap.saaj.SaajSoapMessageFactory;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -33,20 +36,10 @@ public class MetricServiceDefinition {
     @Autowired
     private MetricService metricService;
 
-    @When("we submit a new gas metric")
-    public void submitGasMetric() throws JsonProcessingException {
+    ServiceOrder createServiceOrder() {
         ServiceOrder serviceOrder = new ServiceOrder();
+
         List<KeyValuesType> paramsList = serviceOrder.getParams();
-
-        KeyValuesType accountIdValue = new KeyValuesType();
-        accountIdValue.setKey("accountId");
-        accountIdValue.setValue("1");
-        paramsList.add(accountIdValue);
-
-        KeyValuesType typeValue = new KeyValuesType();
-        typeValue.setKey("type");
-        typeValue.setValue("gas");
-        paramsList.add(typeValue);
 
         KeyValuesType meterIdValue = new KeyValuesType();
         meterIdValue.setKey("meterId");
@@ -63,12 +56,47 @@ public class MetricServiceDefinition {
         dateValue.setValue("2023-07-28");
         paramsList.add(dateValue);
 
+        serviceOrder.setServiceType("gas");
+        serviceOrder.setServiceOrderID("1");
         serviceOrder.getParams().addAll(paramsList);
 
-        ServiceOrderStatus sos = metricService.process(serviceOrder);
+        return serviceOrder;
+    }
+
+    @When("we submit a new gas metric")
+    public void submitGasMetric() throws JsonProcessingException {
+        ServiceOrderStatus sos = metricService.process(createServiceOrder());
 
         Assertions.assertEquals("200", sos.getStatusType().getCode());
-        Assertions.assertEquals("Ok", sos.getStatusType().getResult());
+        Assertions.assertEquals("OK", sos.getStatusType().getResult());
+    }
+
+    @When("we send SOAP request")
+    public void sendSoapRequest() throws Exception {
+        SaajSoapMessageFactory messageFactory = new SaajSoapMessageFactory(MessageFactory.newInstance());
+        messageFactory.afterPropertiesSet();
+
+        WebServiceTemplate webServiceTemplate = new WebServiceTemplate(messageFactory);
+
+        Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
+        marshaller.setContextPath("my.javacraft.soap2rest.soap.generated.ds.ws");
+        marshaller.afterPropertiesSet();
+
+        webServiceTemplate.setMarshaller(marshaller);
+        webServiceTemplate.setUnmarshaller(marshaller);
+        webServiceTemplate.afterPropertiesSet();
+
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrder());
+
+        DSRequest dsRequest = new DSRequest();
+        dsRequest.setBody(body);
+
+        DSResponse dsResponse = (DSResponse) webServiceTemplate.marshalSendAndReceive(
+                "http://localhost:" + port + "/soap2rest/soap/v1/DeliverServiceWS.wsdl",
+                dsRequest
+        );
+        Assertions.assertNotNull(dsResponse);
     }
 
 }

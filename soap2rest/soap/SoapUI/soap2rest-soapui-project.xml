@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="a7ae5178-16d2-49b7-abd4-483b5652ce3b" activeEnvironment="Default" name="soap2rest.spring" resourceRoot="" soapui-version="5.7.1" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config">
+    <con:settings/>
+    <con:interface xsi:type="con:WsdlInterface" id="3a9ab6cc-bd46-4574-a2d1-d5788168b0e4" wsaVersion="NONE" name="DeliverServiceWS_Binder" type="wsdl" bindingName="{http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS}DeliverServiceWS_Binder" soapVersion="1_1" anonymous="optional" definition="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <con:settings/>
+        <con:definitionCache type="TEXT" rootPart="file:/home/nikilipa/Yandex.Disk/soap2rest/impl-soap/src/main/resources/wsdl/ds.wsdl">
+            <con:part>
+                <con:url>file:/home/nikilipa/Yandex.Disk/soap2rest/impl-soap/src/main/resources/wsdl/ds.wsdl</con:url>
+                <con:content><![CDATA[<wsdl:definitions targetNamespace="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns="http://www.nikilipa.org/Common/MessageHeader/v01" xmlns:ns1="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:ns2="http://www.nikilipa.org/SoapServiceResponse/v01" xmlns:tns="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/">
+  <plnk:partnerLinkType name="DS_Routing_link" xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype">
+    <plnk:role name="nikilipa" portType="tns:handleRequest_PortType"/>
+  </plnk:partnerLinkType>
+  <wsdl:types>
+    <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.nikilipa.org/Common/MessageHeader/v01" version="v01" xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01">
+      <xs:complexType name="messageHeaderType">
+        <xs:sequence>
+          <xs:element name="messageId" type="xs:string" minOccurs="0" maxOccurs="1"/>
+          <xs:element name="conversationId" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="statusType">
+        <xs:sequence>
+          <xs:element name="code" type="xs:string" minOccurs="1" maxOccurs="1"/>
+          <xs:element name="desc" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="keyValuesType">
+        <xs:sequence>
+          <xs:element name="key" type="xs:string" minOccurs="1" maxOccurs="1"/>
+          <xs:element name="value" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="Header" nillable="false" type="header:messageHeaderType"/>
+    </xs:schema>
+    <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.nikilipa.org/SoapServiceRequest/v01" version="v01" xmlns:tns="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01">
+      <xs:import namespace="http://www.nikilipa.org/Common/MessageHeader/v01"/>
+      <xs:element name="DSRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Header" type="header:messageHeaderType"/>
+            <xs:element name="Body">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="ServiceOrder" type="tns:ServiceOrder"/>
+                  <xs:element name="AsyncronousResponse" type="xs:string"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="ServiceOrder">
+        <xs:sequence>
+          <xs:element name="ServiceOrderID" type="xs:string"/>
+          <xs:element name="Params" type="header:keyValuesType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+    <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.nikilipa.org/SoapServiceResponse/v01" version="v01" xmlns:tns="http://www.nikilipa.org/SoapServiceResponse/v01" xmlns:header="http://www.nikilipa.org/Common/MessageHeader/v01">
+      <xs:import namespace="http://www.nikilipa.org/Common/MessageHeader/v01"/>
+      <xs:complexType name="ServiceOrderStatus">
+        <xs:sequence>
+          <xs:element name="ServiceOrderID" type="xs:string"/>
+          <xs:element name="statusType" type="header:statusType"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="DSResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Header" type="header:messageHeaderType"/>
+            <xs:element name="Body">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="ServiceOrderStatus" type="tns:ServiceOrderStatus"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+    <xs:schema elementFormDefault="qualified" targetNamespace="http://nikilipa.org/Service/DeliverService/v01/DeliverServiceWS"/>
+  </wsdl:types>
+  <wsdl:desc name="handleResponse">
+    <wsdl:part element="ns2:DSResponse" name="parameter"/>
+  </wsdl:desc>
+  <wsdl:desc name="handleRequest">
+    <wsdl:part element="ns1:DSRequest" name="parameter"/>
+  </wsdl:desc>
+  <wsdl:portType name="handleRequest_PortType">
+    <wsdl:operation name="handleRequest">
+      <wsdl:input desc="tns:handleRequest"/>
+      <wsdl:output desc="tns:handleResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="DeliverServiceWS_Binder" type="tns:handleRequest_PortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="handleRequest">
+      <soap:operation soapAction="DeliverServiceWS_Binder_handleRequest" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="DeliverServiceWS">
+    <wsdl:port binding="tns:DeliverServiceWS_Binder" name="DeliverServiceWS_Port">
+      <soap:address location="http://XXX.nikilipa.org:8078/ws/DeliverService.v01.webService:DeliverServiceWS"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>]]></con:content>
+                <con:type>http://schemas.xmlsoap.org/wsdl/</con:type>
+            </con:part>
+        </con:definitionCache>
+        <con:endpoints>
+            <con:endpoint>http://XXX.nikilipa.org:8078/ws/DeliverService.v01.webService:DeliverServiceWS</con:endpoint>
+        </con:endpoints>
+        <con:operation id="b2a7b3d1-ca91-413b-ad60-95b9dfdea16b" isOneWay="false" action="DeliverServiceWS_Binder_handleRequest" name="handleRequest" bindingOperationName="handleRequest" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional">
+            <con:settings/>
+            <con:call id="60e95fdb-c2d3-4dca-b17a-480ad37cd5cf" name="Multicast">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/>
+                    </con:setting>
+                </con:settings>
+                <con:encoding>UTF-8</con:encoding>
+                <con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS</con:endpoint>
+                <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>Order-Multicast</v01:ServiceOrderID>
+               <v01:ServiceName>Async</v01:ServiceName>
+               <v01:ServiceType>Fast</v01:ServiceType>
+               <!--1 or more repetitions:-->
+               <v01:Params>
+                  <v011:key>PerformanceTime:Execution</v011:key>
+                  <v011:value>TRUE</v011:value>
+               </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:credentials>
+                    <con:username>soap2rest</con:username>
+                    <con:password>soap2rest</con:password>
+                    <con:selectedAuthProfile>Basic</con:selectedAuthProfile>
+                    <con:addedBasicAuthenticationTypes>Basic</con:addedBasicAuthenticationTypes>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/>
+                <con:wsrmConfig version="1.2"/>
+            </con:call>
+            <con:call id="bdeed3e9-4a32-4167-945a-6d4c2a4c1b66" name="Sync">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+                </con:settings>
+                <con:encoding>UTF-8</con:encoding>
+                <con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint>
+                <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>Order-Sync</v01:ServiceOrderID>
+               <v01:ServiceName>Sync</v01:ServiceName>
+               <v01:ServiceType>Slow</v01:ServiceType>
+               <!--1 or more repetitions:-->
+               <v01:Params>
+                  <v011:key>PerformanceTime:Execution</v011:key>
+                  <v011:value>TRUE</v011:value>
+               </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:credentials>
+                    <con:username>soap2rest</con:username>
+                    <con:password>soap2rest</con:password>
+                    <con:selectedAuthProfile>Basic</con:selectedAuthProfile>
+                    <con:addedBasicAuthenticationTypes>Basic</con:addedBasicAuthenticationTypes>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/>
+                <con:wsrmConfig version="1.2"/>
+            </con:call>
+            <con:call id="d147aa99-0e9f-4c99-b479-4bd5c0006fc5" name="Async">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+                </con:settings>
+                <con:encoding>UTF-8</con:encoding>
+                <con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS</con:endpoint>
+                <con:request><![CDATA[<soapenv:Envelope 
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" 
+xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>Order-Async</v01:ServiceOrderID>
+               <v01:ServiceName>Async</v01:ServiceName>
+               <v01:ServiceType>Fast</v01:ServiceType>
+               <!--1 or more repetitions:-->
+               <v01:Params>
+                  <v011:key>PerformanceTime:Execution</v011:key>
+                  <v011:value>TRUE</v011:value>
+               </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>TRUE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:credentials>
+                    <con:username>soap2rest</con:username>
+                    <con:password>soap2rest</con:password>
+                    <con:selectedAuthProfile>Basic</con:selectedAuthProfile>
+                    <con:addedBasicAuthenticationTypes>Basic</con:addedBasicAuthenticationTypes>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/>
+                <con:wsrmConfig version="1.2"/>
+            </con:call>
+        </con:operation>
+    </con:interface>
+    <con:properties/>
+    <con:wssContainer/>
+    <con:oAuth2ProfileContainer/>
+    <con:oAuth1ProfileContainer/>
+    <con:sensitiveInformation/>
+</con:soapui-project>
