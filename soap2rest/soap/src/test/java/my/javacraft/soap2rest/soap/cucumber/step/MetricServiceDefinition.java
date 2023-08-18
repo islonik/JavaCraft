@@ -1,7 +1,5 @@
 package my.javacraft.soap2rest.soap.cucumber.step;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.cucumber.java.en.When;
 import jakarta.xml.soap.MessageFactory;
 import java.util.List;
@@ -14,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpStatus;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.saaj.SaajSoapMessageFactory;
@@ -56,6 +55,7 @@ public class MetricServiceDefinition {
         dateValue.setValue("2023-07-28");
         paramsList.add(dateValue);
 
+        serviceOrder.setServiceName(MetricService.NAME);
         serviceOrder.setServiceType("gas");
         serviceOrder.setServiceOrderID("1");
         serviceOrder.getParams().addAll(paramsList);
@@ -63,40 +63,41 @@ public class MetricServiceDefinition {
         return serviceOrder;
     }
 
-    @When("we submit a new gas metric")
-    public void submitGasMetric() throws JsonProcessingException {
-        ServiceOrderStatus sos = metricService.process(createServiceOrder());
-
-        Assertions.assertEquals("200", sos.getStatusType().getCode());
-        Assertions.assertEquals("OK", sos.getStatusType().getResult());
-    }
-
-    @When("we send SOAP request")
+    @When("we send a SOAP request to submit a new gas metric")
     public void sendSoapRequest() throws Exception {
-        SaajSoapMessageFactory messageFactory = new SaajSoapMessageFactory(MessageFactory.newInstance());
-        messageFactory.afterPropertiesSet();
-
-        WebServiceTemplate webServiceTemplate = new WebServiceTemplate(messageFactory);
-
-        Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-        marshaller.setContextPath("my.javacraft.soap2rest.soap.generated.ds.ws");
-        marshaller.afterPropertiesSet();
-
-        webServiceTemplate.setMarshaller(marshaller);
-        webServiceTemplate.setUnmarshaller(marshaller);
-        webServiceTemplate.afterPropertiesSet();
-
         Body body = new Body();
         body.setServiceOrder(createServiceOrder());
 
         DSRequest dsRequest = new DSRequest();
         dsRequest.setBody(body);
 
+        WebServiceTemplate webServiceTemplate = createWebServiceTemplate();
+
         DSResponse dsResponse = (DSResponse) webServiceTemplate.marshalSendAndReceive(
                 "http://localhost:" + port + "/soap2rest/soap/v1/DeliverServiceWS.wsdl",
                 dsRequest
         );
         Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals(HttpStatus.OK.getReasonPhrase(),
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
+    private WebServiceTemplate createWebServiceTemplate() throws Exception {
+        SaajSoapMessageFactory messageFactory = new SaajSoapMessageFactory(MessageFactory.newInstance());
+        messageFactory.afterPropertiesSet();
+
+        Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
+        marshaller.setContextPath("my.javacraft.soap2rest.soap.generated.ds.ws");
+        marshaller.afterPropertiesSet();
+
+        WebServiceTemplate webServiceTemplate = new WebServiceTemplate(messageFactory);
+        webServiceTemplate.setMarshaller(marshaller);
+        webServiceTemplate.setUnmarshaller(marshaller);
+        webServiceTemplate.afterPropertiesSet();
+
+        return webServiceTemplate;
     }
 
 }

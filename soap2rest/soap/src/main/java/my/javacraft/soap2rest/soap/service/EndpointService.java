@@ -19,7 +19,7 @@ public class EndpointService {
             return dsRequestService.getDSResponse(dsRequest, "501", "Async Service is not implemented yet!");
         }
 
-        return dsRequestService.getDSResponse(dsRequest, "501", "Sync Service is not implemented yet!");
+        return syncService.syncProcess(dsRequest);
     }
 
     boolean isAsync(DSRequest dsRequest) {

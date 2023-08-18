@@ -19,10 +19,6 @@ public class DSRequestService {
 
         body.setServiceOrderStatus(sos);
 
-        StatusType statusType = new StatusType();
-        sos.setStatusType(statusType);
-        statusType.setCode(HttpStatus.OK.toString());
-
         return dsResponse;
     }
 

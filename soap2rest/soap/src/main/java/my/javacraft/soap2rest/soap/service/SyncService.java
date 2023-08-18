@@ -1,8 +1,9 @@
 package my.javacraft.soap2rest.soap.service;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.soap.generated.ds.ws.*;
-import my.javacraft.soap2rest.soap.service.order.MetricService;
+import my.javacraft.soap2rest.soap.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,16 +15,20 @@ public class SyncService {
     private DSRequestService dsRequestService;
 
     @Autowired
-    private MetricService metricService;
+    private List<OrderService> orderServices;
 
     public DSResponse syncProcess(DSRequest dsRequest) {
         try {
             ServiceOrder serviceOrder = dsRequest.getBody().getServiceOrder();
-            // TODO: move to interface and auto search and injection
-            if (serviceOrder.getServiceName().equalsIgnoreCase(MetricService.NAME)) {
-                ServiceOrderStatus sos = metricService.process(serviceOrder);
-                return dsRequestService.getOk(dsRequest, sos);
-            }
+            String serviceName = serviceOrder.getServiceName();
+
+            return orderServices
+                    .stream()
+                    .filter(s -> s.getServiceName().equalsIgnoreCase(serviceName))
+                    .findFirst()
+                    .map(ms -> ms.process(serviceOrder))
+                    .map(sos -> dsRequestService.getOk(dsRequest, sos))
+                    .orElse(dsRequestService.getDSResponse(dsRequest, "500", "Service Name doesn't registered!"));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
