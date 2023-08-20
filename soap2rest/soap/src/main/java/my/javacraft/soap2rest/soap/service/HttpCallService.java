@@ -25,13 +25,17 @@ public class HttpCallService {
         return host + ":" + port;
     }
 
-    public ResponseEntity<Metric> put(String methodUrl, Metric metric) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-
+    MultiValueMap<String, String> getHeaders() {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         headers.set(AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+        return headers;
+    }
 
+    public ResponseEntity<Metric> put(String methodUrl, Metric metric) throws JsonProcessingException {
+        MultiValueMap<String, String> headers = getHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        ObjectMapper objectMapper = new ObjectMapper();
         HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(metric), headers);
 
         RestTemplate restTemplate = new RestTemplate();
@@ -43,6 +47,40 @@ public class HttpCallService {
                 HttpMethod.PUT,
                 entity,
                 Metric.class
+        );
+    }
+
+    public ResponseEntity<Boolean> delete(String methodUrl) {
+        MultiValueMap<String, String> headers = getHeaders();
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // like that http://localhost:8081/api/v1/smart/1/gas
+        String url = "%s%s".formatted(baseHost(), methodUrl);
+        return restTemplate.exchange(
+                url,
+                HttpMethod.DELETE,
+                entity,
+                Boolean.class
+        );
+    }
+
+    public<T> ResponseEntity<T> get(String methodUrl, Class<T> type) {
+        MultiValueMap<String, String> headers = getHeaders();
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // like that http://localhost:8081/api/v1/smart/1/gas
+        String url = "%s%s".formatted(baseHost(), methodUrl);
+        return restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                type
         );
     }
 }

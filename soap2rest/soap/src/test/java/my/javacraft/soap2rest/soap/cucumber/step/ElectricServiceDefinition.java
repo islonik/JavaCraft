@@ -1,5 +1,6 @@
 package my.javacraft.soap2rest.soap.cucumber.step;
 
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ public class ElectricServiceDefinition extends BaseDefinition {
     @LocalServerPort
     int port;
 
-    ServiceOrder createServiceOrder() {
+    ServiceOrder createServiceOrderWithPutBody() {
         ServiceOrder serviceOrder = new ServiceOrder();
         serviceOrder.setServiceName(ElectricService.class.getSimpleName());
         serviceOrder.setServiceType(RequestMethod.PUT.toString());
@@ -50,10 +51,64 @@ public class ElectricServiceDefinition extends BaseDefinition {
         return serviceOrder;
     }
 
-    @When("we send a SOAP request to submit a new electric metric")
-    public void sendSoapRequest() throws Exception {
+    ServiceOrder createServiceOrderWithDeleteBody() {
+        ServiceOrder serviceOrder = new ServiceOrder();
+        serviceOrder.setServiceName(ElectricService.class.getSimpleName());
+        serviceOrder.setServiceType(RequestMethod.DELETE.toString());
+        serviceOrder.setServiceOrderID("1");
+        return serviceOrder;
+    }
+
+    ServiceOrder createServiceOrderWithLatestGetBody() {
+        ServiceOrder serviceOrder = new ServiceOrder();
+        serviceOrder.setServiceName(ElectricService.class.getSimpleName());
+        serviceOrder.setServiceType(RequestMethod.GET.toString());
+        serviceOrder.setServiceOrderID("1");
+
+        List<KeyValuesType> paramsList = serviceOrder.getParams();
+
+        KeyValuesType meterIdValue = new KeyValuesType();
+        meterIdValue.setKey("path");
+        meterIdValue.setValue("/latest");
+        paramsList.add(meterIdValue);
+
+        serviceOrder.getParams().addAll(paramsList);
+
+        return serviceOrder;
+    }
+
+    @When("we send a SOAP request to delete all previous electric metrics")
+    public void sendSoapRequestWithDeleteMethod() throws Exception {
         Body body = new Body();
-        body.setServiceOrder(createServiceOrder());
+        body.setServiceOrder(createServiceOrderWithDeleteBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("true",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
+    @When("we send a SOAP request to put a new electric metric")
+    public void sendSoapRequestWithPutMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithPutBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("Metric(id=13, meterId=100, reading=678.439, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
+    @Then("we send a SOAP request to get the latest electric metric")
+    public void sendSoapRequestWithGetLatestMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithLatestGetBody());
 
         DSResponse dsResponse = sendSoapRequest(port, body);
 

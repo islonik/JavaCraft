@@ -19,10 +19,6 @@ public class ElectricService implements OrderService {
     @Autowired
     private HttpCallService httpCallService;
 
-    public String getServiceName() {
-        return this.getClass().getSimpleName();
-    }
-
     public ServiceOrderStatus execProcess(ServiceOrder serviceOrder) throws Exception {
         ServiceOrderStatus sos = new ServiceOrderStatus();
         StatusType statusType = new StatusType();
@@ -30,12 +26,38 @@ public class ElectricService implements OrderService {
 
         String type = serviceOrder.getServiceType();
         String accountId = serviceOrder.getServiceOrderID();
-        Metric metric = toMetric(serviceOrder.getParams());
 
-        ResponseEntity<Metric> httpEntity;
         // http call
-        if (type.startsWith(RequestMethod.PUT.toString())) {
-            httpEntity = httpCallService.put("/api/v1/smart/%s/electric".formatted(accountId), metric);
+        if (type.equalsIgnoreCase(RequestMethod.PUT.toString())) {
+            Metric metric = toMetric(serviceOrder.getParams());
+
+            ResponseEntity<Metric> httpEntity =
+                    httpCallService.put("/api/v1/smart/%s/electric".formatted(accountId), metric);
+
+            statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
+            statusType.setResult(Optional
+                    .of(httpEntity)
+                    .map(HttpEntity::getBody)
+                    .map(Metric::toString)
+                    .orElse(null)
+            );
+        } else if (type.equalsIgnoreCase(RequestMethod.DELETE.toString())) {
+            ResponseEntity<Boolean> httpEntity =
+                    httpCallService.delete("/api/v1/smart/%s/electric".formatted(accountId));
+
+            statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
+            statusType.setResult(Optional
+                    .of(httpEntity)
+                    .map(HttpEntity::getBody)
+                    .map(Object::toString)
+                    .orElse(null)
+            );
+        } else if (type.equalsIgnoreCase(RequestMethod.GET.toString())) {
+            String path = toPath(serviceOrder.getParams());
+
+            ResponseEntity<Metric> httpEntity =
+                    httpCallService.get("/api/v1/smart/%s/electric%s".formatted(accountId, path), Metric.class);
+
             statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
             statusType.setResult(Optional
                     .of(httpEntity)

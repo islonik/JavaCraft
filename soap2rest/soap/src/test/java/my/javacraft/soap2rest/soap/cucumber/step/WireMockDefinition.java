@@ -30,12 +30,41 @@ public class WireMockDefinition {
 
             wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/gas"))
                     .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBodyFile("put_1_gas.json")));
-            wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/electric"))
+                        .withStatus(200)
+                        .withBodyFile("put_1_gas.json")
+                    )
+            );
+            wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/gas"))
                     .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                             .withStatus(200)
-                            .withBodyFile("put_1_electric.json")));
+                            .withBody("true")
+                    )
+            );
+            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas/latest"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                            .withBodyFile("put_1_gas.json")
+                    )
+            );
+
+            wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/electric"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_electric.json")
+                    )
+            );
+            wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/electric"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                            .withBody("true")
+                    )
+            );
+            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric/latest"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                            .withBodyFile("put_1_electric.json")
+                    )
+            );
             log.info("Setup Stubs is done for MetricService");
         } catch (Exception e) {
             log.info("WireMock start exception: " + e.getMessage());

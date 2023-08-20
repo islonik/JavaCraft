@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 
 public interface OrderService {
 
-    String getServiceName();
+    default String getServiceName() {
+        return this.getClass().getSimpleName();
+    }
 
     default ServiceOrderStatus process(ServiceOrder serviceOrder) {
         ServiceOrderStatus sos = new ServiceOrderStatus();
@@ -21,8 +23,8 @@ public interface OrderService {
         try {
             sos = execProcess(serviceOrder);
         } catch (Exception e) {
-            statusType.setResult(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
             statusType.setCode(Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+            statusType.setResult(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
         }
         return sos;
     }
@@ -39,6 +41,16 @@ public interface OrderService {
             }
         }
         return metric;
+    }
+
+    default String toPath(List<KeyValuesType> paramsList) {
+        return paramsList
+                .stream()
+                .filter(keyValuesType -> keyValuesType.getKey().equalsIgnoreCase("path"))
+                .map(KeyValuesType::getValue)
+                .map(String::trim)
+                .findFirst()
+                .orElse("");
     }
 
 }
