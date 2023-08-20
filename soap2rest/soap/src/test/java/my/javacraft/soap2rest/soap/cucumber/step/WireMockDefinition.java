@@ -46,7 +46,14 @@ public class WireMockDefinition {
                             .withBodyFile("put_1_gas.json")
                     )
             );
+            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                            .withBodyFile("get_1_gas.json")
+                    )
+            );
 
+            // electric
             wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/electric"))
                     .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withStatus(200)
@@ -63,6 +70,12 @@ public class WireMockDefinition {
                     .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                             .withStatus(200)
                             .withBodyFile("put_1_electric.json")
+                    )
+            );
+            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric"))
+                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                            .withBodyFile("get_1_electric.json")
                     )
             );
             log.info("Setup Stubs is done for MetricService");

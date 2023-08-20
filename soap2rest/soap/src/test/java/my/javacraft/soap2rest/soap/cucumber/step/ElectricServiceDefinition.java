@@ -77,6 +77,24 @@ public class ElectricServiceDefinition extends BaseDefinition {
         return serviceOrder;
     }
 
+    ServiceOrder createServiceOrderWithGetBody() {
+        ServiceOrder serviceOrder = new ServiceOrder();
+        serviceOrder.setServiceName(ElectricService.class.getSimpleName());
+        serviceOrder.setServiceType(RequestMethod.GET.toString());
+        serviceOrder.setServiceOrderID("1");
+
+        List<KeyValuesType> paramsList = serviceOrder.getParams();
+
+        KeyValuesType meterIdValue = new KeyValuesType();
+        meterIdValue.setKey("path");
+        meterIdValue.setValue("");
+        paramsList.add(meterIdValue);
+
+        serviceOrder.getParams().addAll(paramsList);
+
+        return serviceOrder;
+    }
+
     @When("we send a SOAP request to delete all previous electric metrics")
     public void sendSoapRequestWithDeleteMethod() throws Exception {
         Body body = new Body();
@@ -116,6 +134,20 @@ public class ElectricServiceDefinition extends BaseDefinition {
         Assertions.assertEquals("200",
                 dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
         Assertions.assertEquals("Metric(id=13, meterId=100, reading=678.439, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
+    @Then("we send a SOAP request to get all electric metrics")
+    public void sendSoapRequestWithGetMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithGetBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("[{id=13, meterId=100, reading=678.439, date=2023-07-28}]",
                 dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
     }
 
