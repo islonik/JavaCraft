@@ -28,69 +28,69 @@ public class WireMockDefinition {
 
             wireMockServer.start();
 
-            wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/gas"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBodyFile("put_1_gas.json")
-                    )
-            );
-            wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/gas"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBody("true")
-                    )
-            );
-            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas/latest"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBodyFile("put_1_gas.json")
-                    )
-            );
-            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBodyFile("get_1_gas.json")
-                    )
-            );
+            addGasStubs(wireMockServer);
+            addElectricStubs(wireMockServer);
 
-            // electric
-            wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/electric"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBodyFile("put_1_electric.json")
-                    )
-            );
-            wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/electric"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBody("true")
-                    )
-            );
-            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric/latest"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBodyFile("put_1_electric.json")
-                    )
-            );
-            wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric"))
-                    .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .withStatus(200)
-                            .withBodyFile("get_1_electric.json")
-                    )
-            );
             log.info("Setup Stubs is done for MetricService");
         } catch (Exception e) {
             log.info("WireMock start exception: " + e.getMessage());
         }
     }
 
-    @Then("we shutdown WireMock server")
-    public void teardown() {
-//        try {
-//            wireMockServer.stop();
-//            log.info("WireMock stopped.");
-//        } catch (Exception e) {
-//            log.info("WireMock stop exception: " + e.getMessage());
-//        }
+    void addGasStubs(WireMockServer wireMockServer) {
+        wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/gas"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_gas.json")
+                )
+        );
+        wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/gas"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBody("true")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas/latest"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_gas.json")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("get_1_gas.json")
+                )
+        );
     }
+
+    void addElectricStubs(WireMockServer wireMockServer) {
+        wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/electric"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_electric.json")
+                )
+        );
+        wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/electric"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBody("true")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric/latest"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_electric.json")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/electric"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("get_1_electric.json")
+                )
+        );
+    }
+
+
+
 }

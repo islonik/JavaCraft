@@ -47,7 +47,7 @@ public class SmartResource {
 
     @ExecutionTime
     @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> deleteAllGasMetrics() {
+    public ResponseEntity<Boolean> deleteAllMetrics() {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)

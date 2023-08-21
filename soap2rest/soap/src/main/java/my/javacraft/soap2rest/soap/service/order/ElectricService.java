@@ -27,15 +27,13 @@ public class ElectricService implements OrderService {
         sos.setStatusType(statusType);
 
         String type = serviceOrder.getServiceType();
-        String accountId = serviceOrder.getServiceOrderID();
 
-        // http call
         if (type.equalsIgnoreCase(RequestMethod.PUT.toString())) {
-            put(serviceOrder, accountId, statusType);
+            put(serviceOrder, statusType);
         } else if (type.equalsIgnoreCase(RequestMethod.DELETE.toString())) {
-            delete(accountId, statusType);
+            delete(serviceOrder, statusType);
         } else if (type.equalsIgnoreCase(RequestMethod.GET.toString())) {
-            get(serviceOrder, accountId, statusType);
+            get(serviceOrder, statusType);
         } else {
             statusType.setCode(Integer.toString(HttpStatus.NOT_IMPLEMENTED.value()));
             statusType.setResult(HttpStatus.NOT_IMPLEMENTED.getReasonPhrase());
@@ -44,7 +42,9 @@ public class ElectricService implements OrderService {
         return sos;
     }
 
-    private void put(ServiceOrder serviceOrder, String accountId, StatusType statusType) throws JsonProcessingException {
+    private void put(ServiceOrder serviceOrder, StatusType statusType) throws JsonProcessingException {
+        String accountId = serviceOrder.getServiceOrderID();
+
         Metric metric = toMetric(serviceOrder.getParams());
 
         ResponseEntity<Metric> httpEntity =
@@ -59,7 +59,9 @@ public class ElectricService implements OrderService {
         );
     }
 
-    private void delete(String accountId, StatusType statusType) {
+    private void delete(ServiceOrder serviceOrder, StatusType statusType) {
+        String accountId = serviceOrder.getServiceOrderID();
+
         ResponseEntity<Boolean> httpEntity =
                 httpCallService.delete("/api/v1/smart/%s/electric".formatted(accountId));
 
@@ -72,7 +74,9 @@ public class ElectricService implements OrderService {
         );
     }
 
-    private void get(ServiceOrder serviceOrder, String accountId, StatusType statusType) {
+    private void get(ServiceOrder serviceOrder, StatusType statusType) {
+        String accountId = serviceOrder.getServiceOrderID();
+
         String path = toPath(serviceOrder.getParams());
 
         if (path.equalsIgnoreCase("/latest")) {
