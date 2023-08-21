@@ -1,9 +1,8 @@
 package my.javacraft.soap2rest.soap.service.order;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.List;
 import java.util.Optional;
-import my.javacraft.soap2rest.rest.api.Metric;
+import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrder;
 import my.javacraft.soap2rest.soap.generated.ds.ws.StatusType;
 import my.javacraft.soap2rest.soap.service.HttpCallService;
@@ -13,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ElectricService implements OrderService {
+public class SmartService implements OrderService {
 
     @Autowired
     private HttpCallService httpCallService;
@@ -22,16 +21,16 @@ public class ElectricService implements OrderService {
     public void put(ServiceOrder serviceOrder, StatusType statusType) throws JsonProcessingException {
         String accountId = serviceOrder.getServiceOrderID();
 
-        Metric metric = toMetric(serviceOrder.getParams());
+        Metrics metrics = toMetrics(serviceOrder.getParams());
+        metrics.setAccountId(Long.parseLong(accountId));
 
-        ResponseEntity<Metric> httpEntity =
-                httpCallService.put("/api/v1/smart/%s/electric".formatted(accountId), Metric.class, metric);
+        ResponseEntity<Boolean> httpEntity = httpCallService.put("/api/v1/smart/%s".formatted(accountId), Boolean.class, metrics);
 
         statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
         statusType.setResult(Optional
                 .of(httpEntity)
                 .map(HttpEntity::getBody)
-                .map(Metric::toString)
+                .map(Object::toString)
                 .orElse(null)
         );
     }
@@ -41,7 +40,7 @@ public class ElectricService implements OrderService {
         String accountId = serviceOrder.getServiceOrderID();
 
         ResponseEntity<Boolean> httpEntity =
-                httpCallService.delete("/api/v1/smart/%s/electric".formatted(accountId));
+                httpCallService.delete("/api/v1/smart/%s".formatted(accountId));
 
         statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
         statusType.setResult(Optional
@@ -59,27 +58,26 @@ public class ElectricService implements OrderService {
         String path = toPath(serviceOrder.getParams());
 
         if (path.equalsIgnoreCase("/latest")) {
-            ResponseEntity<Metric> httpEntity =
-                    httpCallService.get("/api/v1/smart/%s/electric/latest".formatted(accountId), Metric.class);
+            ResponseEntity<Metrics> httpEntity =
+                    httpCallService.get("/api/v1/smart/%s/latest".formatted(accountId), Metrics.class);
 
             statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
             statusType.setResult(Optional
                     .of(httpEntity)
                     .map(HttpEntity::getBody)
-                    .map(Metric::toString)
+                    .map(Metrics::toString)
                     .orElse(null)
             );
         } else {
-            ResponseEntity<Object> httpEntity =
-                    httpCallService.get("/api/v1/smart/%s/electric".formatted(accountId), Object.class);
+            ResponseEntity<Metrics> httpEntity =
+                    httpCallService.get("/api/v1/smart/%s".formatted(accountId), Metrics.class);
 
             statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
-
-            List<Metric> metricList = (List<Metric>) httpEntity.getBody();
             statusType.setResult(Optional
-                    .ofNullable(metricList)
-                    .map(Object::toString)
-                    .orElse("")
+                    .of(httpEntity)
+                    .map(HttpEntity::getBody)
+                    .map(Metrics::toString)
+                    .orElse(null)
             );
         }
     }

@@ -6,7 +6,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.soap.generated.ds.ws.*;
 import my.javacraft.soap2rest.soap.generated.ds.ws.DSRequest.Body;
-import my.javacraft.soap2rest.soap.service.order.ElectricService;
 import my.javacraft.soap2rest.soap.service.order.GasService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -21,6 +20,42 @@ public class GasServiceDefinition extends BaseDefinition {
 
     @LocalServerPort
     int port;
+
+    @When("we send a SOAP request to delete all previous gas metrics")
+    public void sendSoapRequestWithDeleteMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithDeleteBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("true",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
+    ServiceOrder createServiceOrderWithDeleteBody() {
+        ServiceOrder serviceOrder = new ServiceOrder();
+        serviceOrder.setServiceName(GasService.class.getSimpleName());
+        serviceOrder.setServiceType(RequestMethod.DELETE.toString());
+        serviceOrder.setServiceOrderID("1");
+        return serviceOrder;
+    }
+
+    @When("we send a SOAP request to put a new gas metric")
+    public void sendSoapRequestWithPutMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithPutBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
 
     ServiceOrder createServiceOrderWithPutBody() {
         ServiceOrder serviceOrder = new ServiceOrder();
@@ -50,12 +85,18 @@ public class GasServiceDefinition extends BaseDefinition {
         return serviceOrder;
     }
 
-    ServiceOrder createServiceOrderWithDeleteBody() {
-        ServiceOrder serviceOrder = new ServiceOrder();
-        serviceOrder.setServiceName(GasService.class.getSimpleName());
-        serviceOrder.setServiceType(RequestMethod.DELETE.toString());
-        serviceOrder.setServiceOrderID("1");
-        return serviceOrder;
+    @Then("we send a SOAP request to get the latest gas metric")
+    public void sendSoapRequestWithGetLatestMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithLatestGetBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
     }
 
     ServiceOrder createServiceOrderWithLatestGetBody() {
@@ -76,6 +117,20 @@ public class GasServiceDefinition extends BaseDefinition {
         return serviceOrder;
     }
 
+    @Then("we send a SOAP request to get all gas metrics")
+    public void sendSoapRequestWithGetMethod() throws Exception {
+        Body body = new Body();
+        body.setServiceOrder(createServiceOrderWithGetBody());
+
+        DSResponse dsResponse = sendSoapRequest(port, body);
+
+        Assertions.assertNotNull(dsResponse);
+        Assertions.assertEquals("200",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
+        Assertions.assertEquals("[{id=23, meterId=200, reading=2536.708, date=2023-07-28}]",
+                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    }
+
     ServiceOrder createServiceOrderWithGetBody() {
         ServiceOrder serviceOrder = new ServiceOrder();
         serviceOrder.setServiceName(GasService.class.getSimpleName());
@@ -93,63 +148,6 @@ public class GasServiceDefinition extends BaseDefinition {
 
         return serviceOrder;
     }
-
-    @When("we send a SOAP request to delete all previous gas metrics")
-    public void sendSoapRequestWithDeleteMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithDeleteBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("true",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
-    }
-
-    @When("we send a SOAP request to put a new gas metric")
-    public void sendSoapRequestWithPutMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithPutBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
-    }
-
-    @Then("we send a SOAP request to get the latest gas metric")
-    public void sendSoapRequestWithGetLatestMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithLatestGetBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
-    }
-
-    @Then("we send a SOAP request to get all gas metrics")
-    public void sendSoapRequestWithGetMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithGetBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("[{id=23, meterId=200, reading=2536.708, date=2023-07-28}]",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
-    }
-
 
 
 }

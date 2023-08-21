@@ -30,6 +30,7 @@ public class WireMockDefinition {
 
             addGasStubs(wireMockServer);
             addElectricStubs(wireMockServer);
+            addSmartStubs(wireMockServer);
 
             log.info("Setup Stubs is done for MetricService");
         } catch (Exception e) {
@@ -87,6 +88,33 @@ public class WireMockDefinition {
                 .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withStatus(200)
                         .withBodyFile("get_1_electric.json")
+                )
+        );
+    }
+
+    void addSmartStubs(WireMockServer wireMockServer) {
+        wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBody("true")
+                )
+        );
+        wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBody("true")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/latest"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("get_1_metrics.json")
+                )
+        );
+        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1"))
+                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBodyFile("put_1_metrics.json")
                 )
         );
     }

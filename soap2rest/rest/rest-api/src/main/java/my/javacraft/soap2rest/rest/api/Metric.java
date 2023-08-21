@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Metric {
+public class Metric implements Comparable<Metric>{
 
     /**
      * Metric unique id, i.e. a unique id for this record.
@@ -43,5 +43,13 @@ public class Metric {
      Average daily usage taking into account all data.
      */
     private BigDecimal avgDailyUsage;
+
+    @Override
+    public int compareTo(Metric o) {
+        int dateCompared = this.getDate().compareTo(o.getDate());
+        return dateCompared == 0
+                ? this.getReading().compareTo(o.getReading())
+                : dateCompared;
+    }
 
 }

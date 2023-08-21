@@ -1,0 +1,19 @@
+{
+  "accountId" : 1,
+  "gasReadings" : [
+    {
+      "id" : 24,
+      "meterId" : 200,
+      "reading" : 2537.777,
+      "date" : "2023-07-29"
+    }
+  ],
+  "elecReadings" : [
+    {
+      "id" : 13,
+      "meterId" : 100,
+      "reading" : 678.888,
+      "date" : "2023-07-29"
+    }
+  ]
+}

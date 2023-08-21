@@ -2,7 +2,6 @@ package my.javacraft.soap2rest.soap.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import my.javacraft.soap2rest.rest.api.Metric;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -31,12 +30,12 @@ public class HttpCallService {
         return headers;
     }
 
-    public ResponseEntity<Metric> put(String methodUrl, Metric metric) throws JsonProcessingException {
+    public<T> ResponseEntity<T> put(String methodUrl, Class<T> objectType, Object object) throws JsonProcessingException {
         MultiValueMap<String, String> headers = getHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(metric), headers);
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(object), headers);
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -46,7 +45,7 @@ public class HttpCallService {
                 url,
                 HttpMethod.PUT,
                 entity,
-                Metric.class
+                objectType
         );
     }
 
