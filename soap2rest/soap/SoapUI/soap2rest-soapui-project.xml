@@ -255,7 +255,319 @@ xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
                 <con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/>
                 <con:wsrmConfig version="1.2"/>
             </con:call>
-        </con:operation>
+        <con:call id="5242cb33-ebf8-47ed-bbf4-1384cdd8be46" name="GasMetricDelete"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>1</v01:ServiceOrderID>
+               <v01:ServiceName>GasService</v01:ServiceName>
+               <v01:ServiceType>DELETE</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="f8686b1e-2a29-4cd2-b9a9-d55c088ab434" name="GasMetricPut"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>GasService</v01:ServiceName>
+                <v01:ServiceType>PUT</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>meterId</v011:key>
+	               <v011:value>200</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>reading</v011:key>
+	               <v011:value>2536.708</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>date</v011:key>
+	               <v011:value>2023-07-28</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="c0c14afe-f2dc-4fc7-b1ee-ef23a8bd4d2e" name="GasMetricGetLatest"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>GasService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>path</v011:key>
+	               <v011:value>/latest</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="93a2520b-830e-4fa8-9849-5a5b68df2c3d" name="GasMetricGetAll"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>GasService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="f9c25010-0c7c-412a-bd7e-5750ef9affe0" name="ElectricMetricDelete"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>1</v01:ServiceOrderID>
+               <v01:ServiceName>ElectricService</v01:ServiceName>
+               <v01:ServiceType>DELETE</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="e9906bf4-5b1b-47ef-b20e-fca048842834" name="ElectricMetricPut"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>ElectricService</v01:ServiceName>
+                <v01:ServiceType>PUT</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>meterId</v011:key>
+	               <v011:value>100</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>reading</v011:key>
+	               <v011:value>678.439</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>date</v011:key>
+	               <v011:value>2023-07-28</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="ce9af49e-0966-4acf-947b-39f7c985fbae" name="ElectricMetricGetLatest"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>ElectricService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>path</v011:key>
+	               <v011:value>/latest</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="177b1256-f6c7-420b-9949-a01b9d89e896" name="ElectricMetricGetAll"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>ElectricService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="46ecc7d6-d0a0-4dce-b75c-cdf9427158a2" name="SmartMetricsDelete"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+               <v01:ServiceOrderID>1</v01:ServiceOrderID>
+               <v01:ServiceName>SmartService</v01:ServiceName>
+               <v01:ServiceType>DELETE</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="ab882118-8f82-4cbd-aa30-898e498172ee" name="SmartMetricsPut"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>SmartService</v01:ServiceName>
+                <v01:ServiceType>PUT</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>gasMetric</v011:key>
+	               <v011:value>               {
+                    "id" : 23,
+                    "meterId" : 200,
+                    "reading" : 2531.111,
+                    "date" : "2023-07-28"
+               }</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>gasMetric</v011:key>
+	               <v011:value>               {
+                    "id" : 24,
+                    "meterId" : 200,
+                    "reading" : 2537.777,
+                    "date" : "2023-07-29"
+               }</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>elecMetric</v011:key>
+	               <v011:value>               {
+                      "id" : 13,
+                      "meterId" : 100,
+                      "reading" : 674.444,
+                      "date" : "2023-07-28"
+               }</v011:value>
+	           </v01:Params>
+	           <v01:Params>
+	               <v011:key>elecMetric</v011:key>
+	               <v011:value>               {
+                      "id" : 14,
+                      "meterId" : 100,
+                      "reading" : 678.888,
+                      "date" : "2023-07-29"
+               }</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="160e5a3d-6064-4d4f-a5aa-3417b328ad80" name="SmartMetricsGetLatest"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>SmartService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+	           <v01:Params>
+	               <v011:key>path</v011:key>
+	               <v011:value>/latest</v011:value>
+	           </v01:Params>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="c84784eb-a6fc-4ff9-8f95-15b0f21741df" name="SmartMetricsGetAll"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8078/soap2rest/soap/v1/DeliverServiceWS.wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://www.nikilipa.org/SoapServiceRequest/v01" xmlns:v011="http://www.nikilipa.org/Common/MessageHeader/v01">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v01:DSRequest>
+         <v01:Header>
+            <!--Optional:-->
+            <v011:messageId>test11</v011:messageId>
+            <!--Optional:-->
+            <v011:conversationId>test22</v011:conversationId>
+         </v01:Header>
+         <v01:Body>
+            <v01:ServiceOrder>
+                <v01:ServiceOrderID>1</v01:ServiceOrderID>
+                <v01:ServiceName>SmartService</v01:ServiceName>
+                <v01:ServiceType>GET</v01:ServiceType>
+            </v01:ServiceOrder>
+            <v01:AsyncronousResponse>FALSE</v01:AsyncronousResponse>
+         </v01:Body>
+      </v01:DSRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="DeliverServiceWS_Binder_handleRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation>
     </con:interface>
     <con:properties/>
     <con:wssContainer/>
