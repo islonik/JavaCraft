@@ -87,7 +87,7 @@ public class SmartServiceDefinition extends BaseDefinition {
                     "id" : 24,
                     "meterId" : 200,
                     "reading" : 2537.777,
-                    "date" : "2023-07-28"
+                    "date" : "2023-07-29"
                }
         """);
         paramsList.add(gasMetric2);
@@ -108,10 +108,10 @@ public class SmartServiceDefinition extends BaseDefinition {
         elecMetric2.setKey("elecMetric");
         elecMetric2.setValue("""
                {
-                      "id" : 13,
+                      "id" : 14,
                       "meterId" : 100,
                       "reading" : 678.888,
-                      "date" : "2023-07-28"
+                      "date" : "2023-07-29"
                }
         """);
         paramsList.add(elecMetric2);

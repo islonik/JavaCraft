@@ -29,7 +29,7 @@ public class MetricTest {
     {
         "meterId" : 200,
         "reading" : 2639.999,
-        "date" : "2023-04-03"
+        "date" : "2023-04-04"
     }
     """;
 
@@ -56,7 +56,7 @@ public class MetricTest {
         Assertions.assertEquals("2023-04-01", metricList.get(0).getDate().toString());
         Assertions.assertEquals("2023-04-03", metricList.get(1).getDate().toString());
         Assertions.assertEquals("2636.708", metricList.get(1).getReading().toString());
-        Assertions.assertEquals("2023-04-03", metricList.get(2).getDate().toString());
+        Assertions.assertEquals("2023-04-04", metricList.get(2).getDate().toString());
         Assertions.assertEquals("2639.999", metricList.get(2).getReading().toString());
     }
 
@@ -76,7 +76,7 @@ public class MetricTest {
         Assertions.assertEquals("2023-04-01", metricList.get(0).getDate().toString());
         Assertions.assertEquals("2023-04-03", metricList.get(1).getDate().toString());
         Assertions.assertEquals("2636.708", metricList.get(1).getReading().toString());
-        Assertions.assertEquals("2023-04-03", metricList.get(2).getDate().toString());
+        Assertions.assertEquals("2023-04-04", metricList.get(2).getDate().toString());
         Assertions.assertEquals("2639.999", metricList.get(2).getReading().toString());
     }
 
