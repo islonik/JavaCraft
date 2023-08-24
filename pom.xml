@@ -19,6 +19,7 @@
     <modules>
         <module>bdd</module>
 <!--        <module>linker</module>-->
+        <module>mathparser</module>
         <module>ses</module>
         <module>soap2rest</module>
         <module>translation</module>
