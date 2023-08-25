@@ -19,7 +19,14 @@ public class ExecutionTimeAspect {
 
         Long endedTime = System.currentTimeMillis();
 
-        log.info(point.getSignature() + " method executes in: " + (endedTime - startedTime) + " ms");
+        String logOutput =
+                """
+                \n===============================================================
+                Method Signature: %s
+                Method Execution: %s ms
+                """.formatted(point.getSignature(), endedTime - startedTime);
+
+        log.info(logOutput);
 
         return returnObject;
     }
