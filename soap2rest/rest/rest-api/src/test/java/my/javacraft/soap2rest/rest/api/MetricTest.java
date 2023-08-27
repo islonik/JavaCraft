@@ -41,7 +41,7 @@ public class MetricTest {
     }
 
     @Test
-    public void testSortByDateByValueAscWithAscInsertations() throws Exception {
+    public void testSortByDateByValueAscWithAscOrder() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         Metric metric1 = mapper.readValue(json1, Metric.class);
         Metric metric2 = mapper.readValue(json2, Metric.class);
@@ -61,7 +61,7 @@ public class MetricTest {
     }
 
     @Test
-    public void testSortByDateByValueAscWithDescInsertations() throws Exception {
+    public void testSortByDateByValueAscWithDescOrder() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         Metric metric1 = mapper.readValue(json1, Metric.class);
         Metric metric2 = mapper.readValue(json2, Metric.class);
