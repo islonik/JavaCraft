@@ -18,20 +18,15 @@ public class SyncService {
     private List<OrderService> orderServices;
 
     public DSResponse syncProcess(DSRequest dsRequest) {
-        try {
-            ServiceOrder serviceOrder = dsRequest.getBody().getServiceOrder();
-            String serviceName = serviceOrder.getServiceName();
+        ServiceOrder serviceOrder = dsRequest.getBody().getServiceOrder();
+        String serviceName = serviceOrder.getServiceName();
 
-            return orderServices
-                    .stream()
-                    .filter(s -> s.getServiceName().equalsIgnoreCase(serviceName))
-                    .findFirst()
-                    .map(ms -> ms.process(serviceOrder))
-                    .map(sos -> dsRequestService.getOk(dsRequest, sos))
-                    .orElse(dsRequestService.getDSResponse(dsRequest, "500", "Service Name doesn't registered!"));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return dsRequestService.getDSResponse(dsRequest, "501", "Not implemented yet");
+        return orderServices
+                .stream()
+                .filter(s -> s.getServiceName().equalsIgnoreCase(serviceName))
+                .findFirst()
+                .map(ms -> ms.process(serviceOrder))
+                .map(sos -> dsRequestService.getOk(dsRequest, sos))
+                .orElse(dsRequestService.getDSResponse(dsRequest, "501", "Service Name doesn't registered!"));
     }
 }

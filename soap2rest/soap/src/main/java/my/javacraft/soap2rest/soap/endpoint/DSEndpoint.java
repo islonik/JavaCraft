@@ -22,7 +22,6 @@ public class DSEndpoint {
             localPart = "DSRequest")
     @ResponsePayload
     public DSResponse getCountry(@RequestPayload DSRequest dsRequest) {
-
         return endpointService.executeDsRequest(dsRequest);
     }
 }
