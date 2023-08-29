@@ -1,11 +1,20 @@
 # Soap to Rest - Rest
 
+<!-- TOC -->
+
+- [Navigation](#markdown-navigation)
+    - [Maven modules](#Maven-modules)
+    - [Liquibase](#Liquibase)
+    - [In-Memory DB](#In-Memory-DB)
+  
+<!-- /TOC -->
+
+## Maven modules
 Rest part consist of two modules:
 * rest-api
 * rest-app
 
 ## Liquibase
-
 Liquibase provides a way to incrementally update the database schema and manages database changes.
 
 To use it in Spring boot you could declare next properties in your application.yaml file
