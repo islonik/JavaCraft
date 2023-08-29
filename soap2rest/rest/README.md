@@ -1,13 +1,10 @@
 # Soap to Rest - Rest
 
-<!-- TOC -->
-
-- [Navigation](#markdown-navigation)
-    - [Maven modules](#Maven-modules)
-    - [Liquibase](#Liquibase)
-    - [In-Memory DB](#In-Memory-DB)
-  
-<!-- /TOC -->
+Rest module demonstrates how you could implement RESTful API.
+## Table of content
+- [Maven modules](#Maven-modules)
+- [Liquibase](#Liquibase)
+- [In-Memory DB](#In-Memory-DB)
 
 ## Maven modules
 Rest part consist of two modules:
