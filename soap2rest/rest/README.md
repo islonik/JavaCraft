@@ -1,7 +1,7 @@
 # Soap to Rest - Rest
 
 Rest module demonstrates how you could implement RESTful API.
-## Table of content
+## Content
 - [Maven modules](#Maven-modules)
 - [Liquibase](#Liquibase)
 - [In-Memory DB](#In-Memory-DB)
