@@ -1,7 +1,9 @@
 package my.javacraft.bdd.cucumber.step;
 
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.bdd.service.BMIService;
 import org.junit.jupiter.api.Assertions;
@@ -33,6 +35,20 @@ public class BMIStepDefinition {
         Assertions.assertEquals(expectedBmi, new BigDecimal(actualBmi));
     }
 
+    @When("we use batch to test BMI calculator")
+    public void applyPutRequestWithGasReading(DataTable table) {
+        List<List<String>> rows = table.cells();
+        for (List<String> row : rows) {
+            String weight = row.get(0);
+            String height = row.get(1);
+            boolean isImperial = Boolean.parseBoolean(row.get(2));
+            String expected = row.get(3);
+
+            BigDecimal actual = bmiService.calculate(new BigDecimal(weight), new BigDecimal(height), isImperial);
+
+            Assertions.assertEquals(new BigDecimal(expected), actual);
+        }
+    }
 
 
 }
