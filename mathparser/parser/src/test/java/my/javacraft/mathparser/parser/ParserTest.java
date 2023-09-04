@@ -1,8 +1,5 @@
 package my.javacraft.mathparser.parser;
 
-import my.javacraft.mathparser.parser.Parser;
-import my.javacraft.mathparser.parser.ParserException;
-import my.javacraft.mathparser.parser.ParserType;
 import org.junit.Assert;
 import org.junit.Test;
 
