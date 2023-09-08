@@ -13,7 +13,7 @@ package my.javacraft.mathparser.parser;
  */
 public class RomanNumbers {
 
-    final static String[] Thousands = {"", "M", "MM", "MMM"};
+    final static String[] Thousands = {"", "M", "MM", "MMM", "MMMM"};
     final static String[] Hundreds = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
     final static String[] Tens = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
     final static String[] Units = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
