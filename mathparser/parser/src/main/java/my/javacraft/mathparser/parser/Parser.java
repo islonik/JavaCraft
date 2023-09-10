@@ -63,12 +63,12 @@ public class Parser {
             if (storToken.isEmpty()) {
                 throw new ParserException(ParserException.Error.NO_EXPRESSION);
             }
-            Number _temp = new Number();
-            firstStepParsing(_temp);
+            Number temp = new Number();
+            firstStepParsing(temp);
             if (!storToken.isEmpty()) {
                 throw new ParserException(ParserException.Error.SYNTAX);
             }
-            return Double.toString(_temp.get());
+            return Double.toString(temp.get());
         } catch (ParserException exception) {
             return exception.toString();
         }
@@ -81,26 +81,26 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void firstStepParsing(Number result) throws ParserException {
-        String _token;
-        Types _tempType;
+        String token;
+        Types tempType;
         if (typeToken == Types.VARIABLE) {
-            _token = storToken;
-            _tempType = Types.VARIABLE;
-            if (!storVars.containsKey(_token)) {
-                storVars.put(_token, 0.0);
+            token = storToken;
+            tempType = Types.VARIABLE;
+            if (!storVars.containsKey(token)) {
+                storVars.put(token, 0.0);
             }
             getToken();
             if (!storToken.equals("=")) {
                 putBack();
-                if (!storVars.containsKey(_token)) {
-                    storVars.remove(_token);
+                if (!storVars.containsKey(token)) {
+                    storVars.remove(token);
                 }
-                storToken = _token;
-                typeToken = _tempType;
+                storToken = token;
+                typeToken = tempType;
             } else {
                 getToken();
                 secondStepParsing(result);
-                storVars.put(_token, result.get());
+                storVars.put(token, result.get());
                 return;
             }
         }
@@ -124,15 +124,15 @@ public class Parser {
      **/
     private void secondStepParsing(Number result) throws ParserException {
         thirdStepParsing(result);
-        String _token;
-        while ((_token = storToken).equals("+") || _token.equals("-")) {
+        String token;
+        while ((token = storToken).equals("+") || token.equals("-")) {
             getToken();
-            Number _temp = new Number();
-            thirdStepParsing(_temp);
-            if (_token.equals("-")) {
-                result.set(result.get() - _temp.get());
-            } else if (_token.equals("+")) {
-                result.set(result.get() + _temp.get());
+            Number temp = new Number();
+            thirdStepParsing(temp);
+            if (token.equals("-")) {
+                result.set(result.get() - temp.get());
+            } else if (token.equals("+")) {
+                result.set(result.get() + temp.get());
             }
         }
     }
@@ -145,23 +145,23 @@ public class Parser {
      **/
     private void thirdStepParsing(Number result) throws ParserException {
         fourthStepParsing(result);
-        String _token;
-        while ((_token = storToken).equals("*") || _token.equals("/") || _token.equals("%")) {
+        String token;
+        while ((token = storToken).equals("*") || token.equals("/") || token.equals("%")) {
             getToken();
-            Number _temp = new Number();
-            fourthStepParsing(_temp);
-            if (_token.equals("/")) {
-                if (_temp.get() == 0.0) {
+            Number temp = new Number();
+            fourthStepParsing(temp);
+            if (token.equals("/")) {
+                if (temp.get() == 0.0) {
                     throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
                 }
-                result.set(result.get() / _temp.get());
-            } else if (_token.equals("%")) {
-                if (_temp.get() == 0.0) {
+                result.set(result.get() / temp.get());
+            } else if (token.equals("%")) {
+                if (temp.get() == 0.0) {
                     throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
                 }
-                result.set(result.get() % _temp.get());
-            } else if (_token.equals("*")) {
-                result.set(result.get() * _temp.get());
+                result.set(result.get() % temp.get());
+            } else if (token.equals("*")) {
+                result.set(result.get() * temp.get());
             }
         }
     }
@@ -280,13 +280,13 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void functions(Number result) throws ParserException {
-        String _str;
-        if (isRegularExpression((_str = storToken), "abs;acos;asin;atan;cos;log10;round;sin;sqrt;tan;")) {
-            oneParameterFunctions(result, _str);
-        } else if (isRegularExpression((_str = storToken), "pow;log;")) {
-            twoParameterFunctions(result, _str);
-        } else if (isRegularExpression((_str = storToken), "min;max;sum;avg;")) {
-            multiParameterFunctions(result, _str);
+        String str;
+        if (isRegularExpression((str = storToken), "abs;acos;asin;atan;cos;log10;round;sin;sqrt;tan;")) {
+            oneParameterFunctions(result, str);
+        } else if (isRegularExpression((str = storToken), "pow;log;")) {
+            twoParameterFunctions(result, str);
+        } else if (isRegularExpression((str = storToken), "min;max;sum;avg;")) {
+            multiParameterFunctions(result, str);
         } else {
             throw new ParserException(ParserException.Error.SYNTAX);
         }
@@ -426,24 +426,20 @@ public class Parser {
             return;
         }
 
-        if (idString == storString.length()) {
-            return;
-        }
-
         if (isDelimiter(storString.charAt(idString))) {
             strBuilder.append(storString.charAt(idString));
             idString++;
             typeToken = Types.DELIMITER;
         } else if (Character.isLetter(storString.charAt(idString))) { //isLetter??
-            int _ctrl = 0;
+            int ctrl = 0;
             while (!isDelimiter(storString.charAt(idString))) {
                 strBuilder.append(storString.charAt(idString));
                 idString++;
                 if (idString >= storString.length()) {
                     break;
                 }
-                _ctrl++;
-                if (_ctrl >= 32) {
+                ctrl++;
+                if (ctrl >= 32) {
                     throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
                 }
             }
@@ -477,28 +473,28 @@ public class Parser {
      * TODO: Should I rewrite it?.
      **/
     private boolean isRegularExpression(String str, String expression) {
-        int _idString = 0;
-        StringBuilder _strbuf = new StringBuilder(expression.length());
-        while (expression.length() > _idString) {
+        int idString = 0;
+        StringBuilder strbuf = new StringBuilder(expression.length());
+        while (expression.length() > idString) {
             // If we find the hiatus
-            while (expression.charAt(_idString) == ' ') {
-                _idString++;
+            while (expression.charAt(idString) == ' ') {
+                idString++;
             }
             // If the delimiter was found
-            if (expression.charAt(_idString) == ';') {
+            if (expression.charAt(idString) == ';') {
                 // No delimiter
-                if (str.contentEquals(_strbuf)) {
+                if (str.contentEquals(strbuf)) {
                     return true;
                 } else {
-                    _strbuf.delete(0, _strbuf.length());
+                    strbuf.delete(0, strbuf.length());
                 }
             } else {
-                _strbuf.append(expression.charAt(_idString));
+                strbuf.append(expression.charAt(idString));
             }
-            _idString++;
+            idString++;
         }
         // No delimiter
-        return str.contentEquals(_strbuf);
+        return str.contentEquals(strbuf);
     }
 
     /**
