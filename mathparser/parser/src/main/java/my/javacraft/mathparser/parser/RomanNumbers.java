@@ -27,4 +27,41 @@ public class RomanNumbers {
         return roman.toString();
     }
 
+    static int fromRoman(String romanNumber) {
+        int number = 0;
+
+        for (int i = Thousands.length - 1; i >= 0; i--) {
+            if (romanNumber.startsWith(Thousands[i])) {
+                number += i * 1000;
+                romanNumber = romanNumber.substring(Thousands[i].length());
+                break;
+            }
+        }
+
+        for (int i = Hundreds.length - 1; i >= 0; i--) {
+            if (romanNumber.startsWith(Hundreds[i])) {
+                number += i * 100;
+                romanNumber = romanNumber.substring(Hundreds[i].length());
+                break;
+            }
+        }
+
+        for (int i = Tens.length - 1; i >= 0; i--) {
+            if (romanNumber.startsWith(Tens[i])) {
+                number += i * 10;
+                romanNumber = romanNumber.substring(Tens[i].length());
+                break;
+            }
+        }
+
+        for (int i = Units.length - 1; i >= 0; i--) {
+            if (romanNumber.startsWith(Units[i])) {
+                number += i;
+                break;
+            }
+        }
+
+        return number;
+    }
+
 }
