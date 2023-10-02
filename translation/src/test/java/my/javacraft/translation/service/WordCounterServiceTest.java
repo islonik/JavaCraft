@@ -5,10 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.*;
@@ -17,18 +14,16 @@ public class WordCounterServiceTest {
 
     @Test
     public void testContainsNonAlphabeticCharacters() {
-        WordCounterService wordCounterService = prepareBasicWordCounterService();
+        Assertions.assertFalse(WordCounterService.containsNonAlphabeticCharacters("A"));
+        Assertions.assertFalse(WordCounterService.containsNonAlphabeticCharacters("apple"));
+        Assertions.assertFalse(WordCounterService.containsNonAlphabeticCharacters("banana"));
 
-        Assertions.assertFalse(wordCounterService.containsNonAlphabeticCharacters("A"));
-        Assertions.assertFalse(wordCounterService.containsNonAlphabeticCharacters("apple"));
-        Assertions.assertFalse(wordCounterService.containsNonAlphabeticCharacters("banana"));
-
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("ba ba ba"));
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("apple1"));
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("222"));
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("Romeo’s"));
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("’"));
-        Assertions.assertTrue(wordCounterService.containsNonAlphabeticCharacters("2"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("ba ba ba"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("apple1"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("222"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("Romeo’s"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("’"));
+        Assertions.assertTrue(WordCounterService.containsNonAlphabeticCharacters("2"));
     }
 
     @Test
