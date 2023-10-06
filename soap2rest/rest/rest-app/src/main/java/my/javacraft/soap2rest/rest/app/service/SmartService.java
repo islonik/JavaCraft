@@ -1,20 +1,18 @@
 package my.javacraft.soap2rest.rest.app.service;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.api.Metrics;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class SmartService {
 
-    @Autowired
-    private GasService gasService;
-
-    @Autowired
-    private ElectricService electricService;
+    private final GasService gasService;
+    private final ElectricService electricService;
 
     @Transactional
     public boolean submit(Metrics metrics) {

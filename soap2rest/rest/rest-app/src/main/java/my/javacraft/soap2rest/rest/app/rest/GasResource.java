@@ -1,11 +1,11 @@
 package my.javacraft.soap2rest.rest.app.rest;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.service.GasService;
 import my.javacraft.soap2rest.utils.interceptor.ExecutionTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping(path = "/api/v1/smart/{id}/gas")
+@RequiredArgsConstructor
 public class GasResource {
 
-    @Autowired
-    private GasService gasService;
+    private final GasService gasService;
 
     @ExecutionTime
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)

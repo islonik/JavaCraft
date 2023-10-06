@@ -3,24 +3,20 @@ package my.javacraft.soap2rest.rest.app.service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class GasService {
 
-    @Autowired
-    private MetricService metricService;
-
-    @Autowired
-    private MetricValidationService metricValidationService;
-
-    @Autowired
-    private GasMetricDao gasMetricDao;
+    private final MetricService metricService;
+    private final MetricValidationService metricValidationService;
+    private final GasMetricDao gasMetricDao;
 
     public List<Metric> getMetricsByAccountId(Long accountId) {
         return metricService.calculateExtraFields(gasMetricDao.findMetrics(accountId));
