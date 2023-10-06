@@ -27,3 +27,8 @@ spring:
     console:
       enabled: true
       path: /console
+
+soap2rest:
+  rest:
+    smart:
+      message: REST SmartResource is up!

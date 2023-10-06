@@ -5,6 +5,7 @@ Rest module demonstrates how you could implement RESTful API.
 - [Maven modules](#Maven-modules)
 - [Liquibase](#Liquibase)
 - [In-Memory DB](#In-Memory-DB)
+- [How-to](#How-to)
 
 ## Maven modules
 Rest part consist of two modules:
@@ -81,4 +82,29 @@ You also need to add this code in your Security Configuration to disable default
 ```java
 // disable 'X-Frame-Options' for H2 /console access
 http.headers((headersConfigurer) -> headersConfigurer.frameOptions(FrameOptionsConfig::disable));
+```
+
+## How to
+
+#### How to use @RequiredArgsConstructor annotation from Lombok 
+
+We all should know that "<b>Field injection is not recommended</b>" (there is the whole article about it, just google it), but how should we inject our beans?
+
+Answer for that is "<b>constructor injection</b>". 
+
+The easiest way to apply "<b>constructor injection</b>" is to use @RequiredArgsConstructor annotation and mark your dependencies as final.
+
+Be warned, you SHOULD NOT mark your <b>value</b> as final, otherwise it would be considered as dependency too and asks to create a bean for it.
+
+See example below
+```java
+@RequiredArgsConstructor
+public class SmartResource {
+
+    private final MetricsDao metricsDao;
+    private final SmartService smartService;
+    @Value("${soap2rest.rest.smart.message:Hello World!}")
+    private String smartMessage;
+    
+}
 ```
