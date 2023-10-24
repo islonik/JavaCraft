@@ -24,7 +24,6 @@
         <module>soap2rest</module>
         <module>translation</module>
         <module>xsd2model</module>
-        <!--        <module>xsd2model</module>-->
     </modules>
 
 
