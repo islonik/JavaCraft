@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<jaxb:bindings
+        version="3.0"
+        xmlns:jaxb="https://jakarta.ee/xml/ns/jaxb"
+        xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        jaxb:extensionBindingPrefixes="xjc"
+>
+
+    <jaxb:globalBindings>
+        <xjc:simple/> <!-- adds @XmlRootElement annotations -->
+    </jaxb:globalBindings>
+
+    <jaxb:bindings schemaLocation="Core.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="org.xsd2model.model"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+
+    <jaxb:bindings schemaLocation="Request.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="org.xsd2model.model"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+
+    <jaxb:bindings schemaLocation="Response.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="org.xsd2model.model"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+
+</jaxb:bindings>

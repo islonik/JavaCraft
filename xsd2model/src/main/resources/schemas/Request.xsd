@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hint:
+    if you want generate xml with a namespace then change 'unqualified' values to 'qualified',
+    but you should be aware of https://bugs.openjdk.java.net/browse/JDK-8134111
+-->
+<xs:schema attributeFormDefault="unqualified"
+           elementFormDefault="unqualified"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:core="http://xsd2model.org/examples/xsd2model/model/core"
+           targetNamespace="http://xsd2model.org/examples/xsd2model/model/request"
+           xmlns:req="http://xsd2model.org/examples/xsd2model/model/request"
+>
+    <xs:import schemaLocation="Core.xsd" namespace="http://xsd2model.org/examples/xsd2model/model/core"/>
+
+    <xs:element name="requestType" type="req:RequestType"/>
+
+    <xs:complexType name="RequestType">
+        <xs:sequence>
+            <xs:element type="core:UserType" name="user"/>
+            <xs:element type="req:Message" name="message" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Message">
+        <xs:sequence>
+            <xs:element type="xs:string" name="log"/>
+            <xs:element type="xs:string" name="command"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

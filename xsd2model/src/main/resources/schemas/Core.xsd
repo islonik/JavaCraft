@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hint:
+    if you want generate xml with a namespace then change 'unqualified' values to 'qualified',
+    but you should be aware of https://bugs.openjdk.java.net/browse/JDK-8134111
+-->
+<xs:schema attributeFormDefault="unqualified"
+           elementFormDefault="unqualified"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://xsd2model.org/examples/xsd2model/model/core"
+           xmlns:ns="http://xsd2model.org/examples/xsd2model/model/core"
+>
+
+    <xs:element name="userType" type="ns:UserType"> </xs:element>
+
+    <xs:complexType name="UserType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="login"/>
+            <xs:element type="xs:string" name="password"/>
+        </xs:sequence>
+    </xs:complexType>
+
+
+
+</xs:schema>
