@@ -34,6 +34,9 @@ replay_pid*
 *.ipr
 
 #Maven
+target
+/target
+target/
 /target/
 /surefire-report/
 
@@ -61,3 +64,4 @@ build/
 
 ### Mac OS ###
 .DS_Store
+./DS_Store
