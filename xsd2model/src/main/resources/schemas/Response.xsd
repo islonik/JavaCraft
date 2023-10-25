@@ -3,15 +3,13 @@
     if you want generate xml with a namespace then change 'unqualified' values to 'qualified',
     but you should be aware of https://bugs.openjdk.java.net/browse/JDK-8134111
 -->
-<xs:schema attributeFormDefault="unqualified"
-           elementFormDefault="unqualified"
-           xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:core="http://xsd2model.org/examples/xsd2model/model/core"
-           targetNamespace="http://xsd2model.org/examples/xsd2model/model/response"
-           xmlns:res="http://xsd2model.org/examples/xsd2model/model/response"
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:core="http://xsd2model.org/core"
+           targetNamespace="http://xsd2model.org/response"
+           xmlns:res="http://xsd2model.org/response"
 >
 
-    <xs:import schemaLocation="Core.xsd" namespace="http://xsd2model.org/examples/xsd2model/model/core"/>
+    <xs:import schemaLocation="Core.xsd" namespace="http://xsd2model.org/core"/>
 
     <xs:element name="responseType" type="res:ResponseType"/>
 
@@ -20,7 +18,7 @@
             <xs:element type="core:UserType" name="user"/>
             <xs:element type="xs:string" name="code"/>
             <xs:element type="xs:string" name="desc"/>
-            <xs:element type="res:Body" name="Body" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="res:Body" name="Body" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 

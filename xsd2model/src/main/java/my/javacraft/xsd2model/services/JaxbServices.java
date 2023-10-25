@@ -8,8 +8,6 @@ import java.io.Writer;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provide services for serialization and deserialization from Xml to Object and visa versa.
@@ -18,17 +16,15 @@ import org.slf4j.LoggerFactory;
  */
 public class JaxbServices<T> {
 
-    private final static Logger log = LoggerFactory.getLogger(JaxbServices.class);
+    private final Class<T> clazz;
+    private final JAXBContext context;
 
-    private Class clazz;
-    private JAXBContext context;
-
-    public <T> JaxbServices(Class<T> clazz) throws JAXBException {
+    public JaxbServices(Class<T> clazz) throws JAXBException {
         this.clazz = clazz;
         context = JAXBContext.newInstance(this.clazz);
     }
 
-    public <T> String object2xml(T type) throws JAXBException, XMLStreamException {
+    public String object2xml(T type) throws JAXBException {
         Writer writer = new StringWriter();
 
         Marshaller marshaller = context.createMarshaller();
@@ -39,7 +35,7 @@ public class JaxbServices<T> {
     }
 
     // Without @XmlRootElement annotation we can use this code instead of above
-    public <T> String object2xml2(T type) throws JAXBException, XMLStreamException {
+    public String object2xml2(T type) {
         Writer writer = new StringWriter();
 
         JAXB.marshal(type, writer);
@@ -47,7 +43,7 @@ public class JaxbServices<T> {
         return writer.toString();
     }
 
-    public <T> T xml2object(String xml) throws JAXBException, XMLStreamException  {
+    public T xml2object(String xml) throws JAXBException, XMLStreamException  {
         // xml to XmlStreamReader
         Reader reader = new StringReader(xml);
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -55,9 +51,9 @@ public class JaxbServices<T> {
 
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
-        JAXBElement jaxbElement = unmarshaller.unmarshal(xmlReader, this.clazz);
+        JAXBElement<T> jaxbElement = unmarshaller.unmarshal(xmlReader, this.clazz);
 
-        return (T)jaxbElement.getValue();
+        return jaxbElement.getValue();
     }
 
 }

@@ -1,6 +1,5 @@
 package my.javacraft.xsd2model.services;
 
-import jakarta.xml.bind.JAXBException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +15,7 @@ public class JsonServicesTest {
     private UserType userType;
 
     @Before
-    public void setUp() throws JAXBException {
+    public void setUp() {
         UserType userType = new UserType();
         userType.setLogin("nikita");
         userType.setPassword("password22");
@@ -32,22 +31,26 @@ public class JsonServicesTest {
         responseType0.setDesc("Ok!");
 
         // toJson
-        String json1 = JsonServices.objectToJson(responseType0);
+        String actualJson = JsonServices.objectToJson(responseType0);
         // toObject
-        ResponseType responseType2 = (ResponseType) JsonServices.jsonToObject(json1, ResponseType.class);
+        ResponseType responseType2 = (ResponseType) JsonServices.jsonToObject(actualJson, ResponseType.class);
         // toJson
-        String json2 = JsonServices.objectToJson(responseType2);
+        String actualJson2 = JsonServices.objectToJson(responseType2);
 
-        Assert.assertEquals(json1, json2);
-        String json = "{\n" +
-                "  \"user\" : {\n" +
-                "    \"login\" : \"nikita\",\n" +
-                "    \"password\" : \"password22\"\n" +
-                "  },\n" +
-                "  \"code\" : \"0\",\n" +
-                "  \"desc\" : \"Ok!\"\n" +
-                "}";
-        Assert.assertEquals(json.replaceAll("\r", "\n"), json1.replaceAll("\r\n", "\n"));
+        Assert.assertEquals(actualJson, actualJson2);
+        String expectedJson = """
+                {
+                  "user" : {
+                    "login" : "nikita",
+                    "password" : "password22"
+                  },
+                  "code" : "0",
+                  "desc" : "Ok!"
+                }""";
+        Assert.assertEquals(
+                expectedJson.replaceAll("\r", "\n"),
+                actualJson.replaceAll("\r\n", "\n")
+        );
     }
 
 }
