@@ -11,9 +11,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <java.version>17</java.version>
+
+        <spring.boot>3.1.5</spring.boot>
+        <cucumber.version>7.13.0</cucumber.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <junit5.version>5.9.3</junit5.version>
     </properties>
 
     <modules>
@@ -25,6 +31,5 @@
         <module>translation</module>
         <module>xsd2model</module>
     </modules>
-
 
 </project>
