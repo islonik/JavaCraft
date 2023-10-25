@@ -8,7 +8,7 @@
            xmlns:ns="http://xsd2model.org/core"
 >
 
-    <xs:element name="userType" type="ns:UserType"> </xs:element>
+    <xs:element name="userType" type="ns:UserType"/>
 
     <xs:complexType name="UserType">
         <xs:sequence>
@@ -16,7 +16,5 @@
             <xs:element type="xs:string" name="password"/>
         </xs:sequence>
     </xs:complexType>
-
-
 
 </xs:schema>
