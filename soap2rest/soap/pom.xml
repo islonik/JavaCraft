@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <jakarta.xml.version>4.0.0</jakarta.xml.version>
+        <jakarta.xml.version>4.0.1</jakarta.xml.version>
     </properties>
 
     <dependencies>
