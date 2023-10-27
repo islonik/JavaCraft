@@ -18,15 +18,16 @@ public class LinkServices {
 
     final LinkRepository linkRepository;
 
-    public boolean createLink(String url) {
+    public String createLink(String url) {
         Link link = new Link();
         link.setUrl(url);
-        link.setShortUrl(host + SymbolGeneratorServices.generateShortText());
+        link.setShortUrl(SymbolGeneratorServices.generateShortText());
         link.setCreationDate(new Date());
 
         link = linkRepository.save(link);
 
-        log.info("Added a new Link = '{}'", link);
-        return true;
+        String fullShortUrl = host + link.getShortUrl();
+        log.info("Added a new Link = '{}' with full short url = '{}'", link, fullShortUrl);
+        return fullShortUrl;
     }
 }
