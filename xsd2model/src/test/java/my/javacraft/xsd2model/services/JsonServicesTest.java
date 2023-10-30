@@ -1,11 +1,11 @@
 package my.javacraft.xsd2model.services;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.xsd2model.model.ResponseType;
 import org.xsd2model.model.UserType;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 /**
  * Created by nikilipa on 8/20/16.
@@ -14,7 +14,7 @@ public class JsonServicesTest {
 
     private UserType userType;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         UserType userType = new UserType();
         userType.setLogin("nikita");
@@ -37,7 +37,7 @@ public class JsonServicesTest {
         // toJson
         String actualJson2 = JsonServices.objectToJson(responseType2);
 
-        Assertions.assertEquals(actualJson, actualJson2);
+        Assert.assertEquals(actualJson, actualJson2);
         String expectedJson = """
                 {
                   "user" : {
@@ -47,7 +47,7 @@ public class JsonServicesTest {
                   "code" : "0",
                   "desc" : "Ok!"
                 }""";
-        Assertions.assertEquals(
+        Assert.assertEquals(
                 expectedJson.replaceAll("\r", "\n"),
                 actualJson.replaceAll("\r\n", "\n")
         );
