@@ -2,9 +2,8 @@ package my.javacraft.mathparser.gui.view;
 
 import java.awt.event.*;
 import my.javacraft.mathparser.parser.Parser;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /**
@@ -13,7 +12,6 @@ import org.mockito.Mockito;
 public class GUITest {
 
     @Test
-    @Ignore// TODO: stopped working
     public void testCase() {
         Parser mathParser = new Parser();
         GUI instance = new GUI();
@@ -37,6 +35,6 @@ public class GUITest {
 
         instance.calculateButton();
 
-        Assert.assertEquals("19.0", instance.getOutputText());
+        Assertions.assertEquals("19.0", instance.getOutputText());
     }
 }
