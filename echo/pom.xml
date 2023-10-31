@@ -15,8 +15,6 @@
     <modules>
         <module>standard</module>
         <module>single</module>
-        <module>single/single-server</module>
-        <module>single/single-client</module>
     </modules>
 
 </project>
