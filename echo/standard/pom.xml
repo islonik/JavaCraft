@@ -13,8 +13,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>standard-server</module>
         <module>standard-client</module>
+        <module>standard-server</module>
     </modules>
 
 </project>
