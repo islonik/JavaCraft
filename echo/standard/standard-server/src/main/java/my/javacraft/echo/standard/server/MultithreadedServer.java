@@ -3,16 +3,15 @@ package my.javacraft.echo.standard.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class MultithreadedServer {
-    private static final Logger log = LoggerFactory.getLogger(MultithreadedServer.class);
 
-    private static int port = -1;
+    private final int port;
 
     public MultithreadedServer(int port) {
         this.port = port;
@@ -21,20 +20,25 @@ public class MultithreadedServer {
     }
 
     public void run() {
-        try {
-            ServerSocket server = new ServerSocket(port);
+        try (ServerSocket server = new ServerSocket(port)) {
 
-            String serverHello = "\n" +
-                    "Server host address - " + server.getInetAddress().getHostAddress() + "\n" +
-                    "Server host name - " + server.getInetAddress().getHostName() + "\n" +
-                    "Server port - " + server.getLocalPort() + "\n";
+            String serverHello = """ 
+                    \\{^_^}/ Hi!
+                    Server host address - %s
+                    Server host name - %s
+                    Server port - %s
+                    """.formatted(
+                    server.getInetAddress().getHostAddress(),
+                    server.getInetAddress().getHostName(),
+                    server.getLocalPort()
+            );
 
             log.info(serverHello);
 
             while (true) {
                 Socket client = server.accept();
                 if (client != null) {
-                    String info = String.format("New client from %s is connected", client.toString());
+                    String info = String.format("New client from %s is connected", client);
 
                     log.info(info);
 

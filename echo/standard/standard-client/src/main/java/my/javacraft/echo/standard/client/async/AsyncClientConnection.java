@@ -6,10 +6,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class AsyncClientConnection extends Thread {
 
     private Socket socket = null;
@@ -21,8 +23,10 @@ public class AsyncClientConnection extends Thread {
             socket = new Socket(host, port);
             outStream = new PrintWriter(socket.getOutputStream(), true);
             inStream  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            log.info("Async client {} is connected", socket);
         } catch (Exception error) {
-            System.err.println(error);
+            System.err.println(error.getMessage());
         }
     }
 

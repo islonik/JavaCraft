@@ -26,13 +26,13 @@
 
     <modules>
         <module>bdd</module>
+        <module>echo</module>
         <module>linker</module>
         <module>mathparser</module>
         <module>ses</module>
         <module>soap2rest</module>
         <module>translation</module>
         <module>xsd2model</module>
-        <module>echo</module>
     </modules>
 
 </project>

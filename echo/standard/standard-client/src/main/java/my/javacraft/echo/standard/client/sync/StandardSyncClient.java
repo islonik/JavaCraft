@@ -25,6 +25,8 @@ public class StandardSyncClient {
     }
 
     public void run() throws IOException {
+        log.info("Starting StandardSyncClient...");
+
         Socket socket = null;
         PrintWriter outStream = null;
         BufferedReader inStream = null;
@@ -40,7 +42,7 @@ public class StandardSyncClient {
             log.warn(String.format("Couldn't get I/O for the connection to: %s", host));
             System.exit(1);
         }
-        log.info(String.format("This client %s is connected", socket.toString()));
+        log.info("Sync client {} is connected", socket);
 
         BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
         String userInput;

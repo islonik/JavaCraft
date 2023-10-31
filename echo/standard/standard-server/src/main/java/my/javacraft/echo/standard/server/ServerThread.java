@@ -2,6 +2,7 @@ package my.javacraft.echo.standard.server;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServerThread extends Thread {
 
+    private static final AtomicInteger threads = new AtomicInteger(0);
     private Socket socket;
     private BufferedReader inStream = null;
     private BufferedWriter outStream = null;
@@ -19,6 +21,8 @@ public class ServerThread extends Thread {
             this.socket = socket;
             this.inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.outStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
+            log.info("Simultaneously connected clients : {}", threads.incrementAndGet());
         } catch (IOException ioe) {
             log.error(ioe.getLocalizedMessage(), ioe);
         }
@@ -28,16 +32,18 @@ public class ServerThread extends Thread {
     public void run() {
         try {
             // all incoming requests
-            while (true) {
+            boolean isConnected = true;
+            while (isConnected) {
                 String request = inStream.readLine();
 
-                String response = null;
-                boolean close = false;
-                if (request.isEmpty()) {
+                String response = "";
+                if (request == null) {
+                    isConnected = false;
+                } else if (request.isEmpty()) {
                     response = "Please type something.\r\n";
                 } else if ("bye".equalsIgnoreCase(request)) {
                     response = "Have a good day!\r\n";
-                    close = true;
+                    isConnected = false;
                 } else {
                     response = "Did you say '" + request + "'?\r\n";
                 }
@@ -46,15 +52,11 @@ public class ServerThread extends Thread {
 
                 this.outStream.write(response);
                 this.outStream.flush();
-
-                if (close) {
-                    throw new InterruptedException();
-                }
             }
+            log.info("Client {} left ", socket.getPort());
+            log.info("Simultaneously connected clients : {}", threads.decrementAndGet());
         } catch (IOException ioe) {
             log.error("run method: " + ioe.getLocalizedMessage(), ioe);
-        } catch (InterruptedException ie) {
-            log.error("Client {} left ", socket.getPort());
         } finally {
             try {
                 if (inStream != null) {
@@ -64,7 +66,7 @@ public class ServerThread extends Thread {
                     outStream.close();
                 }
             } catch (IOException ioe) {
-                System.err.println(ioe);
+                System.err.println(ioe.getMessage());
                 log.error(ioe.getMessage(), ioe);
             }
         }
