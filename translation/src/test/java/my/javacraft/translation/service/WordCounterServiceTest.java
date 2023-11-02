@@ -1,5 +1,6 @@
 package my.javacraft.translation.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+
 import static org.mockito.Mockito.*;
 
 public class WordCounterServiceTest {
@@ -113,7 +116,7 @@ public class WordCounterServiceTest {
 
     @Test
     public void testRomeoAndJuliet() throws IOException {
-        List<String> wordList = getWordsFromTxtFile("src/test/resources/Romeo_and_Juliet.txt");
+        List<String> wordList = getWordsFromTxtFileByClasspath("Romeo_and_Juliet.txt");
 
         WordCounterService wordCounterService = prepareBasicWordCounterService();
         wordCounterService.addWords(wordList.toString().substring(1, wordList.toString().length() - 1));
@@ -122,8 +125,18 @@ public class WordCounterServiceTest {
         Assertions.assertEquals(180, wordCounterService.counterByWord("Juliet"));
     }
 
+    // This approach expects the resource to be present in the filesystem and not within a jar file.
+    public List<String> getWordsFromTxtFileByClasspath(String classpath) throws IOException {
+        File resource = new ClassPathResource(classpath).getFile();
+        return getLinesFromFile(resource.toPath());
+    }
+
     private List<String> getWordsFromTxtFile(String pathToFile) throws IOException {
         Path path = Paths.get(pathToFile);
+        return getLinesFromFile(path);
+    }
+
+    private List<String> getLinesFromFile(Path path) throws IOException {
         List<String> lineList = Files.readAllLines(path);
 
         List<String> wordList = new ArrayList<>();
