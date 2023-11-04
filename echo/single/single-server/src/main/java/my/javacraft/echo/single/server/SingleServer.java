@@ -3,14 +3,9 @@ package my.javacraft.echo.single.server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.nio.channels.SelectionKey.*;
 
@@ -181,6 +176,9 @@ public class SingleServer implements Runnable {
         try {
             channel.write(ByteBuffer.wrap(content.getBytes()));
             return true;
+        } catch (ClosedChannelException cce) {
+            log.info("Client terminated connection.");
+            return false;
         } catch (IOException e) {
             log.error("Unable to write content", e);
             try {

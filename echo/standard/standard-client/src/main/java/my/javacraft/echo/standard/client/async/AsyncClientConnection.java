@@ -26,7 +26,7 @@ public class AsyncClientConnection extends Thread {
 
             log.info("Async client {} is connected", socket);
         } catch (Exception error) {
-            System.err.println(error.getMessage());
+            log.error(error.getMessage(), error);
         }
     }
 
@@ -53,16 +53,16 @@ public class AsyncClientConnection extends Thread {
                 System.out.println(message);
             }
         } catch (EOFException error) {
-            System.out.println("Connection to the server was lost");
+            log.error("Connection to the server was lost");
         } catch (SocketException error) {
-            System.out.println("The server was shut down");
+            log.error("The server was shut down");
         } catch (Exception error) {
-            System.err.println("Fatal fail in run method because: " + error);
+            log.error("Fatal fail in run method because: " + error);
         } finally {
             try {
                 kill();
             } catch (Exception error) {
-                System.err.println("finally of run method:" + error);
+                log.error("finally of run method:" + error);
             }
         }
     }
