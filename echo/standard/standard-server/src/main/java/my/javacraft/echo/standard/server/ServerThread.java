@@ -66,7 +66,6 @@ public class ServerThread extends Thread {
                     outStream.close();
                 }
             } catch (IOException ioe) {
-                System.err.println(ioe.getMessage());
                 log.error(ioe.getMessage(), ioe);
             }
         }

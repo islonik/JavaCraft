@@ -19,49 +19,41 @@ public class StandardSyncClient {
     private final String host;
     private final int port;
 
-    public StandardSyncClient(String host, int port) throws IOException {
+    public StandardSyncClient(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
-    public void run() throws IOException {
-        log.info("Starting StandardSyncClient...");
+    public void run() {
+        log.info("Starting...");
 
-        Socket socket = null;
-        PrintWriter outStream = null;
-        BufferedReader inStream = null;
+        try (Socket socket = new Socket(host, port);
+             PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))
+        ) {
+            log.info("Sync client {} is connected", socket);
 
-        try {
-            socket = new Socket(host, port);
-            outStream = new PrintWriter(socket.getOutputStream(), true);
-            inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String userInput;
+
+            while (true) {
+                System.out.print("type: ");
+                userInput = stdIn.readLine().trim();
+
+                outStream.println(userInput);
+
+                System.out.println(inStream.readLine());
+                if ("bye".equalsIgnoreCase(userInput)) {
+                    break;
+                }
+            }
+
         } catch (UnknownHostException e) {
-            log.warn(String.format("Don't know about host: %s", host));
+            log.warn("Don't know about host: {}", host);
             System.exit(1);
         } catch (IOException e) {
-            log.warn(String.format("Couldn't get I/O for the connection to: %s", host));
+            log.warn("Couldn't get I/O for the connection to: {}", host);
             System.exit(1);
         }
-        log.info("Sync client {} is connected", socket);
-
-        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-        String userInput;
-
-        while (true) {
-            System.out.print("?: ");
-            userInput = stdIn.readLine().trim();
-
-            outStream.println(userInput);
-
-            System.out.println(inStream.readLine());
-            if ("bye".equalsIgnoreCase(userInput)) {
-                break;
-            }
-        }
-
-        outStream.close();
-        inStream.close();
-        stdIn.close();
-        socket.close();
     }
 }

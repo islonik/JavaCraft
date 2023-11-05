@@ -38,7 +38,7 @@ public class AsyncClientConnection extends Thread {
         try {
             outStream.println(message);
         } catch (Exception error) {
-            System.err.println("flush method: " + error);
+            log.error(error.getMessage(), error);
         }
     }
 
@@ -57,20 +57,16 @@ public class AsyncClientConnection extends Thread {
         } catch (SocketException error) {
             log.error("The server was shut down");
         } catch (Exception error) {
-            log.error("Fatal fail in run method because: " + error);
+            log.error("Fatal fail in run method because: " + error.getMessage(), error);
         } finally {
-            try {
-                kill();
-            } catch (Exception error) {
-                log.error("finally of run method:" + error);
-            }
+            closeClientSocket();
         }
     }
 
     /**
      * Method kills the object of client connection.
      */
-    public void kill() {
+    public void closeClientSocket() {
         try {
             if (socket != null) {
                 if (!socket.isClosed()) {
@@ -78,9 +74,11 @@ public class AsyncClientConnection extends Thread {
                 }
                 socket = null;
             }
-            this.interrupt();
         } catch (Exception error) {
-            System.err.println("Close method:" + error);
+            log.error(error.getMessage(), error);
+        } finally {
+            log.info("Closed.");
+            System.exit(1);
         }
     }
 }

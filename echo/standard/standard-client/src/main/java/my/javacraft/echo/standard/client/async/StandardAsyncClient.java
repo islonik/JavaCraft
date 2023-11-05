@@ -19,14 +19,14 @@ public class StandardAsyncClient {
     public StandardAsyncClient(String host, int port) {
         this.asyncClientConnection = new AsyncClientConnection(host, port);
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(1);
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
         // loop
         executorService.execute(this.asyncClientConnection);
     }
 
     public void run() {
         try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
-            log.info("Starting StandardAsyncClient...");
+            log.info("Starting...");
             while (true) {
                 String inputText = input.readLine().toLowerCase();
 
@@ -37,9 +37,7 @@ public class StandardAsyncClient {
                 }
             }
         } catch(IOException error) {
-            System.err.println(error.getMessage());
-        } finally {
-            System.exit(1);
+            log.error(error.getMessage(), error);
         }
     }
 }

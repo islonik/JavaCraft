@@ -16,7 +16,7 @@ public class MultithreadedServer {
     public MultithreadedServer(int port) {
         this.port = port;
 
-        System.out.println("Use next command: telnet localhost " + port);
+        log.info("Use next command: telnet localhost " + port);
     }
 
     public void run() {
@@ -24,10 +24,15 @@ public class MultithreadedServer {
 
             String serverHello = """ 
                     \\{^_^}/ Hi!
+                    *********************************************
+                    Server stats:
+                    Server canonical host name - %s
                     Server host address - %s
                     Server host name - %s
                     Server port - %s
+                    *********************************************
                     """.formatted(
+                    server.getInetAddress().getCanonicalHostName(),
                     server.getInetAddress().getHostAddress(),
                     server.getInetAddress().getHostName(),
                     server.getLocalPort()
@@ -48,7 +53,6 @@ public class MultithreadedServer {
             }
         } catch (IOException ioe) {
             log.error(ioe.getLocalizedMessage(), ioe);
-            System.out.println(ioe.getMessage());
         }
     }
 }
