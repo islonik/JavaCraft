@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,7 +54,8 @@ public class SingleServer implements Runnable {
                     server.close();
                 }
             } catch (Exception e) {
-                // do nothing - server failed
+                // server failed
+                log.error(e.getMessage(), e);
             }
         }
     }
@@ -72,9 +74,11 @@ public class SingleServer implements Runnable {
 
                 if (key.isConnectable()){
                     log.debug("Connectable detected");
-                    ((SocketChannel) key.channel()).finishConnect();
+                    try (SocketChannel socketChannel = (SocketChannel)key.channel()) {
+                        socketChannel.finishConnect();
+                    }
                 } else if (key.isAcceptable()){
-                    acceptOp(key, selector, server);
+                    acceptOp(selector, server);
                 } else if (key.isReadable()){
                     readOp(key);
                 } else if (key.isWritable()){
@@ -84,7 +88,7 @@ public class SingleServer implements Runnable {
         }
     }
 
-    private void acceptOp(SelectionKey key, Selector selector, ServerSocketChannel server) throws IOException {
+    private void acceptOp(Selector selector, ServerSocketChannel server) throws IOException {
         SocketChannel client = server.accept();
 
         log.info("New socket has been accepted!");
@@ -112,7 +116,7 @@ public class SingleServer implements Runnable {
         try {
             numRead = channel.read(buffer);
 
-            if(numRead == -1){
+            if (numRead == -1){
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
                 channel.close();
                 return "";
@@ -121,10 +125,8 @@ public class SingleServer implements Runnable {
             byte[] data = new byte[numRead];
             System.arraycopy(buffer.array(), 0, data, 0, numRead);
 
-            // protobuf example
-            // Protocol.Request request = Protocol.Request.parseFrom(data);
             // return request;
-            String result = new String(data, "UTF-8");
+            String result = new String(data, StandardCharsets.UTF_8);
             log.debug("Got [{}] from [{}]", result, channel.getRemoteAddress());
             return result;
         } catch (IOException e) {
@@ -132,7 +134,8 @@ public class SingleServer implements Runnable {
             try {
                 channel.close();
             } catch (IOException e1) {
-                //nothing to do, channel dead
+                // nothing to do, channel dead
+                log.error(e.getMessage(), e);
             }
         }
 
