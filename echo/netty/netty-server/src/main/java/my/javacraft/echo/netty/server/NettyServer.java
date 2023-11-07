@@ -6,18 +6,20 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class NettyServer {
 
-    private int port;
+    private final int port;
 
     public NettyServer(int port) {
         this.port = port;
 
-        System.out.println("Use next command: telnet localhost " + port);
+        log.info("Use next command: telnet localhost " + port);
     }
 
     public void run() throws Exception {

@@ -25,16 +25,16 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, String request) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, String request) {
         // Generate and write a response.
         String response;
         boolean close = false;
         if (request.isEmpty()) {
             response = "Please type something.\r\n";
-        } else if ("bye".equals(request.toLowerCase())) {
+        } else if ("bye".equalsIgnoreCase(request)) {
             response = "Have a good day!\r\n";
             close = true;
-        } else if("hello".equals(request.toLowerCase())) {
+        } else if("hello".equalsIgnoreCase(request)) {
             sendToAll(ctx, "hello everybody!");
             return;
         } else {

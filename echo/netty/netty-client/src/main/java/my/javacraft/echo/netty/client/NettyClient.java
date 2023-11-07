@@ -9,10 +9,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class NettyClient {
 
     private final String host;
@@ -29,7 +31,7 @@ public class NettyClient {
             Bootstrap b = new Bootstrap();
             b.group(group)
                     .channel(NioSocketChannel.class)
-                    .handler(new NettyClientInitializer(host, port));
+                    .handler(new NettyClientInitializer());
 
             // Start the connection attempt.
             Channel ch = b.connect(host, port).sync().channel();
@@ -48,7 +50,7 @@ public class NettyClient {
 
                 // If user typed the 'bye' command, wait until the server closes
                 // the connection.
-                if ("bye".equals(line.toLowerCase())) {
+                if ("bye".equalsIgnoreCase(line)) {
                     ch.closeFuture().sync();
                     break;
                 }
@@ -59,7 +61,7 @@ public class NettyClient {
                 lastWriteFuture.sync();
             }
         } catch(InterruptedException | IOException ie) {
-            System.err.println(ie);
+            log.error(ie.getMessage(), ie);
         } finally {
             group.shutdownGracefully();
         }

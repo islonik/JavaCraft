@@ -14,16 +14,7 @@ import io.netty.handler.codec.string.StringEncoder;
 public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
-
     private static final NettyClientHandler CLIENT_HANDLER = new NettyClientHandler();
-
-    private final String host;
-    private final int port;
-
-    public NettyClientInitializer(String host, int port) {
-        this.host = host;
-        this.port = port;
-    }
 
     @Override
     public void initChannel(SocketChannel ch) {
