@@ -10,7 +10,6 @@ import my.javacraft.ses.simulator.services.QueueServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -21,21 +20,21 @@ import java.util.concurrent.PriorityBlockingQueue;
 @Component
 public class WorkerLauncher {
 
-    @Autowired
-    private FinanceService financeService;
-
-    @Autowired
-    private QueueServices queueServices;
-
-    private ExecutorService executorService = Executors.newFixedThreadPool(4);
-
+    private final FinanceService financeService;
+    private final QueueServices queueServices;
+    private final ExecutorService executorService;
     private volatile PriorityBlockingQueue<Task> fromCreator;
     private volatile PriorityBlockingQueue<Task> fromValidator;
 
-    @PostConstruct
-    public void post() {
-        fromCreator = queueServices.getCreationQueue();
-        fromValidator = queueServices.getValidationQueue();
+    @Autowired
+    public WorkerLauncher(FinanceService financeService, QueueServices queueServices) {
+        this.financeService = financeService;
+        this.queueServices = queueServices;
+
+        this.executorService = Executors.newFixedThreadPool(4);
+
+        this.fromCreator = queueServices.getCreationQueue();
+        this.fromValidator = queueServices.getValidationQueue();
     }
 
     public void launch() {

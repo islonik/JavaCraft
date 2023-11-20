@@ -11,19 +11,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class FinanceService {
 
-    @Autowired
-    private FinanceDao dao;
+    private final FinanceDao dao;
 
-    public void setDao(FinanceDao dao) {
+    @Autowired
+    public FinanceService(FinanceDao dao) {
         this.dao = dao;
     }
 
     public boolean isEnoughMoney(String financeCode, int sum) {
         FinanceCode code = dao.findFinanceCodeByName(financeCode);
-        if (code.getDays() - sum >= 0) {
-            return true;
-        }
-        return false;
+        return code.getDays() - sum >= 0;
     }
 
     public boolean updateFinance(String financeCode, int sum) {

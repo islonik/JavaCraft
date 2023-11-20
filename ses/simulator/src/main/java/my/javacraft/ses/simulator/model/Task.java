@@ -7,15 +7,11 @@ import my.javacraft.ses.events.Priority;
  */
 public class Task implements Comparable<Task> {
 
-    private Priority priority;
-
-    private int id;
-
-    private String title;
-
-    private String financeCode;
-
-    private int estimate;
+    private final Priority priority;
+    private final int id;
+    private final String title;
+    private final String financeCode;
+    private final int estimate;
 
     public Task(Priority priority, int id, String title, String financeCode, int estimate) {
         this.id = id;

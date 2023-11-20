@@ -1,11 +1,11 @@
 package my.javacraft.ses.simulator.model;
 
-import org.junit.Assert;
-import org.junit.Test;
 import my.javacraft.ses.events.Priority;
 import my.javacraft.ses.simulator.db.FinanceDao;
 
 import java.util.PriorityQueue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by nikilipa on 7/23/16.
@@ -21,10 +21,10 @@ public class TaskTest {
         priorityQueue.add(new Task(Priority.BLOCKER, 3, "Task 3", FinanceDao.FINANCE_CODE_GENERAL, 100));
         priorityQueue.add(new Task(Priority.MAJOR, 4, "Task 4", FinanceDao.FINANCE_CODE_GENERAL, 100));
 
-        Assert.assertEquals(Priority.BLOCKER, priorityQueue.poll().getPriority());
-        Assert.assertEquals(Priority.MAJOR, priorityQueue.poll().getPriority());
-        Assert.assertEquals(Priority.MAJOR, priorityQueue.poll().getPriority());
-        Assert.assertEquals(Priority.MINOR, priorityQueue.poll().getPriority());
+        Assertions.assertEquals(Priority.BLOCKER, priorityQueue.poll().getPriority());
+        Assertions.assertEquals(Priority.MAJOR, priorityQueue.poll().getPriority());
+        Assertions.assertEquals(Priority.MAJOR, priorityQueue.poll().getPriority());
+        Assertions.assertEquals(Priority.MINOR, priorityQueue.poll().getPriority());
 
     }
 }

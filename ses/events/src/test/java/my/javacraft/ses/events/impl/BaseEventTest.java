@@ -1,13 +1,13 @@
 package my.javacraft.ses.events.impl;
 
 import my.javacraft.ses.events.Event;
-import org.junit.Assert;
-import org.junit.Test;
 import my.javacraft.ses.events.Priority;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by nikilipa on 7/26/16.
@@ -24,9 +24,9 @@ public class BaseEventTest {
         eventList.add(new RunningEvent(Priority.NORMAL, "Task 3", financeCode, 20));
         eventList.add(new CompletedEvent(Priority.NORMAL, "Task 4", financeCode, 25));
 
-        Assert.assertTrue(eventList.contains(new CreatedEvent(Priority.BLOCKER, "Task 1", financeCode, 10)));
-        Assert.assertTrue(eventList.contains(new AcceptedEvent(Priority.CRITICAL, "Task 2", financeCode, 15)));
-        Assert.assertTrue(eventList.contains(new RunningEvent(Priority.NORMAL, "Task 3", financeCode, 20)));
+        Assertions.assertTrue(eventList.contains(new CreatedEvent(Priority.BLOCKER, "Task 1", financeCode, 10)));
+        Assertions.assertTrue(eventList.contains(new AcceptedEvent(Priority.CRITICAL, "Task 2", financeCode, 15)));
+        Assertions.assertTrue(eventList.contains(new RunningEvent(Priority.NORMAL, "Task 3", financeCode, 20)));
 
     }
 
@@ -43,11 +43,11 @@ public class BaseEventTest {
 
         Collections.sort(sortedEventList);
 
-        Assert.assertEquals("Task 0", sortedEventList.get(0).getTitle());
-        Assert.assertEquals("Task 1", sortedEventList.get(1).getTitle());
-        Assert.assertEquals("Task 2", sortedEventList.get(2).getTitle());
-        Assert.assertEquals("Task 3", sortedEventList.get(3).getTitle());
-        Assert.assertEquals("Task 4", sortedEventList.get(4).getTitle());
+        Assertions.assertEquals("Task 0", sortedEventList.get(0).getTitle());
+        Assertions.assertEquals("Task 1", sortedEventList.get(1).getTitle());
+        Assertions.assertEquals("Task 2", sortedEventList.get(2).getTitle());
+        Assertions.assertEquals("Task 3", sortedEventList.get(3).getTitle());
+        Assertions.assertEquals("Task 4", sortedEventList.get(4).getTitle());
 
     }
 }
