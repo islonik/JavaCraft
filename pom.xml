@@ -35,6 +35,7 @@
         <module>mathparser</module>
         <module>ses</module>
         <module>soap2rest</module>
+        <module>tic-tac-toe</module>
         <module>translation</module>
         <module>xsd2model</module>
     </modules>
