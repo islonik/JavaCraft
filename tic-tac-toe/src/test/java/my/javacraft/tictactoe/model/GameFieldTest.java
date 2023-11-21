@@ -6,11 +6,9 @@ import org.junit.jupiter.api.Test;
 /**
  * User: Lipatov Nikita
  */
-public class GameFieldTest
-{
+public class GameFieldTest {
     @Test
-    public void testGameField_testCase01()
-    {
+    public void testGameField_testCase01() {
         GameField gameField = new GameField();
         Assertions.assertNull(gameField.getGameField()[0][0]);
         Assertions.assertNull(gameField.getGameField()[0][1]);
@@ -24,8 +22,7 @@ public class GameFieldTest
     }
 
     @Test
-    public void testGameField_testCase02()
-    {
+    public void testGameField_testCase02() {
         Player one = new Player();
         Player two = new Player();
 
@@ -59,8 +56,7 @@ public class GameFieldTest
     }
 
     @Test
-    public void testGameField_testCase03()
-    {
+    public void testGameField_testCase03() {
         Player one = new Player();
         Player two = new Player();
 
@@ -94,25 +90,23 @@ public class GameFieldTest
     }
 
     @Test
-    public void testGameField_testCase04()
-    {
+    public void testGameField_testCase04() {
         // rows
-        testGetWinner(1,2,3,4,5);
-        testGetWinner(4,5,6,1,2);
-        testGetWinner(7,8,9,1,2);
+        testGetWinner(1, 2, 3, 4, 5);
+        testGetWinner(4, 5, 6, 1, 2);
+        testGetWinner(7, 8, 9, 1, 2);
 
         // columns
-        testGetWinner(1,4,7,5,9);
-        testGetWinner(2,5,8,4,6);
-        testGetWinner(3,6,9,2,8);
+        testGetWinner(1, 4, 7, 5, 9);
+        testGetWinner(2, 5, 8, 4, 6);
+        testGetWinner(3, 6, 9, 2, 8);
 
         // diagonals
-        testGetWinner(1,5,9,3,7);
-        testGetWinner(3,5,7,1,9);
+        testGetWinner(1, 5, 9, 3, 7);
+        testGetWinner(3, 5, 7, 1, 9);
     }
 
-    public void testGetWinner(int c1, int c2, int c3, int c4, int c5)
-    {
+    public void testGetWinner(int c1, int c2, int c3, int c4, int c5) {
         Player one = new Player();
         Player two = new Player();
 
