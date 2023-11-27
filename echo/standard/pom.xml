@@ -15,6 +15,7 @@
     <modules>
         <module>standard-client</module>
         <module>standard-server</module>
+        <module>standard-testing</module>
     </modules>
 
     <dependencies>

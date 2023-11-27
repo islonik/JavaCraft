@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public class MultithreadedServer {
+public class MultithreadedServer implements Runnable {
 
     private final int port;
 

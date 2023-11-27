@@ -41,6 +41,8 @@ public class ServerThread extends Thread {
                     isConnected = false;
                 } else if (request.isEmpty()) {
                     response = "Please type something.\r\n";
+                } else if ("stats".equalsIgnoreCase(request)) {
+                    response = "%s simultaneously connected clients.\r\n".formatted(threads.get());
                 } else if ("bye".equalsIgnoreCase(request)) {
                     response = "Have a good day!\r\n";
                     isConnected = false;
@@ -48,7 +50,7 @@ public class ServerThread extends Thread {
                     response = "Did you say '" + request + "'?\r\n";
                 }
 
-                System.out.printf("resp %s = %s%n", socket.getPort(), response);
+                System.out.printf("resp %s = %s", socket.getPort(), response);
 
                 this.outStream.write(response);
                 this.outStream.flush();
