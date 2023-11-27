@@ -36,6 +36,7 @@ public class ServerThread extends Thread {
             while (isConnected) {
                 String request = inStream.readLine();
 
+                // we should add a line terminator at the end of the response here to close the line
                 String response = "";
                 if (request == null) {
                     isConnected = false;
