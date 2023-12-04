@@ -79,7 +79,7 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
-            <version>1.9.3</version>
+            <version>${junit.platform.suite.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -90,7 +90,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <includes>
                         <include>**/*CucumberRunnerTest.java</include>
