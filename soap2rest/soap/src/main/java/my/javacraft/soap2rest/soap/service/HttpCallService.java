@@ -20,6 +20,14 @@ public class HttpCallService {
     @Value("${rest-app.port}")
     String port;
 
+    RestTemplate restTemplate;
+    ObjectMapper objectMapper;
+
+    public HttpCallService() {
+        this.restTemplate = new RestTemplate();
+        this.objectMapper = new ObjectMapper();
+    }
+
     public String baseHost() {
         return host + ":" + port;
     }
@@ -34,10 +42,7 @@ public class HttpCallService {
         MultiValueMap<String, String> headers = getHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(object), headers);
-
-        RestTemplate restTemplate = new RestTemplate();
 
         // like that http://localhost:8081/api/v1/smart/1/gas
         String url = "%s%s".formatted(baseHost(), methodUrl);
@@ -54,8 +59,6 @@ public class HttpCallService {
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         // like that http://localhost:8081/api/v1/smart/1/gas
         String url = "%s%s".formatted(baseHost(), methodUrl);
         return restTemplate.exchange(
@@ -70,8 +73,6 @@ public class HttpCallService {
         MultiValueMap<String, String> headers = getHeaders();
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
 
         // like that http://localhost:8081/api/v1/smart/1/gas
         String url = "%s%s".formatted(baseHost(), methodUrl);

@@ -13,10 +13,6 @@
     <artifactId>parser</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -26,17 +22,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.plugin.version}</version>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
