@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +79,7 @@ public class SingleMessageListener implements Runnable {
             // protobuf example
             // Protocol.Response response = Protocol.Response.parseFrom(data);
             // return response;
-            String response = new String(data, "UTF-8");
-            return response;
+            return new String(data, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
             try {
