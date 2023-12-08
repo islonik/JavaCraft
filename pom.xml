@@ -28,7 +28,7 @@
         <junit.platform.suite.version>1.9.3</junit.platform.suite.version>
         <lombok.version>1.18.30</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
-        <junit5.version>5.9.3</junit5.version>
+        <junit5.version>5.10.1</junit5.version>
         <mockito.version>5.4.0</mockito.version>
     </properties>
 
