@@ -15,13 +15,16 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
-import my.javacraft.soap2rest.rest.app.service.SmartService;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -32,15 +35,20 @@ public class SmartDefinition {
     @LocalServerPort
     int port;
 
-    @Autowired
-    private SmartService gasMetricDao;
-
     private RequestSpecification prepareBaseRequest(Long accountId) {
         RequestSpecification request = RestAssured.given();
         request.baseUri("http://localhost:%s/api/v1/smart/%s".formatted(port, accountId));
         request.header(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
 
         return request;
+    }
+
+    private HttpEntity<String> prepareHttpEntity(String jsonBody) {
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        return new HttpEntity<>(jsonBody, headers);
     }
 
     @Given("the account {long} doesn't have any metrics")
@@ -62,11 +70,18 @@ public class SmartDefinition {
 
         log.info(jsonBody);
 
-        RequestSpecification request = prepareBaseRequest(accountId);
-        request.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<String> entity = prepareHttpEntity(jsonBody);
 
         try {
-            Metrics response = request.body(jsonBody).put().as(Metrics.class);
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpEntity<Boolean> httpResponse = restTemplate.exchange(
+                    "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
+                    HttpMethod.PUT,
+                    entity,
+                    Boolean.class
+            );
+            Boolean response = httpResponse.getBody();
 
             Assertions.assertNotNull(response);
         } catch (Exception e) {

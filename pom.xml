@@ -19,7 +19,7 @@
         <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
         <java.version>17</java.version>
 
-        <spring.boot>3.1.6</spring.boot>
+        <spring.boot>3.2.0</spring.boot>
         <spring.version>6.1.1</spring.version>
 
         <liquibase.version>4.25.0</liquibase.version>

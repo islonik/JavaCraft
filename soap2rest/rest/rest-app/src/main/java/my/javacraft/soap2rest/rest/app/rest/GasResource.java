@@ -20,7 +20,7 @@ public class GasResource {
 
     @ExecutionTime
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Metric>> getGasMetrics(@PathVariable Long id) {
+    public ResponseEntity<List<Metric>> getGasMetrics(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -30,7 +30,7 @@ public class GasResource {
     @ExecutionTime
     @GetMapping(value = "/latest",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Metric> getLatestGasMetric(@PathVariable Long id) {
+    public ResponseEntity<Metric> getLatestGasMetric(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)

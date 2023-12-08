@@ -6,13 +6,13 @@ import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpEntity;
@@ -29,20 +29,23 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
  * This test shows how to create HTTP requests <b>without</b> <i>io.rest-assured:rest-assured</i> library.
  */
 @Scope(SCOPE_CUCUMBER_GLUE)
+@RequiredArgsConstructor
 public class ElectricDefinition {
 
     @LocalServerPort
     int port;
 
-    @Autowired
-    private ElectricMetricDao electricMetricDao;
+    private final ElectricMetricDao electricMetricDao;
+
+    private HttpEntity<String> prepareHttpEntity() {
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
+        return new HttpEntity<>(null, headers);
+    }
 
     @Given("the account {long} doesn't have electric metrics")
     public void cleanElectricMetrics(Long accountId) {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
-
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        HttpEntity<String> entity = prepareHttpEntity();
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<Boolean> httpResponse = restTemplate.exchange(
@@ -102,10 +105,7 @@ public class ElectricDefinition {
     @Then("check the latest electric reading for the account = {long} extra values: {bigdecimal}, {long}, {bigdecimal}")
     public void checkLatestGasReadingForExtraValues(
             Long accountId, BigDecimal usageSince, Long periodSince, BigDecimal avgUsage) {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(AuthenticationService.AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
-
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        HttpEntity<String> entity = prepareHttpEntity();
 
         RestTemplate restTemplate = new RestTemplate();
 

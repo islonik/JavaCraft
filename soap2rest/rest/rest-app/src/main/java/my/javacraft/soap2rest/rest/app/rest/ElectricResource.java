@@ -20,7 +20,7 @@ public class ElectricResource {
 
     @ExecutionTime
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Metric>> getElectricMetrics(@PathVariable Long id) {
+    public ResponseEntity<List<Metric>> getElectricMetrics(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -30,7 +30,7 @@ public class ElectricResource {
     @ExecutionTime
     @GetMapping(value = "/latest",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Metric> getLatestElectricMetric(@PathVariable Long id) {
+    public ResponseEntity<Metric> getLatestElectricMetric(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
