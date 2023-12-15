@@ -3,9 +3,9 @@ package my.javacraft.xsd2model.services;
 import jakarta.xml.bind.JAXBException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xsd2model.model.*;
 
 /**
@@ -18,7 +18,7 @@ public class JaxbServicesTest {
     private JaxbServices<ResponseType> responseServices;
     private UserType userType;
 
-    @Before
+    @BeforeEach
     public void setUp() throws JAXBException {
         coreServices = new JaxbServices<>(UserType.class);
         requestServices = new JaxbServices<>(RequestType.class);
@@ -50,9 +50,9 @@ public class JaxbServicesTest {
                     <password>password22</password>
                 </ns2:userType>
                 """;
-        Assert.assertEquals(xml, xml1);
-        Assert.assertEquals(xml1, xml2);
-        Assert.assertEquals(xml2, xml3);
+        Assertions.assertEquals(xml, xml1);
+        Assertions.assertEquals(xml1, xml2);
+        Assertions.assertEquals(xml2, xml3);
     }
 
     @Test
@@ -88,9 +88,9 @@ public class JaxbServicesTest {
                     </message>
                 </ns3:requestType>
                 """;
-        Assert.assertEquals(xml, xml1);
-        Assert.assertEquals(xml1, xml2);
-        Assert.assertEquals(xml2, xml3);
+        Assertions.assertEquals(xml, xml1);
+        Assertions.assertEquals(xml1, xml2);
+        Assertions.assertEquals(xml2, xml3);
     }
 
     @Test
@@ -126,9 +126,9 @@ public class JaxbServicesTest {
                     </Body>
                 </ns3:responseType>
                 """;
-        Assert.assertEquals(xml, xml1);
-        Assert.assertEquals(xml1, xml2);
-        Assert.assertEquals(xml2, xml3);
+        Assertions.assertEquals(xml, xml1);
+        Assertions.assertEquals(xml1, xml2);
+        Assertions.assertEquals(xml2, xml3);
     }
 
     @Test
@@ -137,15 +137,15 @@ public class JaxbServicesTest {
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < 150; i++) {
             ResponseType responseType = responseServices.xml2object(xmlResponse);
-            Assert.assertNotNull(responseType.getUser());
-            Assert.assertNotNull(responseType.getUser().getLogin());
+            Assertions.assertNotNull(responseType.getUser());
+            Assertions.assertNotNull(responseType.getUser().getLogin());
         }
         long endTime = System.currentTimeMillis();
 
         long resultTime = endTime - startTime;
 
         System.out.println("Performance test result time = " + resultTime);
-        Assert.assertTrue(resultTime < (1000));
+        Assertions.assertTrue(resultTime < (1000));
     }
 
 }
