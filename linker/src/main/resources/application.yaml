@@ -1,0 +1,7 @@
+host: http://localhost:8080/api/v1/links
+
+spring:
+  data:
+    mongodb:
+      database: links
+      uri: mongodb+srv://inikki:PASSWORD@mymongoinaws.pdq9e7w.mongodb.net/links
