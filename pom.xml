@@ -14,12 +14,14 @@
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <build-helper-maven-plugin.version>1.10</build-helper-maven-plugin.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
         <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
         <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
         <maven.deploy.plugin.version>3.1.1</maven.deploy.plugin.version>
         <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
+        <jaxb2-maven-plugin.version>3.1.0</jaxb2-maven-plugin.version>
         <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
 
         <java.version>17</java.version>
@@ -31,6 +33,7 @@
         <jackson.version>2.15.3</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
         <jakarta.xml.version>4.0.1</jakarta.xml.version>
+        <jaxb-runtime.version>4.0.4</jaxb-runtime.version>
         <h2.version>2.2.224</h2.version>
         <liquibase.version>4.25.0</liquibase.version>
         <lombok.version>1.18.30</lombok.version>

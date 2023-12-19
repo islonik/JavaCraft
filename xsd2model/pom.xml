@@ -17,12 +17,12 @@
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>4.0.1</version>
+            <version>${jakarta.xml.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>4.0.4</version>
+            <version>${jaxb-runtime.version}</version>
         </dependency>
 
         <dependency>
@@ -73,7 +73,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.10</version>
+                <version>${build-helper-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -89,7 +89,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>${jaxb2-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>xjc</id>
