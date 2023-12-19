@@ -1,5 +1,8 @@
 package my.javacraft.soap2rest.rest.app.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metrics;
@@ -11,8 +14,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Data
 @Slf4j
 @RestController
+@Tag(name = "Smart", description = "List of APIs for smart metrics")
 @RequestMapping(path = "/api/v1/smart")
 @RequiredArgsConstructor
 public class SmartResource {
@@ -23,12 +28,20 @@ public class SmartResource {
     private String smartMessage;
 
     @ExecutionTime
+    @Operation(
+            summary = "Get default message",
+            description = "API to get default message"
+    )
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getDefault() {
         return ResponseEntity.ok(smartMessage);
     }
 
     @ExecutionTime
+    @Operation(
+            summary = "Get metrics by account id",
+            description = "API to get metrics by account id"
+    )
     @GetMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metrics> getMetrics(@PathVariable Long id) {
@@ -37,6 +50,10 @@ public class SmartResource {
     }
 
     @ExecutionTime
+    @Operation(
+            summary = "Get the LATEST metric by account id",
+            description = "API to get the LATEST metric by account id"
+    )
     @GetMapping(value = "/{id}/latest",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metrics> getLatestMetrics(@PathVariable Long id) {
@@ -45,6 +62,10 @@ public class SmartResource {
     }
 
     @ExecutionTime
+    @Operation(
+            summary = "Create new metrics",
+            description = "API to create new metrics"
+    )
     @PutMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Boolean> putMetrics(@RequestBody Metrics metrics) {
@@ -55,6 +76,10 @@ public class SmartResource {
     }
 
     @ExecutionTime
+    @Operation(
+            summary = "Delete all metrics",
+            description = "API to delete all metrics"
+    )
     @DeleteMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Boolean> deleteAllMetrics() {

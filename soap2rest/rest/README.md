@@ -84,9 +84,76 @@ You also need to add this code in your Security Configuration to disable default
 http.headers((headersConfigurer) -> headersConfigurer.frameOptions(FrameOptionsConfig::disable));
 ```
 
-## How to
+## How-to
 
-#### How to use @RequiredArgsConstructor annotation from Lombok 
+### How to enable integrated Swagger
+#### 1. Add dependency
+```xml
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.3.0</version>
+</dependency>
+```
+
+#### 2. Add @OpenAPIDefinition in Application file
+```java
+
+@OpenAPIDefinition(info = @Info(
+        title = "Battleship game",
+        version = "1.0",
+        description = "Swagger UI for Battleship online game"
+))
+public class Application implements ApplicationRunner {
+```
+
+#### 3. Put OpenAPI annotations
+##### 3.1 @Tag annotation
+
+```java
+@Tag(name = "Smart", description = "List of APIs for smart metrics")
+```
+
+so it might look like:
+
+```java
+@Slf4j
+@RestController
+@Tag(name = "User", description = "List of APIs for user actions")
+@RequestMapping(value = RestResources.USER_PATH)
+public class UserResource {
+```
+
+##### 3.2. @Operation annotation
+
+```java
+@Operation(
+        summary = "Get default message",
+        description = "API to get default message"
+)
+```
+
+so it might look like:
+
+```java
+@ExecutionTime
+@Operation(
+        summary = "Get default message",
+        description = "API to get default message"
+)
+@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<String> getDefault() {
+    return ResponseEntity.ok(smartMessage);
+}
+```
+
+#### 4. Open URL link
+```bash
+http://localhost:8081/swagger-ui/index.html
+```
+
+
+### How to use @RequiredArgsConstructor annotation from Lombok 
 
 We all should know that "<b>Field injection is not recommended</b>" (there is the whole article about it, just google it), but how should we inject our beans?
 

@@ -20,7 +20,6 @@ import static org.mockito.Mockito.atLeastOnce;
 @ExtendWith(MockitoExtension.class)
 public class GasResourceTest {
 
-
     @Mock
     GasService gasService;
 
