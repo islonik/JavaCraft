@@ -20,17 +20,23 @@
         <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
         <maven.deploy.plugin.version>3.1.1</maven.deploy.plugin.version>
         <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
+        <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
+
         <java.version>17</java.version>
 
         <spring.boot>3.2.0</spring.boot>
         <spring.version>6.1.1</spring.version>
 
-        <liquibase.version>4.25.0</liquibase.version>
-        <jackson.version>2.15.3</jackson.version>
         <cucumber.version>7.14.1</cucumber.version>
-        <junit.platform.suite.version>1.9.3</junit.platform.suite.version>
+        <jackson.version>2.15.3</jackson.version>
+        <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
+        <jakarta.xml.version>4.0.1</jakarta.xml.version>
+        <h2.version>2.2.224</h2.version>
+        <liquibase.version>4.25.0</liquibase.version>
         <lombok.version>1.18.30</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
+
+        <junit.platform.suite.version>1.9.3</junit.platform.suite.version>
         <junit5.version>5.10.1</junit5.version>
         <mockito.version>5.8.0</mockito.version>
     </properties>

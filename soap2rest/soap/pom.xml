@@ -11,10 +11,6 @@
     <artifactId>soap</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <jakarta.xml.version>4.0.1</jakarta.xml.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>my.javacraft</groupId>
@@ -40,7 +36,7 @@
         <dependency>
             <groupId>jakarta.jws</groupId>
             <artifactId>jakarta.jws-api</artifactId>
-            <version>3.0.0</version>
+            <version>${jakarta.jws-api.version}</version>
         </dependency>
 
         <dependency>
@@ -103,7 +99,7 @@
             <plugin>
                 <groupId>com.sun.xml.ws</groupId>
                 <artifactId>jaxws-maven-plugin</artifactId>
-                <version>4.0.1</version>
+                <version>${jaxws-maven-plugin.version}</version>
                 <configuration>
                     <!-- use all wsdl files from there -->
                     <wsdlDirectory>${project.basedir}/src/main/resources/wsdl</wsdlDirectory>
