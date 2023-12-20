@@ -1,0 +1,10 @@
+server:
+  port: "8001"
+spring:
+  elastic:
+    cluster:
+      host: "localhost"
+      port: "9200"
+      user: "elastic"
+      pass: "elastic"
+      schema: "http"

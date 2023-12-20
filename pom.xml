@@ -49,6 +49,7 @@
     <modules>
         <module>bdd</module>
         <module>echo</module>
+        <module>elastic</module>
         <module>linker</module>
         <module>mathparser</module>
         <module>ses</module>
