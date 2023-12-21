@@ -24,11 +24,11 @@ It could happen because your browser has an extension to block ads.
 <b>Upsert</b>
 ```bash
 POST /hit_counts/_update/DocumentId1
-    {
-        "script": {
+{
+    "script": {
         "source": "ctx._source.count++"
     },
-        "upsert": {
+    "upsert": {
         "name" : "In the name of the God",
         "count" : 0
     }

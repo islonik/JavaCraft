@@ -1,28 +1,27 @@
 package my.javacraft.elastic.rest;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
-import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.*;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.model.HitCount;
+import my.javacraft.elastic.service.HitCountService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@SuppressWarnings("unchecked")
+
+@SuppressWarnings({"rawtypes"})
 @Slf4j
 @RestController
 @Tag(name = "HitCount", description = "List of APIs for hit count services")
@@ -30,7 +29,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class HitCountResource {
 
-    private final ElasticsearchClient esClient;
+    private final ObjectMapper objectMapper;
+    private final HitCountService hitCountService;
 
     @Operation(
             summary = "Capture hit count",
@@ -44,31 +44,26 @@ public class HitCountResource {
     @PostMapping(value = "/capture",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UpdateResponse> capture(
-            @RequestBody Map<String, String> body) throws IOException {
+    public ResponseEntity<String> capture(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "HitCount to upsert",
+                    useParameterTypeSchema = true,
+                    content = @Content(schema = @Schema(
+                            implementation = HitCount.class
+                    ))
+            )
+            @RequestBody HitCount hitCount) throws IOException {
 
-        log.info("executing capture (body = {})...", body);
+        log.info("executing capture (hitCount = {})...", hitCount);
 
-        String userId = body.get("userId");
-        String documentId = body.get("documentId");
-        String searchType = body.get("searchType");
-        String searchPattern = body.get("searchPattern");
+        UpdateResponse updateResponse = hitCountService.capture(hitCount);
 
-        InlineScript inlineScript = new InlineScript.Builder()
-                .source("ctx._source.count++")
-                .build();
-        Script script = new Script.Builder()
-                .inline(inlineScript)
-                .build();
-
-        UpdateRequest updateRequest = new UpdateRequest.Builder<>()
-                .index("hit_count")
-                .id(documentId)
-                .script(script)
-                .build();
-        UpdateResponse<Map> updateResponse = esClient.update(updateRequest, Map.class);
-
-        return ResponseEntity.ok().body(updateResponse);
+        return ResponseEntity.ok()
+                .body(objectMapper
+                        .writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(updateResponse)
+        );
     }
 
     @Operation(
@@ -80,26 +75,36 @@ public class HitCountResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @GetMapping("/{userId}")
+    @GetMapping("/document/{documentId}")
+    public ResponseEntity<String> getHitCount(
+            @PathVariable("documentId") String documentId) throws IOException {
+
+        log.info("executing getSearchHistory (documentId = '{}')...", documentId);
+
+        GetResponse<Map> map = hitCountService.getHitCount(documentId);
+
+        return ResponseEntity.ok().body(objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(map)
+        );
+    }
+
+    @Operation(
+            summary = "Search History by userId",
+            description = "Fetch the search history by userId"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @GetMapping("/user/{userId}")
     public ResponseEntity<List<Map<String, String>>> getSearchHistory(
             @PathVariable("userId") String userId) throws IOException {
 
         log.info("executing getSearchHistory (userId = '{}')...", userId);
 
-        SearchResponse<Map> search = esClient.search(s -> s
-                        .index("hit_count")
-                        .query(q -> q.term(t -> t
-                                .field("userId")
-                                .value(v -> v.stringValue(userId))
-                        )),
-                Map.class
-        );
-
-        List<Map<String, String>> mapList = new ArrayList<>();
-
-        for (Hit<Map> hit: search.hits().hits()) {
-            mapList.add(hit.source());
-        }
+        List<Map<String, String>> mapList = hitCountService.searchHistoryByUserId(userId);
 
         return ResponseEntity.ok().body(mapList);
     }
@@ -113,14 +118,13 @@ public class HitCountResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @DeleteMapping("/{index}")
+    @DeleteMapping("/index/{index}")
     public ResponseEntity<DeleteIndexResponse> deleteIndex(
             @PathVariable("index") String index) throws IOException {
 
         log.info("executing deleteIndex (index = '{}')...", index);
 
-        DeleteIndexRequest request = new DeleteIndexRequest.Builder().index(index).build();
-        DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
+        DeleteIndexResponse deleteIndexResponse = hitCountService.deleteIndex(index);
 
         return ResponseEntity.ok()
                 .body(deleteIndexResponse);
@@ -135,15 +139,14 @@ public class HitCountResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @DeleteMapping("/{index}/{documentId}")
+    @DeleteMapping("/index/{index}/documentId/{documentId}")
     public ResponseEntity<DeleteResponse> deleteHitCountDocument(
             @PathVariable("index") String index,
             @PathVariable("documentId") String documentId) throws IOException {
 
         log.info("executing deleteHitCountDocument (index = '{}', documentId = '{}')...", index, documentId);
 
-        DeleteRequest request = new DeleteRequest.Builder().index(index).id(documentId).build();
-        DeleteResponse deleteResponse = esClient.delete(request);
+        DeleteResponse deleteResponse = hitCountService.deleteDocument(index, documentId);
 
         return ResponseEntity.ok()
                 .body(deleteResponse);
