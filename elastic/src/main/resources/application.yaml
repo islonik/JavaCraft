@@ -7,4 +7,6 @@ spring:
       port: "9200"
       user: "elastic"
       pass: "elastic"
-      schema: "http"
+      schema: "https"
+      ssl:
+        path: "cert/ca_1703000535393.crt" # the same certificate which Kibana uses to connect to elastic search instance

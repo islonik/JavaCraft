@@ -79,7 +79,7 @@ public class HitCountResource {
     public ResponseEntity<String> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
-        log.info("executing getSearchHistory (documentId = '{}')...", documentId);
+        log.info("executing getHitCount (documentId = '{}')...", documentId);
 
         GetResponse<Map> map = hitCountService.getHitCount(documentId);
 

@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class HitCountService {
 
+    private static final String HIT_COUNT = "hit_counts";
+
     private final ElasticsearchClient esClient;
 
     public UpdateResponse capture(HitCount hitCount) throws IOException {
@@ -38,7 +40,7 @@ public class HitCountService {
         upsertJson.put("searchPattern", hitCount.getSearchPattern());
 
         UpdateRequest updateRequest = new UpdateRequest.Builder<>()
-                .index("hit_count")
+                .index(HIT_COUNT)
                 .id(hitCount.getDocumentId())
                 .upsert(upsertJson)
                 .script(script)
@@ -48,7 +50,7 @@ public class HitCountService {
 
     public GetResponse<Map> getHitCount(String documentId) throws IOException {
         GetRequest getRequest = new GetRequest.Builder()
-                .index("hit_count")
+                .index(HIT_COUNT)
                 .id(documentId)
                 .build();
 
@@ -57,7 +59,7 @@ public class HitCountService {
 
     public List<Map<String, String>> searchHistoryByUserId(String userId) throws IOException {
         SearchResponse<Map> search = esClient.search(s -> s
-                        .index("hit_count")
+                        .index(HIT_COUNT)
                         .query(q -> q.term(t -> t
                                 .field("userId")
                                 .value(v -> v.stringValue(userId))
