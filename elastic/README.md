@@ -25,23 +25,37 @@ It could happen because your browser has an extension to block ads.
 ```bash
 POST /hit_counts/_update/DocumentId1
 {
-    "script": {
-        "source": "ctx._source.count++"
-    },
-    "upsert": {
-        "name" : "In the name of the God",
-        "count" : 0
-    }
+  "script": {
+    "source": "ctx._source.count++"
+  },
+  "upsert": {
+    "searchType": "Obligor",
+    "count": 1,
+    "searchPattern": "1111",
+    "userId": "nl84439"
+  }
 }
 ```
 
-Get
+<b>Get document by Id</b>
 ```bash
-GET /hit_counts/_doc/DocumentId1
+GET /hit_counts/_doc/dId-1
 ```
 
-Delete
+<b>Find documents by field value</b>
 ```bash
-DELETE /hit_counts/_doc/DocumentId1
+GET /hit_counts/_search
+{
+  "query": {
+    "match": {
+      "userId": "nl84439"
+    }
+  }
+}
+```
+
+<b>Delete</b>
+```bash
+DELETE /hit_counts/_doc/dId-1
 ```
 
