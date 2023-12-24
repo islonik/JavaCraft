@@ -15,6 +15,7 @@
     <modules>
         <module>single-client</module>
         <module>single-server</module>
+        <module>single-testing</module>
     </modules>
 
     <dependencies>

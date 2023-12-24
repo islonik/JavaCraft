@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class SingleMessageSender {
 
     private volatile SelectionKey key;
@@ -19,7 +21,7 @@ public class SingleMessageSender {
         }
     }
 
-    public boolean send(String command) {
+    public void send(String command) {
         try {
             if (key == null) {
                 synchronized (this) {
@@ -37,8 +39,7 @@ public class SingleMessageSender {
             key.interestOps(SelectionKey.OP_READ);
 
         } catch (IOException | InterruptedException ie) {
-            System.out.println("MessageSender = " + ie);
+            log.error(ie.getMessage(), ie);
         }
-        return true;
     }
 }

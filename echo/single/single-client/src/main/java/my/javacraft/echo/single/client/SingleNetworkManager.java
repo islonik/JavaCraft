@@ -5,6 +5,10 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ArrayBlockingQueue;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Wait() / notifyAll() - notes:
@@ -12,13 +16,16 @@ import java.nio.channels.SocketChannel;
  * + double checked locking
  * @author Lipatov Nikita
  */
+@Slf4j
 public class SingleNetworkManager {
+
+    private static final int QUEUE_CAPACITY = 10;
+    private final ArrayBlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
     private volatile SocketChannel client;
     private volatile Selector selector;
+    @Setter
+    @Getter
     private SingleMessageSender singleMessageSender;
-
-    public SingleNetworkManager() {
-    }
 
     public void openSocket(String serverHost, String serverPort) throws IOException {
         if (client == null) {
@@ -44,7 +51,7 @@ public class SingleNetworkManager {
                     try {
                         wait();
                     } catch (InterruptedException e) {
-                        System.err.println("NetworkManager.getSocket().IOException.Message=" + e.getMessage());
+                        log.error(e.getMessage(), e);
                         throw new RuntimeException(e);
                     }
                 }
@@ -60,13 +67,36 @@ public class SingleNetworkManager {
                     try {
                         wait();
                     } catch (InterruptedException e) {
-                        System.err.println("NetworkManager.getSocket().IOException.Message=" + e.getMessage());
+                        log.error(e.getMessage(), e);
                         throw new RuntimeException(e);
                     }
                 }
             }
         }
         return client;
+    }
+
+    public void addMessage(String message) {
+        if (messageQueue.size() >= QUEUE_CAPACITY) {
+            log.debug("Message was removed from the queue = {}", messageQueue.poll());
+        }
+        messageQueue.add(message);
+    }
+
+    public String getMessage() {
+        if (messageQueue.peek() == null) {
+            synchronized (this) {
+                if (messageQueue.peek() == null) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        log.error(e.getMessage(), e);
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+        return messageQueue.poll();
     }
 
     public void closeSocket() {
@@ -83,16 +113,8 @@ public class SingleNetworkManager {
                 }
             }
         } catch (IOException ioe) {
-            System.err.println("NetworkManager.closeSocket().IOException.Message=" + ioe.getMessage());
+            log.error(ioe.getMessage(), ioe);
         }
-    }
-
-    public SingleMessageSender getSingleMessageSender() {
-        return singleMessageSender;
-    }
-
-    public void setSingleMessageSender(SingleMessageSender singleMessageSender) {
-        this.singleMessageSender = singleMessageSender;
     }
 
 

@@ -7,20 +7,17 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
+@RequiredArgsConstructor
 public class SingleMessageListener implements Runnable {
-    private static final Logger log = LoggerFactory.getLogger(SingleMessageListener.class);
 
     private final SingleNetworkManager singleNetworkManager;
-
-    public SingleMessageListener(SingleNetworkManager singleNetworkManager) {
-        this.singleNetworkManager = singleNetworkManager;
-    }
 
     @Override
     public void run() {
@@ -48,25 +45,24 @@ public class SingleMessageListener implements Runnable {
                             }
                             singleMessageSender.setKey(key); // message will send after it
                         } else if(key.isReadable()) {
-                            System.out.println(newResponse(channel));
+                            String message = newResponse(channel);
+                            singleNetworkManager.addMessage(message);
+                            System.out.println(message);
                         }
                     }
                 }
             } catch (IOException | NegativeArraySizeException err) {
                 singleNetworkManager.closeSocket();
                 singleMessageSender.setKey(null);
-
-                System.exit(1);
             }
         }
     }
 
     public String newResponse(SocketChannel channel) {
         ByteBuffer buffer = ByteBuffer.allocate(2 * 1024);
-        int numRead = -1;
 
         try {
-            numRead = channel.read(buffer); // get message from client
+            int numRead = channel.read(buffer); // get message from client
 
             if(numRead == -1) {
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
@@ -79,7 +75,7 @@ public class SingleMessageListener implements Runnable {
             // protobuf example
             // Protocol.Response response = Protocol.Response.parseFrom(data);
             // return response;
-            return new String(data, StandardCharsets.UTF_8);
+            return new String(data, StandardCharsets.UTF_8).trim();
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
             try {

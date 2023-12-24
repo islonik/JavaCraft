@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.nio.channels.SelectionKey.*;
@@ -15,6 +16,8 @@ import static java.nio.channels.SelectionKey.*;
  */
 @Slf4j
 public class SingleServer implements Runnable {
+
+    private static final AtomicInteger connections = new AtomicInteger(0);
 
     private final int port;
     private final ByteBuffer buffer;
@@ -60,7 +63,7 @@ public class SingleServer implements Runnable {
         }
     }
 
-    private void loop(Selector selector, ServerSocketChannel server) throws IOException, InterruptedException {
+    private void loop(Selector selector, ServerSocketChannel server) throws IOException {
         while (true) {
             int num = selector.select();
             if (num == 0) {
@@ -92,6 +95,7 @@ public class SingleServer implements Runnable {
         SocketChannel client = server.accept();
 
         log.info("New socket has been accepted!");
+        connections.incrementAndGet();
 
         client.configureBlocking(false);
         client.register(selector, OP_READ);
@@ -111,10 +115,9 @@ public class SingleServer implements Runnable {
 
     String read(SocketChannel channel) {
         buffer.clear();
-        int numRead = -1;
 
         try {
-            numRead = channel.read(buffer);
+            int numRead = channel.read(buffer);
 
             if (numRead == -1){
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
@@ -131,6 +134,7 @@ public class SingleServer implements Runnable {
             return result;
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
+            connections.decrementAndGet();
             try {
                 channel.close();
             } catch (IOException e1) {
@@ -150,13 +154,15 @@ public class SingleServer implements Runnable {
 
         request = request.replace("\r\n", "");
 
-        String response = null;
+        String response;
         boolean close = false;
         if (request.isEmpty()) {
             response = "Please type something.\r\n";
         } else if ("bye".equalsIgnoreCase(request)) {
             response = "Have a good day!\r\n";
             close = true;
+        } else if ("stats".equalsIgnoreCase(request)) {
+            response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
         } else {
             response = "Did you say '" + request + "'?\r\n";
         }
@@ -180,9 +186,11 @@ public class SingleServer implements Runnable {
             channel.write(ByteBuffer.wrap(content.getBytes()));
             return true;
         } catch (ClosedChannelException cce) {
+            connections.decrementAndGet();
             log.info("Client terminated connection.");
             return false;
         } catch (IOException e) {
+            connections.decrementAndGet();
             log.error("Unable to write content", e);
             try {
                 channel.close();
