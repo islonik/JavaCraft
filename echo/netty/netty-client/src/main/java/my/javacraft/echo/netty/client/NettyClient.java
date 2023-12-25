@@ -19,22 +19,38 @@ public class NettyClient {
 
     private final String host;
     private final int port;
+    private final EventLoopGroup group;
+    private volatile Channel ch;
+    private NettyClientInitializer nettyClientInitializer;
 
     public NettyClient(String host, int port) {
         this.host = host;
         this.port = port;
+        this.group = new NioEventLoopGroup();
     }
 
-    public void run () {
-        EventLoopGroup group = new NioEventLoopGroup();
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(group)
-                    .channel(NioSocketChannel.class)
-                    .handler(new NettyClientInitializer());
+    public void openConnection() throws InterruptedException {
+        this.nettyClientInitializer = new NettyClientInitializer();
+        Bootstrap b = new Bootstrap();
+        b.group(group)
+                .channel(NioSocketChannel.class)
+                .handler(nettyClientInitializer);
 
-            // Start the connection attempt.
-            Channel ch = b.connect(host, port).sync().channel();
+        // Start the connection attempt & return opened channel.
+        this.ch = b.connect(host, port).sync().channel();
+    }
+
+    public void sendMessage(String message) {
+        ch.writeAndFlush(message + "\r\n");
+    }
+
+    public String readMessage() {
+        return nettyClientInitializer.getClientHandler().getMessage();
+    }
+
+    public void run() {
+        try {
+            openConnection();
 
             // Read commands from the stdin.
             ChannelFuture lastWriteFuture = null;

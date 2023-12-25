@@ -28,4 +28,8 @@ public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
         // and then business logic.
         pipeline.addLast(CLIENT_HANDLER);
     }
+
+    public NettyClientHandler getClientHandler() {
+        return CLIENT_HANDLER;
+    }
 }

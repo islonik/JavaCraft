@@ -6,12 +6,14 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetAddress;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Lipatov Nikita
  */
 public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
 
+    private static final AtomicInteger connections = new AtomicInteger(0);
     static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
@@ -21,6 +23,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
         ctx.write("It is " + new Date() + " now.\r\n");
         ctx.flush();
 
+        connections.incrementAndGet();
         channels.add(ctx.channel());
     }
 
@@ -37,6 +40,8 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
         } else if("hello".equalsIgnoreCase(request)) {
             sendToAll(ctx, "hello everybody!");
             return;
+        } else if ("stats".equalsIgnoreCase(request)) {
+            response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
         } else {
             response = "Did you say '" + request + "'?\r\n";
         }
@@ -46,6 +51,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
         // Close the connection after sending 'Have a good day!'
         // if the client has sent 'bye'.
         if (close) {
+            connections.decrementAndGet();
             future.addListener(ChannelFutureListener.CLOSE);
         }
     }
@@ -68,6 +74,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
         // Close the connection when an exception is raised.
+        connections.decrementAndGet();
         cause.printStackTrace();
         ctx.close();
     }
