@@ -18,6 +18,27 @@ It could happen because your browser has an extension to block ads.
 2. Restart your app and/or refresh your browser and/or clear browser cache.
 3. Test again.
 
+## SSL certificate
+
+How to create an SSL certificate from .crt
+
+```java
+ public SSLContext getSslContext() throws Exception {
+     Certificate trustedCa;
+     ClassPathResource trustResource = new ClassPathResource(sslPath);
+     try (InputStream is = trustResource.getInputStream()) {
+         CertificateFactory factory = CertificateFactory.getInstance("X.509");
+         trustedCa = factory.generateCertificate(is);
+     }
+     KeyStore trustStore = KeyStore.getInstance("pkcs12");
+     trustStore.load(null, null);
+     trustStore.setCertificateEntry("ca", trustedCa);
+     return SSLContexts
+             .custom()
+             .loadTrustMaterial(trustStore, null)
+             .build();
+ }
+```
 
 ## Dev-tools queries
 
