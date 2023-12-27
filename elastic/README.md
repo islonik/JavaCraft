@@ -44,7 +44,7 @@ How to create an SSL certificate from .crt
 
 <b>Upsert</b>
 ```bash
-POST /hit_counts/_update/DocumentId1
+POST /hit_count/_update/did-1
 {
   "script": {
     "source": "ctx._source.count++"
@@ -58,25 +58,36 @@ POST /hit_counts/_update/DocumentId1
 }
 ```
 
-<b>Get document by Id</b>
+<b>GET document by Id</b>
 ```bash
-GET /hit_counts/_doc/dId-1
+GET /hit_count/_doc/did-1
 ```
 
-<b>Find documents by field value</b>
+<b>Find top 10 documents belonging to userId="nl84439" and sorted in desc order</b>
 ```bash
-GET /hit_counts/_search
+GET /hit_count/_search
 {
   "query": {
     "match": {
       "userId": "nl84439"
     }
+  },
+  "size": 10,
+  "sort" : {
+    "count": {
+      "order": "desc"
+    }
   }
 }
 ```
 
-<b>Delete</b>
+GET type of field values for hit_count index
 ```bash
-DELETE /hit_counts/_doc/dId-1
+GET /hit_count/_mapping
+```
+
+<b>DELETE</b>
+```bash
+DELETE /hit_count/_doc/did-1
 ```
 

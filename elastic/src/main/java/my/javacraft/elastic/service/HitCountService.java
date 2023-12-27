@@ -1,8 +1,7 @@
 package my.javacraft.elastic.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
-import co.elastic.clients.elasticsearch._types.Script;
+import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class HitCountService {
 
-    private static final String HIT_COUNT = "hit_counts";
+    private static final String HIT_COUNT = "hit_count";
 
     private final ElasticsearchClient esClient;
 
@@ -34,7 +33,7 @@ public class HitCountService {
                 .build();
 
         Map<String, Object> upsertJson = new HashMap<>();
-        upsertJson.put("count", 1); // initial value; It won't be overridden
+        upsertJson.put("count", 1L); // initial value; It won't be overridden
         upsertJson.put("userId", hitCount.getUserId());
         upsertJson.put("searchType", hitCount.getSearchType());
         upsertJson.put("searchPattern", hitCount.getSearchPattern());
@@ -63,7 +62,14 @@ public class HitCountService {
                         .query(q -> q.term(t -> t
                                 .field("userId")
                                 .value(v -> v.stringValue(userId))
-                        )),
+                        ))
+                        .size(1)
+                        .sort(so -> so.field(
+                                FieldSort.of(f -> f
+                                        .field("count")
+                                        .order(SortOrder.Desc)
+                                ))
+                        ),
                 Map.class
         );
 
