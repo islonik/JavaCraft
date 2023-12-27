@@ -3,17 +3,17 @@ package my.javacraft.elastic.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch.core.*;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.elastic.model.HitCount;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriUtils;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 @Service
@@ -24,6 +24,14 @@ public class HitCountService {
 
     private final ElasticsearchClient esClient;
 
+    public String getCompositeId(HitCount hitCount) {
+        return UriUtils.encode("%s_%s_%s".formatted(
+                hitCount.getDocumentId(),
+                hitCount.getSearchType(),
+                hitCount.getSearchPattern()
+        ), StandardCharsets.UTF_8);
+    }
+
     public UpdateResponse capture(HitCount hitCount) throws IOException {
         InlineScript inlineScript = new InlineScript.Builder()
                 .source("ctx._source.count++")
@@ -32,16 +40,17 @@ public class HitCountService {
                 .inline(inlineScript)
                 .build();
 
-        Map<String, Object> upsertJson = new HashMap<>();
-        upsertJson.put("count", 1L); // initial value; It won't be overridden
-        upsertJson.put("userId", hitCount.getUserId());
-        upsertJson.put("searchType", hitCount.getSearchType());
-        upsertJson.put("searchPattern", hitCount.getSearchPattern());
+        // initial values
+        Map<String, Object> initialValues = new HashMap<>();
+        initialValues.put("count", 1L);
+        initialValues.put("userId", hitCount.getUserId());
+        initialValues.put("searchType", hitCount.getSearchType());
+        initialValues.put("searchPattern", hitCount.getSearchPattern());
 
         UpdateRequest updateRequest = new UpdateRequest.Builder<>()
                 .index(HIT_COUNT)
-                .id(hitCount.getDocumentId())
-                .upsert(upsertJson)
+                .id(getCompositeId(hitCount))
+                .upsert(initialValues)
                 .script(script)
                 .build();
         return esClient.update(updateRequest, Map.class);
@@ -56,28 +65,36 @@ public class HitCountService {
         return esClient.get(getRequest, Map.class);
     }
 
-    public List<Map<String, String>> searchHistoryByUserId(String userId) throws IOException {
+    public List<Map> searchHistoryByUserId(String userId) throws IOException {
         SearchResponse<Map> search = esClient.search(s -> s
                         .index(HIT_COUNT)
+                        // search by userId
                         .query(q -> q.term(t -> t
                                 .field("userId")
                                 .value(v -> v.stringValue(userId))
                         ))
-                        .size(1)
+                        .size(10) // limit result to 10 values
+                        // the result values with the highest count are going to be displayed
                         .sort(so -> so.field(
                                 FieldSort.of(f -> f
                                         .field("count")
                                         .order(SortOrder.Desc)
-                                ))
+                                )
+                            )
                         ),
                 Map.class
         );
 
-        List<Map<String, String>> mapList = new ArrayList<>();
-        for (Hit<Map> hit: search.hits().hits()) {
-            mapList.add(hit.source());
-        }
-        return mapList;
+        return search.hits()
+                .hits()
+                .stream()
+                .filter(hit -> hit.source() != null)
+                .map(hit -> { // source doesn't contain document id
+                    Map map = hit.source();
+                    map.put("id", hit.id());
+                    return map;
+                })
+                .toList();
     }
 
     public DeleteIndexResponse deleteIndex(String index) throws IOException {

@@ -2,7 +2,6 @@ package my.javacraft.elastic.rest;
 
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class HitCountResource {
 
-    private final ObjectMapper objectMapper;
     private final HitCountService hitCountService;
 
     @Operation(
@@ -44,10 +42,10 @@ public class HitCountResource {
     @PostMapping(value = "/capture",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> capture(
+    public ResponseEntity<UpdateResponse> capture(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    description = "HitCount to upsert",
+                    description = "HitCount values",
                     useParameterTypeSchema = true,
                     content = @Content(schema = @Schema(
                             implementation = HitCount.class
@@ -59,11 +57,7 @@ public class HitCountResource {
 
         UpdateResponse updateResponse = hitCountService.capture(hitCount);
 
-        return ResponseEntity.ok()
-                .body(objectMapper
-                        .writerWithDefaultPrettyPrinter()
-                        .writeValueAsString(updateResponse)
-        );
+        return ResponseEntity.ok().body(updateResponse);
     }
 
     @Operation(
@@ -76,17 +70,14 @@ public class HitCountResource {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping("/document/{documentId}")
-    public ResponseEntity<String> getHitCount(
+    public ResponseEntity<GetResponse<Map>> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
         log.info("executing getHitCount (documentId = '{}')...", documentId);
 
         GetResponse<Map> map = hitCountService.getHitCount(documentId);
 
-        return ResponseEntity.ok().body(objectMapper
-                .writerWithDefaultPrettyPrinter()
-                .writeValueAsString(map)
-        );
+        return ResponseEntity.ok().body(map);
     }
 
     @Operation(
@@ -99,12 +90,12 @@ public class HitCountResource {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Map<String, String>>> getSearchHistory(
+    public ResponseEntity<List<Map>> getSearchHistory(
             @PathVariable("userId") String userId) throws IOException {
 
         log.info("executing getSearchHistory (userId = '{}')...", userId);
 
-        List<Map<String, String>> mapList = hitCountService.searchHistoryByUserId(userId);
+        List<Map> mapList = hitCountService.searchHistoryByUserId(userId);
 
         return ResponseEntity.ok().body(mapList);
     }
