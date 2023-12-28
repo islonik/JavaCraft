@@ -44,6 +44,7 @@ public class HitCountService {
         Map<String, Object> initialValues = new HashMap<>();
         initialValues.put("count", 1L);
         initialValues.put("userId", hitCount.getUserId());
+        initialValues.put("documentId", hitCount.getDocumentId());
         initialValues.put("searchType", hitCount.getSearchType());
         initialValues.put("searchPattern", hitCount.getSearchPattern());
 
