@@ -13,11 +13,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class EventsManagerImpl implements EventsManager {
 
+    private final EventsSubscriptionsManager eventsSubscriptionsManager;
+
     @Autowired
-    private EventsSubscriptionsManager eventsSubscriptionsManager;
+    public EventsManagerImpl(EventsSubscriptionsManager eventsSubscriptionsManager) {
+        this.eventsSubscriptionsManager = eventsSubscriptionsManager;
+    }
 
     @Override
-    public <T extends Event> void subscribe(Class<T> event, EventListener<T> listener) {
+    public void subscribe(Class<? extends Event> event, EventListener<Event> listener) {
         eventsSubscriptionsManager.addSubscriber(event, listener);
     }
 

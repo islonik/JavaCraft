@@ -64,13 +64,9 @@ public abstract class BaseEvent implements Event {
     }
 
     @Override
-    public boolean equals(Object that)
-    {
-        if(that instanceof Event) {
-            Event event = (Event) that;
-            if (this.title.equals(event.getTitle())) {
-                return true;
-            }
+    public boolean equals(Object that) {
+        if (that instanceof Event event) {
+            return this.title.equals(event.getTitle());
         }
         return false;
     }
@@ -90,9 +86,7 @@ public abstract class BaseEvent implements Event {
                 return compareStatus;
             }
 
-            int estimate = Integer.compare(that.getEstimate(), this.estimate);
-
-            return estimate;
+            return Integer.compare(that.getEstimate(), this.estimate);
         } else {
             return -1;
         }

@@ -10,7 +10,7 @@ public class Application {
 
     public static final String CONTEXT = "application.xml";
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         ApplicationContext context = new ClassPathXmlApplicationContext(CONTEXT);
 
         WorkerLauncher launcher = context.getBean(WorkerLauncher.class);

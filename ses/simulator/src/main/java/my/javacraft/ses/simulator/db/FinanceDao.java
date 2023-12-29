@@ -16,8 +16,7 @@ public class FinanceDao {
     public static final String FINANCE_CODE_SUPPORT = "SupportFinance2016";
 
     // database content?
-    private static final List<FinanceCode> codes = new ArrayList() {
-        {
+    private static final List<FinanceCode> codes = new ArrayList<>() {{
             add(new FinanceCode() {{
                 setId(1L);
                 setFinanceCode(FINANCE_CODE_GENERAL);

@@ -20,14 +20,14 @@ public class Reporter implements Runnable {
                 if (!eventList.isEmpty()) {
                     System.out.println("*********************************************");
                     for (Event event : eventList) {
-                        System.out.println(String.format(
-                                "    Event priority = %s, title = %s, code = %s, estimate = %s, status = %s;",
+                        System.out.printf(
+                                "    Event priority = %s, title = %s, code = %s, estimate = %s, status = %s;%n",
                                 event.getPriority(),
                                 event.getTitle(),
                                 event.getFinanceCode(),
                                 event.getEstimate(),
                                 event.getStatus()
-                        ));
+                        );
                     }
                     System.out.println("*********************************************");
                 } else {
@@ -36,7 +36,6 @@ public class Reporter implements Runnable {
             }
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
-            System.exit(1);
         }
     }
 

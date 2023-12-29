@@ -29,37 +29,28 @@ public class Creator implements Runnable {
 
                 int priority = ThreadLocalRandom.current().nextInt(0, 4);
                 int code = ThreadLocalRandom.current().nextInt(0, 2);
-                String financeCode = null;
-                switch (code) {
-                    case 0:
-                        financeCode = FinanceDao.FINANCE_CODE_GENERAL;
-                        break;
-                    case 1:
-                        financeCode = FinanceDao.FINANCE_CODE_SUPPORT;
-                        break;
-                    case 2:
-                        financeCode = FinanceDao.FINANCE_CODE_MIGRATION;
-                        break;
-                    default:
-                        financeCode = "Unknown finance code";
-                }
+                String financeCode = switch (code) {
+                    case 0 -> FinanceDao.FINANCE_CODE_GENERAL;
+                    case 1 -> FinanceDao.FINANCE_CODE_SUPPORT;
+                    case 2 -> FinanceDao.FINANCE_CODE_MIGRATION;
+                    default -> "Unknown finance code";
+                };
                 int estimate = ThreadLocalRandom.current().nextInt(2, 40);
 
                 Task task = new Task(Priority.valueOf(priority), counter.get(), String.format("Task #%s", counter.getAndIncrement()), financeCode, estimate);
 
                 EventNotifierWrapper.createdEvent(task);
 
-                System.out.println(String.format("Task %s with priority %s was created", task.getTitle(), task.getPriority()));
+                System.out.printf("Task %s with priority %s was created%n", task.getTitle(), task.getPriority());
                 priorityQueue.add(task);
 
-                long sleep = Long.valueOf(ThreadLocalRandom.current().nextInt(2000, 3000));
-                System.out.println(String.format("The creator thread decided to sleep '%s' millisec", sleep));
+                long sleep = ThreadLocalRandom.current().nextInt(2000, 3000);
+                System.out.printf("The creator thread decided to sleep '%s' millisec%n", sleep);
 
                 Thread.sleep(sleep);
             }
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
-            System.exit(1);
         }
     }
 }

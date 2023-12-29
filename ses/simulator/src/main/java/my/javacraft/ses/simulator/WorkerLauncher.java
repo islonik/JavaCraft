@@ -23,8 +23,8 @@ public class WorkerLauncher {
     private final FinanceService financeService;
     private final QueueServices queueServices;
     private final ExecutorService executorService;
-    private volatile PriorityBlockingQueue<Task> fromCreator;
-    private volatile PriorityBlockingQueue<Task> fromValidator;
+    private final PriorityBlockingQueue<Task> fromCreator;
+    private final PriorityBlockingQueue<Task> fromValidator;
 
     @Autowired
     public WorkerLauncher(FinanceService financeService, QueueServices queueServices) {

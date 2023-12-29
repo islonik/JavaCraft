@@ -2,6 +2,6 @@ package my.javacraft.ses.events;
 
 public interface EventsManager {
 
-    <T extends Event> void subscribe(Class<T> event, EventListener<T> listener);
+    void subscribe(Class<? extends Event> event, EventListener<Event> listener);
 
 }

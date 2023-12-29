@@ -25,29 +25,28 @@ public class Worker implements Runnable {
                 if (task != null) {
                     EventNotifierWrapper.runningEvent(task);
 
-                    System.out.println(String.format("The worker thread started to work under %s with priority %s", task.getTitle(), task.getPriority()));
+                    System.out.printf("The worker thread started to work under %s with priority %s%n", task.getTitle(), task.getPriority());
                     int count = ThreadLocalRandom.current().nextInt(1, 5);
                     for (; count >= 0 ; count--) {
-                        long sleep = Long.valueOf(ThreadLocalRandom.current().nextInt(1000, 2000));
-                        System.out.println(String.format(
-                                "Task %s with priority %s is 'in running' status. Counts = %s",
+                        long sleep = ThreadLocalRandom.current().nextInt(1000, 2000);
+                        System.out.printf(
+                                "Task %s with priority %s is 'in running' status. Counts = %s%n",
                                 task.getTitle(),
                                 task.getPriority(),
                                 count
-                        ));
+                        );
                         Thread.sleep(sleep);
                     }
 
                     EventNotifierWrapper.completedEvent(task);
                 } else {
-                    long sleep = Long.valueOf(ThreadLocalRandom.current().nextInt(7000, 12000));
-                    System.out.println(String.format("No tasks were found. The worker thread decided to sleep '%s' millisec", sleep));
+                    long sleep = ThreadLocalRandom.current().nextInt(7000, 12000);
+                    System.out.printf("No tasks were found. The worker thread decided to sleep '%s' millisec%n", sleep);
                     Thread.sleep(sleep);
                 }
             }
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
-            System.exit(1);
         }
 
     }

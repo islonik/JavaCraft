@@ -13,12 +13,16 @@ public class EventNotifier {
 
     private static final Logger log = LoggerFactory.getLogger(EventNotifier.class);
 
+    private final EventsSubscriptionsManager eventsSubscriptionManager;
+
     @Autowired
-    private EventsSubscriptionsManager eventsSubscriptionManager;
+    public EventNotifier(EventsSubscriptionsManager eventsSubscriptionManager) {
+        this.eventsSubscriptionManager = eventsSubscriptionManager;
+    }
 
     public <T extends Event> void notify(T event) {
         try {
-            for(EventListener<Event> listener : eventsSubscriptionManager.getListeners(event.getClass())) {
+            for (EventListener<Event> listener : eventsSubscriptionManager.getListeners(event.getClass())) {
                 try {
                     listener.accept(event);
                 } catch (Throwable t) {

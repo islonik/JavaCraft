@@ -29,24 +29,23 @@ public class Validator implements Runnable {
                 Task task = fromCreator.poll();
                 if (task != null) {
                     if (financeService.isEnoughMoney(task.getFinanceCode(), task.getEstimate())) {
-                        System.out.println(String.format("The task '%s' with priority '%s' was accepted", task.getTitle(), task.getPriority()));
+                        System.out.printf("The task '%s' with priority '%s' was accepted%n", task.getTitle(), task.getPriority());
                         financeService.updateFinance(task.getFinanceCode(), task.getEstimate());
 
                         EventNotifierWrapper.acceptedEvent(task);
                         toWorker.add(task);
                     } else {
                         EventNotifierWrapper.rejectedEvent(task);
-                        System.out.println(String.format("The task '%s' with priority '%s' was rejected", task.getTitle(), task.getPriority()));
+                        System.out.printf("The task '%s' with priority '%s' was rejected%n", task.getTitle(), task.getPriority());
                     }
                 }
 
-                long sleep = Long.valueOf(ThreadLocalRandom.current().nextInt(6000, 10000));
-                System.out.println(String.format("The validator thread decided to sleep %s millisec", sleep));
+                long sleep = ThreadLocalRandom.current().nextInt(6000, 10000);
+                System.out.printf("The validator thread decided to sleep %s millisec%n", sleep);
                 Thread.sleep(sleep);
             }
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
-            System.exit(1);
         }
     }
 }
