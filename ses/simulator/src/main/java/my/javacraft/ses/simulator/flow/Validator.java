@@ -40,7 +40,7 @@ public class Validator implements Runnable {
                     }
                 }
 
-                long sleep = ThreadLocalRandom.current().nextInt(6000, 10000);
+                long sleep = ThreadLocalRandom.current().nextInt(3000, 4000);
                 System.out.printf("The validator thread decided to sleep %s millisec%n", sleep);
                 Thread.sleep(sleep);
             }

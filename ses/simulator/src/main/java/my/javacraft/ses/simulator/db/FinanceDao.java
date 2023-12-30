@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 /**
- * Mock for Database
+ * Super stupid mock for a DB.
  */
 @Repository
 public class FinanceDao {

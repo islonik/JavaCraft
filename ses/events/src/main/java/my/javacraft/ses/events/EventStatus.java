@@ -7,9 +7,9 @@ package my.javacraft.ses.events;
 public enum EventStatus {
     CREATED("Created", 0),
     ACCEPTED("Accepted", 1),
-    REJECTED("Rejected", 2),
-    RUNNING("In running", 3),
-    COMPLETED("Completed", 4);
+    RUNNING("In running", 2),
+    COMPLETED("Completed", 3),
+    REJECTED("Rejected", 4);
 
     private final String value;
     private final int sort;
@@ -28,9 +28,9 @@ public enum EventStatus {
         return switch (sort) {
             case 0 -> CREATED;
             case 1 -> ACCEPTED;
-            case 2 -> REJECTED;
-            case 3 -> RUNNING;
-            case 4 -> COMPLETED;
+            case 2 -> RUNNING;
+            case 3 -> COMPLETED;
+            case 4 -> REJECTED;
             default -> throw new RuntimeException(String.format("Unknown EventStatus sortId = %s", sort));
         };
     }

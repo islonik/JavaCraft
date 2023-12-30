@@ -26,9 +26,8 @@ public class EventNotifier {
                 try {
                     listener.accept(event);
                 } catch (Throwable t) {
-                    log.error(String.format(
-                            "Exception occurred when running even [class=%s] listener [class=%s, object=%s]",
-                            event.getClass(), listener.getClass(), listener),
+                    log.error("Exception occurred when running even [class=%s] listener [class=%s, object=%s]"
+                            .formatted(event.getClass(), listener.getClass(), listener),
                             t);
                 }
             }

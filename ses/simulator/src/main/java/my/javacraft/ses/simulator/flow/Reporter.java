@@ -1,5 +1,6 @@
 package my.javacraft.ses.simulator.flow;
 
+import java.util.Comparator;
 import my.javacraft.ses.events.Event;
 import my.javacraft.ses.events.EventsMonitor;
 
@@ -17,6 +18,14 @@ public class Reporter implements Runnable {
                 Thread.sleep(3000);
 
                 List<Event> eventList = EventsMonitor.getStorage();
+
+                // sort by status
+                // CREATED -> ACCEPTED -> RUNNING -> COMPLETED -> REJECTED
+                eventList.sort(Comparator
+                        .comparingInt((Event e) -> e.getStatus().getSort())
+                        .thenComparingInt(e -> e.getPriority().getSort())
+                );
+
                 if (!eventList.isEmpty()) {
                     System.out.println("*********************************************");
                     for (Event event : eventList) {
