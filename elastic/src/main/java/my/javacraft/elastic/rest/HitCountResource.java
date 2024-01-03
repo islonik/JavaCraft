@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class HitCountResource {
                             implementation = HitCount.class
                     ))
             )
-            @RequestBody HitCount hitCount) throws IOException {
+            @RequestBody @Valid HitCount hitCount) throws IOException {
 
         log.info("executing capture (hitCount = {})...", hitCount);
 
