@@ -59,6 +59,34 @@ public ResponseEntity<UpdateResponse> capture(
 }
 ```
 
+## UUID
+
+### Overview
+UUID (Universally Unique Identifier), also known as GUID (Globally Unique Identifier), is a 128-bit value that is unique for all practical purposes. 
+Their uniqueness doesn’t depend on a central registration authority or coordination between the parties generating them, unlike most other numbering schemes.
+
+### Structure
+Canonical UUID looks like
+```bash
+123e4567-e89b-42d3-a456-556642440000
+xxxxxxxx-xxxx-Bxxx-Axxx-xxxxxxxxxxxx
+```
+The standard representation is composed of 32 hexadecimal (base-16) digits, displayed in five groups separated by hyphens, in the form 8-4-4-4-12, for a total of 36 characters (32 hexadecimal characters and 4 hyphens).
+
+### Versions
+Looking again at the standard representation, B represents the version. The version field holds a value that describes the type of the given UUID. The version (value of B) in the example UUID above is 4.
+
+There are five different basic types of UUIDs:
+
+* Version 1 (Time-Based): based on the current timestamp, measured in units of 100 nanoseconds from October 15, 1582, concatenated with the MAC address of the device where the UUID is created.
+* Version 2 (DCE – Distributed Computing Environment): uses the current time, along with the MAC address (or node) for a network interface on the local machine. Additionally, a version 2 UUID replaces the low part of the time field with a local identifier such as the user ID or group ID of the local account that created the UUID.
+* Version 3 (Name-based): The UUIDs are generated using the hash of namespace and name. The namespace identifiers are UUIDs like Domain Name System (DNS), Object Identifiers (OIDs), and URLs.
+* Version 4 (Randomly generated): In this version, UUID identifiers are randomly generated and do not contain any information about the time they are created or the machine that generated them.
+* Version 5 (Name-based using SHA-1): Generated using the same approach as version 3, with the difference of the hashing algorithm. This version uses SHA-1 (160 bits) hashing of a namespace identifier and name.
+
+### UUID.nameUUIDFromBytes
+UUID.nameUUIDFromBytes uses Version 3
+
 ## SSL certificate
 
 How to create an SSL certificate from .crt
