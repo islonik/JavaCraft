@@ -8,20 +8,22 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.elastic.model.HitCount;
 import org.springframework.stereotype.Service;
 
+/**
+ * Index 'hit_count' should be created with the 'updated' field set up as a 'date' format. See README.md.
+ */
 @SuppressWarnings({"unchecked", "rawtypes"})
 @Service
 @RequiredArgsConstructor
 public class HitCountService {
 
     static final String HIT_COUNT = "hit_count";
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMM-dd");
 
     private final ElasticsearchClient esClient;
 
@@ -126,8 +128,8 @@ public class HitCountService {
         return initialValues;
     }
 
-    // returns: 2024-Jan-03
+    // returns: 2024-01-08T18:16:41.530571300Z
     private String getCurrentDate() {
-        return LocalDate.now().format(formatter);
+        return DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     }
 }

@@ -111,7 +111,24 @@ How to create an SSL certificate from .crt
 
 ## Dev-tools queries
 
-<b>Upsert</b>
+### Create index 'hit_count'.
+```bash
+PUT hit_count
+```
+
+### Create 'updated' field with the required 'date' format.
+```bash
+PUT /hit_count/_mapping
+{
+    "properties": {
+        "updated": {
+            "type": "date"
+        }
+    }
+}
+```
+
+### <b>Upsert</b>
 ```bash
 POST /hit_count/_update/did-1
 {
@@ -127,12 +144,12 @@ POST /hit_count/_update/did-1
 }
 ```
 
-<b>GET document by Id</b>
+### <b>GET document by Id</b>
 ```bash
 GET /hit_count/_doc/did-1
 ```
 
-<b>Find top 10 documents belonging to userId="nl84439" and sorted in desc order</b>
+### <b>Find top 10 documents belonging to userId="nl84439" and sorted in desc order</b>
 ```bash
 GET /hit_count/_search
 {
@@ -150,12 +167,12 @@ GET /hit_count/_search
 }
 ```
 
-GET type of field values for hit_count index
+### GET type of field values for hit_count index
 ```bash
 GET /hit_count/_mapping
 ```
 
-<b>DELETE</b>
+### <b>DELETE</b>
 ```bash
 DELETE /hit_count/_doc/did-1
 ```
