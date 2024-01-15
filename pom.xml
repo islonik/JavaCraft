@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <java.release>17</java.release>
+        <java.release>21</java.release>
         <build-helper-maven-plugin.version>1.10</build-helper-maven-plugin.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
@@ -41,6 +41,7 @@
         <junit.platform.suite.version>1.9.3</junit.platform.suite.version>
         <junit5.version>5.10.1</junit5.version>
         <mockito.version>5.8.0</mockito.version>
+        <buddy.version>1.14.11</buddy.version>
     </properties>
 
     <modules>
