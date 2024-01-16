@@ -13,8 +13,9 @@ import java.io.IOException;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.model.HitCount;
-import my.javacraft.elastic.service.HitCountService;
+import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.service.UserHistoryService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,14 +26,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Slf4j
 @RestController
 @Tag(name = "HitCount", description = "List of APIs for hit count services")
-@RequestMapping(path = "/api/services/hitCount")
+@RequestMapping(path = "/api/services/user_history")
 @RequiredArgsConstructor
 public class HitCountResource {
 
-    private final HitCountService hitCountService;
+    private final UserHistoryService userHistoryService;
 
     @Operation(
-            summary = "Capture hit count",
+            summary = "Capture user click",
             description = "Upsert - create a new hit count document or update(increment) the hit count."
     )
     @ApiResponses(value = {
@@ -40,23 +41,23 @@ public class HitCountResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @PostMapping(value = "/capture",
+    @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UpdateResponse> capture(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    description = "HitCount values",
+                    description = "User history values",
                     useParameterTypeSchema = true,
                     content = @Content(schema = @Schema(
-                            implementation = HitCount.class
+                            implementation = UserClick.class
                     ))
             )
-            @RequestBody @Valid HitCount hitCount) throws IOException {
+            @RequestBody @Valid UserClick userClick) throws IOException {
 
-        log.info("executing capture (hitCount = {})...", hitCount);
+        log.info("executing capture (UserClick = {})...", userClick);
 
-        UpdateResponse updateResponse = hitCountService.capture(hitCount);
+        UpdateResponse updateResponse = userHistoryService.capture(userClick);
 
         return ResponseEntity.ok().body(updateResponse);
     }
@@ -71,12 +72,12 @@ public class HitCountResource {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping("/document/{documentId}")
-    public ResponseEntity<GetResponse<Map>> getHitCount(
+    public ResponseEntity<GetResponse<UserHistory>> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
         log.info("executing getHitCount (documentId = '{}')...", documentId);
 
-        GetResponse<Map> map = hitCountService.getHitCount(documentId);
+        GetResponse<UserHistory> map = userHistoryService.getUserHistory(documentId);
 
         return ResponseEntity.ok().body(map);
     }
@@ -91,12 +92,12 @@ public class HitCountResource {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Map>> getSearchHistory(
+    public ResponseEntity<List<UserHistory>> getSearchHistory(
             @PathVariable("userId") String userId) throws IOException {
 
         log.info("executing getSearchHistory (userId = '{}')...", userId);
 
-        List<Map> mapList = hitCountService.searchHistoryByUserId(userId);
+        List<UserHistory> mapList = userHistoryService.searchHistoryByUserId(userId);
 
         return ResponseEntity.ok().body(mapList);
     }
@@ -116,7 +117,7 @@ public class HitCountResource {
 
         log.info("executing deleteIndex (index = '{}')...", index);
 
-        DeleteIndexResponse deleteIndexResponse = hitCountService.deleteIndex(index);
+        DeleteIndexResponse deleteIndexResponse = userHistoryService.deleteIndex(index);
 
         return ResponseEntity.ok()
                 .body(deleteIndexResponse);
@@ -138,7 +139,7 @@ public class HitCountResource {
 
         log.info("executing deleteHitCountDocument (index = '{}', documentId = '{}')...", index, documentId);
 
-        DeleteResponse deleteResponse = hitCountService.deleteDocument(index, documentId);
+        DeleteResponse deleteResponse = userHistoryService.deleteDocument(index, documentId);
 
         return ResponseEntity.ok()
                 .body(deleteResponse);

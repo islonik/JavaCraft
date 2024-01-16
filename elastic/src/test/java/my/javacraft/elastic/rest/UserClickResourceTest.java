@@ -7,9 +7,9 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import my.javacraft.elastic.model.HitCount;
-import my.javacraft.elastic.service.HitCountService;
+import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.service.UserHistoryService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,24 +22,24 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
-public class HitCountResourceTest {
+public class UserClickResourceTest {
 
     @Mock
-    HitCountService hitCountService;
+    UserHistoryService userHistoryService;
 
     @Test
     public void testCapture() throws IOException {
-        HitCountResource hitCountResource = new HitCountResource(hitCountService);
+        HitCountResource hitCountResource = new HitCountResource(userHistoryService);
 
         UpdateResponse updateResponse = Mockito.mock(UpdateResponse.class);
-        when(hitCountService.capture(any())).thenReturn(updateResponse);
+        when(userHistoryService.capture(any())).thenReturn(updateResponse);
 
-        HitCount hitCount = new HitCount();
-        hitCount.setDocumentId("did-1");
-        hitCount.setSearchType("Obligor");
-        hitCount.setSearchPattern("1111");
+        UserClick userClick = new UserClick();
+        userClick.setDocumentId("did-1");
+        userClick.setSearchType("Obligor");
+        userClick.setSearchPattern("1111");
 
-        ResponseEntity<UpdateResponse> response = hitCountResource.capture(hitCount);
+        ResponseEntity<UpdateResponse> response = hitCountResource.capture(userClick);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -47,12 +47,12 @@ public class HitCountResourceTest {
 
     @Test
     public void testGetHitCount() throws IOException {
-        HitCountResource hitCountResource = new HitCountResource(hitCountService);
+        HitCountResource hitCountResource = new HitCountResource(userHistoryService);
 
-        GetResponse<Map> getResponse = Mockito.mock(GetResponse.class);
-        when(hitCountService.getHitCount(anyString())).thenReturn(getResponse);
+        GetResponse<UserHistory> getResponse = Mockito.mock(GetResponse.class);
+        when(userHistoryService.getUserHistory(anyString())).thenReturn(getResponse);
 
-        ResponseEntity<GetResponse<Map>> response = hitCountResource
+        ResponseEntity<GetResponse<UserHistory>> response = hitCountResource
                 .getHitCount("documentId");
 
         Assertions.assertNotNull(response);
@@ -61,12 +61,12 @@ public class HitCountResourceTest {
 
     @Test
     public void testGetSearchHistory() throws IOException {
-        HitCountResource hitCountResource = new HitCountResource(hitCountService);
+        HitCountResource hitCountResource = new HitCountResource(userHistoryService);
 
-        List<Map> historyList = new ArrayList<>();
-        when(hitCountService.searchHistoryByUserId(anyString())).thenReturn(historyList);
+        List<UserHistory> historyList = new ArrayList<>();
+        when(userHistoryService.searchHistoryByUserId(anyString())).thenReturn(historyList);
 
-        ResponseEntity<List<Map>> response = hitCountResource
+        ResponseEntity<List<UserHistory>> response = hitCountResource
                 .getSearchHistory("nl88888");
 
         Assertions.assertNotNull(response);
@@ -75,10 +75,10 @@ public class HitCountResourceTest {
 
     @Test
     public void testDeleteIndex() throws IOException {
-        HitCountResource hitCountResource = new HitCountResource(hitCountService);
+        HitCountResource hitCountResource = new HitCountResource(userHistoryService);
 
         DeleteIndexResponse deleteIndexResponse = Mockito.mock(DeleteIndexResponse.class);
-        when(hitCountService.deleteIndex(anyString())).thenReturn(deleteIndexResponse);
+        when(userHistoryService.deleteIndex(anyString())).thenReturn(deleteIndexResponse);
 
         ResponseEntity<DeleteIndexResponse> response = hitCountResource
                 .deleteIndex("nl88888");
@@ -89,10 +89,10 @@ public class HitCountResourceTest {
 
     @Test
     public void testDeleteHitCountDocument() throws IOException {
-        HitCountResource hitCountResource = new HitCountResource(hitCountService);
+        HitCountResource hitCountResource = new HitCountResource(userHistoryService);
 
         DeleteResponse deleteResponse = Mockito.mock(DeleteResponse.class);
-        when(hitCountService.deleteDocument(anyString(), anyString())).thenReturn(deleteResponse);
+        when(userHistoryService.deleteDocument(anyString(), anyString())).thenReturn(deleteResponse);
 
         ResponseEntity<DeleteResponse> response = hitCountResource
                 .deleteHitCountDocument("hit_count", "nl88888");

@@ -54,8 +54,9 @@ public ResponseEntity<UpdateResponse> capture(
                 implementation = HitCount.class
         ))
 )
-@RequestBody @Valid HitCount hitCount) throws IOException {
-   ...
+@RequestBody @Valid HitCount userClick) throws IOException {
+   
+    ...
 }
 ```
 

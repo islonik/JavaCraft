@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.ToString;
 
+// Represents the incoming event for UserHistoryService
 @Data
 @ToString
-public class HitCount {
+public class UserClick {
     @NotEmpty
     String userId;
     @NotBlank
