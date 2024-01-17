@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "HitCount", description = "List of APIs for hit count services")
 @RequestMapping(path = "/api/services/user_history")
 @RequiredArgsConstructor
-public class HitCountResource {
+public class UserHistoryResource {
 
     private final UserHistoryService userHistoryService;
 
