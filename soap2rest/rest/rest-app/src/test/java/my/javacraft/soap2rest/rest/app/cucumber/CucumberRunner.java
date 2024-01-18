@@ -1,4 +1,4 @@
-package my.javacraft.echo.netty;
+package my.javacraft.soap2rest.rest.app.cucumber;
 
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -12,6 +12,6 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @IncludeEngines("cucumber")
 @SelectClasspathResource("/features")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.echo.netty")
-public class CucumberRunnerTest {
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.soap2rest.rest.app.cucumber")
+public class CucumberRunner {
 }

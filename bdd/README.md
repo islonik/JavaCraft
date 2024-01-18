@@ -46,7 +46,7 @@ Plugin to run Cucumber tests in <b>maven</b> builds
             <version>3.1.2</version>
             <configuration>
                 <includes>
-                    <include>**/*CucumberRunnerTest.java</include>
+                    <include>**/CucumberRunner.java</include>
                 </includes>
             </configuration>
         </plugin>
@@ -56,14 +56,14 @@ Plugin to run Cucumber tests in <b>maven</b> builds
 
 ### Tests
 
-CucumberRunnerTest is necessary to specify Cucumber configuration.
+CucumberRunner is necessary to specify Cucumber configuration.
 ```java
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("/features")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.bdd.cucumber")
-public class CucumberRunnerTest {
+public class CucumberRunner {
 }
 ```
 

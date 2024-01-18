@@ -1,4 +1,4 @@
-package my.javacraft.soap2rest.rest.app.cucumber;
+package my.javacraft.soap2rest.soap.cucumber;
 
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -12,6 +12,6 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @IncludeEngines("cucumber")
 @SelectClasspathResource("/features")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.soap2rest.rest.app.cucumber")
-public class RestCucumberRunnerTest {
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.soap2rest.soap.cucumber")
+public class CucumberRunner {
 }
