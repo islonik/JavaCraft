@@ -10,3 +10,22 @@
 * [tic-tac-toe](tic-tac-toe/README.md) - Tic-tac-toe game with GUI
 * [translation](translation/README.md) - translation
 * [xsd2model](xsd2model/README.md) - xsd2model
+
+## Dependency management
+
+### Overview of dependencies
+
+```bash
+mvn dependency:tree
+```
+
+### To find unused dependencies
+```bash
+mvn dependency:analyze
+```
+
+### To check new dependencies
+```bash
+mvn versions:display-dependency-updates
+```
+
