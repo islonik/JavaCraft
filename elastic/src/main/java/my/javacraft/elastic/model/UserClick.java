@@ -17,4 +17,7 @@ public class UserClick {
     String searchType;
     @NotBlank
     String searchPattern;
+    @ValueOfEnum(enumClass = Client.class)
+    String client;
+
 }

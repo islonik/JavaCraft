@@ -20,9 +20,9 @@ It could happen because your browser has an extension to block ads.
 
 ## Validation
 
-To add object validation we should
+### To add object validation we should
 
-1. Add dependency
+#### 1. Add dependency
 ```xml
 <dependency>
    <groupId>org.springframework.boot</groupId>
@@ -30,9 +30,10 @@ To add object validation we should
    <version>${spring.boot}</version>
 </dependency>
 ```
-2. Put required annotations on the class
+
+#### 2. Put required annotations on the class
 ```java
-public class HitCount {
+public class UserClick {
     @NotEmpty
     String userId;
     @NotBlank
@@ -43,21 +44,66 @@ public class HitCount {
     String searchPattern;
 }
 ```
-3. Add @Valid annotation in REST controller
+
+#### 3. Add @Valid annotation in REST controller
 ```java
 public ResponseEntity<UpdateResponse> capture(
-@io.swagger.v3.oas.annotations.parameters.RequestBody(
-        required = true,
-        description = "HitCount values",
-        useParameterTypeSchema = true,
-        content = @Content(schema = @Schema(
-                implementation = HitCount.class
-        ))
-)
-@RequestBody @Valid HitCount userClick) throws IOException {
-   
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+             required = true,
+             description = "User history values",
+             useParameterTypeSchema = true,
+             content = @Content(schema = @Schema(
+                     implementation = UserClick.class
+             ))
+    )
+    @RequestBody @Valid UserClick userClick) throws IOException {
+    
     ...
 }
+```
+
+### Validating That a String Matches a Value of an Enum
+
+#### Annotation
+```java
+@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = ValueOfEnumValidator.class)
+public @interface ValueOfEnum {
+    Class<? extends Enum<?>> enumClass();
+    String message() default "must be any of enum {enumClass}";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+```
+#### Validator
+```java
+public class ValueOfEnumValidator implements ConstraintValidator<ValueOfEnum, CharSequence> {
+   private List<String> acceptedValues;
+   
+   @Override
+   public void initialize(ValueOfEnum annotation) {
+      acceptedValues = Stream.of(annotation.enumClass().getEnumConstants())
+              .map(Enum::name)
+              .collect(Collectors.toList());
+   }
+
+   @Override
+   public boolean isValid(CharSequence value, ConstraintValidatorContext context) {
+      if (value == null) {
+         return true;
+      }
+
+      return acceptedValues.contains(value.toString().toUpperCase());
+   }
+}
+```
+
+#### Usage
+```java
+@ValueOfEnum(enumClass = Client.class)
+String client;
 ```
 
 ## UUID
