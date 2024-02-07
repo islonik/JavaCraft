@@ -19,16 +19,15 @@ import org.springframework.stereotype.Service;
 /**
  * Index 'hit_count' should be created with the 'updated' field set up as a 'date' format. See README.md.
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
 @Service
 @RequiredArgsConstructor
 public class UserHistoryService {
 
-    static final String USER_HISTORY = "user_history";
+    public static final String USER_HISTORY = "user_history";
 
     private final ElasticsearchClient esClient;
 
-    public UpdateResponse capture(UserClick userClick) throws IOException {
+    public UpdateResponse<UserHistory> capture(UserClick userClick) throws IOException {
         // default scripting language in Elasticsearch is 'painless'
         // It supports java8 syntax, but doesn't support the current datetime.
         String datetime = getCurrentDate();
@@ -44,7 +43,7 @@ public class UserHistoryService {
                 .build();
 
         UserHistory userHistory = new UserHistory(datetime, userClick);
-        UpdateRequest updateRequest = new UpdateRequest.Builder<>()
+        UpdateRequest<UserHistory, Object> updateRequest = new UpdateRequest.Builder<UserHistory, Object>()
                 .index(USER_HISTORY)
                 .id(userHistory.getElasticId(userClick))
                 .upsert(userHistory)
@@ -62,7 +61,7 @@ public class UserHistoryService {
         return esClient.get(getRequest, UserHistory.class);
     }
 
-    public List<UserHistory> searchHistoryByUserId(String userId) throws IOException {
+    public List<UserHistory> searchHistoryByUserId(String userId, int searchLimitSize) throws IOException {
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(USER_HISTORY)
                 // search by userId
@@ -70,7 +69,7 @@ public class UserHistoryService {
                         .field("userClick.userId")
                         .value(v -> v.stringValue(userId))
                 ))
-                .size(10) // limit result to 10 values
+                .size(searchLimitSize) // limit result to N values
                 // the result values with the highest count are going to be displayed
                 .sort(so -> so.field(
                                 FieldSort.of(f -> f

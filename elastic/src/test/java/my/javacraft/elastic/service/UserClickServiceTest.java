@@ -61,11 +61,11 @@ public class UserClickServiceTest {
 
         Mockito.when(esClient.search(Mockito.any(SearchRequest.class), Mockito.eq(UserHistory.class))).thenReturn(searchResponse);
 
-        List<UserHistory> result = userHistoryService.searchHistoryByUserId("nl8888");
+        List<UserHistory> result = userHistoryService.searchHistoryByUserId("nl8888", 10);
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.size());
 
-        UserHistory resultHit = result.get(0);
+        UserHistory resultHit = result.getFirst();
         Assertions.assertEquals(1L, resultHit.getCount());
         Assertions.assertEquals("nl8888", resultHit.getUserClick().getUserId());
         Assertions.assertEquals("did-1", resultHit.getUserClick().getDocumentId());
