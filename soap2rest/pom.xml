@@ -135,9 +135,9 @@
             2) a standalone uber JAR containing WireMock plus all its dependencies.
             -->
             <dependency>
-                <groupId>com.github.tomakehurst</groupId>
+                <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
-                <version>3.0.1</version>
+                <version>3.3.1</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

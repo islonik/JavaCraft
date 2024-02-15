@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public class ServerThread extends Thread {
+public class ServerThread implements Runnable {
 
     private static final AtomicInteger threads = new AtomicInteger(0);
     private Socket socket;

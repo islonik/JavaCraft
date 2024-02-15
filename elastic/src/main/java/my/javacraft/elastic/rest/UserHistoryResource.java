@@ -21,8 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
-@SuppressWarnings({"rawtypes"})
 @Slf4j
 @RestController
 @Tag(name = "HitCount", description = "List of APIs for hit count services")
@@ -44,7 +42,7 @@ public class UserHistoryResource {
     @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UpdateResponse> capture(
+    public ResponseEntity<UpdateResponse<UserHistory>> capture(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     description = "User history values",
@@ -57,7 +55,7 @@ public class UserHistoryResource {
 
         log.info("executing capture (UserClick = {})...", userClick);
 
-        UpdateResponse updateResponse = userHistoryService.capture(userClick);
+        UpdateResponse<UserHistory> updateResponse = userHistoryService.capture(userClick);
 
         return ResponseEntity.ok().body(updateResponse);
     }
@@ -93,11 +91,13 @@ public class UserHistoryResource {
     })
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<UserHistory>> getSearchHistory(
-            @PathVariable("userId") String userId) throws IOException {
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
+        int limitSize = Integer.parseInt(size);
 
-        log.info("executing getSearchHistory (userId = '{}')...", userId);
+        log.info("executing getSearchHistory (userId = '{}' and limit = '{}')...", userId, limitSize);
 
-        List<UserHistory> mapList = userHistoryService.searchHistoryByUserId(userId);
+        List<UserHistory> mapList = userHistoryService.searchHistoryByUserId(userId, limitSize);
 
         return ResponseEntity.ok().body(mapList);
     }

@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
 public class UserClickResourceTest {
 
@@ -31,7 +31,7 @@ public class UserClickResourceTest {
     public void testCapture() throws IOException {
         UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
 
-        UpdateResponse updateResponse = Mockito.mock(UpdateResponse.class);
+        UpdateResponse<UserHistory> updateResponse = Mockito.mock(UpdateResponse.class);
         when(userHistoryService.capture(any())).thenReturn(updateResponse);
 
         UserClick userClick = new UserClick();
@@ -39,7 +39,7 @@ public class UserClickResourceTest {
         userClick.setSearchType("Obligor");
         userClick.setSearchPattern("1111");
 
-        ResponseEntity<UpdateResponse> response = userHistoryResource.capture(userClick);
+        ResponseEntity<UpdateResponse<UserHistory>> response = userHistoryResource.capture(userClick);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -49,7 +49,13 @@ public class UserClickResourceTest {
     public void testGetHitCount() throws IOException {
         UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
 
-        GetResponse<UserHistory> getResponse = Mockito.mock(GetResponse.class);
+        UserHistory userHistory = Mockito.mock(UserHistory.class);
+        GetResponse<UserHistory> getResponse = new GetResponse.Builder<UserHistory>()
+                .index(UserHistoryService.USER_HISTORY)
+                .found(true)
+                .id("part-of-mock-so-any-id")
+                .source(userHistory)
+                .build();
         when(userHistoryService.getUserHistory(anyString())).thenReturn(getResponse);
 
         ResponseEntity<GetResponse<UserHistory>> response = userHistoryResource
@@ -64,10 +70,10 @@ public class UserClickResourceTest {
         UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
 
         List<UserHistory> historyList = new ArrayList<>();
-        when(userHistoryService.searchHistoryByUserId(anyString())).thenReturn(historyList);
+        when(userHistoryService.searchHistoryByUserId(anyString(), anyInt())).thenReturn(historyList);
 
         ResponseEntity<List<UserHistory>> response = userHistoryResource
-                .getSearchHistory("nl88888");
+                .getSearchHistory("nl88888", "10");
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());

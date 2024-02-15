@@ -47,8 +47,8 @@ public class MultithreadedServer implements Runnable {
 
                     log.info(info);
 
-                    ServerThread handler = new ServerThread(client);
-                    handler.start();
+                    // we use virtual threads added in Java 21
+                    Thread.startVirtualThread(new ServerThread(client));
                 }
             }
         } catch (IOException ioe) {
