@@ -24,7 +24,7 @@
         <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
 
         <spring.boot>3.2.2</spring.boot>
-        <spring.version>6.1.3</spring.version>
+        <spring.version>6.1.4</spring.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.3.0</springdoc-openapi-starter-webmvc-ui.version>
 
         <cucumber.version>7.15.0</cucumber.version>
@@ -34,13 +34,13 @@
         <jaxb-runtime.version>4.0.4</jaxb-runtime.version>
         <h2.version>2.2.224</h2.version>
         <netty.version>4.1.100.Final</netty.version>
-        <liquibase.version>4.25.1</liquibase.version>
+        <liquibase.version>4.26.0</liquibase.version>
         <lombok.version>1.18.30</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
 
-        <junit.platform.suite.version>1.9.3</junit.platform.suite.version>
-        <junit5.version>5.10.1</junit5.version>
-        <mockito.version>5.9.0</mockito.version>
+        <junit.platform.suite.version>1.10.2</junit.platform.suite.version>
+        <junit5.version>5.10.2</junit5.version>
+        <mockito.version>5.10.0</mockito.version>
         <buddy.version>1.14.11</buddy.version>
     </properties>
 
