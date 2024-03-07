@@ -18,9 +18,9 @@ public class UserClickTest {
     public static UserClick createHitCount() {
         UserClick userClick = new UserClick();
         userClick.setUserId("nl8888");
-        userClick.setDocumentId("did-1");
-        userClick.setSearchType("Beneficial Owner");
-        userClick.setSearchPattern("-+= 6789");
+        userClick.setDocumentId("12345");
+        userClick.setSearchType("People");
+        userClick.setSearchPattern("Nikita");
         return userClick;
     }
 }

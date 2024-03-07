@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.UserHistoryService;
 import org.junit.jupiter.api.Assertions;
@@ -31,15 +32,15 @@ public class UserClickResourceTest {
     public void testCapture() throws IOException {
         UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
 
-        UpdateResponse<UserHistory> updateResponse = Mockito.mock(UpdateResponse.class);
-        when(userHistoryService.capture(any())).thenReturn(updateResponse);
+        UserClickResponse userClickResponse = Mockito.mock(UserClickResponse.class);
+        when(userHistoryService.capture(any())).thenReturn(userClickResponse);
 
         UserClick userClick = new UserClick();
         userClick.setDocumentId("did-1");
         userClick.setSearchType("Obligor");
         userClick.setSearchPattern("1111");
 
-        ResponseEntity<UpdateResponse<UserHistory>> response = userHistoryResource.capture(userClick);
+        ResponseEntity<UserClickResponse> response = userHistoryResource.capture(userClick);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());

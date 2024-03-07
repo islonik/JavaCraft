@@ -7,6 +7,8 @@ import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jsonb.JsonbJsonpMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +19,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 @ExtendWith(MockitoExtension.class)
@@ -29,8 +32,9 @@ public class UserClickServiceTest {
 
     @Test
     public void testCapture() throws IOException {
-        UpdateResponse updateResponse = Mockito.mock(UpdateResponse.class);
-        Mockito.when(esClient.update(Mockito.any(UpdateRequest.class), Mockito.any())).thenReturn(updateResponse);
+        UpdateResponse updateResponse = mock(UpdateResponse.class);
+        when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
+        when(esClient.update(any(UpdateRequest.class), any())).thenReturn(updateResponse);
         UserClick userClick = UserClickTest.createHitCount();
 
         UserHistoryService userHistoryService = new UserHistoryService(esClient);
@@ -53,13 +57,14 @@ public class UserClickServiceTest {
         List<Hit<UserHistory>> hitList = new ArrayList<>();
         hitList.add(hitMap);
 
-        HitsMetadata<UserHistory> hitsMetadata = Mockito.mock(HitsMetadata.class);
-        Mockito.when(hitsMetadata.hits()).thenReturn(hitList);
+        HitsMetadata<UserHistory> hitsMetadata = mock(HitsMetadata.class);
+        when(hitsMetadata.hits()).thenReturn(hitList);
 
-        SearchResponse<UserHistory> searchResponse = Mockito.mock(SearchResponse.class);
-        Mockito.when(searchResponse.hits()).thenReturn(hitsMetadata);
+        SearchResponse<UserHistory> searchResponse = mock(SearchResponse.class);
+        when(searchResponse.hits()).thenReturn(hitsMetadata);
 
-        Mockito.when(esClient.search(Mockito.any(SearchRequest.class), Mockito.eq(UserHistory.class))).thenReturn(searchResponse);
+        when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
+        when(esClient.search(any(SearchRequest.class), eq(UserHistory.class))).thenReturn(searchResponse);
 
         List<UserHistory> result = userHistoryService.searchHistoryByUserId("nl8888", 10);
         Assertions.assertNotNull(result);
@@ -68,9 +73,9 @@ public class UserClickServiceTest {
         UserHistory resultHit = result.getFirst();
         Assertions.assertEquals(1L, resultHit.getCount());
         Assertions.assertEquals("nl8888", resultHit.getUserClick().getUserId());
-        Assertions.assertEquals("did-1", resultHit.getUserClick().getDocumentId());
-        Assertions.assertEquals("Beneficial Owner", resultHit.getUserClick().getSearchType());
-        Assertions.assertEquals("-+= 6789", resultHit.getUserClick().getSearchPattern());
-        Assertions.assertEquals("9e12450d-1824-3292-a556-b5c41de79803", resultHit.getElasticId());
+        Assertions.assertEquals("12345", resultHit.getUserClick().getDocumentId());
+        Assertions.assertEquals("People", resultHit.getUserClick().getSearchType());
+        Assertions.assertEquals("Nikita", resultHit.getUserClick().getSearchPattern());
+        Assertions.assertEquals("12345-People-nl8888", resultHit.getElasticId());
     }
 }

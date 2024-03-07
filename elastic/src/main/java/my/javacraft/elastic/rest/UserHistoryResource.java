@@ -14,6 +14,7 @@ import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.UserHistoryService;
 import org.springframework.http.MediaType;
@@ -42,7 +43,7 @@ public class UserHistoryResource {
     @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UpdateResponse<UserHistory>> capture(
+    public ResponseEntity<UserClickResponse> capture(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     description = "User history values",
@@ -55,9 +56,9 @@ public class UserHistoryResource {
 
         log.info("executing capture (UserClick = {})...", userClick);
 
-        UpdateResponse<UserHistory> updateResponse = userHistoryService.capture(userClick);
+        UserClickResponse userClickResponse = userHistoryService.capture(userClick);
 
-        return ResponseEntity.ok().body(updateResponse);
+        return ResponseEntity.ok().body(userClickResponse);
     }
 
     @Operation(

@@ -7,18 +7,22 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.json.JsonpUtils;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import org.springframework.stereotype.Service;
 
 /**
  * Index 'hit_count' should be created with the 'updated' field set up as a 'date' format. See README.md.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserHistoryService {
@@ -27,7 +31,7 @@ public class UserHistoryService {
 
     private final ElasticsearchClient esClient;
 
-    public UpdateResponse<UserHistory> capture(UserClick userClick) throws IOException {
+    public UserClickResponse capture(UserClick userClick) throws IOException {
         // default scripting language in Elasticsearch is 'painless'
         // It supports java8 syntax, but doesn't support the current datetime.
         String datetime = getCurrentDate();
@@ -43,13 +47,24 @@ public class UserHistoryService {
                 .build();
 
         UserHistory userHistory = new UserHistory(datetime, userClick);
+        String documentId = userHistory.getElasticId(userClick);
         UpdateRequest<UserHistory, Object> updateRequest = new UpdateRequest.Builder<UserHistory, Object>()
                 .index(USER_HISTORY)
-                .id(userHistory.getElasticId(userClick))
+                .id(documentId)
                 .upsert(userHistory)
                 .script(script)
                 .build();
-        return esClient.update(updateRequest, UserHistory.class);
+
+        // use -Dlogging.level.tracer=TRACE to print a full curl statement
+        log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(updateRequest, esClient._jsonpMapper()));
+        // execute request to ES cluster
+        UpdateResponse<UserHistory> updateResponse = esClient.update(updateRequest, UserHistory.class);
+
+        // prepare response
+        UserClickResponse userClickResponse = new UserClickResponse();
+        userClickResponse.setDocumentId(documentId);
+        userClickResponse.setResult(updateResponse.result());
+        return userClickResponse;
     }
 
     public GetResponse<UserHistory> getUserHistory(String documentId) throws IOException {
@@ -79,6 +94,8 @@ public class UserHistoryService {
                         )
                 ).build();
 
+        // use -Dlogging.level.tracer=TRACE to print a full CURL statement or see
+        log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
         return esClient.search(searchRequest, UserHistory.class)
                 .hits()
                 .hits()

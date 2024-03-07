@@ -1,0 +1,145 @@
+package my.javacraft.elastic.cucumber.step;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.mapping.DateProperty;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.indices.*;
+import co.elastic.clients.json.JsonData;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserClickResponse;
+import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.service.UserHistoryService;
+import org.apache.http.HttpHeaders;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+
+import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
+@Slf4j
+@Scope(SCOPE_CUCUMBER_GLUE)
+public class UserHistoryDefinition {
+
+    @Value("${server.port}")
+    int port;
+
+    @Autowired
+    ElasticsearchClient esClient;
+
+    @Given("index {string} exists")
+    public void createIndex(String index) throws IOException {
+        DeleteIndexRequest request = new DeleteIndexRequest.Builder()
+                .index(index)
+                .build();
+        DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
+        log.info("{}}", deleteIndexResponse);
+
+        ExistsRequest existsRequest = new ExistsRequest.Builder().index(index).build();
+
+        BooleanResponse existsResponse = esClient.indices().exists(existsRequest);
+
+        if (existsResponse.value()) {
+            log.info("index '{}' exists", index);
+        } else {
+            CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder().index(index).build();
+
+            CreateIndexResponse createIndexResponse = esClient.indices().create(createIndexRequest);
+
+            Assertions.assertEquals(index, createIndexResponse.index());
+            log.info("index '{}' created", index);
+
+            String jsonMapping = """
+                    {
+                      "properties": {
+                        "updated": {
+                          "type": "date"
+                        }
+                      }
+                    }""";
+            PutMappingRequest putMappingRequest = new PutMappingRequest
+                    .Builder()
+                    .index(index)
+                    .withJson(new StringReader(jsonMapping))
+                    .build();
+            PutMappingResponse putMappingResponse = esClient.indices().putMapping(putMappingRequest);
+            Assertions.assertNotNull(putMappingResponse);
+            log.info("mapping for index '{}' updated", index);
+        }
+    }
+
+    @Given("user {string} doesn't have any events")
+    public void clearUserHistory(String userId) throws IOException {
+        DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
+                .index(UserHistoryService.USER_HISTORY)
+                .query(q -> q.term(t -> t
+                        .field("userClick.userId")
+                        .value(v -> v.stringValue(userId))
+                )).build();
+        DeleteByQueryResponse deleteByQueryResponse = esClient.deleteByQuery(deleteByQueryRequest);
+        Assertions.assertNotNull(deleteByQueryResponse);
+        log.info("All events for user '{}' are deleted!", userId);
+    }
+
+    @When("add new event with expected result = {string}")
+    public void addNewEvent(String expectedResult, DataTable dataTable) throws JsonProcessingException {
+        String jsonBody = jsonBody(dataTable);
+
+        log.info("created json:\n" + jsonBody);
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<UserClickResponse> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/user_history".formatted(port),
+                HttpMethod.POST,
+                entity,
+                UserClickResponse.class
+        );
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(expectedResult, httpResponse.getBody().getResult().toString());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        log.info("{}", objectMapper.writeValueAsString(httpResponse.getBody()));
+    }
+
+    private String jsonBody(DataTable dataTable) throws JsonProcessingException {
+        UserClick userClick = new UserClick();
+        List<String> data = dataTable.cells().get(0);
+        userClick.setUserId(data.get(0));
+        userClick.setDocumentId(data.get(1));
+        userClick.setSearchType(data.get(2));
+        userClick.setSearchPattern(data.get(3));
+        userClick.setClient(data.get(4));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(userClick);
+    }
+}
