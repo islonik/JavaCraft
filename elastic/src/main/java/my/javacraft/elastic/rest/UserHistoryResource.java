@@ -70,7 +70,7 @@ public class UserHistoryResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @GetMapping("/document/{documentId}")
+    @GetMapping(value = "/document/{documentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GetResponse<UserHistory>> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
@@ -90,7 +90,7 @@ public class UserHistoryResource {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @GetMapping("/user/{userId}")
+    @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserHistory>> getSearchHistory(
             @PathVariable("userId") String userId,
             @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {

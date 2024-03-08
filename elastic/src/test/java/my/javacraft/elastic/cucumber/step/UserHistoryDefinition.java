@@ -13,9 +13,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -130,9 +133,71 @@ public class UserHistoryDefinition {
         log.info("{}", objectMapper.writeValueAsString(httpResponse.getBody()));
     }
 
+    @Then("user {string} has {int} hit counts for documentId = {string}, searchType = {string} and pattern = {string}")
+    public void checkHitCounts(
+            String userId,
+            int hitCounts,
+            String documentId,
+            String type,
+            String pattern) throws InterruptedException {
+        waitAsElasticSearchIsEventuallyConsistentDB();
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/user_history/user/%s".formatted(port, userId),
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(1, httpResponse.getBody().size());
+        UserHistory userHistory = httpResponse.getBody().getFirst();
+        Assertions.assertEquals(hitCounts, userHistory.getCount());
+        Assertions.assertEquals("%s-%s-%s".formatted(documentId, type, userId), userHistory.getElasticId());
+        Assertions.assertEquals(documentId, userHistory.getUserClick().getDocumentId());
+        Assertions.assertEquals(pattern, userHistory.getUserClick().getSearchPattern());
+
+    }
+
+    @Then("user {string} has next sorting results")
+    public void testSortingOrder(String userId, DataTable dataTable) throws InterruptedException {
+        waitAsElasticSearchIsEventuallyConsistentDB();
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/user_history/user/%s".formatted(port, userId),
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(2, httpResponse.getBody().size());
+        List<List<String>> expectedResults = dataTable.cells();
+        for (int i = 0; i < httpResponse.getBody().size(); i++) {
+            UserHistory userHistory = httpResponse.getBody().get(i);
+            Assertions.assertEquals(expectedResults.get(i).get(0), userHistory.getUserClick().getSearchPattern());
+            Assertions.assertEquals(Long.parseLong(expectedResults.get(i).get(1)), userHistory.getCount());
+        }
+    }
+
     private String jsonBody(DataTable dataTable) throws JsonProcessingException {
         UserClick userClick = new UserClick();
-        List<String> data = dataTable.cells().get(0);
+        List<String> data = dataTable.cells().getFirst();
         userClick.setUserId(data.get(0));
         userClick.setDocumentId(data.get(1));
         userClick.setSearchType(data.get(2));
@@ -141,5 +206,9 @@ public class UserHistoryDefinition {
 
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(userClick);
+    }
+
+    private void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
+        Thread.sleep(1000);
     }
 }

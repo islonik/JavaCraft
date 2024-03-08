@@ -96,13 +96,15 @@ public class UserHistoryService {
 
         // use -Dlogging.level.tracer=TRACE to print a full CURL statement or see
         log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
-        return esClient.search(searchRequest, UserHistory.class)
+        List<UserHistory> userHistoryList = esClient.search(searchRequest, UserHistory.class)
                 .hits()
                 .hits()
                 .stream()
                 .filter(hit -> hit.source() != null)
                 .map(Hit::source)
                 .toList();
+        log.trace(userHistoryList.toString());
+        return userHistoryList;
     }
 
     public DeleteIndexResponse deleteIndex(String index) throws IOException {
