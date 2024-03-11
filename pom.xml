@@ -27,11 +27,11 @@
         <spring.version>6.1.4</spring.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.3.0</springdoc-openapi-starter-webmvc-ui.version>
 
-        <cucumber.version>7.15.0</cucumber.version>
         <jackson.version>2.16.1</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
-        <jakarta.xml.version>4.0.1</jakarta.xml.version>
-        <jaxb-runtime.version>4.0.4</jaxb-runtime.version>
+        <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
+        <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
+        <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
         <h2.version>2.2.224</h2.version>
         <netty.version>4.1.100.Final</netty.version>
         <liquibase.version>4.26.0</liquibase.version>
@@ -40,8 +40,10 @@
 
         <junit.platform.suite.version>1.10.2</junit.platform.suite.version>
         <junit5.version>5.10.2</junit5.version>
-        <mockito.version>5.10.0</mockito.version>
+        <mockito.version>5.11.0</mockito.version>
         <buddy.version>1.14.11</buddy.version>
+        <cucumber.version>7.15.0</cucumber.version>
+        <wiremock.version>3.4.2</wiremock.version>
     </properties>
 
     <modules>
