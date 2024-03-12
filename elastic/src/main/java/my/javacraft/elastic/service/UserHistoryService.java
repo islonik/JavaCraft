@@ -28,6 +28,8 @@ import org.springframework.stereotype.Service;
 public class UserHistoryService {
 
     public static final String USER_HISTORY = "user_history";
+    public static final String COUNT = "count";
+    public static final String UPDATED = "updated";
 
     private final ElasticsearchClient esClient;
 
@@ -36,11 +38,8 @@ public class UserHistoryService {
         // It supports java8 syntax, but doesn't support the current datetime.
         String datetime = getCurrentDate();
         InlineScript inlineScript = new InlineScript.Builder()
-                .source("""
-                                ctx._source.count++;
-                                ctx._source.updated=params['updated'];
-                        """)
-                .params("updated", JsonData.of(datetime))
+                .source(createInlineScript())
+                .params(UPDATED, JsonData.of(datetime))
                 .build();
         Script script = new Script.Builder()
                 .inline(inlineScript)
@@ -65,6 +64,13 @@ public class UserHistoryService {
         userClickResponse.setDocumentId(documentId);
         userClickResponse.setResult(updateResponse.result());
         return userClickResponse;
+    }
+
+    String createInlineScript() {
+        return """
+                ctx._source.%s++;
+                ctx._source.%s=params['%s'];
+                """.formatted(COUNT, UPDATED, UPDATED);
     }
 
     public GetResponse<UserHistory> getUserHistory(String documentId) throws IOException {

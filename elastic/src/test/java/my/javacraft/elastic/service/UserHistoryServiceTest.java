@@ -8,7 +8,6 @@ import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.json.jsonb.JsonbJsonpMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 @ExtendWith(MockitoExtension.class)
-public class UserClickServiceTest {
+public class UserHistoryServiceTest {
 
     @Mock
     ElasticsearchClient esClient;
@@ -77,5 +76,16 @@ public class UserClickServiceTest {
         Assertions.assertEquals("People", resultHit.getUserClick().getSearchType());
         Assertions.assertEquals("Nikita", resultHit.getUserClick().getSearchPattern());
         Assertions.assertEquals("12345-People-nl8888", resultHit.getElasticId());
+    }
+
+    @Test
+    public void testCreateInlineScript() {
+        UserHistoryService userHistoryService = new UserHistoryService(esClient);
+        Assertions.assertEquals("""
+                        ctx._source.count++;
+                        ctx._source.updated=params['updated'];
+                        """,
+                userHistoryService.createInlineScript()
+        );
     }
 }
