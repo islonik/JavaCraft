@@ -25,9 +25,9 @@
 
         <spring.boot>3.2.3</spring.boot>
         <spring.version>6.1.4</spring.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.3.0</springdoc-openapi-starter-webmvc-ui.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.4.0</springdoc-openapi-starter-webmvc-ui.version>
 
-        <jackson.version>2.16.1</jackson.version>
+        <jackson.version>2.17.0</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
