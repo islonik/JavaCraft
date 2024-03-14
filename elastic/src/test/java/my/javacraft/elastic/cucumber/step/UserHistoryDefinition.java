@@ -202,7 +202,6 @@ public class UserHistoryDefinition {
         userClick.setDocumentId(data.get(1));
         userClick.setSearchType(data.get(2));
         userClick.setSearchPattern(data.get(3));
-        userClick.setClient(data.get(4));
 
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(userClick);

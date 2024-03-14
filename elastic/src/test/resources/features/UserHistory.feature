@@ -6,29 +6,29 @@ Feature: UserHistoryResource
   Scenario: add new events
     Given user 'nl0000' doesn't have any events
     When add new event with expected result = 'Created'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | People     | Nikita        | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | People     | Nikita        |
     When add new event with expected result = 'Updated'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | People     | Nikita        | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | People     | Nikita        |
     When add new event with expected result = 'Updated'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | People     | Nikita        | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | People     | Nikita        |
     Then user 'nl0000' has 3 hit counts for documentId = '12345', searchType = 'People' and pattern = 'Nikita'
 
   Scenario: test sorting order
     Given user 'nl0000' doesn't have any events
     When add new event with expected result = 'Created'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | People     | Nikita        | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | People     | Nikita        |
     When add new event with expected result = 'Created'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | Company    | Microsoft     | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | Company    | Microsoft     |
     When add new event with expected result = 'Updated'
-#     | userId | documentId | searchType | searchPattern | client |
-      | nl0000 | 12345      | Company    | Microsoft     | WEB    |
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | Company    | Microsoft     |
     Then user 'nl0000' has next sorting results
-#     | Pattern   | order |
+    # | Pattern   | order |
       | Microsoft | 2     |
       | Nikita    | 1     |
 

@@ -34,8 +34,7 @@ public class UserHistoryTest {
                     "userId" : "nl8888",
                     "documentId" : "12345",
                     "searchType" : "People",
-                    "searchPattern" : "Nikita",
-                    "client" : null
+                    "searchPattern" : "Nikita"
                   }
                 }""",
                 objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(userHistory).replaceAll("\r", "")

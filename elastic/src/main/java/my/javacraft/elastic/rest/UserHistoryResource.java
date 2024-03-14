@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Slf4j
 @RestController
-@Tag(name = "HitCount", description = "List of APIs for hit count services")
+@Tag(name = "UserHistory", description = "List of APIs for hit count services")
 @RequestMapping(path = "/api/services/user_history")
 @RequiredArgsConstructor
 public class UserHistoryResource {

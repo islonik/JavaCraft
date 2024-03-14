@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.ToString;
+import my.javacraft.elastic.validatiion.ValueOfEnum;
 
 // Represents the incoming event for UserHistoryService
 @Data
@@ -17,7 +18,6 @@ public class UserClick {
     String searchType;
     @NotBlank
     String searchPattern;
-    @ValueOfEnum(enumClass = Client.class)
-    String client;
+
 
 }

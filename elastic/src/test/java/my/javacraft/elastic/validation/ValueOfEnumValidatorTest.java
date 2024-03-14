@@ -1,6 +1,9 @@
-package my.javacraft.elastic.model;
+package my.javacraft.elastic.validation;
 
 import jakarta.validation.Payload;
+import my.javacraft.elastic.model.Client;
+import my.javacraft.elastic.validatiion.ValueOfEnum;
+import my.javacraft.elastic.validatiion.ValueOfEnumValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
