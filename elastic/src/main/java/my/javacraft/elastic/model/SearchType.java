@@ -6,6 +6,7 @@ public enum SearchType {
     BOOK,
     COMPANY,
     MUSIC,
+    MOVIE,
     PERSON;
 
 }

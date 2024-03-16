@@ -1,13 +1,10 @@
 package my.javacraft.elastic.cucumber.step;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.mapping.DateProperty;
-import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.indices.*;
-import co.elastic.clients.json.JsonData;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,11 +14,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
@@ -54,17 +47,9 @@ public class UserHistoryDefinition {
 
     @Given("index {string} exists")
     public void createIndex(String index) throws IOException {
-        DeleteIndexRequest request = new DeleteIndexRequest.Builder()
-                .index(index)
-                .build();
-        DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
-        log.info("{}}", deleteIndexResponse);
+        boolean isIndexExists = isIndexExists(index);
 
-        ExistsRequest existsRequest = new ExistsRequest.Builder().index(index).build();
-
-        BooleanResponse existsResponse = esClient.indices().exists(existsRequest);
-
-        if (existsResponse.value()) {
+        if (isIndexExists) {
             log.info("index '{}' exists", index);
         } else {
             CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder().index(index).build();
@@ -90,6 +75,24 @@ public class UserHistoryDefinition {
             PutMappingResponse putMappingResponse = esClient.indices().putMapping(putMappingRequest);
             Assertions.assertNotNull(putMappingResponse);
             log.info("mapping for index '{}' updated", index);
+        }
+    }
+
+    private boolean isIndexExists(String index) {
+        try {
+            DeleteIndexRequest request = new DeleteIndexRequest.Builder()
+                    .index(index)
+                    .build();
+            DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
+            log.info("{}}", deleteIndexResponse);
+
+            ExistsRequest existsRequest = new ExistsRequest.Builder().index(index).build();
+
+            BooleanResponse existsResponse = esClient.indices().exists(existsRequest);
+            return existsResponse.value();
+        } catch (ElasticsearchException | IOException ee) {
+            log.error(ee.getMessage());
+            return false;
         }
     }
 
