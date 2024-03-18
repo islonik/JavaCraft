@@ -1,5 +1,6 @@
 package my.javacraft.elastic.rest;
 
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -7,9 +8,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.model.SearchRequest;
+import my.javacraft.elastic.model.SeekRequest;
 import my.javacraft.elastic.service.SearchService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.elasticsearch.core.document.Document;
 
-import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -30,6 +31,37 @@ import java.util.List;
 public class SearchResource {
 
     final SearchService searchService;
+
+    @Operation(
+            summary = "Wildcard search request",
+            description = "API to make a wildcard search request."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @PostMapping(
+            value = "/wildcard",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Object>> wildcardSearch(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Wildcard search request values",
+                    useParameterTypeSchema = true,
+                    content = @Content(schema = @Schema(
+                            implementation = SeekRequest.class
+                    ))
+            )
+            @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+
+        log.info("searching (SearchRequest = {})...", seekRequest);
+
+        List<Object> documentList = searchService.wildcardSearch(seekRequest);
+
+        return ResponseEntity.ok().body(documentList);
+    }
 
     @Operation(
             summary = "Search request",
@@ -49,14 +81,14 @@ public class SearchResource {
                     description = "Search request values",
                     useParameterTypeSchema = true,
                     content = @Content(schema = @Schema(
-                            implementation = SearchRequest.class
+                            implementation = SeekRequest.class
                     ))
             )
-            @RequestBody @Valid SearchRequest searchRequest)  {
+            @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
 
-        log.info("searching (SearchRequest = {})...", searchRequest);
+        log.info("searching (SearchRequest = {})...", seekRequest);
 
-        List<Document> documentList = null; // TODO: implement it
+        List<Document> documentList = searchService.search(seekRequest);
 
         return ResponseEntity.ok().body(documentList);
     }

@@ -224,3 +224,66 @@ GET /hit_count/_mapping
 DELETE /hit_count/_doc/did-1
 ```
 
+### Wildcard search
+
+Wildcard queries let you search on words with missing characters, suffixes, and prefixes. At times, we want to use wildcards to do a search. For example, when searching for Godfather movie, all possible combinations of movies with titles ending with father or god, or even missing a single character like god?ather, are expected searches. This is where we use a wildcard query.
+
+The wildcard query in Elasticsearch accepts an asterisk (*) or a question mark (?) in the search word. 
+
+The following list describes these characters.
+
+* '*' (asterisk) — searching for zero or more characters
+* '?' (question mark) — searching for a single character
+
+Simple wildcard query
+```bash
+GET movies/_search
+{
+   "query": {
+       "wildcard": {
+           "synopsis": {
+              "value": "imprisoned"
+           }
+       }
+   }
+}
+```
+
+Bool query for wildcard.
+```bash
+GET /movies/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "bool": {
+            "should": [
+              {
+                "wildcard": {
+                  "synopsis": {
+                    "boost": 1.0,
+                    "wildcard": "imprisoned"
+                  }
+                }
+              },
+              {
+                "simple_query_string": {
+                  "boost": 1.0,
+                  "analyze_wildcard": true,
+                  "default_operator": "and",
+                  "fields": [
+                    "synopsis"
+                  ],
+                  "query": "imprisoned"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+

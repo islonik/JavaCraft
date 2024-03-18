@@ -6,9 +6,9 @@ import my.javacraft.elastic.validatiion.ValueOfEnum;
 
 @Data
 @ToString
-public class SearchRequest {
+public class SeekRequest {
 
-    @ValueOfEnum(enumClass = SearchType.class)
+    @ValueOfEnum(enumClass = SeekType.class)
     String type;
 
     String pattern;

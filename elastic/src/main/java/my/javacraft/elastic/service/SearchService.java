@@ -3,12 +3,18 @@ package my.javacraft.elastic.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.model.SeekRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +31,41 @@ public class SearchService {
 
     private final ElasticsearchClient esClient;
 
+    /**
+     * The wildcard query is an expensive query due to the nature of how it was implemented.
+     * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
+     */
+    public List<Object> wildcardSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Query wildcardQuery = createWildcardBoolQuery("synopsis", seekRequest.getPattern());
+
+        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(wildcardQuery))));
+
+        SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
+
+        return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+    }
+
+    public List<Document> search(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        List<Document> searchResults = new ArrayList<>();
+//      TODO: implement it
+
+//        List<RequestItem> requestItems = new ArrayList<>();
+//
+//        MsearchRequest msearchRequest = new MsearchRequest.Builder().searches(requestItems).build();
+//
+//        List<MultiSearchResponseItem<Document>> searchResponseItems =
+//                esClient.msearch(msearchRequest, Map.class).responses();
+
+        return searchResults;
+    }
+
     public boolean isValidIndex(String index) throws IOException, ElasticsearchException {
         return esClient
                 .indices()
                 .exists(new ExistsRequest.Builder().index(index).build())
                 .value();
     }
+
 
     public Query createWildcardBoolQuery(String field, String value) {
         Query wildcardQuery = new WildcardQuery.Builder()
