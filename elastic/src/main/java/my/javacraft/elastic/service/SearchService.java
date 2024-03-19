@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.SeekRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +38,20 @@ public class SearchService {
         Query wildcardQuery = createWildcardBoolQuery("synopsis", seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(wildcardQuery))));
+
+        SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
+
+        return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+    }
+
+    /**
+     * The wildcard query is an expensive query due to the nature of how it was implemented.
+     * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
+     */
+    public List<Object> fuzzySearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Query fuzzyQuery = createFuzzyBoolQuery("synopsis", seekRequest.getPattern());
+
+        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(fuzzyQuery))));
 
         SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
 

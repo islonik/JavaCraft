@@ -224,6 +224,8 @@ GET /hit_count/_mapping
 DELETE /hit_count/_doc/did-1
 ```
 
+## Query types
+
 ### Wildcard search
 
 Wildcard queries let you search on words with missing characters, suffixes, and prefixes. At times, we want to use wildcards to do a search. For example, when searching for Godfather movie, all possible combinations of movies with titles ending with father or god, or even missing a single character like god?ather, are expected searches. This is where we use a wildcard query.
@@ -287,3 +289,47 @@ GET /movies/_search
 }
 ```
 
+### Fuzzy search
+
+Fuzzy queries are an essential component of Elasticsearch when it comes to handling approximate or imprecise search terms. 
+They allow users to search for documents containing terms that are similar to the specified query term, even if they are not exactly the same. 
+This can be particularly useful in scenarios where users might make typos, or input variations of the same term.
+
+Simple fuzzy query
+```bash
+GET movies/_search
+{
+  "query": {
+    "fuzzy": {
+      "synopsis": {
+        "value": "imprtdoned",
+        "fuzziness": 2
+      }
+    }
+  }
+}
+```
+
+Bool query for fuzzy.
+```bash
+GET /movies/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "synopsis": {
+              "boost": 1.0,
+              "fuzziness": "2",
+              "fuzzy_transpositions": true,
+              "operator": "and",
+              "query": "imprtdoned"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```

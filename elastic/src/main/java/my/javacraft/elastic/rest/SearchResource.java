@@ -64,6 +64,37 @@ public class SearchResource {
     }
 
     @Operation(
+            summary = "Fuzzy search request",
+            description = "API to make a fuzzy search request."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @PostMapping(
+            value = "/fuzzy",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Object>> fuzzySearch(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Fuzzy search request values",
+                    useParameterTypeSchema = true,
+                    content = @Content(schema = @Schema(
+                            implementation = SeekRequest.class
+                    ))
+            )
+            @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+
+        log.info("searching (SearchRequest = {})...", seekRequest);
+
+        List<Object> documentList = searchService.fuzzySearch(seekRequest);
+
+        return ResponseEntity.ok().body(documentList);
+    }
+
+    @Operation(
             summary = "Search request",
             description = "API to make a search request."
     )
