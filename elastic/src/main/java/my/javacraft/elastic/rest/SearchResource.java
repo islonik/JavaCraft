@@ -25,7 +25,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@Tag(name = "Search", description = "List of APIs for search services")
+@Tag(name = "1. Search", description = "API(s) for search services")
 @RequestMapping(path = "/api/services/search")
 @RequiredArgsConstructor
 public class SearchResource {

@@ -10,3 +10,7 @@ spring:
       schema: "https"
       ssl:
         path: "cert/ca_1703000535393.crt" # the same certificate which Kibana uses to connect to elastic search instance
+springdoc:
+  swagger-ui:
+    # turn on alphabetical ordering in Swagger
+    tagsSorter: alpha
