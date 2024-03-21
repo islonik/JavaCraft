@@ -56,7 +56,7 @@ public class SearchResource {
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
 
-        log.info("searching (SearchRequest = {})...", seekRequest);
+        log.info("searching wildcard for (SearchRequest = {})...", seekRequest);
 
         List<Object> documentList = searchService.wildcardSearch(seekRequest);
 
@@ -87,9 +87,40 @@ public class SearchResource {
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
 
-        log.info("searching (SearchRequest = {})...", seekRequest);
+        log.info("searching fuzzy for (SearchRequest = {})...", seekRequest);
 
         List<Object> documentList = searchService.fuzzySearch(seekRequest);
+
+        return ResponseEntity.ok().body(documentList);
+    }
+
+    @Operation(
+            summary = "Span search request",
+            description = "API to make a span search request."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @PostMapping(
+            value = "/span",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Object>> spanSearch(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Span search request values",
+                    useParameterTypeSchema = true,
+                    content = @Content(schema = @Schema(
+                            implementation = SeekRequest.class
+                    ))
+            )
+            @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+
+        log.info("searching span for (SearchRequest = {})...", seekRequest);
+
+        List<Object> documentList = searchService.spanQuery(seekRequest);
 
         return ResponseEntity.ok().body(documentList);
     }

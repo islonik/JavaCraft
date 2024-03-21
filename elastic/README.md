@@ -291,6 +291,17 @@ GET /movies/_search
 
 ### Fuzzy search
 
+Fuzzy query returns documents that contain terms similar to the search term, as measured by a <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein edit distance.</a>
+
+An edit distance is the number of one-character changes needed to turn one term into another. These changes can include:
+
+* Changing a character (<b>b</b>ox → f</b>ox)
+* Removing a character (<b>b</b>lack → lack)
+* Inserting a character (sic → sic<b>k</b>)
+* Transposing two adjacent characters (<b>ac</b>t → <b>ca</b>t)
+
+To find similar terms, the fuzzy query creates a set of all possible variations, or expansions, of the search term within a specified edit distance. The query then returns exact matches for each expansion.
+
 Fuzzy queries are an essential component of Elasticsearch when it comes to handling approximate or imprecise search terms. 
 They allow users to search for documents containing terms that are similar to the specified query term, even if they are not exactly the same. 
 This can be particularly useful in scenarios where users might make typos, or input variations of the same term.
@@ -326,6 +337,67 @@ GET /movies/_search
               "operator": "and",
               "query": "imprtdoned"
             }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Span query
+Span queries are low-level positional queries which provide expert control over the order and proximity of the specified terms. These are typically used to implement very specific queries on legal documents or patents.
+
+It is only allowed to set boost on an outer span query. Compound span queries, like span_near, only use the list of matching spans of inner span queries in order to find their own spans, which they then use to produce a score. Scores are never computed on inner span queries, which is the reason why boosts are not allowed: they only influence the way scores are computed, not spans.
+
+Simple span query
+```bash
+GET /movies/_search
+{
+  "query": {
+    "span_near": {
+      "clauses": [
+        { "span_term": { "field": "value1" } },
+        { "span_term": { "field": "value2" } },
+        { "span_term": { "field": "value3" } }
+      ],
+      "slop": 12,
+      "in_order": false
+    }
+  }
+}
+```
+
+Bool span query
+```bash
+GET /movies/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "span_near": {
+            "boost": 1.0,
+            "clauses": [
+              {
+                "span_term": {
+                  "synopsis": {
+                    "boost": 1.0,
+                    "value": "imprisoned"
+                  }
+                }
+              },
+              {
+                "span_term": {
+                  "synopsis": {
+                    "boost": 1.0,
+                    "value": "over"
+                  }
+                }
+              }
+            ],
+            "in_order": false,
+            "slop": 3
           }
         }
       ]

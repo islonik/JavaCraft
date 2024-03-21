@@ -45,13 +45,23 @@ public class SearchService {
     }
 
     /**
-     * The wildcard query is an expensive query due to the nature of how it was implemented.
+     * The fuzzy query is an expensive query due to the nature of how it was implemented.
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> fuzzySearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
         Query fuzzyQuery = createFuzzyBoolQuery("synopsis", seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(fuzzyQuery))));
+
+        SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
+
+        return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+    }
+
+    public List<Object> spanQuery(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Query spanQuery = createSpanQuery("synopsis", seekRequest.getPattern());
+
+        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(spanQuery))));
 
         SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
 
