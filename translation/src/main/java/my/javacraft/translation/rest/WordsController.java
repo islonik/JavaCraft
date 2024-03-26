@@ -1,4 +1,4 @@
-package my.javacraft.translation.resource;
+package my.javacraft.translation.rest;
 
 import my.javacraft.translation.service.WordCounterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +8,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/api/v1/words")
-public class WordCounterResource {
+public class WordsController {
+
+    private final WordCounterService wordCounterService;
 
     @Autowired
-    private WordCounterService wordCounterService;
+    public WordsController(WordCounterService wordCounterService) {
+        this.wordCounterService = wordCounterService;
+    }
 
     @GetMapping(value = "/{word}",
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -23,7 +27,7 @@ public class WordCounterResource {
     }
 
     @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> putNewElectricMetric(
+    public ResponseEntity<String> addWords(
             @RequestBody String text) {
         wordCounterService.addWords(text);
 

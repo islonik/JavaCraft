@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Smart", description = "List of APIs for smart metrics")
 @RequestMapping(path = "/api/v1/smart")
 @RequiredArgsConstructor
-public class SmartResource {
+public class SmartController {
 
     private final MetricsDao metricsDao;
     private final SmartService smartService;

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Gas", description = "List of APIs for gas metrics")
 @RequestMapping(path = "/api/v1/smart/{id}/gas")
 @RequiredArgsConstructor
-public class GasResource {
+public class GasController {
 
     private final GasService gasService;
 

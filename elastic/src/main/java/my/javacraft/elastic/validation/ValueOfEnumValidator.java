@@ -1,4 +1,4 @@
-package my.javacraft.elastic.validatiion;
+package my.javacraft.elastic.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

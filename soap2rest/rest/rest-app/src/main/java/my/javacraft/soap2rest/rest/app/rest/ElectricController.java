@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Electric", description = "List of APIs for electric metrics")
 @RequestMapping(path = "/api/v1/smart/{id}/electric")
 @RequiredArgsConstructor
-public class ElectricResource {
+public class ElectricController {
 
     private final ElectricService electricService;
 

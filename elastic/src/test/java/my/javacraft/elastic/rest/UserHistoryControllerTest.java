@@ -2,7 +2,6 @@ package my.javacraft.elastic.rest;
 
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,16 +20,15 @@ import org.springframework.http.ResponseEntity;
 
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
-public class UserClickResourceTest {
+public class UserHistoryControllerTest {
 
     @Mock
     UserHistoryService userHistoryService;
 
     @Test
     public void testCapture() throws IOException {
-        UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
+        UserHistoryController userHistoryController = new UserHistoryController(userHistoryService);
 
         UserClickResponse userClickResponse = Mockito.mock(UserClickResponse.class);
         when(userHistoryService.capture(any())).thenReturn(userClickResponse);
@@ -40,7 +38,7 @@ public class UserClickResourceTest {
         userClick.setSearchType("Obligor");
         userClick.setSearchPattern("1111");
 
-        ResponseEntity<UserClickResponse> response = userHistoryResource.capture(userClick);
+        ResponseEntity<UserClickResponse> response = userHistoryController.capture(userClick);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -48,7 +46,7 @@ public class UserClickResourceTest {
 
     @Test
     public void testGetHitCount() throws IOException {
-        UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
+        UserHistoryController userHistoryController = new UserHistoryController(userHistoryService);
 
         UserHistory userHistory = Mockito.mock(UserHistory.class);
         GetResponse<UserHistory> getResponse = new GetResponse.Builder<UserHistory>()
@@ -57,9 +55,9 @@ public class UserClickResourceTest {
                 .id("part-of-mock-so-any-id")
                 .source(userHistory)
                 .build();
-        when(userHistoryService.getUserHistory(anyString())).thenReturn(getResponse);
+        when(userHistoryService.getUserHistoryByDocumentId(anyString())).thenReturn(getResponse);
 
-        ResponseEntity<GetResponse<UserHistory>> response = userHistoryResource
+        ResponseEntity<GetResponse<UserHistory>> response = userHistoryController
                 .getHitCount("documentId");
 
         Assertions.assertNotNull(response);
@@ -68,12 +66,12 @@ public class UserClickResourceTest {
 
     @Test
     public void testGetSearchHistory() throws IOException {
-        UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
+        UserHistoryController userHistoryController = new UserHistoryController(userHistoryService);
 
         List<UserHistory> historyList = new ArrayList<>();
         when(userHistoryService.searchHistoryByUserId(anyString(), anyInt())).thenReturn(historyList);
 
-        ResponseEntity<List<UserHistory>> response = userHistoryResource
+        ResponseEntity<List<UserHistory>> response = userHistoryController
                 .getSearchHistory("nl88888", "10");
 
         Assertions.assertNotNull(response);
@@ -82,12 +80,12 @@ public class UserClickResourceTest {
 
     @Test
     public void testDeleteIndex() throws IOException {
-        UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
+        UserHistoryController userHistoryController = new UserHistoryController(userHistoryService);
 
         DeleteIndexResponse deleteIndexResponse = Mockito.mock(DeleteIndexResponse.class);
         when(userHistoryService.deleteIndex(anyString())).thenReturn(deleteIndexResponse);
 
-        ResponseEntity<DeleteIndexResponse> response = userHistoryResource
+        ResponseEntity<DeleteIndexResponse> response = userHistoryController
                 .deleteIndex("nl88888");
 
         Assertions.assertNotNull(response);
@@ -96,12 +94,12 @@ public class UserClickResourceTest {
 
     @Test
     public void testDeleteHitCountDocument() throws IOException {
-        UserHistoryResource userHistoryResource = new UserHistoryResource(userHistoryService);
+        UserHistoryController userHistoryController = new UserHistoryController(userHistoryService);
 
         DeleteResponse deleteResponse = Mockito.mock(DeleteResponse.class);
         when(userHistoryService.deleteDocument(anyString(), anyString())).thenReturn(deleteResponse);
 
-        ResponseEntity<DeleteResponse> response = userHistoryResource
+        ResponseEntity<DeleteResponse> response = userHistoryController
                 .deleteHitCountDocument("hit_count", "nl88888");
 
         Assertions.assertNotNull(response);

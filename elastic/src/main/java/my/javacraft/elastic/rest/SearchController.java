@@ -28,7 +28,7 @@ import java.util.List;
 @Tag(name = "1. Search", description = "API(s) for search services")
 @RequestMapping(path = "/api/services/search")
 @RequiredArgsConstructor
-public class SearchResource {
+public class SearchController {
 
     final SearchService searchService;
 
@@ -120,7 +120,7 @@ public class SearchResource {
 
         log.info("searching span for (SearchRequest = {})...", seekRequest);
 
-        List<Object> documentList = searchService.spanQuery(seekRequest);
+        List<Object> documentList = searchService.spanSearch(seekRequest);
 
         return ResponseEntity.ok().body(documentList);
     }

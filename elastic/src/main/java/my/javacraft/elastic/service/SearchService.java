@@ -58,7 +58,7 @@ public class SearchService {
         return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
     }
 
-    public List<Object> spanQuery(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+    public List<Object> spanSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
         Query spanQuery = createSpanQuery("synopsis", seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(spanQuery))));
@@ -121,7 +121,7 @@ public class SearchService {
                 // If true, edits for fuzzy matching include transpositions of two adjacent characters (for example, ab to ba).
                 .fuzzyTranspositions(true)
                 .operator(Operator.And)
-                .field((field))
+                .field(field)
                 .query(value)
                 .build()
                 ._toQuery();

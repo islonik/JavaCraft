@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/v1/links")
 @RequiredArgsConstructor
-public class LinkResource {
+public class LinkController {
 
     private final LinkRepository linkRepository;
     private final LinkServices linkServices;
@@ -31,6 +31,7 @@ public class LinkResource {
     @GetMapping(value = "/{shortUrl}")
     public ResponseEntity<byte []> shortUrl2FullUrl(@PathVariable String shortUrl) {
         String url = linkRepository.findLinkByShortUrl(shortUrl).getUrl();
+
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, url);
 

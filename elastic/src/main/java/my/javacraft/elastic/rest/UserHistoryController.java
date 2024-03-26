@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "2. User history", description = "API(s) for hit count services")
 @RequestMapping(path = "/api/services/user_history")
 @RequiredArgsConstructor
-public class UserHistoryResource {
+public class UserHistoryController {
 
     private final UserHistoryService userHistoryService;
 
@@ -76,7 +76,7 @@ public class UserHistoryResource {
 
         log.info("executing getHitCount (documentId = '{}')...", documentId);
 
-        GetResponse<UserHistory> map = userHistoryService.getUserHistory(documentId);
+        GetResponse<UserHistory> map = userHistoryService.getUserHistoryByDocumentId(documentId);
 
         return ResponseEntity.ok().body(map);
     }

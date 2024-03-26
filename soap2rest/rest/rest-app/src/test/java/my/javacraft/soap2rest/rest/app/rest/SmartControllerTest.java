@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class SmartResourceTest {
+public class SmartControllerTest {
 
     @Mock
     MetricsDao metricsDao;
@@ -27,17 +27,17 @@ public class SmartResourceTest {
     @Mock
     SmartService smartService;
 
-    SmartResource smartResource;
+    SmartController smartController;
 
     @BeforeEach
     public void beforeEach() {
-        this.smartResource = new SmartResource(metricsDao, smartService);
-        this.smartResource.setSmartMessage("Hello World!");
+        this.smartController = new SmartController(metricsDao, smartService);
+        this.smartController.setSmartMessage("Hello World!");
     }
 
     @Test
     public void testGetDefaultMessage() {
-        ResponseEntity<String> response = smartResource.getDefault();
+        ResponseEntity<String> response = smartController.getDefault();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -48,7 +48,7 @@ public class SmartResourceTest {
     public void testGetMetrics() {
         when(metricsDao.findByAccountId(eq(111L))).thenReturn(createMetrics());
 
-        ResponseEntity<Metrics> response = smartResource.getMetrics(111L);
+        ResponseEntity<Metrics> response = smartController.getMetrics(111L);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -59,7 +59,7 @@ public class SmartResourceTest {
     public void testGetLatestMetrics() {
         when(metricsDao.findLatestMetrics(eq(111L))).thenReturn(createMetrics());
 
-        ResponseEntity<Metrics> response = smartResource.getLatestMetrics(111L);
+        ResponseEntity<Metrics> response = smartController.getLatestMetrics(111L);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -70,7 +70,7 @@ public class SmartResourceTest {
     public void testPutMetrics() {
         when(smartService.submit(any())).thenReturn(Boolean.TRUE);
 
-        ResponseEntity<Boolean> response = smartResource.putMetrics(createMetrics());
+        ResponseEntity<Boolean> response = smartController.putMetrics(createMetrics());
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -81,7 +81,7 @@ public class SmartResourceTest {
     public void testDeleteAllMetrics() {
         when(smartService.deleteAll()).thenReturn(Boolean.TRUE);
 
-        ResponseEntity<Boolean> response = smartResource.deleteAllMetrics();
+        ResponseEntity<Boolean> response = smartController.deleteAllMetrics();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import my.javacraft.soap2rest.rest.api.Metric;
-import my.javacraft.soap2rest.rest.app.service.GasService;
+import my.javacraft.soap2rest.rest.app.service.ElectricService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,65 +12,62 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.atLeastOnce;
 
 @ExtendWith(MockitoExtension.class)
-public class GasResourceTest {
+public class ElectricControllerTest {
 
     @Mock
-    GasService gasService;
+    ElectricService electricService;
 
     @Test
     public void testGetElectricMetrics() {
-        GasResource gasResource = new GasResource(gasService);
+        ElectricController electricController = new ElectricController(electricService);
 
-        when(gasService.getMetricsByAccountId(anyLong())).thenReturn(createMetricList());
+        when(electricService.getMetricsByAccountId(anyLong())).thenReturn(createMetricList());
 
-        ResponseEntity<List<Metric>> response = gasResource.getGasMetrics(1L);
+        ResponseEntity<List<Metric>> response = electricController.getElectricMetrics(1L);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
         Assertions.assertEquals(1, response.getBody().size());
-        verify(gasService, atLeastOnce()).getMetricsByAccountId(anyLong());
+        verify(electricService, atLeastOnce()).getMetricsByAccountId(anyLong());
     }
 
     @Test
     public void testGetLatestElectricMetric() {
-        GasResource gasResource = new GasResource(gasService);
+        ElectricController electricController = new ElectricController(electricService);
 
-        when(gasService.findLatestMetric(anyLong())).thenReturn(createMetricList().get(0));
+        when(electricService.findLatestMetric(anyLong())).thenReturn(createMetricList().getFirst());
 
-        ResponseEntity<Metric> response = gasResource.getLatestGasMetric(1L);
+        ResponseEntity<Metric> response = electricController.getLatestElectricMetric(1L);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(gasService, atLeastOnce()).findLatestMetric(anyLong());
+        verify(electricService, atLeastOnce()).findLatestMetric(anyLong());
     }
 
     @Test
     public void testPutNewElectricMetric() {
-        GasResource gasResource = new GasResource(gasService);
+        ElectricController electricController = new ElectricController(electricService);
 
-        Metric metric = createMetricList().get(0);
-        when(gasService.submit(any())).thenReturn(metric);
+        Metric metric = createMetricList().getFirst();
+        when(electricService.submit(any())).thenReturn(metric);
 
-        ResponseEntity<Metric> response = gasResource.putNewGasMetric(metric);
+        ResponseEntity<Metric> response = electricController.putNewElectricMetric(metric);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(gasService, atLeastOnce()).submit(any());
+        verify(electricService, atLeastOnce()).submit(any());
     }
 
     @Test
     public void testDeleteAllElectricMetrics() {
-        GasResource gasResource = new GasResource(gasService);
+        ElectricController electricController = new ElectricController(electricService);
 
-        when(gasService.deleteAll()).thenReturn(Boolean.TRUE);
+        when(electricService.deleteAll()).thenReturn(Boolean.TRUE);
 
-        ResponseEntity<Boolean> response = gasResource.deleteAllGasMetrics();
+        ResponseEntity<Boolean> response = electricController.deleteAllElectricMetrics();
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(gasService, atLeastOnce()).deleteAll();
+        verify(electricService, atLeastOnce()).deleteAll();
     }
 
     private List<Metric> createMetricList() {
@@ -83,5 +80,4 @@ public class GasResourceTest {
         metricList.add(metric);
         return metricList;
     }
-    
 }

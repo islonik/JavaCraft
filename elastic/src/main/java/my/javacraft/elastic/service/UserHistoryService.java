@@ -73,7 +73,7 @@ public class UserHistoryService {
                 """.formatted(COUNT, UPDATED, UPDATED);
     }
 
-    public GetResponse<UserHistory> getUserHistory(String documentId) throws IOException {
+    public GetResponse<UserHistory> getUserHistoryByDocumentId(String documentId) throws IOException {
         GetRequest getRequest = new GetRequest.Builder()
                 .index(USER_HISTORY)
                 .id(documentId)

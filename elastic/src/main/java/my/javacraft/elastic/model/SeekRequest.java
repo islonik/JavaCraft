@@ -2,7 +2,7 @@ package my.javacraft.elastic.model;
 
 import lombok.Data;
 import lombok.ToString;
-import my.javacraft.elastic.validatiion.ValueOfEnum;
+import my.javacraft.elastic.validation.ValueOfEnum;
 
 @Data
 @ToString

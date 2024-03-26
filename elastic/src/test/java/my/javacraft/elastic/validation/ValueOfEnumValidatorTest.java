@@ -2,8 +2,6 @@ package my.javacraft.elastic.validation;
 
 import jakarta.validation.Payload;
 import my.javacraft.elastic.model.Client;
-import my.javacraft.elastic.validatiion.ValueOfEnum;
-import my.javacraft.elastic.validatiion.ValueOfEnumValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +20,7 @@ public class ValueOfEnumValidatorTest {
         Assertions.assertFalse(validator.isValid(null, null));
     }
 
-    private class TestValuesOfValueOfEnum implements ValueOfEnum {
+    private static class TestValuesOfValueOfEnum implements ValueOfEnum {
         @Override
         public String message() {
             return "Test Message";
