@@ -3,13 +3,19 @@ package my.javacraft.elastic.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch.core.MsearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.msearch.MultiSearchResponseItem;
+import co.elastic.clients.elasticsearch.core.msearch.MultisearchBody;
+import co.elastic.clients.elasticsearch.core.msearch.MultisearchHeader;
+import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +34,8 @@ public class SearchService {
     // A value greater than 1.0 increases the relevance score.
     private static final Float NEUTRAL_VALUE = 1f;
 
+    private static final String SYNOPSIS = "synopsis";
+
     private final ElasticsearchClient esClient;
 
     /**
@@ -35,7 +43,7 @@ public class SearchService {
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> wildcardSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query wildcardQuery = createWildcardBoolQuery("synopsis", seekRequest.getPattern());
+        Query wildcardQuery = createWildcardBoolQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(wildcardQuery))));
 
@@ -49,7 +57,7 @@ public class SearchService {
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> fuzzySearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query fuzzyQuery = createFuzzyBoolQuery("synopsis", seekRequest.getPattern());
+        Query fuzzyQuery = createFuzzyBoolQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(fuzzyQuery))));
 
@@ -59,7 +67,7 @@ public class SearchService {
     }
 
     public List<Object> spanSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query spanQuery = createSpanQuery("synopsis", seekRequest.getPattern());
+        Query spanQuery = createSpanQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(spanQuery))));
 
@@ -69,17 +77,70 @@ public class SearchService {
     }
 
     public List<Document> search(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        List<RequestItem> requestItems = createRequestItems(seekRequest);
+
+        // executing several searches with a single API request.
+        MsearchRequest msearchRequest = new MsearchRequest.Builder().searches(requestItems).build();
+
+        // filtering results
+        List<MultiSearchResponseItem<Map>> searchResponses =
+                esClient.msearch(msearchRequest, Map.class)
+                        .responses();
+
+        List<List<Document>> results = searchResponses
+                .stream()
+                .filter(MultiSearchResponseItem::isResult)
+                .map(response -> response
+                        .result()
+                        .hits()
+                        .hits()
+                        .stream()
+                        .filter(hit -> hit.id() != null)
+                        .filter(hit -> hit.source() != null)
+                        .map(hit -> Document.from(hit.source()))
+                        .toList()
+                )
+                .toList();
+
         List<Document> searchResults = new ArrayList<>();
-//      TODO: implement it
-
-//        List<RequestItem> requestItems = new ArrayList<>();
-//
-//        MsearchRequest msearchRequest = new MsearchRequest.Builder().searches(requestItems).build();
-//
-//        List<MultiSearchResponseItem<Document>> searchResponseItems =
-//                esClient.msearch(msearchRequest, Map.class).responses();
-
+        results.forEach(searchResults::addAll);
         return searchResults;
+    }
+
+    private List<RequestItem> createRequestItems(SeekRequest seekRequest) {
+        List<RequestItem> requestItems = new ArrayList<>();
+
+        List<BoolQuery> boolQueries = new ArrayList<>();
+
+        List<String> fields = new ArrayList<>();
+        fields.add(SYNOPSIS);
+        // 1 field -> 1 wildcard query
+        fields.forEach(field -> {
+            Query query = createWildcardBoolQuery(field, seekRequest.getPattern());
+
+            boolQueries.add(new BoolQuery.Builder()
+                    .boost(NEUTRAL_VALUE)
+                    .must(query)
+                    .build()
+            );
+        });
+
+        // 1 wildcard query -> 1 requestItem
+        boolQueries.forEach(boolQuery -> {
+            requestItems.add(
+                    new RequestItem.Builder()
+                            .header(new MultisearchHeader.Builder()
+                                    .index(seekRequest.getType())
+                                    .build()
+                            )
+                            .body(new MultisearchBody.Builder()
+                                    .query(boolQuery._toQuery())
+                                    .build()
+                            )
+                            .build()
+            );
+        });
+        return requestItems;
     }
 
     public boolean isValidIndex(String index) throws IOException, ElasticsearchException {

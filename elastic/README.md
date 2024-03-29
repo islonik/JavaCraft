@@ -405,3 +405,47 @@ GET /movies/_search
   }
 }
 ```
+
+### Multi-Search query
+
+Elasticsearch provides a powerful and efficient way to execute multiple search queries in a single request using the Multi-Search API (_msearch). 
+This feature allows you to send multiple search requests within a single HTTP request, reducing the overhead of multiple round-trips to the server. 
+In this article, we will discuss the benefits, use cases, and best practices for optimizing _msearch in Elasticsearch.
+
+```bash
+GET /movies/_search
+{
+  "query": {
+    "bool": {
+      "boost": 1.0,
+      "must": [
+        {
+          "bool": {
+            "should": [
+              {
+                "wildcard": {
+                  "synopsis": {
+                    "boost": 1.0,
+                    "wildcard": "imprisoned"
+                  }
+                }
+              },
+              {
+                "simple_query_string": {
+                  "boost": 1.0,
+                  "analyze_wildcard": true,
+                  "default_operator": "and",
+                  "fields": [
+                    "synopsis"
+                  ],
+                  "query": "imprisoned"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
