@@ -1,0 +1,120 @@
+package my.javacraft.elastic.cucumber.step;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.When;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.model.Client;
+import my.javacraft.elastic.model.SeekRequest;
+import org.apache.http.HttpHeaders;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+
+import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
+
+@Slf4j
+@Scope(SCOPE_CUCUMBER_GLUE)
+public class SearchDefinition {
+
+    @Value("${server.port}")
+    int port;
+
+    @Autowired
+    ElasticsearchClient esClient;
+
+    @When("wildcard search for {string} in {string}")
+    public void testWildcard(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
+        waitAsElasticSearchIsEventuallyConsistentDB();
+
+        String jsonBody = jsonBody(pattern, type);
+
+        log.info("created json:\n" + jsonBody);
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<List<Object>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/search/wildcard".formatted(port),
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(1, httpResponse.getBody().size());
+        LinkedHashMap map = (LinkedHashMap)httpResponse.getBody().getFirst();
+        List<String> row = dataTable.cells().getFirst();
+
+        Assertions.assertEquals(row.get(0), map.get("title"));
+        Assertions.assertEquals(row.get(1), map.get("director"));
+        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
+        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+    }
+
+    @When("fuzzy search for {string} in {string}")
+    public void testFuzzy(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
+        waitAsElasticSearchIsEventuallyConsistentDB();
+
+        String jsonBody = jsonBody(pattern, type);
+
+        log.info("created json:\n" + jsonBody);
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<List<Object>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/search/fuzzy".formatted(port),
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertEquals(1, httpResponse.getBody().size());
+        LinkedHashMap map = (LinkedHashMap)httpResponse.getBody().getFirst();
+        List<String> row = dataTable.cells().getFirst();
+
+        Assertions.assertEquals(row.get(0), map.get("title"));
+        Assertions.assertEquals(row.get(1), map.get("director"));
+        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
+        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+    }
+
+    private String jsonBody(String pattern, String type) throws JsonProcessingException {
+        SeekRequest seekRequest = new SeekRequest();
+        seekRequest.setType(type);
+        seekRequest.setPattern(pattern);
+        seekRequest.setClient(Client.WEB.toString());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(seekRequest);
+    }
+
+    private void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
+        Thread.sleep(1000);
+    }
+}

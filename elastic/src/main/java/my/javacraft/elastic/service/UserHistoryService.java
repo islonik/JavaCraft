@@ -11,12 +11,14 @@ import co.elastic.clients.json.JsonpUtils;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,6 +34,17 @@ public class UserHistoryService {
     public static final String UPDATED = "updated";
 
     private final ElasticsearchClient esClient;
+    private final DateTimeFormatter isoInstant;
+
+    @Autowired
+    public UserHistoryService(ElasticsearchClient esClient) {
+        this.esClient = esClient;
+
+        this.isoInstant = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendInstant(3)
+                .toFormatter();
+    }
 
     public UserClickResponse capture(UserClick userClick) throws IOException {
         // default scripting language in Elasticsearch is 'painless'
@@ -94,7 +107,7 @@ public class UserHistoryService {
                 // the result values with the highest count are going to be displayed
                 .sort(so -> so.field(
                                 FieldSort.of(f -> f
-                                        .field("count")
+                                        .field(COUNT)
                                         .order(SortOrder.Desc)
                                 )
                         )
@@ -128,8 +141,8 @@ public class UserHistoryService {
         return esClient.delete(request);
     }
 
-    // returns: 2024-01-08T18:16:41.530571300Z
+    // returns: 2024-01-08T18:16:41.531Z
     private String getCurrentDate() {
-        return DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        return isoInstant.format(Instant.now());
     }
 }
