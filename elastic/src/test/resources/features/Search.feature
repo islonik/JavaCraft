@@ -13,3 +13,13 @@ Feature: test SearchController
     Then fuzzy search for 'imprtdoned' in 'movies'
     # | title                    | director       | release_year | synopsis |
       | The Shawshank Redemption | Frank Darabont | 1994         | Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency. |
+
+  Scenario: span search
+    Then span search for 'imprisoned over' in 'movies'
+    # | title                    | director       | release_year | synopsis |
+      | The Shawshank Redemption | Frank Darabont | 1994         | Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency. |
+
+  Scenario: search
+    Then search for 'imprisoned' in 'movies'
+    # | title                    | director       | release_year | synopsis |
+      | The Shawshank Redemption | Frank Darabont | 1994         | Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency. |
