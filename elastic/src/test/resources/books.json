@@ -1,0 +1,802 @@
+[
+  {
+    "name": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "ranking": 1,
+    "release_year": 1960,
+    "genres": ["Fiction", "Classics"],
+    "synopsis": "One of the best-loved stories of all time, To Kill a Mockingbird has been translated into more than forty languages, sold more than forty million copies worldwide, served as the basis for an enormously popular motion picture, and was voted one of the best novels of the twentieth century by librarians across the country. A gripping, heart-wrenching, and wholly remarkable tale of coming-of-age in a South poisoned by virulent prejudice, it views a world of great beauty and savage inequities through the eyes of a young girl, as her father—a crusading local lawyer—risks everything to defend a black man unjustly accused of a terrible crime."
+  },
+  {
+    "name": "Outlander (Series)",
+    "author": "Diana Gabaldon",
+    "ranking": 2,
+    "release_year": 1991,
+    "genres": ["Historical Fiction", "Romance", "Science Fiction", "Fantasy"],
+    "synopsis": "The Outlander series is a sequence of novels and shorter works written by Diana Gabaldon that feature elements of historical fiction, romance, mystery, adventure, and science fiction/fantasy. The main series follows the story of Claire Randall, a married World War II nurse who is mysteriously transported back in time to Scotland in 1743, where she meets and falls in love with Jamie Fraser, a Highland warrior."
+  },
+  {
+    "name": "Harry Potter Series",
+    "author": "J.K. Rowling",
+    "ranking": 3,
+    "release_year": 1997,
+    "genres": ["Fantasy", "Young Adult", "Magic"],
+    "synopsis": "The Harry Potter series follows the life and adventures of a young wizard, Harry Potter, and his friends Hermione Granger and Ron Weasley, all of whom are students at Hogwarts School of Witchcraft and Wizardry. The main story arc concerns Harry's struggle against the dark wizard Lord Voldemort, who aims to become immortal, conquer the wizarding world, subjugate non-magical people, and destroy all those who stand in his way, especially Harry Potter."
+  },
+  {
+    "name": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "ranking": 4,
+    "release_year": 1813,
+    "genres": ["Classic", "Romance", "Fiction"],
+    "synopsis": "Pride and Prejudice is a romantic novel by Jane Austen, first published in 1813. The story follows the main character, Elizabeth Bennet, as she deals with issues of manners, upbringing, morality, education, and marriage in the society of the landed gentry of early 19th-century England. Elizabeth is the second of five daughters of a country gentleman living near the fictional town of Meryton in Hertfordshire, near London."
+  },
+  {
+    "name": "The Lord of the Rings Series",
+    "author": "J.R.R. Tolkien",
+    "ranking": 5,
+    "release_year": 1954,
+    "genres": ["Fantasy", "Adventure"],
+    "synopsis": "The Lord of the Rings is an epic high-fantasy novel written by J.R.R. Tolkien, which was originally published as a single volume in 1954. It is set in the fictional world of Middle-earth and follows the quest undertaken by the hobbit Frodo Baggins and the Fellowship of the Ring to destroy the One Ring, an object of immense power created by the Dark Lord Sauron to control the other Rings of Power. The series explores themes of good versus evil, heroism, friendship, and the corrupting influence of power."
+  },
+  {
+    "name": "Gone with the Wind",
+    "author": "Margaret Mitchell",
+    "ranking": 6,
+    "release_year": 1936,
+    "genres": ["Historical Fiction", "Romance"],
+    "synopsis": "Gone with the Wind is a novel by American writer Margaret Mitchell, first published in 1936. The story is set in Clayton County and Atlanta, both in Georgia, during the American Civil War and Reconstruction Era. It depicts the struggles of young Scarlett O'Hara, the spoiled daughter of a well-to-do plantation owner, who must use every means at her disposal to claw her way out of poverty following the destruction of her family's plantation by the war."
+  },
+  {
+    "name": "Charlotte's Web",
+    "author": "E.B. White",
+    "ranking": 7,
+    "release_year": 1952,
+    "genres": ["Children's Literature", "Fiction"],
+    "synopsis": "Charlotte's Web is a children's novel by American author E.B. White, illustrated by Garth Williams, and published in 1952. It tells the story of a pig named Wilbur and his friendship with a barn spider named Charlotte. When Wilbur is in danger of being slaughtered by the farmer, Charlotte writes messages praising Wilbur in her web in order to persuade the farmer to let him live. The novel explores themes of friendship, loyalty, and the circle of life."
+  },
+  {
+    "name": "Little Women",
+    "author": "Louisa May Alcott",
+    "ranking": 8,
+    "release_year": 1868,
+    "genres": ["Classic", "Fiction"],
+    "synopsis": "Little Women is a novel by American author Louisa May Alcott, which was originally published in two volumes in 1868 and 1869. It follows the lives of the four March sisters—Meg, Jo, Beth, and Amy—as they grow from childhood to womanhood in Concord, Massachusetts, during the Civil War. The novel explores themes of family, sisterhood, love, and the struggle for independence and self-discovery."
+  },
+  {
+    "name": "The Chronicles of Narnia Series",
+    "author": "C.S. Lewis",
+    "ranking": 9,
+    "release_year": 1950,
+    "genres": ["Fantasy", "Children's Literature"],
+    "synopsis": "The Chronicles of Narnia is a series of seven fantasy novels by C.S. Lewis. The series is set in the fictional realm of Narnia, a magical world where animals talk and mythical creatures exist. The books follow the adventures of various children who are transported to Narnia from the real world and become involved in the struggles between good and evil. The series explores themes of loyalty, courage, faith, and redemption."
+  },
+  {
+    "name": "Jane Eyre",
+    "author": "Charlotte Brontë",
+    "ranking": 10,
+    "release_year": 1847,
+    "genres": ["Gothic Fiction", "Romance", "Classic"],
+    "synopsis": "Jane Eyre is a novel by English writer Charlotte Brontë, published in 1847 under the pen name 'Currer Bell.' The story follows the experiences of its eponymous heroine, including her growth to adulthood and her love for Mr. Rochester, the brooding master of Thornfield Hall. Jane Eyre is noted for its exploration of social class, morality, and the struggle for independence, as well as its portrayal of a strong, principled female protagonist."
+  },
+  {
+    "name": "Anne of Green Gables",
+    "author": "Lucy Maud Montgomery",
+    "ranking" : 11,
+    "release_year": 1908,
+    "genres": ["Children's Literature", "Classic", "Fiction"],
+    "synopsis": "Anne of Green Gables is a novel by Canadian author Lucy Maud Montgomery. It was first published in 1908 and follows the adventures of Anne Shirley, an imaginative and spirited orphan girl who is mistakenly sent to live with Marilla and Matthew Cuthbert, an elderly brother and sister who had intended to adopt a boy to help them with their farm work in the fictional community of Avonlea on Prince Edward Island. The novel explores themes of friendship, family, and the search for belonging."
+  },
+  {
+    "name": "The Grapes of Wrath",
+    "author": "John Steinbeck",
+    "ranking" : 12,
+    "release_year": 1939,
+    "genres": ["Fiction", "Historical Fiction"],
+    "synopsis": "The Grapes of Wrath is a novel by John Steinbeck, published in 1939. It tells the story of the Joads, a poor family of tenant farmers driven from their Oklahoma home by drought, economic hardship, and changes in the agriculture industry during the Great Depression. The novel is widely regarded as a masterpiece of American literature and explores themes of resilience, social injustice, and the human spirit."
+  },
+  {
+    "name": "A Tree Grows in Brooklyn",
+    "author": "Betty Smith",
+    "ranking" : 13,
+    "release_year": 1943,
+    "genres": ["Fiction", "Coming-of-age"],
+    "synopsis": "A Tree Grows in Brooklyn is a semi-autobiographical novel by Betty Smith, published in 1943. It follows the life of Francie Nolan, a young girl growing up in the Williamsburg neighborhood of Brooklyn in the early 20th century. The novel explores themes of poverty, family, education, and the immigrant experience."
+  },
+  {
+    "name": "The Book Thief",
+    "author": "Markus Zusak",
+    "ranking" : 14,
+    "release_year": 2005,
+    "genres": ["Historical Fiction", "Young Adult"],
+    "synopsis": "The Book Thief is a novel by Markus Zusak, published in 2005. Set in Nazi Germany during World War II, it follows the story of Liesel Meminger, a young girl who finds solace in stealing books and sharing them with others during a time of great adversity. The novel is narrated by Death and explores themes of loss, hope, and the power of words."
+  },
+  {
+    "name": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "ranking" : 15,
+    "release_year": 1925,
+    "genres": ["Fiction", "Classic"],
+    "synopsis": "The Great Gatsby is a novel by F. Scott Fitzgerald, published in 1925. Set in the Jazz Age on Long Island, it tells the story of the enigmatic millionaire Jay Gatsby and his pursuit of the elusive Daisy Buchanan. The novel explores themes of the American Dream, wealth, love, and the moral decay of society."
+  },
+  {
+    "name": "The Help",
+    "author": "Kathryn Stockett",
+    "ranking" : 16,
+    "release_year": 2009,
+    "genres": ["Historical Fiction", "Drama"],
+    "synopsis": "The Help is a novel by Kathryn Stockett, published in 2009. Set in Jackson, Mississippi, during the early 1960s, it tells the story of African American maids working in white households and their relationships with their employers. The novel explores themes of racism, prejudice, and the power of friendship."
+  },
+  {
+    "name": "The Adventures of Tom Sawyer",
+    "author": "Mark Twain",
+    "ranking" : 17,
+    "release_year": 1876,
+    "genres": ["Fiction", "Adventure"],
+    "synopsis": "The Adventures of Tom Sawyer is a novel by Mark Twain, first published in 1876. It follows the adventures of Tom Sawyer, a young boy growing up along the Mississippi River in the fictional town of St. Petersburg, Missouri. The novel is a classic of American literature and explores themes of childhood, friendship, and morality."
+  },
+  {
+    "name": "1984",
+    "author": "George Orwell",
+    "ranking" : 18,
+    "release_year": 1949,
+    "genres": ["Dystopian", "Science Fiction"],
+    "synopsis": "1984 is a dystopian novel by George Orwell, published in 1949. Set in a totalitarian society ruled by the Party led by Big Brother, it follows the life of Winston Smith, a low-ranking member of the Party, as he grapples with oppression, surveillance, and thought control. The novel explores themes of government surveillance, propaganda, and individual freedom."
+  },
+  {
+    "name": "And Then There Were None",
+    "author": "Agatha Christie",
+    "ranking" : 19,
+    "release_year": 1939,
+    "genres": ["Mystery", "Thriller"],
+    "synopsis": "And Then There Were None is a mystery novel by Agatha Christie, first published in 1939. It follows ten strangers who are invited to a remote island under various pretexts, only to find themselves accused of past crimes and being systematically murdered one by one. The novel is considered one of Christie's masterpiece and is known for its clever plot and unexpected twists."
+  },
+  {
+    "name": "Atlas Shrugged",
+    "author": "Ayn Rand",
+    "ranking" : 20,
+    "release_year": 1957,
+    "genres": ["Philosophical Fiction", "Political Fiction"],
+    "synopsis": "Atlas Shrugged is a novel by Ayn Rand, published in 1957. Set in a dystopian United States, it portrays a world where individualism and innovation are stifled by government regulations and collectivism. The novel follows the story of Dagny Taggart, a railroad executive, and explores themes of capitalism, individualism, and the role of government in society."
+  },
+  {
+    "name": "Wuthering Heights",
+    "author": "Emily Brontë",
+    "ranking" : 21,
+    "release_year": 1847,
+    "genres": ["Gothic Fiction", "Romance", "Tragedy"],
+    "synopsis": "Wuthering Heights is a novel by Emily Brontë, published in 1847 under the pseudonym 'Ellis Bell.' It tells the story of the passionate and destructive love between Heathcliff and Catherine Earnshaw, set in the Yorkshire moors of England. The novel explores themes of love, revenge, social class, and the supernatural."
+  },
+  {
+    "name": "Lonesome Dove",
+    "author": "Larry McMurtry",
+    "ranking" : 22,
+    "release_year": 1985,
+    "genres": ["Western", "Historical Fiction"],
+    "synopsis": "Lonesome Dove is a novel by Larry McMurtry, published in 1985. Set in the late 19th century, it follows the journey of former Texas Rangers Gus McCrae and Woodrow F. Call as they lead a cattle drive from Texas to Montana. The novel explores themes of friendship, loyalty, and the changing American frontier."
+  },
+  {
+    "name": "The Pillars of the Earth",
+    "author": "Ken Follett",
+    "ranking" : 23,
+    "release_year": 1989,
+    "genres": ["Historical Fiction"],
+    "synopsis": "The Pillars of the Earth is a historical novel by Ken Follett, published in 1989. Set in 12th-century England, it follows the construction of a cathedral in the fictional town of Kingsbridge against the backdrop of political intrigue, war, and religious strife. The novel explores themes of ambition, power, and the resilience of the human spirit."
+  },
+  {
+    "name": "The Stand",
+    "author": "Stephen King",
+    "ranking" : 24,
+    "release_year": 1978,
+    "genres": ["Horror", "Post-Apocalyptic"],
+    "synopsis": "The Stand is a novel by Stephen King, originally published in 1978 and later revised and republished in 1990. It tells the story of a global pandemic caused by a deadly strain of influenza that wipes out most of the world's population. The survivors find themselves drawn to two opposing figures representing good and evil, leading to a final confrontation between the forces of light and darkness."
+  },
+  {
+    "name": "Rebecca",
+    "author": "Daphne du Maurier",
+    "ranking" : 25,
+    "release_year": 1938,
+    "genres": ["Gothic Fiction", "Mystery", "Romance"],
+    "synopsis": "Rebecca is a novel by Daphne du Maurier, published in 1938. It tells the story of an unnamed young woman who marries Maxim de Winter and moves with him to his estate, Manderley. There, she finds herself haunted by the memory of Maxim's first wife, Rebecca, whose presence still lingers in the house and in the memories of its inhabitants. The novel explores themes of jealousy, obsession, and identity."
+  },
+  {
+    "name": "A Prayer for Owen Meany",
+    "author": "John Irving",
+    "ranking" : 26,
+    "release_year": 1989,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "A Prayer for Owen Meany is a novel by John Irving, published in 1989. It tells the story of John Wheelwright and his lifelong friendship with Owen Meany, a small boy with a distinctive voice who believes he is an instrument of God. The novel explores themes of faith, fate, friendship, and sacrifice."
+  },
+  {
+    "name": "The Color Purple",
+    "author": "Alice Walker",
+    "ranking" : 27,
+    "release_year": 1982,
+    "genres": ["Fiction", "Epistolary Novel"],
+    "synopsis": "The Color Purple is a novel by Alice Walker, published in 1982. Set in the American South during the early 20th century, it tells the story of Celie, a young African American woman who struggles to find her identity and independence in a society dominated by racism and sexism. The novel explores themes of race, gender, and the power of sisterhood."
+  },
+  {
+    "name": "Alice's Adventures in Wonderland",
+    "author": "Lewis Carroll",
+    "ranking" : 28,
+    "release_year": 1865,
+    "genres": ["Fantasy", "Children's Literature"],
+    "synopsis": "Alice's Adventures in Wonderland is a novel by Lewis Carroll, first published in 1865. It follows the adventures of a young girl named Alice who falls down a rabbit hole into a fantastical world populated by peculiar creatures and nonsensical characters. The novel is known for its imaginative storytelling and whimsical wordplay."
+  },
+  {
+    "name": "Great Expectations",
+    "author": "Charles Dickens",
+    "ranking" : 29,
+    "release_year": 1861,
+    "genres": ["Classic", "Fiction"],
+    "synopsis": "Great Expectations is a novel by Charles Dickens, published in 1861. It follows the life of an orphan named Pip as he rises from humble beginnings to wealth and social status, thanks to an unknown benefactor. The novel explores themes of ambition, social class, love, and redemption."
+  },
+  {
+    "name": "The Catcher in the Rye",
+    "author": "J.D. Salinger",
+    "ranking" : 30,
+    "release_year": 1951,
+    "genres": ["Fiction", "Coming-of-age"],
+    "synopsis": "The Catcher in the Rye is a novel by J.D. Salinger, published in 1951. It follows the experiences of Holden Caulfield, a disillusioned teenager who has been expelled from prep school and wanders through New York City. The novel is known for its portrayal of adolescent angst, alienation, and the search for authenticity."
+  },
+  {
+    "name": "Where the Red Fern Grows",
+    "author": "Wilson Rawls",
+    "ranking" : 31,
+    "release_year": 1961,
+    "genres": ["Children's Literature", "Fiction"],
+    "synopsis": "Where the Red Fern Grows is a novel by Wilson Rawls, published in 1961. It tells the story of a young boy named Billy Colman and his two coonhounds, Old Dan and Little Ann, as they hunt raccoons in the Ozarks. The novel explores themes of friendship, loyalty, and the bond between humans and animals."
+  },
+  {
+    "name": "The Outsiders",
+    "author": "S.E. Hinton",
+    "ranking" : 32,
+    "release_year": 1967,
+    "genres": ["Young Adult", "Coming-of-age"],
+    "synopsis": "The Outsiders is a novel by S.E. Hinton, published in 1967. It follows the lives of two rival groups, the Greasers and the Socs, and their struggles with social class, violence, and identity. The novel is narrated by Ponyboy Curtis, a Greaser, and explores themes of friendship, loyalty, and the search for belonging."
+  },
+  {
+    "name": "The Da Vinci Code",
+    "author": "Dan Brown",
+    "ranking" : 33,
+    "release_year": 2003,
+    "genres": ["Mystery", "Thriller"],
+    "synopsis": "The Da Vinci Code is a novel by Dan Brown, published in 2003. It follows the adventures of Harvard symbologist Robert Langdon and French cryptologist Sophie Neveu as they investigate a murder in the Louvre Museum and uncover a conspiracy related to the works of Leonardo da Vinci. The novel explores themes of religion, history, and secret societies."
+  },
+  {
+    "name": "The Handmaid's Tale",
+    "author": "Margaret Atwood",
+    "ranking" : 34,
+    "release_year": 1985,
+    "genres": ["Dystopian", "Science Fiction"],
+    "synopsis": "The Handmaid's Tale is a novel by Margaret Atwood, published in 1985. Set in a totalitarian society called the Republic of Gilead, it follows the life of Offred, a Handmaid who is forced to bear children for the ruling class. The novel explores themes of gender, power, and reproductive rights."
+  },
+  {
+    "name": "Dune",
+    "author": "Frank Herbert",
+    "ranking" : 35,
+    "release_year": 1965,
+    "genres": ["Science Fiction", "Fantasy"],
+    "synopsis": "Dune is a science fiction novel by Frank Herbert, published in 1965. Set in the distant future on the desert planet of Arrakis, it follows the political intrigue and power struggles surrounding the control of a valuable resource called spice. The novel explores themes of politics, religion, and environmentalism."
+  },
+  {
+    "name": "The Little Prince",
+    "author": "Antoine de Saint-Exupéry",
+    "ranking" : 36,
+    "release_year": 1943,
+    "genres": ["Children's Literature", "Fiction"],
+    "synopsis": "The Little Prince is a novella by Antoine de Saint-Exupéry, first published in 1943. It tells the story of a young prince who travels from planet to planet, meeting various inhabitants and learning valuable life lessons along the way. The novella is known for its philosophical themes and allegorical storytelling."
+  },
+  {
+    "name": "The Call of the Wild",
+    "author": "Jack London",
+    "ranking" : 37,
+    "release_year": 1903,
+    "genres": ["Adventure", "Fiction"],
+    "synopsis": "The Call of the Wild is a novel by Jack London, published in 1903. It follows the journey of Buck, a domesticated dog who is stolen from his home in California and sold into the brutal life of an Alaskan sled dog. The novel explores themes of survival, instinct, and the primal nature of man and beast."
+  },
+  {
+    "name": "The Clan of the Cave Bear",
+    "author": "Jean M. Auel",
+    "ranking" : 38,
+    "release_year": 1980,
+    "genres": ["Historical Fiction", "Adventure"],
+    "synopsis": "The Clan of the Cave Bear is a novel by Jean M. Auel, published in 1980. It is set in prehistoric Europe and follows the story of Ayla, a Cro-Magnon girl who is orphaned and raised by a Neanderthal clan. The novel explores themes of survival, adaptation, and the clash of cultures."
+  },
+  {
+    "name": "The Hitchhiker's Guide to the Galaxy",
+    "author": "Douglas Adams",
+    "ranking" : 39,
+    "release_year": 1979,
+    "genres": ["Science Fiction", "Comedy"],
+    "synopsis": "The Hitchhiker's Guide to the Galaxy is a science fiction comedy novel by Douglas Adams, published in 1979. It follows the misadventures of Arthur Dent, an ordinary human who is rescued by an alien named Ford Prefect just before Earth is demolished to make way for a hyperspace bypass. The novel is known for its humor and satirical take on life, the universe, and everything in between."
+  },
+  {
+    "name": "The Hunger Games (Series)",
+    "author": "Suzanne Collins",
+    "ranking" : 40,
+    "release_year": 2008,
+    "genres": ["Young Adult", "Dystopian", "Science Fiction"],
+    "synopsis": "The Hunger Games series is a trilogy of young adult dystopian novels by Suzanne Collins, beginning with The Hunger Games in 2008. Set in a post-apocalyptic world, the series follows the story of Katniss Everdeen, a young girl who becomes a symbol of rebellion against the oppressive government of Panem. The novels explore themes of power, survival, and the consequences of war."
+  },
+  {
+    "name": "The Count of Monte Cristo",
+    "author": "Alexandre Dumas",
+    "ranking" : 41,
+    "release_year": 1844,
+    "genres": ["Adventure", "Historical Fiction"],
+    "synopsis": "The Count of Monte Cristo is a novel by Alexandre Dumas, first published in 1844. It follows the story of Edmond Dantès, a young sailor who is wrongfully imprisoned and later seeks revenge against those who betrayed him. The novel is known for its intricate plot, themes of justice and revenge, and memorable characters."
+  },
+  {
+    "name": "The Joy Luck Club",
+    "author": "Amy Tan",
+    "ranking" : 42,
+    "release_year": 1989,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "The Joy Luck Club is a novel by Amy Tan, published in 1989. It tells the stories of four Chinese immigrant women and their American-born daughters, exploring themes of mother-daughter relationships, cultural identity, and the immigrant experience."
+  },
+  {
+    "name": "Frankenstein",
+    "author": "Mary Shelley",
+    "ranking" : 43,
+    "release_year": 1818,
+    "genres": ["Gothic Fiction", "Science Fiction"],
+    "synopsis": "Frankenstein; or, The Modern Prometheus is a novel by Mary Shelley, first published in 1818. It tells the story of Victor Frankenstein, a young scientist who creates a grotesque creature in an unorthodox scientific experiment. The novel explores themes of ambition, responsibility, and the consequences of playing god."
+  },
+  {
+    "name": "The Giver",
+    "author": "Lois Lowry",
+    "ranking" : 44,
+    "release_year": 1993,
+    "genres": ["Young Adult", "Dystopian", "Science Fiction"],
+    "synopsis": "The Giver is a novel by Lois Lowry, published in 1993. It is set in a dystopian society where emotions and memories are suppressed, and one person known as the Receiver of Memory holds the collective memories of humanity. The novel follows Jonas, a young boy who is selected to become the new Receiver and discovers the truth about his society."
+  },
+  {
+    "name": "Memoirs of a Geisha",
+    "author": "Arthur Golden",
+    "ranking" : 45,
+    "release_year": 1997,
+    "genres": ["Historical Fiction", "Romance"],
+    "synopsis": "Memoirs of a Geisha is a novel by Arthur Golden, published in 1997. It tells the fictional story of a young Japanese girl named Chiyo Sakamoto, who is sold into slavery and trained as a geisha in Kyoto before World War II. The novel explores themes of identity, beauty, and the traditions of Japanese culture."
+  },
+  {
+    "name": "Moby Dick",
+    "author": "Herman Melville",
+    "ranking" : 46,
+    "release_year": 1851,
+    "genres": ["Adventure", "Classic"],
+    "synopsis": "Moby Dick is a novel by Herman Melville, first published in 1851. It tells the story of Ishmael, a sailor aboard the whaling ship Pequod, and his obsessive quest for revenge against the white whale Moby Dick, which had previously bitten off Captain Ahab's leg at the knee during a previous voyage. The novel explores themes of obsession, fate, and the struggle between man and nature."
+  },
+  {
+    "name": "Catch-22",
+    "author": "Joseph Heller",
+    "ranking" : 47,
+    "release_year": 1961,
+    "genres": ["Satire", "War Novel"],
+    "synopsis": "Catch-22 is a novel by Joseph Heller, published in 1961. Set during World War II, it follows the experiences of Captain John Yossarian, a U.S. Army Air Forces B-25 bombardier, who is stationed on the fictional island of Pianosa in the Mediterranean Sea. The novel is known for its satirical portrayal of bureaucracy and the absurdity of war, and its title has become synonymous with paradoxical situations."
+  },
+  {
+    "name": "Game of Thrones (Series)",
+    "author": "George R.R. Martin",
+    "ranking" : 48,
+    "release_year": 1996,
+    "genres": ["Fantasy", "Epic"],
+    "synopsis": "A Song of Ice and Fire is a series of epic fantasy novels by George R.R. Martin, beginning with A Game of Thrones in 1996. The series is set in the fictional continents of Westeros and Essos and follows the power struggles among noble families as they vie for control of the Iron Throne and the Seven Kingdoms. The novels are known for their complex characters, intricate plotlines, and political intrigue."
+  },
+  {
+    "name": "Foundation (Series)",
+    "author": "Isaac Asimov",
+    "ranking" : 49,
+    "release_year": 1951,
+    "genres": ["Science Fiction"],
+    "synopsis": "Foundation is a series of science fiction novels by Isaac Asimov, beginning with the novel of the same name in 1951. The series is set in the distant future and follows the efforts of mathematician Hari Seldon to preserve knowledge and guide humanity through a dark age of interstellar conflict and decline. The novels explore themes of history, sociology, and the nature of civilization."
+  },
+  {
+    "name": "War and Peace",
+    "author": "Leo Tolstoy",
+    "ranking" : 50,
+    "release_year": 1869,
+    "genres": ["Historical Fiction", "Epic"],
+    "synopsis": "War and Peace is a novel by Leo Tolstoy, published in 1869. Set against the backdrop of the Napoleonic Wars, it follows the lives of several aristocratic families in Russia and explores themes of love, war, and the search for meaning in life. The novel is renowned for its realistic depiction of historical events and its philosophical insights."
+  },
+  {
+    "name": "Their Eyes Were Watching God",
+    "author": "Zora Neale Hurston",
+    "ranking" : 51,
+    "release_year": 1937,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "Their Eyes Were Watching God is a novel by Zora Neale Hurston, published in 1937. It follows the life of Janie Crawford, an African-American woman in Florida, as she navigates love, identity, and independence throughout her three marriages. The novel explores themes of race, gender, and self-discovery."
+  },
+  {
+    "name": "Jurassic Park",
+    "author": "Michael Crichton",
+    "ranking" : 52,
+    "release_year": 1990,
+    "genres": ["Science Fiction", "Thriller"],
+    "synopsis": "Jurassic Park is a novel by Michael Crichton, published in 1990. It tells the story of a billionaire who creates a theme park featuring genetically engineered dinosaurs cloned from DNA preserved in amber. Chaos ensues when the dinosaurs escape and wreak havoc on the island. The novel explores themes of science, ethics, and the consequences of playing god."
+  },
+  {
+    "name": "The Godfather",
+    "author": "Mario Puzo",
+    "ranking" : 53,
+    "release_year": 1969,
+    "genres": ["Crime", "Thriller"],
+    "synopsis": "The Godfather is a novel by Mario Puzo, published in 1969. It tells the story of the Corleone crime family and their rise to power in the Mafia underworld. At its heart is the story of Don Vito Corleone, the patriarch of the family, and his son Michael, who takes over the family business. The novel explores themes of loyalty, power, and the American Dream."
+  },
+  {
+    "name": "One Hundred Years of Solitude",
+    "author": "Gabriel García Márquez",
+    "ranking" : 54,
+    "release_year": 1967,
+    "genres": ["Magical Realism", "Literary Fiction"],
+    "synopsis": "One Hundred Years of Solitude is a novel by Gabriel García Márquez, published in 1967. It tells the multi-generational story of the Buendía family in the fictional town of Macondo, highlighting their triumphs, tragedies, and the cyclical nature of history. The novel blends elements of magical realism with social and political commentary."
+  },
+  {
+    "name": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "ranking" : 55,
+    "release_year": 1890,
+    "genres": ["Gothic Fiction", "Philosophical Fiction"],
+    "synopsis": "The Picture of Dorian Gray is a novel by Oscar Wilde, first published in 1890. It tells the story of Dorian Gray, a young man who sells his soul in exchange for eternal youth and beauty. As his portrait ages and reflects his moral degradation, Dorian becomes increasingly corrupted by his own hedonism and vanity. The novel explores themes of beauty, morality, and the consequences of sin."
+  },
+  {
+    "name": "The Notebook",
+    "author": "Nicholas Sparks",
+    "ranking" : 56,
+    "release_year": 1996,
+    "genres": ["Romance", "Fiction"],
+    "synopsis": "The Notebook is a novel by Nicholas Sparks, published in 1996. It tells the story of Noah Calhoun and Allie Nelson, two young lovers who are separated by circumstances but reunite years later. The novel explores themes of love, fate, and the power of memories."
+  },
+  {
+    "name": "The Shack",
+    "author": "William P. Young",
+    "ranking" : 57,
+    "release_year": 2007,
+    "genres": ["Fiction", "Spirituality"],
+    "synopsis": "The Shack is a novel by William P. Young, published in 2007. It tells the story of Mackenzie Allen Phillips, a man who receives a mysterious invitation to a remote shack where he encounters manifestations of the Holy Trinity. Through his experiences at the shack, Mackenzie learns about forgiveness, healing, and the nature of God."
+  },
+  {
+    "name": "A Confederacy of Dunces",
+    "author": "John Kennedy Toole",
+    "ranking" : 58,
+    "release_year": 1980,
+    "genres": ["Satire", "Comedy"],
+    "synopsis": "A Confederacy of Dunces is a novel by John Kennedy Toole, published posthumously in 1980. It follows the misadventures of Ignatius J. Reilly, a slothful and eccentric character living in New Orleans. The novel is known for its colorful characters, absurd situations, and biting satire of American culture."
+  },
+  {
+    "name": "The Hunt for Red October",
+    "author": "Tom Clancy",
+    "ranking" : 59,
+    "release_year": 1984,
+    "genres": ["Thriller", "Spy Fiction"],
+    "synopsis": "The Hunt for Red October is a thriller novel by Tom Clancy, published in 1984. It follows the defection of a Soviet submarine captain and his attempt to evade both Soviet and American forces while trying to defect to the United States. The novel is known for its detailed technical descriptions and realistic portrayal of military operations."
+  },
+  {
+    "name": "Beloved",
+    "author": "Toni Morrison",
+    "ranking" : 60,
+    "release_year": 1987,
+    "genres": ["Historical Fiction", "Magical Realism"],
+    "synopsis": "Beloved is a novel by Toni Morrison, published in 1987. Set after the American Civil War, it tells the story of Sethe, a former slave who is haunted by the memory of her deceased daughter, Beloved. The novel explores themes of trauma, memory, and the legacy of slavery in America."
+  },
+  {
+    "name": "The Martian",
+    "author": "Andy Weir",
+    "ranking" : 61,
+    "release_year": 2011,
+    "genres": ["Science Fiction", "Adventure"],
+    "synopsis": "The Martian is a science fiction novel by Andy Weir, self-published in 2011 and later re-published by Crown Publishing in 2014. It follows the story of Mark Watney, an astronaut who becomes stranded alone on Mars and must use his ingenuity and resourcefulness to survive while awaiting rescue. The novel is known for its scientific accuracy and humor."
+  },
+  {
+    "name": "The Wheel of Time (Series)",
+    "author": "Robert Jordan, Brandon Sanderson",
+    "ranking" : 62,
+    "release_year": 1990,
+    "genres": ["Fantasy", "Epic"],
+    "synopsis": "The Wheel of Time is a series of epic fantasy novels written by Robert Jordan and completed by Brandon Sanderson after Jordan's death. The series spans fourteen novels, beginning with The Eye of the World in 1990. It follows the quest of various characters to prevent the Dark One from breaking free of his prison and destroying the world. The series is known for its intricate world-building and expansive narrative."
+  },
+  {
+    "name": "Siddhartha",
+    "author": "Hermann Hesse",
+    "ranking" : 63,
+    "release_year": 1922,
+    "genres": ["Fiction", "Philosophical Fiction"],
+    "synopsis": "Siddhartha is a novel by Hermann Hesse, published in 1922. It tells the story of Siddhartha, a young man who embarks on a spiritual journey to find enlightenment. Along the way, he encounters various teachers and experiences different aspects of life. The novel explores themes of self-discovery, spirituality, and the search for meaning."
+  },
+  {
+    "name": "Crime and Punishment",
+    "author": "Fyodor Dostoevsky",
+    "ranking" : 64,
+    "release_year": 1866,
+    "genres": ["Psychological Fiction", "Philosophical Fiction"],
+    "synopsis": "Crime and Punishment is a novel by Fyodor Dostoevsky, published in 1866. It follows the story of Rodion Raskolnikov, a young ex-student in Saint Petersburg who formulates and executes a plan to kill an unscrupulous pawnbroker for her money. The novel explores themes of morality, guilt, and redemption."
+  },
+  {
+    "name": "The Sun Also Rises",
+    "author": "Ernest Hemingway",
+    "ranking" : 65,
+    "release_year": 1926,
+    "genres": ["Fiction", "Lost Generation"],
+    "synopsis": "The Sun Also Rises is a novel by Ernest Hemingway, published in 1926. Set in the 1920s, it follows a group of American and British expatriates who travel from Paris to Pamplona, Spain, to watch the running of the bulls and the bullfights. The novel explores themes of disillusionment, the lost generation, and the search for meaning in a post-war world."
+  },
+  {
+    "name": "The Curious Incident of the Dog in the Night-Time",
+    "author": "Mark Haddon",
+    "ranking" : 66,
+    "release_year": 2003,
+    "genres": ["Mystery", "Fiction"],
+    "synopsis": "The Curious Incident of the Dog in the Night-Time is a novel by Mark Haddon, published in 2003. It tells the story of Christopher Boone, a 15-year-old boy with autism spectrum disorder, who investigates the mysterious death of his neighbor's dog. The novel is praised for its unique narrative style and portrayal of Christopher's perspective."
+  },
+  {
+    "name": "A Separate Peace",
+    "author": "John Knowles",
+    "ranking" : 67,
+    "release_year": 1959,
+    "genres": ["Fiction", "Coming-of-age"],
+    "synopsis": "A Separate Peace is a novel by John Knowles, published in 1959. Set during World War II, it follows the friendship between two boys, Gene Forrester and Phineas, at a boarding school in New England. The novel explores themes of jealousy, loyalty, and the loss of innocence."
+  },
+  {
+    "name": "Don Quixote",
+    "author": "Miguel de Cervantes",
+    "ranking" : 68,
+    "release_year": 1605,
+    "genres": ["Classic", "Satire"],
+    "synopsis": "Don Quixote is a novel by Miguel de Cervantes, first published in two parts in 1605 and 1615. It follows the adventures of Alonso Quixano, a middle-aged man who becomes obsessed with chivalric romances and sets out on a quest to revive chivalry under the name Don Quixote. The novel is considered one of the greatest works of literature and a masterpiece of Spanish literature."
+  },
+  {
+    "name": "The Lovely Bones",
+    "author": "Alice Sebold",
+    "ranking" : 69,
+    "release_year": 2002,
+    "genres": ["Fiction", "Mystery"],
+    "synopsis": "The Lovely Bones is a novel by Alice Sebold, published in 2002. It tells the story of Susie Salmon, a 14-year-old girl who is murdered by a neighbor and watches from the afterlife as her family and friends cope with her death and the search for her killer. The novel explores themes of grief, loss, and the power of love."
+  },
+  {
+    "name": "The Alchemist",
+    "author": "Paulo Coelho",
+    "ranking" : 70,
+    "release_year": 1988,
+    "genres": ["Fiction", "Philosophical Fiction"],
+    "synopsis": "The Alchemist is a novel by Paulo Coelho, published in 1988. It follows the journey of Santiago, a young Andalusian shepherd boy who dreams of finding a hidden treasure in Egypt and sets out on a quest to fulfill his destiny. The novel is known for its spiritual and philosophical themes, as well as its inspirational message about following one's dreams."
+  },
+  {
+    "name": "Hatchet (Series)",
+    "author": "Gary Paulsen",
+    "ranking" : 71,
+    "release_year": 1986,
+    "genres": ["Adventure", "Young Adult"],
+    "synopsis": "The Hatchet series by Gary Paulsen follows the adventures of Brian Robeson, a young boy who survives a plane crash in the Canadian wilderness and learns to fend for himself using only a hatchet. The series chronicles Brian's struggles for survival, growth, and self-discovery as he faces various challenges in the wild."
+  },
+  {
+    "name": "Invisible Man",
+    "author": "Ralph Ellison",
+    "ranking" : 72,
+    "release_year": 1952,
+    "genres": ["Fiction", "African American Literature"],
+    "synopsis": "Invisible Man is a novel by Ralph Ellison, published in 1952. It follows the story of an unnamed African American man who considers himself invisible in a society dominated by white supremacy and racial prejudice. The novel explores themes of identity, invisibility, and the struggle for self-definition in a hostile world."
+  },
+  {
+    "name": "The Twilight Saga (Series)",
+    "author": "Stephenie Meyer",
+    "ranking" : 73,
+    "release_year": 2005,
+    "genres": ["Fantasy", "Romance", "Young Adult"],
+    "synopsis": "The Twilight Saga is a series of vampire-themed fantasy romance novels by Stephenie Meyer. The series follows the romance between Bella Swan, a human, and Edward Cullen, a vampire, as they navigate the challenges of their relationship amidst the supernatural world of vampires and werewolves."
+  },
+  {
+    "name": "Tales of the City (Series)",
+    "author": "Armistead Maupin",
+    "ranking" : 74,
+    "release_year": 1993,
+    "genres": ["Fiction", "LGBTQ+"],
+    "synopsis": "Tales of the City is a series of novels by Armistead Maupin set in San Francisco. The series explores the lives and relationships of a diverse group of characters living in the city, including Mary Ann Singleton, a young woman who moves to San Francisco and becomes intertwined with the lives of her eccentric neighbors."
+  },
+  {
+    "name": "Gulliver's Travels",
+    "author": "Jonathan Swift",
+    "ranking" : 75,
+    "release_year": 1726,
+    "genres": ["Satire", "Adventure"],
+    "synopsis": "Gulliver's Travels is a novel by Jonathan Swift, published in 1726. It follows the adventures of Lemuel Gulliver, a ship's surgeon who finds himself in various fantastical lands populated by giants, tiny people, talking horses, and more. The novel is known for its satirical commentary on human nature, politics, and society."
+  },
+  {
+    "name": "Ready Player One",
+    "author": "Ernest Cline",
+    "ranking" : 76,
+    "release_year": 2011,
+    "genres": ["Science Fiction", "Dystopian", "Adventure"],
+    "synopsis": "Ready Player One is a science fiction novel by Ernest Cline, published in 2011. Set in a dystopian future, it follows Wade Watts, a teenager who immerses himself in a virtual reality world called the OASIS. When the creator of the OASIS dies, he leaves behind a series of challenges that lead to an Easter egg granting control of the OASIS to the winner. The novel is known for its nostalgic references to 1980s pop culture and gaming."
+  },
+  {
+    "name": "Left Behind (Series)",
+    "author": "Tim LaHaye, Jerry B. Jenkins",
+    "ranking" : 77,
+    "release_year": 1995,
+    "genres": ["Christian Fiction", "Apocalyptic Fiction"],
+    "synopsis": "Left Behind is a series of Christian apocalyptic novels by Tim LaHaye and Jerry B. Jenkins. The series depicts the events of the end times as foretold in the Book of Revelation. It follows the struggles of those left behind after the Rapture and their efforts to survive and resist the rise of the Antichrist."
+  },
+  {
+    "name": "Gone Girl",
+    "author": "Gillian Flynn",
+    "ranking" : 78,
+    "release_year": 2012,
+    "genres": ["Mystery", "Thriller", "Psychological Fiction"],
+    "synopsis": "Gone Girl is a thriller novel by Gillian Flynn, published in 2012. It tells the story of Nick and Amy Dunne, a married couple whose relationship deteriorates after their fifth wedding anniversary. When Amy goes missing, Nick becomes the prime suspect, and the novel explores themes of marriage, deception, and media manipulation."
+  },
+  {
+    "name": "Watchers",
+    "author": "Dean Koontz",
+    "ranking" : 79,
+    "release_year": 1987,
+    "genres": ["Horror", "Thriller", "Science Fiction"],
+    "synopsis": "Watchers is a novel by Dean Koontz, published in 1987. It follows the story of Travis Cornell, a former Special Forces operative who discovers a highly intelligent golden retriever with telepathic abilities. As Travis and the dog, whom he names Einstein, unravel the mystery behind Einstein's origins, they become embroiled in a deadly pursuit by a shadowy government agency and a genetically engineered monster."
+  },
+  {
+    "name": "The Pilgrim's Progress",
+    "author": "John Bunyan",
+    "ranking" : 80,
+    "release_year": 1678,
+    "genres": ["Allegory", "Christian Literature"],
+    "synopsis": "The Pilgrim's Progress is an allegorical novel by John Bunyan, first published in 1678. It follows the journey of Christian, the protagonist, as he travels from the City of Destruction to the Celestial City, encountering various obstacles, trials, and allegorical characters along the way. The novel is a classic of Christian literature and is considered one of the most important works of English literature."
+  },
+  {
+    "name": "Alex Cross Mysteries (Series)",
+    "author": "James Patterson",
+    "ranking" : 81,
+    "release_year": 1993,
+    "genres": ["Mystery", "Thriller"],
+    "synopsis": "The Alex Cross Mysteries is a series of detective novels by James Patterson. The series follows the investigations of Alex Cross, a detective and psychologist, as he solves various crimes and hunts down criminals. Each novel presents a new case for Alex Cross to unravel, often involving serial killers and other dangerous adversaries."
+  },
+  {
+    "name": "Things Fall Apart",
+    "author": "Chinua Achebe",
+    "ranking" : 82,
+    "release_year": 1958,
+    "genres": ["Fiction", "African Literature"],
+    "synopsis": "Things Fall Apart is a novel by Chinua Achebe, published in 1958. It tells the story of Okonkwo, a warrior and leader in a fictional Igbo village in Nigeria, and his experiences as European colonialism encroaches upon his community. The novel explores themes of culture clash, colonialism, and the consequences of societal change."
+  },
+  {
+    "name": "Heart of Darkness",
+    "author": "Joseph Conrad",
+    "ranking" : 83,
+    "release_year": 1899,
+    "genres": ["Fiction", "Adventure"],
+    "synopsis": "Heart of Darkness is a novella by Joseph Conrad, published in 1899. Set in the Congo Free State during the height of European imperialism, it follows the journey of Charles Marlow, a steamboat captain, as he travels up the Congo River in search of the enigmatic ivory trader Kurtz. The novella explores themes of imperialism, colonialism, and the darkness within human nature."
+  },
+  {
+    "name": "Gilead",
+    "author": "Marilynne Robinson",
+    "ranking" : 84,
+    "release_year": 2004,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "Gilead is a novel by Marilynne Robinson, published in 2004. It is written as a letter from John Ames, a dying minister, to his young son, recounting his life and reflections on faith, love, and fatherhood. The novel explores themes of grace, forgiveness, and the passage of time."
+  },
+  {
+    "name": "Flowers in the Attic",
+    "author": "V.C. Andrews",
+    "ranking" : 85,
+    "release_year": 1979,
+    "genres": ["Gothic Fiction", "Horror"],
+    "synopsis": "Flowers in the Attic is a novel by V.C. Andrews, published in 1979. It follows the story of the Dollanganger children, who are hidden away in the attic of their wealthy grandparents' mansion after their father's death. As they endure neglect and abuse, they uncover dark family secrets. The novel is known for its themes of forbidden love, family dysfunction, and psychological horror."
+  },
+  {
+    "name": "Fifty Shades of Grey (Series)",
+    "author": "E.L. James",
+    "ranking" : 86,
+    "release_year": 2015,
+    "genres": ["Romance", "Erotica"],
+    "synopsis": "The Fifty Shades of Grey series by E.L. James follows the romantic and erotic relationship between Anastasia Steele, a college graduate, and Christian Grey, a wealthy businessman. The series explores themes of love, desire, and power dynamics."
+  },
+  {
+    "name": "The Sirens of Titan",
+    "author": "Kurt Vonnegut",
+    "ranking" : 87,
+    "release_year": 1959,
+    "genres": ["Science Fiction", "Satire"],
+    "synopsis": "The Sirens of Titan is a science fiction novel by Kurt Vonnegut, published in 1959. It follows the journey of Malachi Constant, a wealthy but dissatisfied man, as he travels through space and time on a quest orchestrated by an alien race. The novel explores themes of free will, destiny, and the absurdity of human existence."
+  },
+  {
+    "name": "This Present Darkness",
+    "author": "Frank E. Peretti",
+    "ranking" : 88,
+    "release_year": 1986,
+    "genres": ["Christian Fiction", "Thriller"],
+    "synopsis": "This Present Darkness is a Christian thriller novel by Frank E. Peretti, published in 1986. It tells the story of a small town besieged by supernatural forces and the spiritual battle that ensues between angels and demons. The novel explores themes of faith, spiritual warfare, and the power of prayer."
+  },
+  {
+    "name": "Americanah",
+    "author": "Chimamanda Ngozi Adichie",
+    "ranking" : 89,
+    "release_year": 2013,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "Americanah is a novel by Chimamanda Ngozi Adichie, published in 2013. It follows the story of Ifemelu, a Nigerian woman who immigrates to the United States to pursue her education and career. The novel explores themes of race, identity, and the immigrant experience."
+  },
+  {
+    "name": "Another Country",
+    "author": "James Baldwin",
+    "ranking" : 90,
+    "release_year": 1962,
+    "genres": ["Fiction", "Literary Fiction"],
+    "synopsis": "Another Country is a novel by James Baldwin, published in 1962. It explores the lives and relationships of several characters living in Greenwich Village, New York City, during the 1950s. The novel addresses themes of race, sexuality, and the search for identity in a society marked by prejudice and oppression."
+  },
+  {
+    "name": "Bless Me, Ultima",
+    "author": "Rudolfo Anaya",
+    "ranking" : 91,
+    "release_year": 1972,
+    "genres": ["Fiction", "Magical Realism"],
+    "synopsis": "Bless Me, Ultima is a novel by Rudolfo Anaya, published in 1972. Set in New Mexico during World War II, it follows the story of Antonio Márez, a young Mexican-American boy, and his relationship with Ultima, a curandera or healer. The novel explores themes of culture, spirituality, and the clash between tradition and modernity."
+  },
+  {
+    "name": "Looking for Alaska",
+    "author": "John Green",
+    "ranking" : 92,
+    "release_year": 2005,
+    "genres": ["Young Adult", "Contemporary", "Coming-of-age"],
+    "synopsis": "Looking for Alaska is a young adult novel by John Green, published in 2005. It follows the story of Miles Halter, a teenager who enrolls in a boarding school in search of the 'Great Perhaps.' There, he meets and falls in love with the enigmatic Alaska Young, and the novel explores themes of love, loss, and the search for meaning."
+  },
+  {
+    "name": "The Brief Wondrous Life of Oscar Wao",
+    "author": "Junot Díaz",
+    "ranking" : 93,
+    "release_year": 2007,
+    "genres": ["Fiction", "Magical Realism"],
+    "synopsis": "The Brief Wondrous Life of Oscar Wao is a novel by Junot Díaz, published in 2007. It follows the life of Oscar de León, a Dominican-American boy growing up in New Jersey, and his family's curse. The novel weaves together elements of history, fantasy, and pop culture as it explores themes of identity, love, and the immigrant experience."
+  },
+  {
+    "name": "Swan Song",
+    "author": "Robert R. McCammon",
+    "ranking" : 94,
+    "release_year": 1987,
+    "genres": ["Horror", "Post-Apocalyptic"],
+    "synopsis": "Swan Song is a horror novel by Robert R. McCammon, published in 1987. Set in a post-apocalyptic United States devastated by nuclear war, it follows the struggles of various survivors as they navigate a world plagued by radiation, mutations, and supernatural forces. The novel explores themes of survival, hope, and the resilience of the human spirit."
+  },
+  {
+    "name": "Mind Invaders",
+    "author": "Dave Hunt",
+    "ranking" : 95,
+    "release_year": 1986,
+    "genres": ["Science Fiction", "Thriller"],
+    "synopsis": "Mind Invaders is a science fiction thriller novel by Dave Hunt, published in 1986. It follows the story of Dr. Neil Chase, a psychologist who becomes embroiled in a conspiracy involving mind control experiments and extraterrestrial beings. As he uncovers the truth, he must race against time to stop a malevolent force from enslaving humanity."
+  },
+  {
+    "name": "White Teeth",
+    "author": "Zadie Smith",
+    "ranking" : 96,
+    "release_year": 2000,
+    "genres": ["Fiction", "Satire", "Literary Fiction"],
+    "synopsis": "White Teeth is a novel by Zadie Smith, published in 2000. Set in London, it follows the lives of two wartime friends, Archie Jones and Samad Iqbal, and their families over several decades. The novel explores themes of multiculturalism, identity, and the complexities of modern life."
+  },
+  {
+    "name": "Ghost",
+    "author": "Jason Reynolds",
+    "ranking" : 97,
+    "release_year": 2016,
+    "genres": ["Young Adult", "Sports", "Realistic Fiction"],
+    "synopsis": "Ghost is a young adult novel by Jason Reynolds, published in 2016. It tells the story of Castle 'Ghost' Cranshaw, a young boy who joins a track team as a way to escape his troubled past. As Ghost learns to channel his talent and discipline, he confronts the challenges of his environment and discovers the true meaning of family and friendship."
+  },
+  {
+    "name": "The Coldest Winter Ever",
+    "author": "Sister Souljah",
+    "ranking" : 98,
+    "release_year": 1999,
+    "genres": ["Urban Fiction", "Coming-of-age", "Drama"],
+    "synopsis": "The Coldest Winter Ever is a novel by Sister Souljah, published in 1999. It follows the story of Winter Santiaga, the daughter of a drug kingpin, as she navigates the dangerous world of urban street life. The novel explores themes of family, loyalty, and the consequences of choices."
+  },
+  {
+    "name": "The Intuitionist",
+    "author": "Colson Whitehead",
+    "ranking" : 99,
+    "release_year": 1999,
+    "genres": ["Fiction", "Science Fiction", "Literary Fiction"],
+    "synopsis": "The Intuitionist is a novel by Colson Whitehead, published in 1999. Set in an alternate reality where elevator inspectors have heightened intuition, it follows the story of Lila Mae Watson, the first black female elevator inspector in a city divided by racial tension. The novel explores themes of race, technology, and the pursuit of truth."
+  },
+  {
+    "name": "Doña Bárbara",
+    "author": "Rómulo Gallegos",
+    "ranking" : 100,
+    "release_year": 1929,
+    "genres": ["Novel", "Latin American Literature", "Adventure"],
+    "synopsis": "Doña Bárbara is a novel by Venezuelan author Rómulo Gallegos, published in 1929. It is a classic of Latin American literature and tells the story of the feud between Santos Luzardo and Doña Bárbara, two landowners in the Venezuelan plains. The novel explores themes of power, love, and the clash between civilization and wilderness."
+  }
+]

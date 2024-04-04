@@ -2,6 +2,7 @@ package my.javacraft.elastic.cucumber.step;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.Given;
 import java.io.File;
@@ -27,13 +28,14 @@ public class IngestionDefinition {
     ElasticsearchClient esClient;
 
     @Given("ingest {string} json file with {int} entities in {string} index")
-    public void ingestMoviesJson(String pathToFile, Integer expectedMovies, String index) throws IOException {
+    public void ingestMoviesJson(String pathToFile, Integer expectedItems, String index) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         File resource = new ClassPathResource(pathToFile).getFile();
-        List<LinkedHashMap> movies = objectMapper.readValue(resource, List.class);
+        TypeReference<List<LinkedHashMap<String, Object>>> typeRef = new TypeReference<>() {};
+        List<LinkedHashMap<String, Object>> movies = objectMapper.readValue(resource, typeRef);
 
         Assertions.assertNotNull(movies);
-        Assertions.assertEquals(expectedMovies, movies.size());
+        Assertions.assertEquals(expectedItems, movies.size());
 
         for (LinkedHashMap<String, Object> entity : movies) {
             String id = createId(entity);
