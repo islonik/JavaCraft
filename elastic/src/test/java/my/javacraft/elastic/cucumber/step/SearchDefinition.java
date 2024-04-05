@@ -54,16 +54,7 @@ public class SearchDefinition {
                 new ParameterizedTypeReference<>() {
                 }
         );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(1, httpResponse.getBody().size());
-        LinkedHashMap<String, Object> map = httpResponse.getBody().getFirst();
-        List<String> row = dataTable.cells().getFirst();
-
-        Assertions.assertEquals(row.get(0), map.get("title"));
-        Assertions.assertEquals(row.get(1), map.get("director"));
-        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
-        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+        compareHttpResponseToDataTable(httpResponse, dataTable);
     }
 
     @When("fuzzy search for {string} in {string}")
@@ -88,16 +79,7 @@ public class SearchDefinition {
                 new ParameterizedTypeReference<>() {
                 }
         );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(1, httpResponse.getBody().size());
-        LinkedHashMap<String, Object> map = httpResponse.getBody().getFirst();
-        List<String> row = dataTable.cells().getFirst();
-
-        Assertions.assertEquals(row.get(0), map.get("title"));
-        Assertions.assertEquals(row.get(1), map.get("director"));
-        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
-        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+        compareHttpResponseToDataTable(httpResponse, dataTable);
     }
 
     @When("span search for {string} in {string}")
@@ -122,16 +104,7 @@ public class SearchDefinition {
                 new ParameterizedTypeReference<>() {
                 }
         );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(1, httpResponse.getBody().size());
-        LinkedHashMap<String, Object> map = httpResponse.getBody().getFirst();
-        List<String> row = dataTable.cells().getFirst();
-
-        Assertions.assertEquals(row.get(0), map.get("title"));
-        Assertions.assertEquals(row.get(1), map.get("director"));
-        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
-        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+        compareHttpResponseToDataTable(httpResponse, dataTable);
     }
 
     @When("search for {string} in {string}")
@@ -156,16 +129,25 @@ public class SearchDefinition {
                 new ParameterizedTypeReference<>() {
                 }
         );
+        compareHttpResponseToDataTable(httpResponse, dataTable);
+    }
+
+    private void compareHttpResponseToDataTable(
+            ResponseEntity<List<LinkedHashMap<String, Object>>> httpResponse, DataTable dataTable) {
         Assertions.assertNotNull(httpResponse);
         Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(1, httpResponse.getBody().size());
-        LinkedHashMap<String, Object> map = httpResponse.getBody().getFirst();
-        List<String> row = dataTable.cells().getFirst();
+        Assertions.assertEquals(dataTable.cells().size(), httpResponse.getBody().size());
 
-        Assertions.assertEquals(row.get(0), map.get("title"));
-        Assertions.assertEquals(row.get(1), map.get("director"));
-        Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("release_year"));
-        Assertions.assertEquals(row.get(3), map.get("synopsis"));
+        for (int i = 0; i < dataTable.cells().size(); i++) {
+            LinkedHashMap<String, Object> map = httpResponse.getBody().get(i);
+            List<String> row = dataTable.cells().get(i);
+
+            Assertions.assertEquals(row.get(0), map.get("name"));
+            Assertions.assertEquals(row.get(1), map.get("director"));
+            Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("ranking"));
+            Assertions.assertEquals(Integer.parseInt(row.get(3)), map.get("release_year"));
+            Assertions.assertEquals(row.get(4), map.get("synopsis"));
+        }
     }
 
     private String jsonBody(String pattern, String type) throws JsonProcessingException {

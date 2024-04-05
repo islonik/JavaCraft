@@ -2,7 +2,7 @@ Feature: UserHistoryResource
 
   Scenario: ingest movies
     Given index 'movies' exists
-    Then ingest 'movies.json' json file with 10 entities in 'movies' index
+    Then ingest 'movies.json' json file with 250 entities in 'movies' index
 
   Scenario: ingest books
     Given index 'books' exists
