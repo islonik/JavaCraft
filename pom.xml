@@ -25,7 +25,7 @@
 
         <spring.boot>3.2.4</spring.boot>
         <spring.version>6.1.4</spring.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.4.0</springdoc-openapi-starter-webmvc-ui.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
 
         <jackson.version>2.17.0</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
@@ -43,7 +43,7 @@
         <mockito.version>5.11.0</mockito.version>
         <buddy.version>1.14.11</buddy.version>
         <cucumber.version>7.16.1</cucumber.version>
-        <wiremock.version>3.4.2</wiremock.version>
+        <wiremock.version>3.5.2</wiremock.version>
     </properties>
 
     <modules>
