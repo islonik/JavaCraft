@@ -42,7 +42,7 @@ public class UserHistoryService {
 
         this.isoInstant = new DateTimeFormatterBuilder()
                 .parseCaseInsensitive()
-                .appendInstant(3)
+                .appendInstant(3) // should limit the amount of number after 'dot'
                 .toFormatter();
     }
 
@@ -65,6 +65,7 @@ public class UserHistoryService {
                 .id(documentId)
                 .upsert(userHistory)
                 .script(script)
+                .retryOnConflict(10) // retry 10 times to execute an update
                 .build();
 
         // use -Dlogging.level.tracer=TRACE to print a full curl statement

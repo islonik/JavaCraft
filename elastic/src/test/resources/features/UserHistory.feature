@@ -32,4 +32,11 @@ Feature: UserHistoryResource
       | Microsoft | 2     |
       | Nikita    | 1     |
 
+  Scenario: test multiple requests in parallel
+    Given user 'nl0000' doesn't have any events
+    When there are 10 requests
+    # | userId | documentId | searchType | searchPattern |
+      | nl0000 | 12345      | People     | Nikita        |
+    Then user 'nl0000' has 10 hit counts for documentId = '12345', searchType = 'People' and pattern = 'Nikita'
+
 

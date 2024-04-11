@@ -14,7 +14,11 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
@@ -133,6 +137,44 @@ public class UserHistoryDefinition {
 
         ObjectMapper objectMapper = new ObjectMapper();
         log.info("{}", objectMapper.writeValueAsString(httpResponse.getBody()));
+    }
+
+    @When("there are {int} requests")
+    public void sendMultipleRequestInParallel(Integer requests, DataTable dataTable) throws Exception {
+        log.info("sending {} requests in parallel...", requests);
+
+        List<Future<HttpEntity<UserClickResponse>>> futureClicks = new ArrayList<>();
+        try (ExecutorService executorService = Executors.newFixedThreadPool(requests)) {
+            for (int i = 0; i < requests; i++) {
+                Future<HttpEntity<UserClickResponse>> callbackResult = executorService.submit(() -> {
+                    String jsonBody = jsonBody(dataTable);
+
+                    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+                    headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+                    HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+                    RestTemplate restTemplate = new RestTemplate();
+
+                    return restTemplate.exchange(
+                            "http://localhost:%s/api/services/user_history".formatted(port),
+                            HttpMethod.POST,
+                            entity,
+                            UserClickResponse.class
+                    );
+                });
+                futureClicks.add(callbackResult);
+            }
+        }
+
+        Assertions.assertFalse(futureClicks.isEmpty());
+
+        for (Future<HttpEntity<UserClickResponse>> futureUserClickResponse : futureClicks) {
+            HttpEntity<UserClickResponse> userClickResponseHttpEntity = futureUserClickResponse.get();
+            UserClickResponse userClickResponse = userClickResponseHttpEntity.getBody();
+            Assertions.assertNotNull(userClickResponse);
+            log.info(userClickResponse.toString());
+        }
     }
 
     @Then("user {string} has {int} hit counts for documentId = {string}, searchType = {string} and pattern = {string}")
