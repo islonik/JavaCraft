@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.Client;
 import my.javacraft.elastic.model.SeekRequest;
 import org.apache.http.HttpHeaders;
@@ -34,7 +35,7 @@ public class SearchDefinition {
 
     @When("wildcard search for {string} in {string}")
     public void testWildcard(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
 
@@ -59,7 +60,7 @@ public class SearchDefinition {
 
     @When("fuzzy search for {string} in {string}")
     public void testFuzzy(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
 
@@ -84,7 +85,7 @@ public class SearchDefinition {
 
     @When("span search for {string} in {string}")
     public void testSpan(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
 
@@ -109,7 +110,7 @@ public class SearchDefinition {
 
     @When("search for {string} in {string}")
     public void testSearch(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
 
@@ -160,7 +161,5 @@ public class SearchDefinition {
         return objectMapper.writeValueAsString(seekRequest);
     }
 
-    private void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
-        Thread.sleep(1000);
-    }
+
 }

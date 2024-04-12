@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.UserHistoryService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class UserHistoryController {
 
     private final UserHistoryService userHistoryService;
+    private final DateService dateService;
 
     @Operation(
             summary = "Capture user click",
@@ -56,7 +58,7 @@ public class UserHistoryController {
 
         log.info("executing capture (UserClick = {})...", userClick);
 
-        UserClickResponse userClickResponse = userHistoryService.capture(userClick);
+        UserClickResponse userClickResponse = userHistoryService.capture(userClick, dateService.getCurrentDate());
 
         return ResponseEntity.ok().body(userClickResponse);
     }

@@ -12,4 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
         webEnvironment = WebEnvironment.DEFINED_PORT
 )
 public class CucumberSpringConfiguration {
+
+    public static void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
+        Thread.sleep(1000);
+    }
 }

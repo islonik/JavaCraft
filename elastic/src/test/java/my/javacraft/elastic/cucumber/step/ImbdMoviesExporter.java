@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class ImbdMoviesExporter {
 
     @Test
+    @Disabled
     public void exportImdbTop250Movies() throws IOException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate, br, zstd");
@@ -51,6 +53,7 @@ public class ImbdMoviesExporter {
     }
 
     @Test
+    @Disabled
     public void transformCsvIntoJson() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
 

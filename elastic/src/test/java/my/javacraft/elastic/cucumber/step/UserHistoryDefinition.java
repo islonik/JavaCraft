@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
@@ -184,7 +185,7 @@ public class UserHistoryDefinition {
             String documentId,
             String type,
             String pattern) throws InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
@@ -213,7 +214,7 @@ public class UserHistoryDefinition {
 
     @Then("user {string} has next sorting results")
     public void testSortingOrder(String userId, DataTable dataTable) throws InterruptedException {
-        waitAsElasticSearchIsEventuallyConsistentDB();
+        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
@@ -251,7 +252,4 @@ public class UserHistoryDefinition {
         return objectMapper.writeValueAsString(userClick);
     }
 
-    private void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
-        Thread.sleep(1000);
-    }
 }

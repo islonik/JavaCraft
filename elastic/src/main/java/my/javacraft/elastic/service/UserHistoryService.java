@@ -9,16 +9,12 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.JsonpUtils;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -34,22 +30,11 @@ public class UserHistoryService {
     public static final String UPDATED = "updated";
 
     private final ElasticsearchClient esClient;
-    private final DateTimeFormatter isoInstant;
+    private final DateService dateService;
 
-    @Autowired
-    public UserHistoryService(ElasticsearchClient esClient) {
-        this.esClient = esClient;
-
-        this.isoInstant = new DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendInstant(3) // should limit the amount of number after 'dot'
-                .toFormatter();
-    }
-
-    public UserClickResponse capture(UserClick userClick) throws IOException {
+    public UserClickResponse capture(UserClick userClick, String datetime) throws IOException {
         // default scripting language in Elasticsearch is 'painless'
         // It supports java8 syntax, but doesn't support the current datetime.
-        String datetime = getCurrentDate();
         InlineScript inlineScript = new InlineScript.Builder()
                 .source(createInlineScript())
                 .params(UPDATED, JsonData.of(datetime))
@@ -142,8 +127,5 @@ public class UserHistoryService {
         return esClient.delete(request);
     }
 
-    // returns: 2024-01-08T18:16:41.531Z
-    private String getCurrentDate() {
-        return isoInstant.format(Instant.now());
-    }
+
 }

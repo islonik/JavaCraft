@@ -1,3 +1,5 @@
+scheduler:
+  enabled: true
 server:
   port: "8001"
 spring:

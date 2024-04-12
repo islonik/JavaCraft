@@ -29,20 +29,24 @@ public class UserHistoryServiceTest {
     @Mock
     ElasticsearchClient esClient;
 
+    @Mock
+    DateService dateService;
+
     @Test
     public void testCapture() throws IOException {
         UpdateResponse updateResponse = mock(UpdateResponse.class);
+        when(dateService.getCurrentDate()).thenReturn("2024-01-15");
         when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
         when(esClient.update(any(UpdateRequest.class), any())).thenReturn(updateResponse);
         UserClick userClick = UserClickTest.createHitCount();
 
-        UserHistoryService userHistoryService = new UserHistoryService(esClient);
-        Assertions.assertNotNull(userHistoryService.capture(userClick));
+        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
+        Assertions.assertNotNull(userHistoryService.capture(userClick, dateService.getCurrentDate()));
     }
 
     @Test
     public void testSearchHistoryByUserId() throws IOException {
-        UserHistoryService userHistoryService = new UserHistoryService(esClient);
+        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
 
         UserClick userClick = UserClickTest.createHitCount();
         UserHistory userHistory = new UserHistory("2024-01-08T18:16:41.530571300Z", userClick);
@@ -80,7 +84,7 @@ public class UserHistoryServiceTest {
 
     @Test
     public void testCreateInlineScript() {
-        UserHistoryService userHistoryService = new UserHistoryService(esClient);
+        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
         Assertions.assertEquals("""
                         ctx._source.count++;
                         ctx._source.updated=params['updated'];
