@@ -22,7 +22,9 @@ public class DateService {
                 .toFormatter();
     }
 
-    // returns: 2024-01-08T18:16:41.531Z
+    /**
+     * @return 2024-01-08T18:16:41.531Z
+     */
     public String getCurrentDate() {
         return isoInstant.format(Instant.now());
     }
