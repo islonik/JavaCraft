@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserHistoryService {
 
-    public static final String USER_HISTORY = "user_history";
+    public static final String USER_HISTORY = "user-history";
     public static final String COUNT = "count";
     public static final String UPDATED = "updated";
 

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Slf4j
 @RestController
 @Tag(name = "2. User history", description = "API(s) for hit count services")
-@RequestMapping(path = "/api/services/user_history")
+@RequestMapping(path = "/api/services/user-history")
 @RequiredArgsConstructor
 public class UserHistoryController {
 
@@ -72,7 +72,7 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @GetMapping(value = "/document/{documentId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/documents/{documentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GetResponse<UserHistory>> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
@@ -92,7 +92,7 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserHistory>> getSearchHistory(
             @PathVariable("userId") String userId,
             @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
@@ -114,7 +114,7 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @DeleteMapping("/index/{index}")
+    @DeleteMapping("/indexes/{index}")
     public ResponseEntity<DeleteIndexResponse> deleteIndex(
             @PathVariable("index") String index) throws IOException {
 
@@ -135,7 +135,7 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "404", description = "Not found"),
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
-    @DeleteMapping("/index/{index}/documentId/{documentId}")
+    @DeleteMapping("/indexes/{index}/documents/{documentId}")
     public ResponseEntity<DeleteResponse> deleteHitCountDocument(
             @PathVariable("index") String index,
             @PathVariable("documentId") String documentId) throws IOException {

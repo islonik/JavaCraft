@@ -127,7 +127,7 @@ public class UserHistoryDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<UserClickResponse> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user_history".formatted(port),
+                "http://localhost:%s/api/services/user-history".formatted(port),
                 HttpMethod.POST,
                 entity,
                 UserClickResponse.class
@@ -158,7 +158,7 @@ public class UserHistoryDefinition {
                     RestTemplate restTemplate = new RestTemplate();
 
                     return restTemplate.exchange(
-                            "http://localhost:%s/api/services/user_history".formatted(port),
+                            "http://localhost:%s/api/services/user-history".formatted(port),
                             HttpMethod.POST,
                             entity,
                             UserClickResponse.class
@@ -195,7 +195,7 @@ public class UserHistoryDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user_history/user/%s".formatted(port, userId),
+                "http://localhost:%s/api/services/user-history/users/%s".formatted(port, userId),
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -223,7 +223,7 @@ public class UserHistoryDefinition {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user_history/user/%s".formatted(port, userId),
+                "http://localhost:%s/api/services/user-history/users/%s".formatted(port, userId),
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {

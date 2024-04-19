@@ -25,7 +25,7 @@ public class GasService {
     public Metric findLatestMetric(Long accountId) {
         return Optional.of(getMetricsByAccountId(accountId))
                 .filter(l -> !l.isEmpty())
-                .map(l -> l.get(l.size() - 1))
+                .map(List::getLast)
                 .orElse(null);
     }
 
