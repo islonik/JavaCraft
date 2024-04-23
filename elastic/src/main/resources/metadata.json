@@ -1,0 +1,27 @@
+[
+  {
+    "seekType": "BOOKS",
+    "searchFields": [
+      "name",
+      "author",
+      "synopsis"
+    ]
+  },
+  {
+    "seekType": "MOVIES",
+    "searchFields": [
+      "name",
+      "director",
+      "synopsis"
+    ]
+  },
+  {
+    "seekType": "MUSIC",
+    "searchFields": [
+      "band",
+      "album",
+      "name",
+      "lyrics"
+    ]
+  }
+]

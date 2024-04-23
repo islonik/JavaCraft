@@ -13,13 +13,16 @@ import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.SeekRequest;
+import my.javacraft.elastic.model.SeekType;
+import my.javacraft.elastic.model.SeekTypeMetadata;
+import my.javacraft.elastic.service.query.FuzzyFactory;
+import my.javacraft.elastic.service.query.SpanFactory;
+import my.javacraft.elastic.service.query.WildcardFactory;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.stereotype.Service;
 
@@ -32,20 +35,28 @@ public class SearchService {
     // Boost values are relative to the default value of 1.0.
     // A boost value between 0 and 1.0 decreases the relevance score.
     // A value greater than 1.0 increases the relevance score.
-    private static final Float NEUTRAL_VALUE = 1f;
+    public static final Float NEUTRAL_VALUE = 1f;
 
     private static final String SYNOPSIS = "synopsis";
 
     private final ElasticsearchClient esClient;
+    private final MetadataService metadataService;
+    private final WildcardFactory wildcardFactory;
+    private final FuzzyFactory fuzzyFactory;
+    private final SpanFactory spanFactory;
 
     /**
      * The wildcard query is an expensive query due to the nature of how it was implemented.
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> wildcardSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query wildcardQuery = createWildcardBoolQuery(SYNOPSIS, seekRequest.getPattern());
+        Query wildcardQuery = wildcardFactory.createWildcardBoolQuery(SYNOPSIS, seekRequest.getPattern());
 
-        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(wildcardQuery))));
+        SearchRequest searchRequest = new SearchRequest.Builder()
+                .index(seekRequest.getType())
+                .query(wildcardQuery)
+                .build();
+        //SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(wildcardQuery))));
 
         SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
 
@@ -57,7 +68,7 @@ public class SearchService {
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> fuzzySearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query fuzzyQuery = createFuzzyBoolQuery(SYNOPSIS, seekRequest.getPattern());
+        Query fuzzyQuery = fuzzyFactory.createFuzzyBoolQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(fuzzyQuery))));
 
@@ -67,7 +78,7 @@ public class SearchService {
     }
 
     public List<Object> spanSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query spanQuery = createSpanQuery(SYNOPSIS, seekRequest.getPattern());
+        Query spanQuery = spanFactory.createSpanQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(spanQuery))));
 
@@ -109,28 +120,50 @@ public class SearchService {
 
     private List<RequestItem> createRequestItems(SeekRequest seekRequest) {
         List<RequestItem> requestItems = new ArrayList<>();
+        
+        // get search fields for each type
+        Set<SeekTypeMetadata> seekTypeMetadataList = metadataService.getSeekTypeMetadata();
 
-        List<BoolQuery> boolQueries = new ArrayList<>();
+        // filter type we look
+        Set<SeekTypeMetadata> seekTypeToUseInQuery = seekTypeMetadataList
+                .stream()
+                .filter(s -> s.getSeekType().equals(SeekType.valueByName(seekRequest.getType())))
+                .findFirst()
+                .map(Collections::singleton)
+                .orElse(Collections.emptySet());
 
-        List<String> fields = new ArrayList<>();
-        fields.add(SYNOPSIS);
-        // 1 field -> 1 wildcard query
-        fields.forEach(field -> {
-            Query query = createWildcardBoolQuery(field, seekRequest.getPattern());
+        if (seekTypeToUseInQuery.isEmpty() || SeekType.valueByName(seekRequest.getType()) == SeekType.ALL) {
+            seekTypeToUseInQuery = seekTypeMetadataList;
+        }
+        
+        // generate queries
+        for (SeekTypeMetadata seekTypeMetadata : seekTypeToUseInQuery) {
+            addToRequestItems(seekRequest, seekTypeMetadata, requestItems);
+        }
 
-            boolQueries.add(new BoolQuery.Builder()
+        return requestItems;
+    }
+
+    private void addToRequestItems(SeekRequest seekRequest, SeekTypeMetadata seekTypeMetadata, List<RequestItem> requestItems) {
+        List<BoolQuery> boolTypeQueries = new ArrayList<>();
+        List<String> searchFields = seekTypeMetadata.getSearchFields();
+        // N fields -> N wildcard queries
+        searchFields.forEach(field -> {
+            Query query = wildcardFactory.createWildcardBoolQuery(field, seekRequest.getPattern());
+
+            boolTypeQueries.add(new BoolQuery.Builder()
                     .boost(NEUTRAL_VALUE)
                     .must(query)
                     .build()
             );
         });
 
-        // 1 wildcard query -> 1 requestItem
-        boolQueries.forEach(boolQuery -> {
+        // N wildcard queries -> N request items
+        boolTypeQueries.forEach(boolQuery -> {
             requestItems.add(
                     new RequestItem.Builder()
                             .header(new MultisearchHeader.Builder()
-                                    .index(seekRequest.getType())
+                                    .index(seekTypeMetadata.getSeekType().toString().toLowerCase())
                                     .build()
                             )
                             .body(new MultisearchBody.Builder()
@@ -140,7 +173,6 @@ public class SearchService {
                             .build()
             );
         });
-        return requestItems;
     }
 
     public boolean isValidIndex(String index) throws IOException, ElasticsearchException {
@@ -150,67 +182,4 @@ public class SearchService {
                 .value();
     }
 
-
-    public Query createWildcardBoolQuery(String field, String value) {
-        Query wildcardQuery = new WildcardQuery.Builder()
-                .boost(NEUTRAL_VALUE)
-                .field(field)
-                .wildcard(value)
-                .build()
-                ._toQuery();
-
-        Query simpleQuery = new SimpleQueryStringQuery.Builder()
-                .boost(NEUTRAL_VALUE)
-                .analyzeWildcard(true) // if true, the query attempts to analyze wildcard terms in the query string.
-                .defaultOperator(Operator.And)
-                .fields(field)
-                .query(value)
-                .build()
-                ._toQuery();
-
-        return new BoolQuery.Builder()
-                .should(List.of(wildcardQuery, simpleQuery))
-                .build()
-                ._toQuery();
-    }
-
-    public Query createFuzzyBoolQuery(String field, String value) {
-        return new MatchQuery.Builder()
-                .boost(NEUTRAL_VALUE)
-                // Maximum edit distance allowed for matching.
-                .fuzziness("2")
-                // If true, edits for fuzzy matching include transpositions of two adjacent characters (for example, ab to ba).
-                .fuzzyTranspositions(true)
-                .operator(Operator.And)
-                .field(field)
-                .query(value)
-                .build()
-                ._toQuery();
-    }
-
-    public Query createSpanQuery(String field, String value) {
-        List<SpanQuery> spanQueries = new ArrayList<>();
-        String[] searchTokens = value.split(" ", -1);
-        for (String token : searchTokens) {
-            spanQueries.add(new SpanQuery.Builder()
-                    .spanTerm(
-                            new SpanTermQuery.Builder()
-                                    .boost(NEUTRAL_VALUE)
-                                    .field(field)
-                                    .value(token)
-                                    .build()
-                    ).build()
-            );
-        }
-
-        return new SpanNearQuery.Builder()
-                .boost(NEUTRAL_VALUE)
-                // Controls the maximum number of intervening unmatched positions permitted.
-                .slop(3)
-                // Controls whether matches are required to be in-order.
-                .inOrder(false)
-                .clauses(spanQueries)
-                .build()
-                ._toQuery();
-    }
 }

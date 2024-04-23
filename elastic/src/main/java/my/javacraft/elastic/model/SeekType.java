@@ -9,4 +9,14 @@ public enum SeekType {
     MOVIES,
     PEOPLE;
 
+    public static SeekType valueByName(String name) {
+        SeekType[] values = values();
+        for (SeekType seekType : values) {
+            if (seekType.name().equalsIgnoreCase(name)) {
+                return seekType;
+            }
+        }
+        return ALL;
+    }
+
 }
