@@ -1,4 +1,4 @@
-Feature: UserHistoryResource
+Feature: UserHistoryController
 
   Scenario: prepare data
     Given index 'user_history' exists

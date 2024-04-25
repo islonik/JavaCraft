@@ -1,4 +1,4 @@
-Feature: UserHistoryResource
+Feature: data ingestion
 
   Scenario: ingest movies
     Given index 'movies' exists
