@@ -82,13 +82,37 @@ public class UserHistoryDefinition {
         }
     }
 
+    @Given("index {string} has next mapping")
+    public void applyMappingToIndex(String index, DataTable data) throws IOException {
+        PutMappingRequest.Builder putMappingRequest = new PutMappingRequest.Builder().index(index);
+        List<List<String>> rows = data.cells();
+        for (List<String> row : rows) {
+            String fieldName = row.get(0);
+            String type = row.get(1);
+
+            switch (type) {
+                case "text" -> putMappingRequest.properties(fieldName, p -> p.text(tpr -> tpr));
+                case "date" -> putMappingRequest.properties(fieldName, p -> p.date(tpr -> tpr));
+                case "float" -> putMappingRequest.properties(fieldName, p -> p.float_(tpr -> tpr));
+                case "double" -> putMappingRequest.properties(fieldName, p -> p.double_(tpr -> tpr));
+                case "keyword" -> putMappingRequest.properties(fieldName, p -> p.keyword(tpr -> tpr));
+                case "integer" -> putMappingRequest.properties(fieldName, p -> p.integer(tpr -> tpr));
+            }
+
+        }
+        PutMappingResponse putMappingResponse = esClient
+                .indices()
+                .putMapping(putMappingRequest.build());
+        log.info("mapping applied = {}", putMappingResponse.acknowledged());
+    }
+
     private boolean isIndexExists(String index) {
         try {
             DeleteIndexRequest request = new DeleteIndexRequest.Builder()
                     .index(index)
                     .build();
             DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
-            log.info("{}}", deleteIndexResponse);
+            log.info("{}", deleteIndexResponse);
 
             ExistsRequest existsRequest = new ExistsRequest.Builder().index(index).build();
 
