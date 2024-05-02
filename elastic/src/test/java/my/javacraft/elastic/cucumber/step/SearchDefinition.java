@@ -143,11 +143,15 @@ public class SearchDefinition {
             LinkedHashMap<String, Object> map = httpResponse.getBody().get(i);
             List<String> row = dataTable.cells().get(i);
 
-            Assertions.assertEquals(row.get(0), map.get("name"));
-            Assertions.assertEquals(row.get(1), map.get("director"));
-            Assertions.assertEquals(Integer.parseInt(row.get(2)), map.get("ranking"));
-            Assertions.assertEquals(Integer.parseInt(row.get(3)), map.get("release_year"));
-            Assertions.assertEquals(row.get(4), map.get("synopsis"));
+            for (String cell : row) {
+                if (cell.contains("=")) {
+                    String[] cellValues = cell.split("=");
+                    String key = cellValues[0].trim();
+                    String value = cellValues[1].trim();
+
+                    Assertions.assertEquals(value, map.get(key).toString());
+                }
+            }
         }
     }
 
