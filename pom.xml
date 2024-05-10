@@ -24,10 +24,10 @@
         <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
 
         <spring.boot>3.2.5</spring.boot>
-        <spring.version>6.1.4</spring.version>
+        <spring.version>6.1.6</spring.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
 
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.17.1</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
@@ -42,7 +42,7 @@
         <junit5.version>5.10.2</junit5.version>
         <mockito.version>5.11.0</mockito.version>
         <buddy.version>1.14.11</buddy.version>
-        <cucumber.version>7.16.1</cucumber.version>
+        <cucumber.version>7.17.0</cucumber.version>
         <wiremock.version>3.5.4</wiremock.version>
     </properties>
 
