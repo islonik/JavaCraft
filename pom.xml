@@ -37,6 +37,7 @@
         <liquibase.version>4.27.0</liquibase.version>
         <lombok.version>1.18.32</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
+        <opencsv.version>5.9</opencsv.version>
 
         <junit.platform.suite.version>1.10.2</junit.platform.suite.version>
         <junit5.version>5.10.2</junit5.version>
