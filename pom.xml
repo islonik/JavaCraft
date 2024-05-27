@@ -23,7 +23,7 @@
         <jaxb2-maven-plugin.version>3.1.0</jaxb2-maven-plugin.version>
         <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
 
-        <spring.boot>3.2.5</spring.boot>
+        <spring.boot>3.3.0</spring.boot>
         <spring.version>6.1.6</spring.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
 
