@@ -26,6 +26,7 @@
         <spring.boot>3.3.0</spring.boot>
         <spring.version>6.1.8</spring.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
+        <spring.kafka.version>3.2.0</spring.kafka.version>
 
         <jackson.version>2.17.1</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
@@ -51,6 +52,7 @@
         <module>bdd</module>
         <module>echo</module>
         <module>elastic</module>
+        <module>kafka</module>
         <module>linker</module>
         <module>mathparser</module>
         <module>ses</module>

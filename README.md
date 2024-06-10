@@ -3,6 +3,7 @@
 * [BDD](bdd/README.md) - Behaviour Driven Development
 * [echo](echo/README.md) - Different Server types
 * [elastic](elastic/README.md) - rest to elasticsearch
+* [kafka](kafka/README.md) - simple Kafka application
 * [linker](linker/README.md) - Simple short to full url transformer
 * [mathparser](mathparser/README.md) - Complex Math parser with GUI
 * [SES](ses/README.md) - Simple Event System
