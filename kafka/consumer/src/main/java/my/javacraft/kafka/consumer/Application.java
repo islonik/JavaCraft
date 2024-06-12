@@ -1,13 +1,18 @@
 package my.javacraft.kafka.consumer;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 /**
  * Hello world!
  *
  */
-public class Application
-{
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+@Slf4j
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        log.info("Kafka Producer Application starting...");
+        SpringApplication.run(Application.class, args);
     }
 }
