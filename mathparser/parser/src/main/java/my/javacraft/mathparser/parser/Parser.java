@@ -302,26 +302,17 @@ public class Parser {
     private void oneParameterFunctions(Number result, String function) throws ParserException {
         getToken();
         sixthStepParsing(result);
-        if (function.equals("abs")) {
-            result.set(Math.abs(result.get()));
-        } else if (function.equals("log10")) {
-            result.set(Math.log10(result.get()));
-        } else if (function.equals("round")) {
-            result.set(Math.round(result.get()));
-        } else if (function.equals("sqrt")) {
-            result.set(Math.sqrt(result.get()));
-        } else if (function.equals("acos")) {
-            result.set(Math.acos(valueToMeasure(result.get())));
-        } else if (function.equals("asin")) {
-            result.set(Math.asin(valueToMeasure(result.get())));
-        } else if (function.equals("atan")) {
-            result.set(Math.atan(valueToMeasure(result.get())));
-        } else if (function.equals("cos")) {
-            result.set(Math.cos(valueToMeasure(result.get())));
-        } else if (function.equals("sin")) {
-            result.set(Math.sin(valueToMeasure(result.get())));
-        } else if (function.equals("tan")) {
-            result.set(Math.tan(valueToMeasure(result.get())));
+        switch (function) {
+            case "abs" -> result.set(Math.abs(result.get()));
+            case "log10" -> result.set(Math.log10(result.get()));
+            case "round" -> result.set(Math.round(result.get()));
+            case "sqrt" -> result.set(Math.sqrt(result.get()));
+            case "acos" -> result.set(Math.acos(valueToMeasure(result.get())));
+            case "asin" -> result.set(Math.asin(valueToMeasure(result.get())));
+            case "atan" -> result.set(Math.atan(valueToMeasure(result.get())));
+            case "cos" -> result.set(Math.cos(valueToMeasure(result.get())));
+            case "sin" -> result.set(Math.sin(valueToMeasure(result.get())));
+            case "tan" -> result.set(Math.tan(valueToMeasure(result.get())));
         }
     }
 
@@ -332,17 +323,14 @@ public class Parser {
      * @return converted value.
      **/
     private double valueToMeasure(double result) {
-        switch (typeTangentUnit) {
+        return switch (typeTangentUnit) {
             case ParserType.DEGREE:
-                result = result * Math.PI / 180;
-                break;
+                yield result * Math.PI / 180;
             case ParserType.GRADUS:
-                result = result * Math.PI / 200;
-                break;
-            case ParserType.RADIAN:
-                break;
-        }
-        return result;
+                yield result * Math.PI / 200;
+            default: // ParserType.RADIAN
+                yield result;
+        };
     }
 
     /**
