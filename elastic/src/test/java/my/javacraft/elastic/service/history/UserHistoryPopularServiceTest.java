@@ -22,14 +22,14 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked"})
 @ExtendWith(MockitoExtension.class)
-public class UserHistoryServiceTest {
+public class UserHistoryPopularServiceTest {
 
     @Mock
     ElasticsearchClient esClient;
 
     @Test
     public void testSearchHistoryByUserId() throws IOException {
-        UserHistoryService userHistoryService = new UserHistoryService(esClient);
+        UserHistoryPopularService userHistoryPopularService = new UserHistoryPopularService(esClient);
 
         UserClick userClick = UserClickTest.createHitCount();
         UserHistory userHistory = new UserHistory("2024-01-08T18:16:41.530571300Z", userClick);
@@ -52,7 +52,7 @@ public class UserHistoryServiceTest {
         when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
         when(esClient.search(any(SearchRequest.class), eq(UserHistory.class))).thenReturn(searchResponse);
 
-        List<UserHistory> result = userHistoryService.searchHistoryByUserId("nl8888", 10);
+        List<UserHistory> result = userHistoryPopularService.retrievePopularUserSearches("nl8888", 10);
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.size());
 

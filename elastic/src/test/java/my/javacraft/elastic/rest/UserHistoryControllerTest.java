@@ -11,6 +11,7 @@ import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.history.UserHistoryIngestionService;
+import my.javacraft.elastic.service.history.UserHistoryPopularService;
 import my.javacraft.elastic.service.history.UserHistoryService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,8 @@ public class UserHistoryControllerTest {
     @Mock
     UserHistoryService userHistoryService;
     @Mock
+    UserHistoryPopularService userHistoryPopularService;
+    @Mock
     UserHistoryIngestionService userHistoryIngestionService;
 
     @Test
@@ -37,6 +40,7 @@ public class UserHistoryControllerTest {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
+                userHistoryPopularService,
                 userHistoryIngestionService
         );
 
@@ -61,6 +65,7 @@ public class UserHistoryControllerTest {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
+                userHistoryPopularService,
                 userHistoryIngestionService
         );
 
@@ -85,11 +90,12 @@ public class UserHistoryControllerTest {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
+                userHistoryPopularService,
                 userHistoryIngestionService
         );
 
         List<UserHistory> historyList = new ArrayList<>();
-        when(userHistoryService.searchHistoryByUserId(anyString(), anyInt())).thenReturn(historyList);
+        when(userHistoryPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(historyList);
 
         ResponseEntity<List<UserHistory>> response = userHistoryController
                 .getSearchHistory("nl88888", "10");
@@ -103,6 +109,7 @@ public class UserHistoryControllerTest {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
+                userHistoryPopularService,
                 userHistoryIngestionService
         );
 
@@ -121,6 +128,7 @@ public class UserHistoryControllerTest {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
+                userHistoryPopularService,
                 userHistoryIngestionService
         );
 

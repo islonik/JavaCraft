@@ -22,7 +22,7 @@ public class SchedulerService {
         try {
             RangeQuery rangeQuery = new RangeQuery.Builder()
                     .field(UserHistoryService.UPDATED)
-                    .lt(JsonData.of(dateService.getNDaysBeforeDate(90))) // less than 90 days
+                    .lte(JsonData.of(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS)))
                     .build();
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                     .index(UserHistoryService.INDEX_USER_HISTORY)

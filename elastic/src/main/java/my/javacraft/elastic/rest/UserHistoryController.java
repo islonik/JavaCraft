@@ -18,6 +18,7 @@ import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.history.UserHistoryIngestionService;
+import my.javacraft.elastic.service.history.UserHistoryPopularService;
 import my.javacraft.elastic.service.history.UserHistoryService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class UserHistoryController {
 
     private final DateService dateService;
     private final UserHistoryService userHistoryService;
+    private final UserHistoryPopularService userHistoryPopularService;
     private final UserHistoryIngestionService userHistoryIngestionService;
 
     @Operation(
@@ -100,9 +102,9 @@ public class UserHistoryController {
             @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
         int limitSize = Integer.parseInt(size);
 
-        log.info("executing getSearchHistory (userId = '{}' and limit = '{}')...", userId, limitSize);
+        log.info("retrieving popular user searches (userId = '{}' and limit = '{}')...", userId, limitSize);
 
-        List<UserHistory> mapList = userHistoryService.searchHistoryByUserId(userId, limitSize);
+        List<UserHistory> mapList = userHistoryPopularService.retrievePopularUserSearches(userId, limitSize);
 
         return ResponseEntity.ok().body(mapList);
     }

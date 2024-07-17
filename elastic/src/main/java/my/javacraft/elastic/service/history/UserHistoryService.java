@@ -1,26 +1,23 @@
 package my.javacraft.elastic.service.history;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch.core.*;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
-import co.elastic.clients.json.JsonpUtils;
 import java.io.IOException;
-import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserHistory;
 import org.springframework.stereotype.Service;
 
-/**
- * Index 'hit_count' should be created with the 'updated' field set up as a 'date' format. See README.md.
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserHistoryService {
+
+    // we keep 180 days or close to 6 months of data in the index
+    public static final int SIX_MONTHS = 180;
 
     public static final String INDEX_USER_HISTORY = "user-history";
     public static final String COUNT = "count";
@@ -35,37 +32,6 @@ public class UserHistoryService {
                 .build();
 
         return esClient.get(getRequest, UserHistory.class);
-    }
-
-    public List<UserHistory> searchHistoryByUserId(String userId, int searchLimitSize) throws IOException {
-        SearchRequest searchRequest = new SearchRequest.Builder()
-                .index(INDEX_USER_HISTORY)
-                // search by userId
-                .query(q -> q.term(t -> t
-                        .field("userClick.userId")
-                        .value(v -> v.stringValue(userId))
-                ))
-                .size(searchLimitSize) // limit result to N values
-                // the result values with the highest count are going to be displayed
-                .sort(so -> so.field(
-                                FieldSort.of(f -> f
-                                        .field(COUNT)
-                                        .order(SortOrder.Desc)
-                                )
-                        )
-                ).build();
-
-        // use -Dlogging.level.tracer=TRACE to print a full CURL statement or see
-        log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
-        List<UserHistory> userHistoryList = esClient.search(searchRequest, UserHistory.class)
-                .hits()
-                .hits()
-                .stream()
-                .filter(hit -> hit.source() != null)
-                .map(Hit::source)
-                .toList();
-        log.trace(userHistoryList.toString());
-        return userHistoryList;
     }
 
     public DeleteIndexResponse deleteIndex(String index) throws IOException {

@@ -15,6 +15,9 @@ import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import org.springframework.stereotype.Service;
 
+/**
+ * Index 'user-history' should be created with the 'updated' field set up as a 'date' format. See README.md.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
