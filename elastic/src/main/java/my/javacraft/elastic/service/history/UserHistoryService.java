@@ -18,10 +18,12 @@ public class UserHistoryService {
 
     // we keep 180 days or close to 6 months of data in the index
     public static final int SIX_MONTHS = 180;
+    public static final int SEVEN_DAYS = 7;
 
     public static final String INDEX_USER_HISTORY = "user-history";
     public static final String COUNT = "count";
     public static final String UPDATED = "updated";
+    public static final String RECORD_ID = "recordId";
 
     private final ElasticsearchClient esClient;
 

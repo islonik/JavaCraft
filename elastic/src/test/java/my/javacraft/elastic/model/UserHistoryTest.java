@@ -11,7 +11,7 @@ public class UserHistoryTest {
     public void testGetCompositeId() {
         UserClick userClick = new UserClick();
         userClick.setUserId("nl8888");
-        userClick.setDocumentId("12345");
+        userClick.setRecordId("12345");
         userClick.setSearchType("Companies");
         userClick.setSearchPattern("Microsoft");
 
@@ -30,9 +30,10 @@ public class UserHistoryTest {
                   "count" : 1,
                   "updated" : "2024-01-08T18:16:41.53",
                   "elasticId" : "12345-People-nl8888",
+                  "recordId" : "12345",
                   "userClick" : {
                     "userId" : "nl8888",
-                    "documentId" : "12345",
+                    "recordId" : "12345",
                     "searchType" : "People",
                     "searchPattern" : "Nikita"
                   }

@@ -206,7 +206,7 @@ public class UserHistoryDefinition {
     public void checkHitCounts(
             String userId,
             int hitCounts,
-            String documentId,
+            String recordId,
             String type,
             String pattern) throws InterruptedException {
         CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
@@ -230,8 +230,8 @@ public class UserHistoryDefinition {
         Assertions.assertEquals(1, httpResponse.getBody().size());
         UserHistory userHistory = httpResponse.getBody().getFirst();
         Assertions.assertEquals(hitCounts, userHistory.getCount());
-        Assertions.assertEquals("%s-%s-%s".formatted(documentId, type, userId), userHistory.getElasticId());
-        Assertions.assertEquals(documentId, userHistory.getUserClick().getDocumentId());
+        Assertions.assertEquals("%s-%s-%s".formatted(recordId, type, userId), userHistory.getElasticId());
+        Assertions.assertEquals(recordId, userHistory.getUserClick().getRecordId());
         Assertions.assertEquals(pattern, userHistory.getUserClick().getSearchPattern());
 
     }
@@ -268,7 +268,7 @@ public class UserHistoryDefinition {
         UserClick userClick = new UserClick();
         List<String> data = dataTable.cells().getFirst();
         userClick.setUserId(data.get(0));
-        userClick.setDocumentId(data.get(1));
+        userClick.setRecordId(data.get(1));
         userClick.setSearchType(data.get(2));
         userClick.setSearchPattern(data.get(3));
 

@@ -37,13 +37,13 @@ public class SchedulerDefinition {
         List<UserClickResponse> responses = new ArrayList<>();
         for (int i = 0; i < records; i++) {
             UserClick userClick = new UserClick();
-            userClick.setDocumentId("document-id-" + i);
+            userClick.setRecordId("document-id-" + i);
             userClick.setSearchType(SeekType.PEOPLE.toString());
             userClick.setUserId("nl8111");
             userClick.setSearchPattern("FIXED INCOME");
 
             UserClickResponse userClickResponse = userHistoryIngestionService.ingestUserClick(
-                    userClick, dateService.getNDaysBeforeDate(91 + i));
+                    userClick, dateService.getNDaysBeforeDate(200 + i));
             responses.add(userClickResponse);
         }
 

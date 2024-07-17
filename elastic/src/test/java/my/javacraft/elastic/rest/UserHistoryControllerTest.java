@@ -13,6 +13,7 @@ import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.history.UserHistoryIngestionService;
 import my.javacraft.elastic.service.history.UserHistoryPopularService;
 import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.service.history.UserHistoryTrendingService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,8 @@ public class UserHistoryControllerTest {
     @Mock
     UserHistoryPopularService userHistoryPopularService;
     @Mock
+    UserHistoryTrendingService userHistoryTrendingService;
+    @Mock
     UserHistoryIngestionService userHistoryIngestionService;
 
     @Test
@@ -41,6 +44,7 @@ public class UserHistoryControllerTest {
                 dateService,
                 userHistoryService,
                 userHistoryPopularService,
+                userHistoryTrendingService,
                 userHistoryIngestionService
         );
 
@@ -50,7 +54,7 @@ public class UserHistoryControllerTest {
         when(userHistoryIngestionService.ingestUserClick(any(), anyString())).thenReturn(userClickResponse);
 
         UserClick userClick = new UserClick();
-        userClick.setDocumentId("did-1");
+        userClick.setRecordId("did-1");
         userClick.setSearchType("Obligor");
         userClick.setSearchPattern("1111");
 
@@ -66,6 +70,7 @@ public class UserHistoryControllerTest {
                 dateService,
                 userHistoryService,
                 userHistoryPopularService,
+                userHistoryTrendingService,
                 userHistoryIngestionService
         );
 
@@ -86,11 +91,12 @@ public class UserHistoryControllerTest {
     }
 
     @Test
-    public void testGetSearchHistory() throws IOException {
+    public void testPopularSearchHistory() throws IOException {
         UserHistoryController userHistoryController = new UserHistoryController(
                 dateService,
                 userHistoryService,
                 userHistoryPopularService,
+                userHistoryTrendingService,
                 userHistoryIngestionService
         );
 
@@ -98,7 +104,27 @@ public class UserHistoryControllerTest {
         when(userHistoryPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(historyList);
 
         ResponseEntity<List<UserHistory>> response = userHistoryController
-                .getSearchHistory("nl88888", "10");
+                .retrievePopularUserSearches("nl88888", "10");
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testTrendingSearchHistory() throws IOException {
+        UserHistoryController userHistoryController = new UserHistoryController(
+                dateService,
+                userHistoryService,
+                userHistoryPopularService,
+                userHistoryTrendingService,
+                userHistoryIngestionService
+        );
+
+        List<UserHistory> historyList = new ArrayList<>();
+        when(userHistoryTrendingService.retrieveTrendingUserSearches(anyInt())).thenReturn(historyList);
+
+        ResponseEntity<List<UserHistory>> response = userHistoryController
+                .retrieveTrendingUserSearches("10");
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -110,6 +136,7 @@ public class UserHistoryControllerTest {
                 dateService,
                 userHistoryService,
                 userHistoryPopularService,
+                userHistoryTrendingService,
                 userHistoryIngestionService
         );
 
@@ -129,6 +156,7 @@ public class UserHistoryControllerTest {
                 dateService,
                 userHistoryService,
                 userHistoryPopularService,
+                userHistoryTrendingService,
                 userHistoryIngestionService
         );
 

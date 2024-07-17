@@ -59,7 +59,7 @@ public class UserHistoryPopularServiceTest {
         UserHistory resultHit = result.getFirst();
         Assertions.assertEquals(1L, resultHit.getCount());
         Assertions.assertEquals("nl8888", resultHit.getUserClick().getUserId());
-        Assertions.assertEquals("12345", resultHit.getUserClick().getDocumentId());
+        Assertions.assertEquals("12345", resultHit.getUserClick().getRecordId());
         Assertions.assertEquals("People", resultHit.getUserClick().getSearchType());
         Assertions.assertEquals("Nikita", resultHit.getUserClick().getSearchPattern());
         Assertions.assertEquals("12345-People-nl8888", resultHit.getElasticId());

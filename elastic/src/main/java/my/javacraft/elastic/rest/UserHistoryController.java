@@ -20,6 +20,7 @@ import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.history.UserHistoryIngestionService;
 import my.javacraft.elastic.service.history.UserHistoryPopularService;
 import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.service.history.UserHistoryTrendingService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ public class UserHistoryController {
     private final DateService dateService;
     private final UserHistoryService userHistoryService;
     private final UserHistoryPopularService userHistoryPopularService;
+    private final UserHistoryTrendingService userHistoryTrendingService;
     private final UserHistoryIngestionService userHistoryIngestionService;
 
     @Operation(
@@ -97,7 +99,7 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserHistory>> getSearchHistory(
+    public ResponseEntity<List<UserHistory>> retrievePopularUserSearches(
             @PathVariable("userId") String userId,
             @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
         int limitSize = Integer.parseInt(size);
@@ -105,6 +107,27 @@ public class UserHistoryController {
         log.info("retrieving popular user searches (userId = '{}' and limit = '{}')...", userId, limitSize);
 
         List<UserHistory> mapList = userHistoryPopularService.retrievePopularUserSearches(userId, limitSize);
+
+        return ResponseEntity.ok().body(mapList);
+    }
+
+    @Operation(
+            summary = "Fetch trending search services.",
+            description = "Fetch trending search services."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserHistory>> retrieveTrendingUserSearches(
+            @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
+        int limitSize = Integer.parseInt(size);
+
+        log.info("retrieving trending user searches (limit = '{}')...", limitSize);
+
+        List<UserHistory> mapList = userHistoryTrendingService.retrieveTrendingUserSearches(limitSize);
 
         return ResponseEntity.ok().body(mapList);
     }

@@ -15,6 +15,8 @@ public class UserHistory {
     @NotEmpty
     String elasticId;
     @NotEmpty
+    String recordId;
+    @NotEmpty
     UserClick userClick;
 
     public UserHistory() {} // we need default constructor for jackson
@@ -22,6 +24,7 @@ public class UserHistory {
     public UserHistory(String updated, UserClick userClick) {
         this.count = 1L;
         this.updated = updated;
+        this.recordId = userClick.getRecordId();
         this.elasticId = getElasticId(userClick);
         this.userClick = userClick;
     }
@@ -31,7 +34,7 @@ public class UserHistory {
         // _id is limited to 512 bytes in size and larger values will be rejected, that means we should limit how we generated id.
         // UUID.nameUUIDFromBytes uses 3rd UUID type (Name-based)
         return new String("%s-%s-%s".formatted(
-                userClick.getDocumentId(),
+                userClick.getRecordId(),
                 userClick.getSearchType(),
                 userClick.getUserId()
         ).getBytes(StandardCharsets.UTF_8));

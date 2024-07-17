@@ -10,7 +10,7 @@ public class UserClickTest {
         UserClick userClick = createHitCount();
 
         Assertions.assertNotNull(userClick.getUserId());
-        Assertions.assertNotNull(userClick.getDocumentId());
+        Assertions.assertNotNull(userClick.getRecordId());
         Assertions.assertNotNull(userClick.getSearchType());
         Assertions.assertNotNull(userClick.getSearchPattern());
     }
@@ -18,7 +18,7 @@ public class UserClickTest {
     public static UserClick createHitCount() {
         UserClick userClick = new UserClick();
         userClick.setUserId("nl8888");
-        userClick.setDocumentId("12345");
+        userClick.setRecordId("12345");
         userClick.setSearchType("People");
         userClick.setSearchPattern("Nikita");
         return userClick;

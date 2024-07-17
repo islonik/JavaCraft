@@ -9,14 +9,14 @@ import lombok.ToString;
 @Data
 @ToString
 public class UserClick {
+
     @NotEmpty
     String userId;
     @NotBlank
-    String documentId;
+    String recordId;
     @NotBlank
     String searchType;
     @NotBlank
     String searchPattern;
-
 
 }
