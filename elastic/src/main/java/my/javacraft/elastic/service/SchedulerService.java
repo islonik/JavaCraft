@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.service.history.UserHistoryService;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -24,7 +25,7 @@ public class SchedulerService {
                     .lt(JsonData.of(dateService.getNDaysBeforeDate(90))) // less than 90 days
                     .build();
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                    .index(UserHistoryService.USER_HISTORY)
+                    .index(UserHistoryService.INDEX_USER_HISTORY)
                     .query(rangeQuery._toQuery())
                     .build();
 

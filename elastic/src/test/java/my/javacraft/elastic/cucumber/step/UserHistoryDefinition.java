@@ -24,7 +24,7 @@ import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
-import my.javacraft.elastic.service.UserHistoryService;
+import my.javacraft.elastic.service.history.UserHistoryService;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,7 +127,7 @@ public class UserHistoryDefinition {
     @Given("user {string} doesn't have any events")
     public void clearUserHistory(String userId) throws IOException {
         DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                .index(UserHistoryService.USER_HISTORY)
+                .index(UserHistoryService.INDEX_USER_HISTORY)
                 .query(q -> q.term(t -> t
                         .field("userClick.userId")
                         .value(v -> v.stringValue(userId))

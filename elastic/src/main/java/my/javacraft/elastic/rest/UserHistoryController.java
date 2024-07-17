@@ -17,7 +17,8 @@ import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.DateService;
-import my.javacraft.elastic.service.UserHistoryService;
+import my.javacraft.elastic.service.history.UserHistoryIngestionService;
+import my.javacraft.elastic.service.history.UserHistoryService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +31,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class UserHistoryController {
 
-    private final UserHistoryService userHistoryService;
     private final DateService dateService;
+    private final UserHistoryService userHistoryService;
+    private final UserHistoryIngestionService userHistoryIngestionService;
 
     @Operation(
             summary = "Capture user click",
@@ -45,7 +47,7 @@ public class UserHistoryController {
     @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserClickResponse> capture(
+    public ResponseEntity<UserClickResponse> captureUserClick(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     description = "User history values",
@@ -56,9 +58,9 @@ public class UserHistoryController {
             )
             @RequestBody @Valid UserClick userClick) throws IOException {
 
-        log.info("executing capture (UserClick = {})...", userClick);
+        log.info("ingesting (UserClick = {})...", userClick);
 
-        UserClickResponse userClickResponse = userHistoryService.capture(userClick, dateService.getCurrentDate());
+        UserClickResponse userClickResponse = userHistoryIngestionService.ingestUserClick(userClick, dateService.getCurrentDate());
 
         return ResponseEntity.ok().body(userClickResponse);
     }

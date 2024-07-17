@@ -1,31 +1,21 @@
 package my.javacraft.elastic.cucumber.step;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.UpdateRequest;
-import co.elastic.clients.elasticsearch.core.UpdateResponse;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
-import my.javacraft.elastic.model.Client;
 import my.javacraft.elastic.model.SeekType;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.SchedulerService;
-import my.javacraft.elastic.service.UserHistoryService;
+import my.javacraft.elastic.service.history.UserHistoryIngestionService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.ClassPathResource;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -34,7 +24,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 public class SchedulerDefinition {
 
     @Autowired
-    UserHistoryService userHistoryService;
+    UserHistoryIngestionService userHistoryIngestionService;
     @Autowired
     DateService dateService;
     @Autowired
@@ -52,7 +42,8 @@ public class SchedulerDefinition {
             userClick.setUserId("nl8111");
             userClick.setSearchPattern("FIXED INCOME");
 
-            UserClickResponse userClickResponse = userHistoryService.capture(userClick, dateService.getNDaysBeforeDate(91 + i));
+            UserClickResponse userClickResponse = userHistoryIngestionService.ingestUserClick(
+                    userClick, dateService.getNDaysBeforeDate(91 + i));
             responses.add(userClickResponse);
         }
 

@@ -1,10 +1,8 @@
-package my.javacraft.elastic.service;
+package my.javacraft.elastic.service.history;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.UpdateRequest;
-import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -22,37 +20,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked"})
 @ExtendWith(MockitoExtension.class)
 public class UserHistoryServiceTest {
 
     @Mock
     ElasticsearchClient esClient;
 
-    @Mock
-    DateService dateService;
-
-    @Test
-    public void testCapture() throws IOException {
-        UpdateResponse updateResponse = mock(UpdateResponse.class);
-        when(dateService.getCurrentDate()).thenReturn("2024-01-15");
-        when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
-        when(esClient.update(any(UpdateRequest.class), any())).thenReturn(updateResponse);
-        UserClick userClick = UserClickTest.createHitCount();
-
-        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
-        Assertions.assertNotNull(userHistoryService.capture(userClick, dateService.getCurrentDate()));
-    }
-
     @Test
     public void testSearchHistoryByUserId() throws IOException {
-        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
+        UserHistoryService userHistoryService = new UserHistoryService(esClient);
 
         UserClick userClick = UserClickTest.createHitCount();
         UserHistory userHistory = new UserHistory("2024-01-08T18:16:41.530571300Z", userClick);
 
         Hit<UserHistory> hitMap = new Hit.Builder<UserHistory>()
-                .index(UserHistoryService.USER_HISTORY)
+                .index(UserHistoryService.INDEX_USER_HISTORY)
                 .id(userHistory.getElasticId(userClick))
                 .source(userHistory)
                 .build();
@@ -82,14 +65,5 @@ public class UserHistoryServiceTest {
         Assertions.assertEquals("12345-People-nl8888", resultHit.getElasticId());
     }
 
-    @Test
-    public void testCreateInlineScript() {
-        UserHistoryService userHistoryService = new UserHistoryService(esClient, dateService);
-        Assertions.assertEquals("""
-                        ctx._source.count++;
-                        ctx._source.updated=params['updated'];
-                        """,
-                userHistoryService.createInlineScript()
-        );
-    }
+
 }
