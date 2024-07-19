@@ -30,13 +30,10 @@ public class UserHistoryTest {
                   "count" : 1,
                   "updated" : "2024-01-08T18:16:41.53",
                   "elasticId" : "12345-People-nl8888",
+                  "userId" : "nl8888",
                   "recordId" : "12345",
-                  "userClick" : {
-                    "userId" : "nl8888",
-                    "recordId" : "12345",
-                    "searchType" : "People",
-                    "searchPattern" : "Nikita"
-                  }
+                  "searchType" : "People",
+                  "searchValue" : "Nikita"
                 }""",
                 objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(userHistory).replaceAll("\r", "")
         );

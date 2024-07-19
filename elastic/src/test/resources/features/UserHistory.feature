@@ -1,7 +1,7 @@
 Feature: UserHistoryController
 
   Scenario: prepare data
-    Given index 'user_history' exists
+    Given index 'user-history' exists
 
   Scenario: add new events
     Given user 'nl0000' doesn't have any events

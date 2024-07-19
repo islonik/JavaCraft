@@ -129,7 +129,7 @@ public class UserHistoryDefinition {
         DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                 .index(UserHistoryService.INDEX_USER_HISTORY)
                 .query(q -> q.term(t -> t
-                        .field("userClick.userId")
+                        .field(UserHistoryService.USER_ID)
                         .value(v -> v.stringValue(userId))
                 )).build();
         DeleteByQueryResponse deleteByQueryResponse = esClient.deleteByQuery(deleteByQueryRequest);
@@ -231,8 +231,8 @@ public class UserHistoryDefinition {
         UserHistory userHistory = httpResponse.getBody().getFirst();
         Assertions.assertEquals(hitCounts, userHistory.getCount());
         Assertions.assertEquals("%s-%s-%s".formatted(recordId, type, userId), userHistory.getElasticId());
-        Assertions.assertEquals(recordId, userHistory.getUserClick().getRecordId());
-        Assertions.assertEquals(pattern, userHistory.getUserClick().getSearchPattern());
+        Assertions.assertEquals(recordId, userHistory.getRecordId());
+        Assertions.assertEquals(pattern, userHistory.getSearchValue());
 
     }
 
@@ -259,7 +259,7 @@ public class UserHistoryDefinition {
         List<List<String>> expectedResults = dataTable.cells();
         for (int i = 0; i < httpResponse.getBody().size(); i++) {
             UserHistory userHistory = httpResponse.getBody().get(i);
-            Assertions.assertEquals(expectedResults.get(i).get(0), userHistory.getUserClick().getSearchPattern());
+            Assertions.assertEquals(expectedResults.get(i).get(0), userHistory.getSearchValue());
             Assertions.assertEquals(Long.parseLong(expectedResults.get(i).get(1)), userHistory.getCount());
         }
     }

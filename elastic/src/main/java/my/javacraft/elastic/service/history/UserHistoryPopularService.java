@@ -25,7 +25,7 @@ public class UserHistoryPopularService {
                 .index(UserHistoryService.INDEX_USER_HISTORY)
                 // search by userId
                 .query(q -> q.term(t -> t
-                        .field("userClick.userId")
+                        .field(UserHistoryService.USER_ID)
                         .value(v -> v.stringValue(userId))
                 ))
                 .size(searchLimitSize) // limit result to N values

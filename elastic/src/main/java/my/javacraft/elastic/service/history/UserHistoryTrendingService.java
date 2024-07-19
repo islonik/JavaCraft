@@ -10,14 +10,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery.Builder;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.FieldCollapse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserHistory;
@@ -57,6 +55,14 @@ public class UserHistoryTrendingService {
         namedValueList.add(new NamedValue<>("_count", SortOrder.Desc));
         namedValueList.add(new NamedValue<>(UserHistoryService.COUNT, SortOrder.Desc));
 
+        // provided for aggregation
+        // query size should be more
+        int querySize = Math.min(size * 10, UserHistoryService.MAX_VALUES);
+
+        // similar to DISTINCT in SQL
+        FieldCollapse.Builder fieldCollapse = new FieldCollapse.Builder();
+        fieldCollapse.field(UserHistoryService.USER_ID);
+
         Query boolQuery = new BoolQuery.Builder()
                 .must(mustQueryList)
                 .build()
@@ -75,8 +81,9 @@ public class UserHistoryTrendingService {
                                 .sum(s -> s.field(UserHistoryService.COUNT))
                         )
                 )
-                .size(size)
+                .size(querySize)
                 .sort(so -> so.field(fieldSort))
+                .collapse(fieldCollapse.build())
                 .build();
     }
 
@@ -109,11 +116,16 @@ public class UserHistoryTrendingService {
                 .map(Hit::source)
                 .toList();
 
-        // populate values
+        // populate values if key exist, but value is null
         for (UserHistory curr : allRecords) {
             String key = curr.getRecordId();
-            resultMap.putIfAbsent(key, curr);
+            if (resultMap.containsKey(key) && resultMap.get(key) == null) {
+                resultMap.putIfAbsent(key, curr);
+            }
         }
+        // remove not populated values
+        resultMap.values().removeAll(Collections.singleton(null));
+        // return final result
         return new ArrayList<>(resultMap.values());
     }
 }

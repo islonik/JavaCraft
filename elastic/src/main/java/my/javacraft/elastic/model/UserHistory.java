@@ -15,9 +15,13 @@ public class UserHistory {
     @NotEmpty
     String elasticId;
     @NotEmpty
+    String userId;
+    @NotEmpty
     String recordId;
     @NotEmpty
-    UserClick userClick;
+    String searchType;
+    @NotEmpty
+    String searchValue;
 
     public UserHistory() {} // we need default constructor for jackson
 
@@ -25,8 +29,10 @@ public class UserHistory {
         this.count = 1L;
         this.updated = updated;
         this.recordId = userClick.getRecordId();
+        this.userId = userClick.getUserId();
         this.elasticId = getElasticId(userClick);
-        this.userClick = userClick;
+        this.searchType = userClick.getSearchType();
+        this.searchValue = userClick.getSearchPattern();
     }
 
     public String getElasticId(UserClick userClick) {
