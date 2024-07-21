@@ -55,6 +55,7 @@
         <module>kafka</module>
         <module>linker</module>
         <module>mathparser</module>
+        <module>modules</module>
         <module>ses</module>
         <module>soap2rest</module>
         <module>tic-tac-toe</module>
