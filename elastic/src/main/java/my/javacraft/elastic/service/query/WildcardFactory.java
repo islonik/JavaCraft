@@ -6,9 +6,10 @@ import my.javacraft.elastic.service.SearchService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class WildcardFactory {
+public class WildcardFactory implements QueryFactory {
 
-    public Query createWildcardBoolQuery(String field, String value) {
+    @Override
+    public Query createQuery(String field, String value) {
         Query wildcardQuery = new WildcardQuery.Builder()
                 .boost(SearchService.NEUTRAL_VALUE)
                 .field(field)

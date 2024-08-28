@@ -7,9 +7,10 @@ import my.javacraft.elastic.service.SearchService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FuzzyFactory {
+public class FuzzyFactory implements QueryFactory {
 
-    public Query createFuzzyBoolQuery(String field, String value) {
+    @Override
+    public Query createQuery(String field, String value) {
         return new MatchQuery.Builder()
                 .boost(SearchService.NEUTRAL_VALUE)
                 // Maximum edit distance allowed for matching.

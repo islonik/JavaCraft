@@ -71,6 +71,29 @@ public class SearchControllerTest {
     }
 
     @Test
+    public void testIntervalSearch() throws IOException {
+        SearchController searchServiceController = new SearchController(searchService);
+
+        Map<String, String> document = new LinkedHashMap<>();
+        document.put("result", "test3 should be submitted");
+        List<Object> documentList = new ArrayList<>();
+        documentList.add(document);
+        when(searchService.intervalSearch(any(SeekRequest.class))).thenReturn(documentList);
+
+        SeekRequest seekRequest = new SeekRequest();
+        seekRequest.setClient(Client.WEB.toString());
+        seekRequest.setType(SeekType.ALL.toString());
+        seekRequest.setPattern("test3 submitted");
+
+        ResponseEntity<List<Object>> response = searchServiceController.intervalSearch(seekRequest);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertFalse(response.getBody().isEmpty());
+        Assertions.assertEquals(1, response.getBody().size());
+    }
+
+    @Test
     public void testSpanSearch() throws IOException {
         SearchController searchServiceController = new SearchController(searchService);
 

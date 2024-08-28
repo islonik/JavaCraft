@@ -21,6 +21,7 @@ import my.javacraft.elastic.model.SeekRequest;
 import my.javacraft.elastic.model.SeekType;
 import my.javacraft.elastic.model.SeekTypeMetadata;
 import my.javacraft.elastic.service.query.FuzzyFactory;
+import my.javacraft.elastic.service.query.IntervalFactory;
 import my.javacraft.elastic.service.query.SpanFactory;
 import my.javacraft.elastic.service.query.WildcardFactory;
 import org.springframework.data.elasticsearch.core.document.Document;
@@ -43,6 +44,7 @@ public class SearchService {
     private final MetadataService metadataService;
     private final WildcardFactory wildcardFactory;
     private final FuzzyFactory fuzzyFactory;
+    private final IntervalFactory intervalFactory;
     private final SpanFactory spanFactory;
 
     /**
@@ -50,7 +52,7 @@ public class SearchService {
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> wildcardSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query wildcardQuery = wildcardFactory.createWildcardBoolQuery(SYNOPSIS, seekRequest.getPattern());
+        Query wildcardQuery = wildcardFactory.createQuery(SYNOPSIS, seekRequest.getPattern());
 
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(seekRequest.getType())
@@ -68,19 +70,44 @@ public class SearchService {
      * Few other expensive queries are the range, prefix, fuzzy, regex, and join queries as well as others.
      */
     public List<Object> fuzzySearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query fuzzyQuery = fuzzyFactory.createFuzzyBoolQuery(SYNOPSIS, seekRequest.getPattern());
+        Query fuzzyQuery = fuzzyFactory.createQuery(SYNOPSIS, seekRequest.getPattern());
 
-        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(fuzzyQuery))));
+        SearchRequest searchRequest = SearchRequest.of(r -> r
+                .query(q -> q
+                        .bool(b -> b
+                                .must(fuzzyQuery)
+                        )
+                )
+        );
 
         SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
 
         return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
     }
 
-    public List<Object> spanSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
-        Query spanQuery = spanFactory.createSpanQuery(SYNOPSIS, seekRequest.getPattern());
+    public List<Object> intervalSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Query intervalsQuery = intervalFactory.createQuery(SYNOPSIS, seekRequest.getPattern());
 
-        SearchRequest searchRequest = SearchRequest.of(r -> r.query(q -> q.bool(b -> b.must(spanQuery))));
+        SearchRequest searchRequest = SearchRequest.of(sr -> sr
+                .query(intervalsQuery)
+        );
+
+        SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
+
+        return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+
+    }
+
+    public List<Object> spanSearch(SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Query spanQuery = spanFactory.createQuery(SYNOPSIS, seekRequest.getPattern());
+
+        SearchRequest searchRequest = SearchRequest.of(r -> r
+                .query(q -> q
+                        .bool(b -> b
+                                .must(spanQuery)
+                        )
+                )
+        );
 
         SearchResponse<Object> searchResponse = esClient.search(searchRequest, Object.class);
 
@@ -149,7 +176,7 @@ public class SearchService {
         List<String> searchFields = seekTypeMetadata.getSearchFields();
         // N fields -> N wildcard queries
         searchFields.forEach(field -> {
-            Query query = wildcardFactory.createWildcardBoolQuery(field, seekRequest.getPattern());
+            Query query = wildcardFactory.createQuery(field, seekRequest.getPattern());
 
             boolTypeQueries.add(new BoolQuery.Builder()
                     .boost(NEUTRAL_VALUE)

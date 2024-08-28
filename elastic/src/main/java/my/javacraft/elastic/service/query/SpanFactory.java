@@ -10,9 +10,10 @@ import my.javacraft.elastic.service.SearchService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SpanFactory {
+public class SpanFactory implements QueryFactory {
 
-    public Query createSpanQuery(String field, String value) {
+    @Override
+    public Query createQuery(String field, String value) {
         List<SpanQuery> spanQueries = new ArrayList<>();
         String[] searchTokens = value.split(" ", -1);
         for (String token : searchTokens) {
@@ -32,7 +33,7 @@ public class SpanFactory {
                 // Controls the maximum number of intervening unmatched positions permitted.
                 .slop(3)
                 // Controls whether matches are required to be in-order.
-                .inOrder(false)
+                .inOrder(true)
                 .clauses(spanQueries)
                 .build()
                 ._toQuery();

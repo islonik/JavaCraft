@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.SeekRequest;
@@ -55,10 +57,13 @@ public class SearchController {
                     ))
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Instant startTime = Instant.now();
 
         log.info("searching wildcard for (SearchRequest = {})...", seekRequest);
 
         List<Object> documentList = searchService.wildcardSearch(seekRequest);
+
+        log.info("Total time to wildcard search is '{}' ms", Duration.between(startTime, Instant.now()).toMillis());
 
         return ResponseEntity.ok().body(documentList);
     }
@@ -86,10 +91,47 @@ public class SearchController {
                     ))
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Instant startTime = Instant.now();
 
         log.info("searching fuzzy for (SearchRequest = {})...", seekRequest);
 
         List<Object> documentList = searchService.fuzzySearch(seekRequest);
+
+        log.info("Total time to fuzzy search is '{}' ms", Duration.between(startTime, Instant.now()).toMillis());
+
+        return ResponseEntity.ok().body(documentList);
+    }
+
+    @Operation(
+            summary = "Interval search request",
+            description = "API to make an interval search request."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "406", description = "Resource unavailable")
+    })
+    @PostMapping(
+            value = "/interval",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Object>> intervalSearch(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Interval search request values",
+                    useParameterTypeSchema = true,
+                    content = @Content(schema = @Schema(
+                            implementation = SeekRequest.class
+                    ))
+            )
+            @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Instant startTime = Instant.now();
+
+        log.info("searching interval for (SearchRequest = {})...", seekRequest);
+
+        List<Object> documentList = searchService.intervalSearch(seekRequest);
+
+        log.info("Total time to interval search is '{}' ms", Duration.between(startTime, Instant.now()).toMillis());
 
         return ResponseEntity.ok().body(documentList);
     }
@@ -117,10 +159,13 @@ public class SearchController {
                     ))
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Instant startTime = Instant.now();
 
         log.info("searching span for (SearchRequest = {})...", seekRequest);
 
         List<Object> documentList = searchService.spanSearch(seekRequest);
+
+        log.info("Total time to span search is '{}' ms", Duration.between(startTime, Instant.now()).toMillis());
 
         return ResponseEntity.ok().body(documentList);
     }
@@ -147,10 +192,13 @@ public class SearchController {
                     ))
             )
             @RequestBody @Valid SeekRequest seekRequest) throws IOException, ElasticsearchException {
+        Instant startTime = Instant.now();
 
         log.info("searching (SearchRequest = {})...", seekRequest);
 
         List<Document> documentList = searchService.search(seekRequest);
+
+        log.info("Total time for searching is '{}' ms", Duration.between(startTime, Instant.now()).toMillis());
 
         return ResponseEntity.ok().body(documentList);
     }
