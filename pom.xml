@@ -61,6 +61,7 @@
         <module>tic-tac-toe</module>
         <module>translation</module>
         <module>xsd2model</module>
+        <module>algs</module>
     </modules>
 
     <build>
