@@ -11,25 +11,27 @@ package my.javacraft.algs;
  */
 public class ValidParentheses {
 
-    public boolean isValid(String s) {
-        char []strs = s.toCharArray();
+    public boolean isValid(String inputString) {
+        char []inputChars = inputString.toCharArray();
 
-        StringBuilder temp = new StringBuilder();
-        for (int i = 0; i < strs.length; i++) {
-            char currCh = strs[i];
-            temp.append(currCh);
-            if (temp.length() > 1) {
-                char lastCh = temp.charAt(temp.length() - 2);
+        char []tempChars = new char[inputChars.length];
+        int tempPos = 0;
+
+        for (char currCh : inputChars) {
+            tempChars[tempPos++] = currCh;
+
+            if (tempPos > 1) {
+                char lastCh = tempChars[tempPos - 2];
 
                 if (lastCh == '(' && currCh == ')') {
-                    temp.deleteCharAt(temp.length() - 1);
-                    temp.deleteCharAt(temp.length() - 1);
+                    tempChars[--tempPos] = 'N';
+                    tempChars[--tempPos] = 'N';
                 } else if (lastCh == '{' && currCh == '}') {
-                    temp.deleteCharAt(temp.length() - 1);
-                    temp.deleteCharAt(temp.length() - 1);
+                    tempChars[--tempPos] = 'N';
+                    tempChars[--tempPos] = 'N';
                 } else if (lastCh == '[' && currCh == ']') {
-                    temp.deleteCharAt(temp.length() - 1);
-                    temp.deleteCharAt(temp.length() - 1);
+                    tempChars[--tempPos] = 'N';
+                    tempChars[--tempPos] = 'N';
                 }
 
                 if (lastCh == '(' && (currCh == '}' || currCh == ']')) {
@@ -42,7 +44,7 @@ public class ValidParentheses {
             }
         }
 
-        return temp.toString().equals("");
+        return tempPos == 0;
     }
 
 }
