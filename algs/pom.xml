@@ -12,8 +12,8 @@
     <artifactId>algs</artifactId>
     <packaging>pom</packaging>
 
-
     <modules>
+        <module>cos226</module>
         <module>leetcode</module>
     </modules>
 
