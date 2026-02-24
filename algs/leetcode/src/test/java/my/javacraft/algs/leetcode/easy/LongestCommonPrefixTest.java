@@ -1,4 +1,4 @@
-package my.javacraft.algs;
+package my.javacraft.algs.leetcode.easy;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package my.javacraft.algs;
+package my.javacraft.algs.leetcode.easy;
 
 /**
  * Write a function to find the longest common prefix string amongst an array of strings.
