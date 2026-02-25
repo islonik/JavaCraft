@@ -18,15 +18,11 @@
             <groupId>org.algs4</groupId>
             <artifactId>algs4</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../libs/algs4.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.stdlib</groupId>
             <artifactId>stdlib</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../libs/stdlib.jar</systemPath>
         </dependency>
 
         <dependency>

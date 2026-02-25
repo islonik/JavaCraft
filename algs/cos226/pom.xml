@@ -17,4 +17,15 @@
         <module>part2</module>
     </modules>
 
+    <repositories>
+        <repository>
+            <id>cos226-local-repo</id>
+            <url>file://${cos226.repo.path}</url>
+        </repository>
+    </repositories>
+
+    <properties>
+        <cos226.repo.path>${project.basedir}/../../libs/repo</cos226.repo.path>
+    </properties>
+
 </project>
