@@ -7,12 +7,10 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery.Builder;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.FieldCollapse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
 import java.util.*;
@@ -45,11 +43,14 @@ public class UserHistoryTrendingService {
         );
 
         List<Query> mustQueryList = new ArrayList<>();
-        RangeQuery.Builder rangeQueryBuilder = new Builder();
-        rangeQueryBuilder.field(UserHistoryService.UPDATED);
-        rangeQueryBuilder.lte(JsonData.of(dateService.getCurrentDate()));
-        rangeQueryBuilder.gte(JsonData.of(dateService.getNDaysBeforeDate(UserHistoryService.SEVEN_DAYS)));
-        mustQueryList.add(rangeQueryBuilder.build()._toQuery());
+        RangeQuery rangeQuery = RangeQuery.of(r -> r
+                .date(d -> d
+                        .field(UserHistoryService.UPDATED)
+                        .lte(dateService.getCurrentDate())
+                        .gte(dateService.getNDaysBeforeDate(UserHistoryService.SEVEN_DAYS))
+                )
+        );
+        mustQueryList.add(rangeQuery._toQuery());
 
         List<NamedValue<SortOrder>> namedValueList = new ArrayList<>();
         namedValueList.add(new NamedValue<>("_count", SortOrder.Desc));

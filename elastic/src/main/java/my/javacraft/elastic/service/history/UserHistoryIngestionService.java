@@ -1,7 +1,6 @@
 package my.javacraft.elastic.service.history;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
 import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.UpdateResponse;
@@ -30,13 +29,11 @@ public class UserHistoryIngestionService {
     public UserClickResponse ingestUserClick(UserClick userClick, String datetime) throws IOException {
         // default scripting language in Elasticsearch is 'painless'
         // It supports java8 syntax, but doesn't support the current datetime.
-        InlineScript inlineScript = new InlineScript.Builder()
-                .source(createInlineScript())
+
+        Script script = Script.of(s -> s
+                .source(createScriptOrigin())
                 .params(UserHistoryService.UPDATED, JsonData.of(datetime))
-                .build();
-        Script script = new Script.Builder()
-                .inline(inlineScript)
-                .build();
+        );
 
         UserHistory userHistory = new UserHistory(datetime, userClick);
         String documentId = userHistory.getElasticId(userClick);
@@ -60,7 +57,7 @@ public class UserHistoryIngestionService {
         return userClickResponse;
     }
 
-    String createInlineScript() {
+    String createScriptOrigin() {
         return """
                 ctx._source.%s++;
                 ctx._source.%s=params['%s'];

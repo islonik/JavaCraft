@@ -23,28 +23,28 @@
         <jaxb2-maven-plugin.version>3.1.0</jaxb2-maven-plugin.version>
         <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
 
-        <spring.boot>3.3.0</spring.boot>
-        <spring.version>6.1.8</spring.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
-        <spring.kafka.version>3.2.0</spring.kafka.version>
+        <spring.boot>3.5.11</spring.boot>
+        <spring.version>6.2.16</spring.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.8.15</springdoc-openapi-starter-webmvc-ui.version>
+        <spring.kafka.version>3.3.13</spring.kafka.version>
 
-        <jackson.version>2.17.1</jackson.version>
+        <jackson.version>2.21.1</jackson.version>
         <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
-        <h2.version>2.2.224</h2.version>
+        <h2.version>2.4.240</h2.version>
         <netty.version>4.1.100.Final</netty.version>
-        <liquibase.version>4.28.0</liquibase.version>
-        <lombok.version>1.18.32</lombok.version>
-        <slf4j.version>2.0.7</slf4j.version>
+        <liquibase.version>5.0.1</liquibase.version>
+        <lombok.version>1.18.42</lombok.version>
+        <slf4j.version>2.0.17</slf4j.version>
         <opencsv.version>5.9</opencsv.version>
 
-        <junit.platform.suite.version>1.10.2</junit.platform.suite.version>
-        <junit5.version>5.10.2</junit5.version>
-        <mockito.version>5.12.0</mockito.version>
+        <junit.platform.suite.version>1.14.2</junit.platform.suite.version>
+        <junit5.version>5.14.2</junit5.version>
+        <mockito.version>5.21.0</mockito.version>
         <buddy.version>1.14.11</buddy.version>
-        <cucumber.version>7.18.0</cucumber.version>
+        <cucumber.version>7.34.2</cucumber.version>
         <wiremock.version>3.6.0</wiremock.version>
     </properties>
 

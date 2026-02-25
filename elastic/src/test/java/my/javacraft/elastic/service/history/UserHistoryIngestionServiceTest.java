@@ -47,7 +47,7 @@ public class UserHistoryIngestionServiceTest {
                         ctx._source.count++;
                         ctx._source.updated=params['updated'];
                         """,
-                ingestionService.createInlineScript()
+                ingestionService.createScriptOrigin()
         );
     }
 }

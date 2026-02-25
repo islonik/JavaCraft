@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.service.history.UserHistoryService;
@@ -20,10 +19,12 @@ public class SchedulerService {
 
     public Long removeOldHistoryRecords() {
         try {
-            RangeQuery rangeQuery = new RangeQuery.Builder()
-                    .field(UserHistoryService.UPDATED)
-                    .lte(JsonData.of(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS)))
-                    .build();
+            RangeQuery rangeQuery = RangeQuery.of(r -> r
+                    .date(d -> d
+                            .field(UserHistoryService.UPDATED)
+                            .lte(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS))
+                    )
+            );
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                     .index(UserHistoryService.INDEX_USER_HISTORY)
                     .query(rangeQuery._toQuery())
