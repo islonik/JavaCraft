@@ -49,6 +49,7 @@
     </properties>
 
     <modules>
+        <module>algs</module>
         <module>bdd</module>
         <module>echo</module>
         <module>elastic</module>
@@ -61,7 +62,6 @@
         <module>tic-tac-toe</module>
         <module>translation</module>
         <module>xsd2model</module>
-        <module>algs</module>
     </modules>
 
     <build>
