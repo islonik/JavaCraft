@@ -3,21 +3,21 @@
  *  Compilation:  javac BoggleGame.java
  *  Execution:    java BoggleGame [M N]
  *  Dependencies: BoggleSolver.java BoggleBoard.java 
- *
+ *  <p>
  *  GUI for the boggle solver. Pits the user against a computer opponent
  *  of various difficulties. Can be launched from the command line, where 
  *  the default size of the board for that game must be specified. 
- *  
+ *  <p>
  *  To add: Way to change the size of the board from inside the game
- *
+ *  <p>
  *  % javac BoggleGame.java
- *  
+ *  <p>
  *  % java BoggleGame 
- *
+ *  <p>
  *  % java -Xmx300m BoggleGame 3 7
- *  
+ *  <p>
  *  Report bugs to: wayne@princeton.edu, CC mdrabick@princeton.edu
- *
+ *  <p>
  *  Note: expect some compiler warning with Java 7 because
  *  javax.swing.JList is a parameterized type in Java 7 but not
  *  in Java 6.
@@ -38,12 +38,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.TreeSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 import javax.swing.*;
 
 
@@ -892,7 +890,7 @@ public class BoggleGame extends JFrame {
         gameMenu.getAccessibleContext().setAccessibleDescription("This menu contains game options");
         menuBar.add(gameMenu);
         JMenuItem newGameMenuItem = new JMenuItem("New...", KeyEvent.VK_N);
-        newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         newGameMenuItem.getAccessibleContext().setAccessibleDescription("Starts a new game");
         newGameMenuItem.addActionListener(new ActionListener() {
             @Override
@@ -901,7 +899,7 @@ public class BoggleGame extends JFrame {
             }
         });
         JMenuItem endGameMenuItem = new JMenuItem("End Game", KeyEvent.VK_E);
-        endGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        endGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         endGameMenuItem.getAccessibleContext().setAccessibleDescription("Ends the current game");
         endGameMenuItem.addActionListener(new ActionListener() {
             @Override
@@ -935,7 +933,7 @@ public class BoggleGame extends JFrame {
             gameMenu.add(difficultySelection[i]);
         }
         JMenuItem quitMenuItem = new JMenuItem("Quit", KeyEvent.VK_Q);
-        quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        quitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         quitMenuItem.getAccessibleContext().setAccessibleDescription("Quits the program");
         quitMenuItem.addActionListener(new ActionListener() {
             @Override

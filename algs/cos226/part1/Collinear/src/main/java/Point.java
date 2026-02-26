@@ -80,7 +80,7 @@ public class Point implements Comparable<Point> {
         if (difX == 0) {
             return Double.POSITIVE_INFINITY;
         }
-        return new Double(difY) / new Double(difX);
+        return (double) difY / (double) difX;
     }
 
 
