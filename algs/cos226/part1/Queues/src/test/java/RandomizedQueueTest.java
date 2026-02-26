@@ -1,7 +1,6 @@
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.lang.instrument.Instrumentation;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -12,13 +11,13 @@ public class RandomizedQueueTest {
 
     @Test
     public void testAddAndIterator() {
-        RandomizedQueue<String> queue = new RandomizedQueue();
+        RandomizedQueue<String> queue = new RandomizedQueue<>();
         queue.enqueue("test-1");
         queue.enqueue("test-2");
         queue.enqueue("test-3");
         queue.enqueue("test-4");
 
-        Assert.assertEquals(4, queue.size());
+        Assertions.assertEquals(4, queue.size());
 
         System.out.println("Random object = " + queue.sample());
 
@@ -26,12 +25,12 @@ public class RandomizedQueueTest {
         while(queueItr.hasNext()) {
             System.out.println(queueItr.next());
         }
-        Assert.assertFalse(queueItr.hasNext());
+        Assertions.assertFalse(queueItr.hasNext());
     }
 
     @Test
     public void testAddDeleteAndIterator() {
-        RandomizedQueue<String> queue = new RandomizedQueue();
+        RandomizedQueue<String> queue = new RandomizedQueue<>();
 
         for (int index = 0; index < 20; index++) {
             queue.enqueue("test-1");
@@ -43,7 +42,7 @@ public class RandomizedQueueTest {
             queue.dequeue();
             queue.dequeue();
 
-            Assert.assertEquals(1, queue.size());
+            Assertions.assertEquals(1, queue.size());
 
             System.out.println("One left random object = " + queue.sample());
 
@@ -51,20 +50,24 @@ public class RandomizedQueueTest {
             while(queueItr.hasNext()) {
                 System.out.println(queueItr.next());
             }
-            Assert.assertFalse(queueItr.hasNext());
+            Assertions.assertFalse(queueItr.hasNext());
             queue.dequeue();
         }
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testEmptyDequeue() {
-        RandomizedQueue queue = new RandomizedQueue();
-        queue.dequeue();
+        RandomizedQueue queue = new RandomizedQueue<>();
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            queue.dequeue();
+        });
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testEmptySample() {
-        RandomizedQueue queue = new RandomizedQueue();
-        queue.sample();
+        RandomizedQueue queue = new RandomizedQueue<>();
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            queue.sample();
+        });
     }
 }

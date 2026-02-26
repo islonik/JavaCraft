@@ -1,7 +1,7 @@
-import org.junit.*;
-import org.junit.Test;
 
 import java.util.Iterator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Lipatov Nikita
@@ -74,13 +74,13 @@ public class BoardTest {
     @Test
     public void testDimension() {
         Board board = new Board(blocks3());
-        Assert.assertEquals(3, board.dimension());
+        Assertions.assertEquals(3, board.dimension());
     }
 
     @Test
     public void testToString() {
         Board board = new Board(blocks3());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "3\n" +
                         " 8  1  3 \n" +
                         " 4  0  2 \n" +
@@ -92,13 +92,13 @@ public class BoardTest {
     @Test
     public void testHamming() {
         Board board = new Board(blocks3());
-        Assert.assertEquals(5, board.hamming());
+        Assertions.assertEquals(5, board.hamming());
     }
 
     @Test
     public void testManhattan() {
         Board board = new Board(blocks3());
-        Assert.assertEquals(10, board.manhattan());
+        Assertions.assertEquals(10, board.manhattan());
     }
 
     /**
@@ -128,8 +128,8 @@ public class BoardTest {
         blocks[2][2] = 0;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(0, board.hamming());
-        Assert.assertEquals(0, board.manhattan());
+        Assertions.assertEquals(0, board.hamming());
+        Assertions.assertEquals(0, board.manhattan());
     }
 
     @Test
@@ -147,8 +147,8 @@ public class BoardTest {
         blocks[2][2] = 6;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(3, board.hamming());
-        Assert.assertEquals(3, board.manhattan());
+        Assertions.assertEquals(3, board.hamming());
+        Assertions.assertEquals(3, board.manhattan());
 
     }
 
@@ -167,8 +167,8 @@ public class BoardTest {
         blocks[2][2] = 6;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(2, board.hamming());
-        Assert.assertEquals(2, board.manhattan());
+        Assertions.assertEquals(2, board.hamming());
+        Assertions.assertEquals(2, board.manhattan());
     }
 
     @Test
@@ -186,8 +186,8 @@ public class BoardTest {
         blocks[2][2] = 6;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(3, board.hamming());
-        Assert.assertEquals(3, board.manhattan());
+        Assertions.assertEquals(3, board.hamming());
+        Assertions.assertEquals(3, board.manhattan());
     }
 
     @Test
@@ -205,25 +205,25 @@ public class BoardTest {
         blocks[2][2] = 6;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(5, board.hamming());
-        Assert.assertEquals(5, board.manhattan());
+        Assertions.assertEquals(5, board.hamming());
+        Assertions.assertEquals(5, board.manhattan());
     }
 
     @Test
     public void testTwin() {
         Board board = new Board(blocks3());
         Board twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
         twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
         twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
         twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
         twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
         twin = board.twin();
-        Assert.assertFalse(board.equals(twin));
+        Assertions.assertFalse(board.equals(twin));
 
 
         /*
@@ -232,7 +232,7 @@ public class BoardTest {
             long startTime = System.currentTimeMillis();
             for(int i = 0; i < 100000; i++) {
                 twin = board.twin();
-                Assert.assertFalse(board.equals(twin));
+                Assertions.assertFalse(board.equals(twin));
             }
             long endTime = System.currentTimeMillis();
             sumTime += (endTime - startTime);
@@ -274,8 +274,8 @@ public class BoardTest {
         blocks[3][3] = 1;
 
         Board board = new Board(blocks);
-        Assert.assertEquals(15, board.hamming());
-        Assert.assertEquals(57, board.manhattan());
+        Assertions.assertEquals(15, board.hamming());
+        Assertions.assertEquals(57, board.manhattan());
 
         int [][]blocks2 = new int[N][N];
         blocks2[0][0] = 12;
@@ -296,8 +296,8 @@ public class BoardTest {
         blocks2[3][3] = 1;
 
         Board board2 = new Board(blocks2);
-        Assert.assertEquals(15, board2.hamming());
-        Assert.assertEquals(58, board2.manhattan());
+        Assertions.assertEquals(15, board2.hamming());
+        Assertions.assertEquals(58, board2.manhattan());
 
         int [][]blocks3 = new int[N][N];
         blocks3[0][0] = 12;
@@ -318,8 +318,8 @@ public class BoardTest {
         blocks3[3][3] = 1;
 
         Board board3 = new Board(blocks3);
-        Assert.assertEquals(15, board3.hamming());
-        Assert.assertEquals(58, board3.manhattan());
+        Assertions.assertEquals(15, board3.hamming());
+        Assertions.assertEquals(58, board3.manhattan());
     }
 
     @Test
@@ -332,7 +332,7 @@ public class BoardTest {
             }
         }
         Board initial = new Board(blocks);
-        Assert.assertFalse(initial.isGoal());
+        Assertions.assertFalse(initial.isGoal());
     }
 
     @Test
@@ -347,7 +347,7 @@ public class BoardTest {
         Board initial = new Board(blocks);
         Board twin1 = initial.twin();
         Board twin2 = initial.twin();
-        Assert.assertTrue(twin1.equals(twin2));
+        Assertions.assertTrue(twin1.equals(twin2));
     }
 
 
@@ -362,7 +362,7 @@ public class BoardTest {
 
         Board initial = new Board(blocks);
         Board twin1 = initial.twin();
-        Assert.assertFalse(twin1.equals(initial));
+        Assertions.assertFalse(twin1.equals(initial));
     }
 
 

@@ -25,7 +25,20 @@
     </repositories>
 
     <properties>
-        <cos226.repo.path>${project.basedir}/../../libs/repo</cos226.repo.path>
+        <cos226.repo.path>${project.basedir}/libs/repo</cos226.repo.path>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.algs4</groupId>
+            <artifactId>algs4</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.stdlib</groupId>
+            <artifactId>stdlib</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
 
 </project>

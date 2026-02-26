@@ -1,5 +1,5 @@
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Comparator;
 
@@ -21,7 +21,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(0, 0);
         double slope = it.slopeTo(that);
-        Assert.assertEquals(Double.NEGATIVE_INFINITY, slope, 0.1);
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY, slope, 0.1);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(0, 4);
         double slope = it.slopeTo(that);
-        Assert.assertEquals(Double.POSITIVE_INFINITY, slope, 0.1);
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, slope, 0.1);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(0, -4);
         double slope = it.slopeTo(that);
-        Assert.assertEquals(Double.POSITIVE_INFINITY, slope, 0.1);
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, slope, 0.1);
     }
 
     @Test
@@ -45,7 +45,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(4, 0);
         double slope = it.slopeTo(that);
-        Assert.assertEquals(0.0, slope, 0.1);
+        Assertions.assertEquals(0.0, slope, 0.1);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(-4, 0);
         double slope = it.slopeTo(that);
-        Assert.assertEquals(0.0, slope, 0.1);
+        Assertions.assertEquals(0.0, slope, 0.1);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class PointTest {
         Point it = new Point(-1, -1);
         Point that = new Point(0, 0);
         int res = it.compareTo(that);
-        Assert.assertEquals(-1, res);
+        Assertions.assertEquals(-1, res);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class PointTest {
         Point it = new Point(-1, -1);
         Point that = new Point(-1, 0);
         int res = it.compareTo(that);
-        Assert.assertEquals(-1, res);
+        Assertions.assertEquals(-1, res);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class PointTest {
         Point it = new Point(1, 1);
         Point that = new Point(1, 1);
         int res = it.compareTo(that);
-        Assert.assertEquals(0, res);
+        Assertions.assertEquals(0, res);
     }
 
     @Test
@@ -85,7 +85,7 @@ public class PointTest {
         Point it = new Point(1, 0);
         Point that = new Point(1, 0);
         int res = it.compareTo(that);
-        Assert.assertEquals(0, res);
+        Assertions.assertEquals(0, res);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class PointTest {
         Point it = new Point(0, 1);
         Point that = new Point(0, 1);
         int res = it.compareTo(that);
-        Assert.assertEquals(0, res);
+        Assertions.assertEquals(0, res);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class PointTest {
         Point it = new Point(0, 1);
         Point that = new Point(0, 0);
         int res = it.compareTo(that);
-        Assert.assertEquals(1, res);
+        Assertions.assertEquals(1, res);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PointTest {
         Point it = new Point(0, 0);
         Point that = new Point(0, -1);
         int res = it.compareTo(that);
-        Assert.assertEquals(1, res);
+        Assertions.assertEquals(1, res);
     }
 
     @Test

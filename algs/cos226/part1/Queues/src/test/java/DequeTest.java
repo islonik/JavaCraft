@@ -1,5 +1,5 @@
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -16,15 +16,17 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSimpleAddFirstException() {
         Deque<String> deque = new Deque<String>();
         deque.addFirst("third item");
         deque.addFirst("second item");
-        deque.addFirst(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            deque.addFirst(null);
+        });
     }
 
     @Test
@@ -34,15 +36,17 @@ public class DequeTest {
         deque.addLast("second item");
         deque.addLast("third item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSimpleAddLastException() {
         Deque<String> deque = new Deque<String>();
         deque.addLast("first item");
         deque.addLast("second item");
-        deque.addLast(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            deque.addLast(null);
+        });
     }
 
     @Test
@@ -52,7 +56,7 @@ public class DequeTest {
         deque.addLast("third item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
     }
 
     @Test
@@ -62,7 +66,7 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
     }
 
     @Test
@@ -72,24 +76,26 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
-        Assert.assertEquals("first item", deque.removeFirst());
-        Assert.assertEquals("second item",  deque.removeFirst());
-        Assert.assertEquals("third item",  deque.removeFirst());
-        Assert.assertEquals(0, deque.size());
+        Assertions.assertEquals("first item", deque.removeFirst());
+        Assertions.assertEquals("second item",  deque.removeFirst());
+        Assertions.assertEquals("third item",  deque.removeFirst());
+        Assertions.assertEquals(0, deque.size());
 
         deque.addFirst("first item");
-        Assert.assertEquals(1, deque.size());
-        Assert.assertEquals("first item", deque.removeFirst());
-        Assert.assertEquals(0, deque.size());
-        Assert.assertTrue(deque.isEmpty());
+        Assertions.assertEquals(1, deque.size());
+        Assertions.assertEquals("first item", deque.removeFirst());
+        Assertions.assertEquals(0, deque.size());
+        Assertions.assertTrue(deque.isEmpty());
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testSimpleAddFirstRemoveException() {
         Deque<String> deque = new Deque<String>();
-        deque.removeFirst();
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            deque.removeFirst();
+        });
     }
 
     @Test
@@ -99,13 +105,13 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
-        Assert.assertEquals("third item", deque.removeLast());
-        Assert.assertEquals("second item",  deque.removeLast());
-        Assert.assertEquals("first item",  deque.removeLast());
-        Assert.assertEquals(0, deque.size());
-        Assert.assertTrue(deque.isEmpty());
+        Assertions.assertEquals("third item", deque.removeLast());
+        Assertions.assertEquals("second item",  deque.removeLast());
+        Assertions.assertEquals("first item",  deque.removeLast());
+        Assertions.assertEquals(0, deque.size());
+        Assertions.assertTrue(deque.isEmpty());
     }
 
     @Test
@@ -115,21 +121,23 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
-        Assert.assertEquals("third item", deque.removeLast());
-        Assert.assertEquals("second item",  deque.removeLast());
-        Assert.assertEquals("first item",  deque.removeLast());
+        Assertions.assertEquals("third item", deque.removeLast());
+        Assertions.assertEquals("second item",  deque.removeLast());
+        Assertions.assertEquals("first item",  deque.removeLast());
 
         deque.addLast("second item(2)");
         deque.addLast("third item(2)");
 
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testSimpleAddLastRemoveException() {
         Deque<String> deque = new Deque<String>();
-        deque.removeLast();
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            deque.removeLast();
+        });
     }
 
     @Test
@@ -139,7 +147,7 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
         for (String iter : deque) {
             System.out.println(iter);
@@ -153,7 +161,7 @@ public class DequeTest {
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
         Iterator<String> iterator = deque.iterator();
         while (iterator.hasNext()) {
@@ -162,36 +170,40 @@ public class DequeTest {
         }
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testSimpleIteratorNextException() {
         Deque<String> deque = new Deque<String>();
         deque.addFirst("third item");
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
         Iterator<String> iterator = deque.iterator();
         while (iterator.hasNext()) {
-            Assert.assertTrue(iterator.hasNext());
+            Assertions.assertTrue(iterator.hasNext());
             String iter = iterator.next();
         }
-        Assert.assertFalse(iterator.hasNext());
-        iterator.next();
+        Assertions.assertFalse(iterator.hasNext());
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            iterator.next();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testSimpleIteratorRemoveException() {
         Deque<String> deque = new Deque<String>();
         deque.addFirst("third item");
         deque.addFirst("second item");
         deque.addFirst("first item");
 
-        Assert.assertEquals(3, deque.size());
+        Assertions.assertEquals(3, deque.size());
 
         Iterator<String> iterator = deque.iterator();
-        while (iterator.hasNext()) {
-            iterator.remove();
-        }
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            while (iterator.hasNext()) {
+                iterator.remove();
+            }
+        });
     }
 }
