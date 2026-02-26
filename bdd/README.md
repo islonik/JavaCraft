@@ -35,11 +35,11 @@ Add cucumber libraries in your dependecies:
 </dependency>
 ```
 
-Plugin to run Cucumber tests in <b>maven</b> builds
+Plugin to run Cucumber and JUnit 5 tests in <b>maven</b> builds
 ```xml
 <build>
     <plugins>
-        <!-- makes cucumber tests run in maven -->
+        <!-- makes cucumber and junit5 tests run in maven -->
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -47,6 +47,7 @@ Plugin to run Cucumber tests in <b>maven</b> builds
             <configuration>
                 <includes>
                     <include>**/CucumberRunner.java</include>
+                    <include>**/*Test.java</include>
                 </includes>
             </configuration>
         </plugin>
@@ -60,7 +61,7 @@ CucumberRunner is necessary to specify Cucumber configuration.
 ```java
 @Suite
 @IncludeEngines("cucumber")
-@ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "classpath:features")
+@SelectPackages("features")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME,
         value = "pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json")
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.bdd.cucumber")

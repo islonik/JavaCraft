@@ -30,6 +30,7 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- slf4j-simple replaces logback-classic for lightweight console logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>

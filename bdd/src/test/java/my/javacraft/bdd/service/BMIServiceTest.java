@@ -72,6 +72,20 @@ class BMIServiceTest {
     }
 
     @Test
+    void testCalculateMetricBmi() {
+        BigDecimal result = bmiService.calculate(
+                BigDecimal.valueOf(75), BigDecimal.valueOf(1.75), false);
+        Assertions.assertEquals(new BigDecimal("24.49"), result);
+    }
+
+    @Test
+    void testCalculateImperialBmi() {
+        BigDecimal result = bmiService.calculate(
+                BigDecimal.valueOf(150), BigDecimal.valueOf(65), true);
+        Assertions.assertEquals(new BigDecimal("24.96"), result);
+    }
+
+    @Test
     void testBmi2categoryThrowsExceptionWhenBmiIsNull() {
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -81,12 +95,21 @@ class BMIServiceTest {
     }
 
     @Test
+    void testBmi2categoryThrowsExceptionWhenBmiIsZero() {
+        IllegalArgumentException ex = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> bmiService.bmi2category(BigDecimal.ZERO)
+        );
+        Assertions.assertEquals("BMI must be positive", ex.getMessage());
+    }
+
+    @Test
     void testBmi2categoryThrowsExceptionWhenBmiIsNegative() {
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> bmiService.bmi2category(BigDecimal.valueOf(-1))
         );
-        Assertions.assertEquals("BMI must not be negative", ex.getMessage());
+        Assertions.assertEquals("BMI must be positive", ex.getMessage());
     }
 
 }

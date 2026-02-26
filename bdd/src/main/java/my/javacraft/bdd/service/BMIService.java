@@ -40,7 +40,6 @@ public class BMIService {
         }
     }
 
-
     /**
      * Severe thinness < 16.00
      * Moderate thinness 16.00 - 16.99
@@ -57,23 +56,23 @@ public class BMIService {
         if (bmi == null) {
             throw new IllegalArgumentException("BMI must not be null");
         }
-        if (bmi.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("BMI must not be negative");
+        if (bmi.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("BMI must be positive");
         }
         if (bmi.compareTo(BigDecimal.valueOf(16.00)) < 0) {
             return "Severe thinness as your BMI is less than 16.00";
         } else if (bmi.compareTo(BigDecimal.valueOf(16.99)) <= 0) {
-            return "Moderate thinness as your BMI is less than 16.99";
+            return "Moderate thinness as your BMI is up to 16.99";
         } else if (bmi.compareTo(BigDecimal.valueOf(18.49)) <= 0) {
-            return "Mild thinness as your BMI is less than 18.49";
+            return "Mild thinness as your BMI is up to 18.49";
         } else if (bmi.compareTo(BigDecimal.valueOf(24.99)) <= 0) {
-            return "Normal range as your BMI is less than 24.99";
+            return "Normal range as your BMI is up to 24.99";
         } else if (bmi.compareTo(BigDecimal.valueOf(29.99)) <= 0) {
-            return "Pre-obese as your BMI is less than 29.99";
+            return "Pre-obese as your BMI is up to 29.99";
         } else if (bmi.compareTo(BigDecimal.valueOf(34.99)) <= 0) {
-            return "Obese class I as your BMI is less than 34.99";
+            return "Obese class I as your BMI is up to 34.99";
         } else if (bmi.compareTo(BigDecimal.valueOf(39.99)) <= 0) {
-            return "Obese class II as your BMI is less than 39.99";
+            return "Obese class II as your BMI is up to 39.99";
         } else {
             return "Obese class III as your BMI is over 40";
         }
