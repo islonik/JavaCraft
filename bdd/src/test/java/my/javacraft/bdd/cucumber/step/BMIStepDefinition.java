@@ -36,7 +36,7 @@ public class BMIStepDefinition {
     }
 
     @When("we use batch to test BMI calculator")
-    public void applyPutRequestWithGasReading(DataTable table) {
+    public void batchTestBMICalculator(DataTable table) {
         List<List<String>> rows = table.cells();
         for (List<String> row : rows) {
             String weight = row.get(0);
