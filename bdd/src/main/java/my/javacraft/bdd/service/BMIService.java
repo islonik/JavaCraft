@@ -23,8 +23,17 @@ public class BMIService {
      * squared and then you multiply this figure by a conversion factor of 703.
      */
     public BigDecimal calculate(BigDecimal weight, BigDecimal height, boolean isImperial) {
+        if (weight == null || height == null) {
+            throw new IllegalArgumentException("Weight and height must not be null");
+        }
+        if (weight.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Weight must be positive");
+        }
+        if (height.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Height must be positive");
+        }
         if (isImperial) {
-            BigDecimal result = weight.divide(height.multiply(height), 1000, RoundingMode.HALF_EVEN);
+            BigDecimal result = weight.divide(height.multiply(height), 10, RoundingMode.HALF_EVEN);
             return result.multiply(BigDecimal.valueOf(703)).setScale(2, RoundingMode.HALF_EVEN);
         } else {
             return weight.divide(height.multiply(height), 2, RoundingMode.HALF_EVEN);
@@ -45,6 +54,12 @@ public class BMIService {
      * Obese class III ≥40.00
      */
     public String bmi2category(BigDecimal bmi) {
+        if (bmi == null) {
+            throw new IllegalArgumentException("BMI must not be null");
+        }
+        if (bmi.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("BMI must not be negative");
+        }
         if (bmi.compareTo(BigDecimal.valueOf(16.00)) < 0) {
             return "Severe thinness as your BMI is less than 16.00";
         } else if (bmi.compareTo(BigDecimal.valueOf(16.99)) <= 0) {
