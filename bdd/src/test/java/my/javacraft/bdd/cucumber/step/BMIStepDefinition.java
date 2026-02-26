@@ -1,38 +1,46 @@
 package my.javacraft.bdd.cucumber.step;
 
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.bdd.service.BMIService;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.math.BigDecimal;
 
 @Slf4j
 public class BMIStepDefinition {
 
-    @Autowired
-    BMIService bmiService;
+    private final BMIService bmiService;
 
-    private BigDecimal expectedBmi;
+    private BigDecimal actualBmi;
+
+    public BMIStepDefinition(BMIService bmiService) {
+        this.bmiService = bmiService;
+    }
+
+    @Given("the BMI calculator is available")
+    public void theBmiCalculatorIsAvailable() {
+        Assertions.assertNotNull(bmiService, "BMIService should be injected");
+    }
 
     @When("a person has weight = {string} kg and height = {string} metres")
     public void calculateBmiInMetric(String weight, String height) {
-        this.expectedBmi = bmiService.calculate(new BigDecimal(weight), new BigDecimal(height), false);
+        this.actualBmi = bmiService.calculate(new BigDecimal(weight), new BigDecimal(height), false);
     }
 
     @When("a person has weight = {string} lbs and height = {string} inches")
     public void calculateBmiInImperial(String weight, String height) {
-        this.expectedBmi = bmiService.calculate(new BigDecimal(weight), new BigDecimal(height), true);
+        this.actualBmi = bmiService.calculate(new BigDecimal(weight), new BigDecimal(height), true);
     }
 
     @Then("that person should have BMI = {string} kg m2")
     @Then("that person should have BMI = {string}")
-    public void checkBMI(String actualBmi) {
-        Assertions.assertEquals(expectedBmi, new BigDecimal(actualBmi));
+    public void checkBMI(String expectedBmi) {
+        log.info("checking actual BMI is '{}'", expectedBmi);
+        Assertions.assertEquals(new BigDecimal(expectedBmi), actualBmi);
     }
 
     @When("we use batch to test BMI calculator")
@@ -50,5 +58,18 @@ public class BMIStepDefinition {
         }
     }
 
+    @When("we classify BMI values into categories")
+    public void classifyBmiValuesIntoCategories(DataTable table) {
+        List<List<String>> rows = table.cells();
+        for (List<String> row : rows) {
+            BigDecimal bmi = new BigDecimal(row.get(0).trim());
+            String expectedCategory = row.get(1).trim();
+
+            String actualCategory = bmiService.bmi2category(bmi);
+
+            Assertions.assertEquals(expectedCategory, actualCategory,
+                    "Category mismatch for BMI " + bmi);
+        }
+    }
 
 }

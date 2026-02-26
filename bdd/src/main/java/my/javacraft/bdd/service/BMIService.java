@@ -42,10 +42,10 @@ public class BMIService {
 
 
     /**
-     * Underweight < 18.50
      * Severe thinness < 16.00
      * Moderate thinness 16.00 - 16.99
      * Mild thinness 17.00 - 18.49
+     * Underweight < 18.50
      * Normal range 18.50 - 24.99
      * Pre-obese 25.00 - 29.99
      * Obese ≥ 30.00

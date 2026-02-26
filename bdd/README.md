@@ -1,10 +1,10 @@
 # Behaviour Driven Development
 
-This micro sample demonstrates how to use Cucumber library with Spring boot. 
+This micro sample demonstrates how to use Cucumber library with Spring boot.
 
 ## Content
 * [Maven](#maven)
-* [Tests](#tests) 
+* [Tests](#tests)
 
 ### Maven
 Add cucumber libraries in your dependecies:
@@ -30,7 +30,7 @@ Add cucumber libraries in your dependecies:
 <dependency>
     <groupId>org.junit.platform</groupId>
     <artifactId>junit-platform-suite</artifactId>
-    <version>1.9.3</version>
+    <version>${junit.platform.suite.version}</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -43,7 +43,7 @@ Plugin to run Cucumber tests in <b>maven</b> builds
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>3.1.2</version>
+            <version>${maven.surefire.plugin.version}</version>
             <configuration>
                 <includes>
                     <include>**/CucumberRunner.java</include>
@@ -60,8 +60,9 @@ CucumberRunner is necessary to specify Cucumber configuration.
 ```java
 @Suite
 @IncludeEngines("cucumber")
-@SelectClasspathResource("/features")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
+@ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "classpath:features")
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME,
+        value = "pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json")
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.bdd.cucumber")
 public class CucumberRunner {
 }
@@ -70,7 +71,7 @@ public class CucumberRunner {
 CucumberSpringConfiguration is necessary to inject cucumber in java Application.
 ```java
 @CucumberContextConfiguration
-@SpringBootTest(classes = Application.class)
+@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class CucumberSpringConfiguration {
 }
 ```
