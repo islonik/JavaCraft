@@ -13,15 +13,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <java.release>21</java.release>
-        <build-helper-maven-plugin.version>1.10</build-helper-maven-plugin.version>
-        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
-        <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
-        <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
-        <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
-        <maven.deploy.plugin.version>3.1.1</maven.deploy.plugin.version>
-        <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
-        <jaxb2-maven-plugin.version>3.1.0</jaxb2-maven-plugin.version>
-        <jaxws-maven-plugin.version>4.0.2</jaxws-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+        <maven.install.plugin.version>3.1.4</maven.install.plugin.version>
+        <maven.deploy.plugin.version>3.1.4</maven.deploy.plugin.version>
+        <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
+        <jaxb2-maven-plugin.version>4.1.0</jaxb2-maven-plugin.version>
+        <jaxws-maven-plugin.version>4.0.3</jaxws-maven-plugin.version>
 
         <spring.boot>3.5.11</spring.boot>
         <spring.version>6.2.16</spring.version>
