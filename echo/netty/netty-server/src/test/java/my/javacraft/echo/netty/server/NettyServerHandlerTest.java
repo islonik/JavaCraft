@@ -12,50 +12,9 @@ class NettyServerHandlerTest {
         return new EmbeddedChannel(new NettyServerHandler());
     }
 
-    @Test
-    void testEmptyInputReturnsPleasTypeSomething() {
-        EmbeddedChannel channel = createChannel();
-
-        // Drain greeting messages from channelActive
-        channel.readOutbound();
-        channel.readOutbound();
-
-        channel.writeInbound("");
-
-        String response = channel.readOutbound();
-        Assertions.assertEquals("Please type something.\r\n", response);
-
-        channel.close();
-    }
-
-    @Test
-    void testEchoResponse() {
-        EmbeddedChannel channel = createChannel();
-
-        channel.readOutbound();
-        channel.readOutbound();
-
-        channel.writeInbound("hello world");
-
-        String response = channel.readOutbound();
-        Assertions.assertEquals("Did you say 'hello world'?\r\n", response);
-
-        channel.close();
-    }
-
-    @Test
-    void testByeClosesChannel() {
-        EmbeddedChannel channel = createChannel();
-
-        channel.readOutbound();
-        channel.readOutbound();
-
-        channel.writeInbound("bye");
-
-        String response = channel.readOutbound();
-        Assertions.assertEquals("Have a good day!\r\n", response);
-
-        channel.close();
+    private void drainGreeting(EmbeddedChannel channel) {
+        channel.readOutbound(); // Welcome message
+        channel.readOutbound(); // Date message
     }
 
     @Test
@@ -71,6 +30,105 @@ class NettyServerHandlerTest {
         Assertions.assertTrue(dateMsg.startsWith("It is "));
 
         channel.close();
+    }
+
+    @Test
+    void testChannelInactiveOnClose() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        // Closing the channel should trigger channelInactive without errors
+        Assertions.assertDoesNotThrow(() -> channel.close());
+    }
+
+    @Test
+    void testEmptyInputReturnsPleasTypeSomething() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        channel.writeInbound("");
+
+        String response = channel.readOutbound();
+        Assertions.assertEquals("Please type something.\r\n", response);
+
+        channel.close();
+    }
+
+    @Test
+    void testEchoResponse() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        channel.writeInbound("hello world");
+
+        String response = channel.readOutbound();
+        Assertions.assertEquals("Did you say 'hello world'?\r\n", response);
+
+        channel.close();
+    }
+
+    @Test
+    void testByeClosesChannel() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        channel.writeInbound("bye");
+
+        String response = channel.readOutbound();
+        Assertions.assertEquals("Have a good day!\r\n", response);
+
+        channel.close();
+    }
+
+    @Test
+    void testByeIsCaseInsensitive() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        channel.writeInbound("BYE");
+
+        String response = channel.readOutbound();
+        Assertions.assertEquals("Have a good day!\r\n", response);
+
+        channel.close();
+    }
+
+    @Test
+    void testStatsReturnsClientCount() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        channel.writeInbound("stats");
+
+        String response = channel.readOutbound();
+        Assertions.assertNotNull(response);
+        Assertions.assertTrue(response.startsWith("Simultaneously connected clients:"));
+        Assertions.assertTrue(response.endsWith("\r\n"));
+
+        channel.close();
+    }
+
+    @Test
+    void testHelloSendsBroadcastToSender() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        // "hello" triggers sendToAll — the sender gets "[you]" prefix
+        channel.writeInbound("hello");
+
+        String response = channel.readOutbound();
+        Assertions.assertEquals("[you] hello everybody!\r\n", response);
+
+        channel.close();
+    }
+
+    @Test
+    void testExceptionCaughtClosesChannel() {
+        EmbeddedChannel channel = createChannel();
+
+        channel.pipeline().fireExceptionCaught(new RuntimeException("test error"));
+
+        Assertions.assertFalse(channel.isOpen());
     }
 
 }

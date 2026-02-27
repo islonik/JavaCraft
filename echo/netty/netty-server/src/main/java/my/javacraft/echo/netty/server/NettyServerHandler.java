@@ -48,7 +48,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
             sendToAll(ctx, "hello everybody!");
             return;
         } else if ("stats".equalsIgnoreCase(request)) {
-            response = "%s simultaneously connected clients.\r\n".formatted(channels.size());
+            response = "Simultaneously connected clients: %s\r\n".formatted(channels.size());
         } else {
             response = "Did you say '" + request + "'?\r\n";
         }
