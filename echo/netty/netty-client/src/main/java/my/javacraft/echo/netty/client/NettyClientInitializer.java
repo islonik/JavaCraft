@@ -15,7 +15,7 @@ public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
 
-    private NettyClientHandler clientHandler;
+    private volatile NettyClientHandler clientHandler;
 
     @Override
     public void initChannel(SocketChannel ch) {

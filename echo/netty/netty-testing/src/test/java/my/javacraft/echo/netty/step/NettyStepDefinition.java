@@ -1,5 +1,6 @@
 package my.javacraft.echo.netty.step;
 
+import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -13,6 +14,16 @@ public class NettyStepDefinition {
 
     private final Map<String, NettyClient> connections = new ConcurrentHashMap<>();
     private NettyServer server;
+
+    @After
+    public void cleanup() {
+        connections.values().forEach(NettyClient::close);
+        connections.clear();
+        if (server != null) {
+            server.stop();
+            server = null;
+        }
+    }
 
     @Given("socket server started up on port = '{int}'")
     public void startUpSocketServer(int port) throws InterruptedException {

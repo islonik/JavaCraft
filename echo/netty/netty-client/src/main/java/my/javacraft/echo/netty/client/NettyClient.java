@@ -90,7 +90,7 @@ public class NettyClient {
         } catch(InterruptedException | IOException ie) {
             log.error(ie.getMessage(), ie);
         } finally {
-            group.shutdownGracefully();
+            close();
         }
     }
 }

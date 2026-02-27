@@ -65,9 +65,9 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     public void sendToAll(ChannelHandlerContext ctx, String msg) {
         for (Channel c : channels) {
             if (c != ctx.channel()) {
-                c.writeAndFlush("[" + ctx.channel().remoteAddress() + "] " + msg + '\n');
+                c.writeAndFlush("[" + ctx.channel().remoteAddress() + "] " + msg + "\r\n");
             } else {
-                c.writeAndFlush("[you] " + msg + '\n');
+                c.writeAndFlush("[you] " + msg + "\r\n");
             }
         }
     }
