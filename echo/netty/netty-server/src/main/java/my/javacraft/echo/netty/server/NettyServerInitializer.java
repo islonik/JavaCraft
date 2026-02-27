@@ -11,8 +11,7 @@ import io.netty.handler.codec.string.StringEncoder;
 /**
  * @author Lipatov Nikita
  */
-public class NettyServerInitializer extends ChannelInitializer<SocketChannel>
-{
+public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
 

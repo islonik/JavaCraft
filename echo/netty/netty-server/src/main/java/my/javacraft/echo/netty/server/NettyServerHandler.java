@@ -53,7 +53,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
             response = "Did you say '" + request + "'?\r\n";
         }
         // We do not need to write a ChannelBuffer here.
-        // We know the encoder inserted at TelnetPipelineFactory will do the conversion.
+        // We know the encoder inserted at NettyServerInitializer will do the conversion.
         ChannelFuture future = ctx.writeAndFlush(response);
         // Close the connection after sending 'Have a good day!'
         // if the client has sent 'bye'.
