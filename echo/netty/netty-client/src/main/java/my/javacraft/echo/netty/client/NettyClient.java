@@ -49,6 +49,16 @@ public class NettyClient {
         return nettyClientInitializer.getClientHandler().getMessage();
     }
 
+    /**
+     * Closes the connection and releases all resources.
+     */
+    public void close() {
+        if (ch != null) {
+            ch.close();
+        }
+        group.shutdownGracefully();
+    }
+
     public void run() {
         try {
             openConnection();

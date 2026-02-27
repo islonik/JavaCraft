@@ -14,10 +14,12 @@ import io.netty.handler.codec.string.StringEncoder;
 public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
-    private static final NettyClientHandler CLIENT_HANDLER = new NettyClientHandler();
+
+    private NettyClientHandler clientHandler;
 
     @Override
     public void initChannel(SocketChannel ch) {
+        clientHandler = new NettyClientHandler();
         ChannelPipeline pipeline = ch.pipeline();
 
         // Add the text line codec combination first,
@@ -26,10 +28,10 @@ public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(ENCODER);
 
         // and then business logic.
-        pipeline.addLast(CLIENT_HANDLER);
+        pipeline.addLast(clientHandler);
     }
 
     public NettyClientHandler getClientHandler() {
-        return CLIENT_HANDLER;
+        return clientHandler;
     }
 }

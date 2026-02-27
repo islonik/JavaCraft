@@ -5,26 +5,33 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetAddress;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
+@Slf4j
 public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
 
-    private static final AtomicInteger connections = new AtomicInteger(0);
-    static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // Send greeting for a new connection.
         ctx.write("Welcome to " + InetAddress.getLocalHost().getHostName() + "!\r\n");
-        ctx.write("It is " + new Date() + " now.\r\n");
+        ctx.write("It is " + LocalDateTime.now() + " now.\r\n");
         ctx.flush();
 
-        connections.incrementAndGet();
         channels.add(ctx.channel());
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        log.info("Client disconnected: {}", ctx.channel().remoteAddress());
+        // ChannelGroup automatically removes closed channels,
+        // so no manual removal is needed here.
+        super.channelInactive(ctx);
     }
 
     @Override
@@ -37,11 +44,11 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
         } else if ("bye".equalsIgnoreCase(request)) {
             response = "Have a good day!\r\n";
             close = true;
-        } else if("hello".equalsIgnoreCase(request)) {
+        } else if ("hello".equalsIgnoreCase(request)) {
             sendToAll(ctx, "hello everybody!");
             return;
         } else if ("stats".equalsIgnoreCase(request)) {
-            response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
+            response = "%s simultaneously connected clients.\r\n".formatted(channels.size());
         } else {
             response = "Did you say '" + request + "'?\r\n";
         }
@@ -51,13 +58,12 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
         // Close the connection after sending 'Have a good day!'
         // if the client has sent 'bye'.
         if (close) {
-            connections.decrementAndGet();
             future.addListener(ChannelFutureListener.CLOSE);
         }
     }
 
     public void sendToAll(ChannelHandlerContext ctx, String msg) {
-        for (Channel c: channels) {
+        for (Channel c : channels) {
             if (c != ctx.channel()) {
                 c.writeAndFlush("[" + ctx.channel().remoteAddress() + "] " + msg + '\n');
             } else {
@@ -72,11 +78,8 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        // Close the connection when an exception is raised.
-        connections.decrementAndGet();
-        cause.printStackTrace();
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        log.error("Unexpected error", cause);
         ctx.close();
     }
 }
-
