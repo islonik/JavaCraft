@@ -54,7 +54,7 @@ public class SingleStepDefinition {
     }
 
     @Then("close the connection to the client {string}")
-    public void sendMessage(String client) {
+    public void closeClientConnection(String client) {
         SingleClient singleClient = connections.get(client);
 
         singleClient.sendMessage("bye");

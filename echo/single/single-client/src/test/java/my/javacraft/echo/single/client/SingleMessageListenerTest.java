@@ -71,7 +71,7 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testNewResponseThrowsOnEof() throws Exception {
+    void testNewResponseReturnsNullOnEof() throws Exception {
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
@@ -79,9 +79,10 @@ class SingleMessageListenerTest {
         Thread.sleep(50);
 
         SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
-        // numRead == -1 falls through to new byte[-1]
-        Assertions.assertThrows(NegativeArraySizeException.class, () -> listener.newResponse(client));
+        // numRead == -1 → returns null after closing channel
+        String result = listener.newResponse(client);
 
+        Assertions.assertNull(result);
         client.close();
     }
 

@@ -17,7 +17,7 @@ import static java.nio.channels.SelectionKey.*;
 @Slf4j
 public class SingleServer implements Runnable {
 
-    private static final AtomicInteger connections = new AtomicInteger(0);
+    private final AtomicInteger connections = new AtomicInteger(0);
 
     private final int port;
     private final ByteBuffer buffer;
@@ -110,6 +110,8 @@ public class SingleServer implements Runnable {
         if (result != null && !result.isEmpty()) {
             key.attach(result);
             key.interestOps(OP_WRITE);
+        } else {
+            key.cancel();
         }
     }
 
@@ -126,10 +128,10 @@ public class SingleServer implements Runnable {
                 return "";
             }
 
+            buffer.flip();
             byte[] data = new byte[numRead];
-            System.arraycopy(buffer.array(), 0, data, 0, numRead);
+            buffer.get(data);
 
-            // return request;
             String result = new String(data, StandardCharsets.UTF_8);
             log.debug("Got [{}] from [{}]", result, channel.getRemoteAddress());
             return result;
@@ -140,7 +142,7 @@ public class SingleServer implements Runnable {
                 channel.close();
             } catch (IOException e1) {
                 // nothing to do, channel dead
-                log.error(e.getMessage(), e);
+                log.error(e1.getMessage(), e1);
             }
         }
 

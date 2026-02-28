@@ -30,7 +30,7 @@ public class SingleNetworkManager {
     public void openSocket(String serverHost, String serverPort) throws IOException {
         if (client == null) {
             synchronized (this) {
-                while(client == null) {
+                if (client == null) {
                     client = SocketChannel.open();
                     // nonblocking I/O
                     client.configureBlocking(false);
@@ -97,7 +97,7 @@ public class SingleNetworkManager {
         try {
             if (client != null) {
                 synchronized (this) {
-                    while(client != null) {
+                    if (client != null) {
                         selector.close();
                         client.socket().close();
                         client.close();

@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SingleClient {
     private final SingleNetworkManager singleNetworkManager;
+    private final ExecutorService listenerExecutor;
 
     private final String host;
     private final int port;
@@ -28,9 +29,8 @@ public class SingleClient {
 
         SingleMessageListener singleMessageListener = new SingleMessageListener(singleNetworkManager);
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(1);
-        // loop
-        executorService.execute(singleMessageListener);
+        listenerExecutor = Executors.newSingleThreadExecutor();
+        listenerExecutor.execute(singleMessageListener);
     }
 
     public void connectToServer() throws IOException {

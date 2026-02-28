@@ -46,8 +46,10 @@ public class SingleMessageListener implements Runnable {
                             singleMessageSender.setKey(key); // message will send after it
                         } else if(key.isReadable()) {
                             String message = newResponse(channel);
-                            singleNetworkManager.addMessage(message);
-                            System.out.println(message);
+                            if (message != null) {
+                                singleNetworkManager.addMessage(message);
+                                log.info(message);
+                            }
                         }
                     }
                 }
@@ -67,14 +69,13 @@ public class SingleMessageListener implements Runnable {
             if(numRead == -1) {
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
                 channel.close();
+                return null;
             }
 
+            buffer.flip();
             byte[] data = new byte[numRead];
-            System.arraycopy(buffer.array(), 0, data, 0, numRead);
+            buffer.get(data);
 
-            // protobuf example
-            // Protocol.Response response = Protocol.Response.parseFrom(data);
-            // return response;
             return new String(data, StandardCharsets.UTF_8).trim();
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
