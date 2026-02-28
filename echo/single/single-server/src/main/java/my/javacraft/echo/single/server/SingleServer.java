@@ -26,7 +26,7 @@ public class SingleServer implements Runnable {
         this.port = port;
         this.buffer = ByteBuffer.allocate(2 * 1024);
 
-        log.info("Use next command: telnet localhost " + port);
+        log.info("Use next command: telnet localhost {}", port);
     }
 
     public void run() {

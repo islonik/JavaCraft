@@ -1,9 +1,12 @@
 package my.javacraft.echo.single.step;
 
+import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -15,14 +18,22 @@ import org.junit.jupiter.api.Assertions;
 public class SingleStepDefinition {
 
     private final Map<String, SingleClient> connections = new ConcurrentHashMap<>();
+    private final List<ExecutorService> serverExecutors = new ArrayList<>();
+
+    @After
+    public void cleanup() {
+        connections.clear();
+        serverExecutors.forEach(ExecutorService::shutdownNow);
+        serverExecutors.clear();
+    }
 
     @Given("socket server started up on port = '{int}'")
     public void startUpSocketServer(int port) {
         SingleServer server = new SingleServer(port);
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        // loop
         executorService.execute(server);
+        serverExecutors.add(executorService);
     }
 
     @When("create a new client {string} for the server with the port = '{int}'")

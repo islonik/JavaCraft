@@ -35,7 +35,7 @@ public class SingleClient {
 
     public void connectToServer() throws IOException {
         singleNetworkManager.openSocket(host, Integer.toString(port));
-        System.out.println("You connected to the server.");
+        log.info("You connected to the server.");
     }
 
     public void sendMessage(String message) {
@@ -64,11 +64,11 @@ public class SingleClient {
                         working = false;
                     }
                 } catch (IOException e) {
-                    System.err.println(e.getLocalizedMessage());
+                    log.error(e.getLocalizedMessage(), e);
                 }
             }
         } catch (Exception error) {
-            System.err.println(error.getLocalizedMessage());
+            log.error(error.getLocalizedMessage(), error);
         }
     }
 }

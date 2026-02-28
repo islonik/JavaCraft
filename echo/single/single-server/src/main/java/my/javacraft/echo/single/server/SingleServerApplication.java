@@ -20,9 +20,8 @@ public class SingleServerApplication {
         ExecutorService es = Executors.newFixedThreadPool(1);
         es.submit(new SingleServer(port));
 
-        es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-
         es.shutdown();
+        es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     }
 
 

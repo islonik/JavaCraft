@@ -84,19 +84,13 @@ public class SingleNetworkManager {
     }
 
     public String getMessage() {
-        if (messageQueue.peek() == null) {
-            synchronized (this) {
-                if (messageQueue.peek() == null) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage(), e);
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
+        try {
+            return messageQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error(e.getMessage(), e);
+            return null;
         }
-        return messageQueue.poll();
     }
 
     public void closeSocket() {
