@@ -121,6 +121,7 @@ public class SingleServer implements Runnable {
 
             if (numRead == -1){
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
+                connections.decrementAndGet();
                 channel.close();
                 return "";
             }
@@ -169,8 +170,10 @@ public class SingleServer implements Runnable {
 
         if (close) {
             write((SocketChannel) key.channel(), response);
+            connections.decrementAndGet();
             key.channel().close();
             key.cancel();
+            return;
         }
 
         if (write((SocketChannel) key.channel(), response)){

@@ -70,6 +70,5 @@ public class SingleClient {
         } catch (Exception error) {
             System.err.println(error.getLocalizedMessage());
         }
-        System.exit(1);
     }
 }
