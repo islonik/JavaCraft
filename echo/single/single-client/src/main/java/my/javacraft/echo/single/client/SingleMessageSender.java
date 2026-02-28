@@ -34,11 +34,16 @@ public class SingleMessageSender {
 
             SocketChannel channel = (SocketChannel)key.channel();
             ByteBuffer writeBuffer = ByteBuffer.wrap(command.getBytes());
-            channel.write(writeBuffer);
+            while (writeBuffer.hasRemaining()) {
+                channel.write(writeBuffer);
+            }
 
             key.interestOps(SelectionKey.OP_READ);
 
-        } catch (IOException | InterruptedException ie) {
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             log.error(ie.getMessage(), ie);
         }
     }

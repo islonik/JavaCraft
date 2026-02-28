@@ -112,7 +112,7 @@ class SingleMessageListenerTest {
         try {
             listenerExec.execute(listener);
 
-            mgr.openSocket("localhost", String.valueOf(serverSocket.getLocalPort()));
+            mgr.openSocket("localhost", serverSocket.getLocalPort());
             Socket serverSide = serverSocket.accept();
 
             // Wait for OP_CONNECT to be processed
@@ -142,7 +142,7 @@ class SingleMessageListenerTest {
         try {
             listenerExec.execute(listener);
 
-            mgr.openSocket("localhost", String.valueOf(serverSocket.getLocalPort()));
+            mgr.openSocket("localhost", serverSocket.getLocalPort());
             Socket serverSide = serverSocket.accept();
 
             // Wait for OP_CONNECT
@@ -185,7 +185,7 @@ class SingleMessageListenerTest {
         try {
             listenerExec.execute(listener);
 
-            mgr.openSocket("localhost", String.valueOf(serverSocket.getLocalPort()));
+            mgr.openSocket("localhost", serverSocket.getLocalPort());
             Socket serverSide = serverSocket.accept();
 
             // Wait for OP_CONNECT

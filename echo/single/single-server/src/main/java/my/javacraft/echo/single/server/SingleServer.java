@@ -17,6 +17,8 @@ import static java.nio.channels.SelectionKey.*;
 @Slf4j
 public class SingleServer implements Runnable {
 
+    static final int BUFFER_SIZE = 2 * 1024;
+
     private final AtomicInteger connections = new AtomicInteger(0);
 
     private final int port;
@@ -24,7 +26,7 @@ public class SingleServer implements Runnable {
 
     public SingleServer(int port) {
         this.port = port;
-        this.buffer = ByteBuffer.allocate(2 * 1024);
+        this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
 
         log.info("Use next command: telnet localhost {}", port);
     }
@@ -45,7 +47,7 @@ public class SingleServer implements Runnable {
             log.debug("Server ready, now ready to accept connections");
             loop(selector, server);
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
             log.error("Server failure", e);
         } finally {
             try {
@@ -75,12 +77,7 @@ public class SingleServer implements Runnable {
                 SelectionKey key = keys.next();
                 keys.remove();
 
-                if (key.isConnectable()){
-                    log.debug("Connectable detected");
-                    try (SocketChannel socketChannel = (SocketChannel)key.channel()) {
-                        socketChannel.finishConnect();
-                    }
-                } else if (key.isAcceptable()){
+                if (key.isAcceptable()){
                     acceptOp(selector, server);
                 } else if (key.isReadable()){
                     readOp(key);

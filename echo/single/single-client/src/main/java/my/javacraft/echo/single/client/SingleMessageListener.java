@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SingleMessageListener implements Runnable {
 
+    static final int BUFFER_SIZE = 2 * 1024;
+
     private final SingleNetworkManager singleNetworkManager;
 
     @Override
@@ -53,7 +55,7 @@ public class SingleMessageListener implements Runnable {
                         }
                     }
                 }
-            } catch (IOException | NegativeArraySizeException err) {
+            } catch (IOException err) {
                 singleNetworkManager.closeSocket();
                 singleMessageSender.setKey(null);
             }
@@ -61,7 +63,7 @@ public class SingleMessageListener implements Runnable {
     }
 
     public String newResponse(SocketChannel channel) {
-        ByteBuffer buffer = ByteBuffer.allocate(2 * 1024);
+        ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
 
         try {
             int numRead = channel.read(buffer); // get message from client

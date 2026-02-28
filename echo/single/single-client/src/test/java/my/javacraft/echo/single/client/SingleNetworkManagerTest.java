@@ -69,7 +69,7 @@ class SingleNetworkManagerTest {
             int port = server.getLocalPort();
             acceptAsync(server);
 
-            manager.openSocket("localhost", String.valueOf(port));
+            manager.openSocket("localhost", port);
 
             SocketChannel channel = manager.getSocketChannel();
             Assertions.assertNotNull(channel);
@@ -89,11 +89,11 @@ class SingleNetworkManagerTest {
             int port = server.getLocalPort();
             acceptAsync(server);
 
-            manager.openSocket("localhost", String.valueOf(port));
+            manager.openSocket("localhost", port);
             SocketChannel first = manager.getSocketChannel();
 
             // Second call should be no-op (client already set)
-            manager.openSocket("localhost", String.valueOf(port));
+            manager.openSocket("localhost", port);
             SocketChannel second = manager.getSocketChannel();
 
             Assertions.assertSame(first, second);
@@ -124,7 +124,7 @@ class SingleNetworkManagerTest {
                 Assertions.assertFalse(future.isDone(), "getSelector() should block until openSocket() is called");
 
                 // Open socket — this calls notifyAll() and should unblock getSelector()
-                manager.openSocket("localhost", String.valueOf(port));
+                manager.openSocket("localhost", port);
 
                 Selector sel = future.get(2, TimeUnit.SECONDS);
                 Assertions.assertNotNull(sel);
@@ -151,7 +151,7 @@ class SingleNetworkManagerTest {
                 Assertions.assertFalse(future.isDone(), "getSocketChannel() should block until openSocket() is called");
 
                 // Open socket — this calls notifyAll() and should unblock getSocketChannel()
-                manager.openSocket("localhost", String.valueOf(port));
+                manager.openSocket("localhost", port);
 
                 SocketChannel ch = future.get(2, TimeUnit.SECONDS);
                 Assertions.assertNotNull(ch);

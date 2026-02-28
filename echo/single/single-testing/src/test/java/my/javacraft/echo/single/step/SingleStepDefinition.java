@@ -50,7 +50,8 @@ public class SingleStepDefinition {
         singleClient.sendMessage(message);
         String actualResponse = singleClient.readMessage();
 
-        Assertions.assertEquals(expectedResponse, actualResponse);
+        Assertions.assertEquals(expectedResponse, actualResponse,
+                "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
     }
 
     @Then("close the connection to the client {string}")
@@ -59,7 +60,8 @@ public class SingleStepDefinition {
 
         singleClient.sendMessage("bye");
         String actualResponse = singleClient.readMessage();
-        Assertions.assertEquals("Have a good day!", actualResponse);
+        Assertions.assertEquals("Have a good day!", actualResponse,
+                "Client '%s' did not receive expected goodbye response".formatted(client));
     }
 
 

@@ -27,14 +27,14 @@ public class SingleNetworkManager {
     @Getter
     private SingleMessageSender singleMessageSender;
 
-    public void openSocket(String serverHost, String serverPort) throws IOException {
+    public void openSocket(String serverHost, int serverPort) throws IOException {
         if (client == null) {
             synchronized (this) {
                 if (client == null) {
                     client = SocketChannel.open();
                     // nonblocking I/O
                     client.configureBlocking(false);
-                    client.connect(new InetSocketAddress(serverHost, Integer.parseInt(serverPort)));
+                    client.connect(new InetSocketAddress(serverHost, serverPort));
                     selector = Selector.open();
                     client.register(selector, SelectionKey.OP_CONNECT);
 
@@ -51,6 +51,7 @@ public class SingleNetworkManager {
                     try {
                         wait();
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         log.error(e.getMessage(), e);
                         throw new RuntimeException(e);
                     }
@@ -67,6 +68,7 @@ public class SingleNetworkManager {
                     try {
                         wait();
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         log.error(e.getMessage(), e);
                         throw new RuntimeException(e);
                     }
@@ -99,7 +101,6 @@ public class SingleNetworkManager {
                 synchronized (this) {
                     if (client != null) {
                         selector.close();
-                        client.socket().close();
                         client.close();
                         client = null;
                         selector = null;

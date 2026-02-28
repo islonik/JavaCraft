@@ -17,7 +17,7 @@ public class SingleServerApplication {
                 .map(a -> Integer.parseInt(a[0]))
                 .orElse(8077);
 
-        ExecutorService es = Executors.newFixedThreadPool(1);
+        ExecutorService es = Executors.newSingleThreadExecutor();
         es.submit(new SingleServer(port));
 
         es.shutdown();
