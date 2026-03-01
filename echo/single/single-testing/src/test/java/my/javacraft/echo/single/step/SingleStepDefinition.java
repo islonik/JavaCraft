@@ -22,6 +22,7 @@ public class SingleStepDefinition {
 
     @After
     public void cleanup() {
+        connections.values().forEach(SingleClient::close);
         connections.clear();
         serverExecutors.forEach(ExecutorService::shutdownNow);
         serverExecutors.clear();

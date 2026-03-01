@@ -6,6 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleNetworkManager {
 
     private static final int QUEUE_CAPACITY = 10;
+    private static final long POLL_TIMEOUT_MS = 100;
     private final ArrayBlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
     private volatile SocketChannel client;
     private volatile Selector selector;
@@ -87,7 +89,7 @@ public class SingleNetworkManager {
 
     public String getMessage() {
         try {
-            return messageQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+            return messageQueue.poll(POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error(e.getMessage(), e);
@@ -111,6 +113,5 @@ public class SingleNetworkManager {
             log.error(ioe.getMessage(), ioe);
         }
     }
-
 
 }

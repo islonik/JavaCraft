@@ -3,13 +3,15 @@ package my.javacraft.echo.single.server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
-
-import static java.nio.channels.SelectionKey.*;
 
 /**
  * @author Lipatov Nikita
@@ -42,7 +44,7 @@ public class SingleServer implements Runnable {
             server = ServerSocketChannel.open();
             server.socket().bind(new InetSocketAddress(port));
             server.configureBlocking(false);
-            server.register(selector, OP_ACCEPT);
+            server.register(selector, SelectionKey.OP_ACCEPT);
 
             log.debug("Server ready, now ready to accept connections");
             loop(selector, server);
@@ -55,7 +57,6 @@ public class SingleServer implements Runnable {
                     selector.close();
                 }
                 if (server != null) {
-                    server.socket().close();
                     server.close();
                 }
             } catch (Exception e) {
@@ -73,15 +74,15 @@ public class SingleServer implements Runnable {
             }
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
-            while (keys.hasNext()){
+            while (keys.hasNext()) {
                 SelectionKey key = keys.next();
                 keys.remove();
 
-                if (key.isAcceptable()){
+                if (key.isAcceptable()) {
                     acceptOp(selector, server);
-                } else if (key.isReadable()){
+                } else if (key.isReadable()) {
                     readOp(key);
-                } else if (key.isWritable()){
+                } else if (key.isWritable()) {
                     writeOp(key);
                 }
             }
@@ -95,7 +96,7 @@ public class SingleServer implements Runnable {
         connections.incrementAndGet();
 
         client.configureBlocking(false);
-        client.register(selector, OP_READ);
+        client.register(selector, SelectionKey.OP_READ);
     }
 
     private void readOp(SelectionKey key) {
@@ -106,7 +107,7 @@ public class SingleServer implements Runnable {
 
         if (result != null && !result.isEmpty()) {
             key.attach(result);
-            key.interestOps(OP_WRITE);
+            key.interestOps(SelectionKey.OP_WRITE);
         } else {
             key.cancel();
         }
@@ -118,7 +119,7 @@ public class SingleServer implements Runnable {
         try {
             int numRead = channel.read(buffer);
 
-            if (numRead == -1){
+            if (numRead == -1) {
                 log.debug("Connection closed by: {}", channel.getRemoteAddress());
                 connections.decrementAndGet();
                 channel.close();
@@ -147,7 +148,7 @@ public class SingleServer implements Runnable {
     }
 
     private void writeOp(SelectionKey key) throws IOException {
-        String request = (String)key.attachment();
+        String request = (String) key.attachment();
         if (request == null || request.isEmpty()) {
             return;
         }
@@ -175,17 +176,20 @@ public class SingleServer implements Runnable {
             return;
         }
 
-        if (write((SocketChannel) key.channel(), response)){
-            key.interestOps(OP_READ);
+        if (write((SocketChannel) key.channel(), response)) {
+            key.interestOps(SelectionKey.OP_READ);
         } else {
             key.channel().close();
             key.cancel();
         }
     }
 
-    boolean write(SocketChannel channel, String content){
+    boolean write(SocketChannel channel, String content) {
         try {
-            channel.write(ByteBuffer.wrap(content.getBytes()));
+            ByteBuffer writeBuffer = ByteBuffer.wrap(content.getBytes());
+            while (writeBuffer.hasRemaining()) {
+                channel.write(writeBuffer);
+            }
             return true;
         } catch (ClosedChannelException cce) {
             connections.decrementAndGet();
@@ -197,7 +201,7 @@ public class SingleServer implements Runnable {
             try {
                 channel.close();
             } catch (IOException e1) {
-                //dead channel, nothing to do
+                // dead channel, nothing to do
             }
             return false;
         }

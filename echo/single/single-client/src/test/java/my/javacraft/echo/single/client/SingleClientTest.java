@@ -1,19 +1,25 @@
 package my.javacraft.echo.single.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 class SingleClientTest {
 
     private static final int PORT = 19077;
     private static ServerSocket testServer;
+    private InputStream originalIn;
 
     @BeforeAll
     static void startTestServer() throws IOException {
@@ -63,6 +69,16 @@ class SingleClientTest {
         }
     }
 
+    @BeforeEach
+    void saveStdin() {
+        originalIn = System.in;
+    }
+
+    @AfterEach
+    void restoreStdin() {
+        System.setIn(originalIn);
+    }
+
     @AfterAll
     static void stopTestServer() throws IOException {
         if (testServer != null) {
@@ -73,32 +89,69 @@ class SingleClientTest {
     @Test
     void testConnectToServer() throws IOException {
         SingleClient client = new SingleClient("localhost", PORT);
-        client.connectToServer();
-        // If no exception thrown, connection succeeded
+        try {
+            client.connectToServer();
+            // If no exception thrown, connection succeeded
+        } finally {
+            client.close();
+        }
     }
 
     @Test
     void testSendAndReceiveEcho() throws IOException, InterruptedException {
         SingleClient client = new SingleClient("localhost", PORT);
-        client.connectToServer();
-        Thread.sleep(200);
+        try {
+            client.connectToServer();
+            Thread.sleep(200);
 
-        client.sendMessage("test message");
-        Thread.sleep(200);
-        String response = client.readMessage();
-        Assertions.assertEquals("Did you say 'test message'?", response);
+            client.sendMessage("test message");
+            Thread.sleep(200);
+            String response = client.readMessage();
+            Assertions.assertEquals("Did you say 'test message'?", response);
+        } finally {
+            client.close();
+        }
     }
 
     @Test
     void testSendByeReceivesGoodbye() throws IOException, InterruptedException {
         SingleClient client = new SingleClient("localhost", PORT);
-        client.connectToServer();
-        Thread.sleep(200);
+        try {
+            client.connectToServer();
+            Thread.sleep(200);
 
-        client.sendMessage("bye");
-        Thread.sleep(200);
-        String response = client.readMessage();
-        Assertions.assertEquals("Have a good day!", response);
+            client.sendMessage("bye");
+            Thread.sleep(200);
+            String response = client.readMessage();
+            Assertions.assertEquals("Have a good day!", response);
+        } finally {
+            client.close();
+        }
+    }
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunWithInputThenEof() {
+        System.setIn(new ByteArrayInputStream("hello\n".getBytes()));
+        SingleClient client = new SingleClient("localhost", PORT);
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunWithEmptyStdin() {
+        // Empty stdin → readLine() returns null immediately → breaks out of loop
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        SingleClient client = new SingleClient("localhost", PORT);
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunWithByeCommand() {
+        System.setIn(new ByteArrayInputStream("bye\n".getBytes()));
+        SingleClient client = new SingleClient("localhost", PORT);
+        Assertions.assertDoesNotThrow(client::run);
     }
 
 }

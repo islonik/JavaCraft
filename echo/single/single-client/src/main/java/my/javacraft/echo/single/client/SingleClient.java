@@ -61,7 +61,11 @@ public class SingleClient {
             boolean working = true;
             while (working) {
                 try {
-                    String inputCommand = keyboard.readLine().trim();
+                    String line = keyboard.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    String inputCommand = line.trim();
 
                     sendMessage(inputCommand);
 
@@ -69,11 +73,11 @@ public class SingleClient {
                         working = false;
                     }
                 } catch (IOException e) {
-                    log.error(e.getLocalizedMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         } catch (Exception error) {
-            log.error(error.getLocalizedMessage(), error);
+            log.error(error.getMessage(), error);
         } finally {
             close();
         }
