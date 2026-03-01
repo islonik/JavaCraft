@@ -22,7 +22,7 @@ public class NettyClient {
     private final int port;
     private final EventLoopGroup group;
     private volatile Channel ch;
-    private NettyClientInitializer nettyClientInitializer;
+    private volatile NettyClientInitializer nettyClientInitializer;
 
     public NettyClient(String host, int port) {
         this.host = host;

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
- * Example was took from official documentation.
+ * Example was taken from official documentation.
  */
 @Slf4j
 public class NettyServerApplication {
@@ -15,14 +15,14 @@ public class NettyServerApplication {
     // telnet localhost 8076
     public static void main(String[] args) throws Exception {
         int port = Optional.of(args)
-                .filter(a -> args.length > 0)
+                .filter(a -> a.length > 0)
                 .map(NettyServerApplication::getPort)
                 .orElse(DEFAULT_PORT);
 
         new NettyServer(port).run();
     }
 
-    private static int getPort(String[] args) {
+    static int getPort(String[] args) {
         try {
             return Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {

@@ -23,3 +23,9 @@ Feature: testing Netty Server
     When create a new client 'Echo' for the server with the port = '8038'
     When use the client 'Echo' to send 'hello world' message and get "Did you say 'hello world'?" response
     Then close the connection to the client 'Echo'
+
+  Scenario: test empty message response
+    Given socket server started up on port = '8040'
+    When create a new client 'Empty' for the server with the port = '8040'
+    When use the client 'Empty' to send '' message and get 'Please type something.' response
+    Then close the connection to the client 'Empty'
