@@ -1,6 +1,9 @@
 package my.javacraft.echo.netty.server;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +42,29 @@ class NettyServerHandlerTest {
 
         // Closing the channel should trigger channelInactive without errors
         Assertions.assertDoesNotThrow(() -> channel.close());
+    }
+
+    @Test
+    void testChannelInactivePropagatesEvent() {
+        // Verify super.channelInactive(ctx) is called, propagating the event
+        // to the next handler in the pipeline
+        AtomicBoolean downstreamNotified = new AtomicBoolean(false);
+
+        EmbeddedChannel channel = new EmbeddedChannel(
+                new NettyServerHandler(),
+                new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) {
+                        downstreamNotified.set(true);
+                    }
+                }
+        );
+        drainGreeting(channel);
+
+        channel.close();
+
+        Assertions.assertTrue(downstreamNotified.get(),
+                "channelInactive event should propagate to downstream handlers via super.channelInactive(ctx)");
     }
 
     @Test

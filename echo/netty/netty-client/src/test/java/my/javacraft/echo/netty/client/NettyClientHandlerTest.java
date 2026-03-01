@@ -1,6 +1,10 @@
 package my.javacraft.echo.netty.client;
 
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -79,6 +83,30 @@ class NettyClientHandlerTest {
         channel.pipeline().fireExceptionCaught(new RuntimeException("test error"));
 
         Assertions.assertFalse(channel.isOpen());
+    }
+
+    @Test
+    void testGetMessageRestoresInterruptFlagOnInterruption() throws Exception {
+        NettyClientHandler handler = new NettyClientHandler();
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Boolean> future = executor.submit(() -> {
+                // Interrupt this thread — getMessage() will catch InterruptedException
+                Thread.currentThread().interrupt();
+                handler.getMessage();
+                // After getMessage() returns, the interrupt flag should still be set
+                return Thread.currentThread().isInterrupted();
+            });
+
+            boolean interruptFlagPreserved = future.get(2, TimeUnit.SECONDS);
+            Assertions.assertTrue(interruptFlagPreserved,
+                    "getMessage() should restore the interrupt flag after catching InterruptedException");
+        } finally {
+            executor.shutdownNow();
+            channel.close();
+        }
     }
 
 }

@@ -17,3 +17,9 @@ Feature: testing Netty Server
     Then close the connection to the client 'Nikita'
     Then close the connection to the client 'Ava'
     Then close the connection to the client 'Alyssa'
+
+  Scenario: test echo response
+    Given socket server started up on port = '8038'
+    When create a new client 'Echo' for the server with the port = '8038'
+    When use the client 'Echo' to send 'hello world' message and get "Did you say 'hello world'?" response
+    Then close the connection to the client 'Echo'

@@ -5,6 +5,7 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,9 +18,16 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     private static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         // Send greeting for a new connection.
-        ctx.write("Welcome to " + InetAddress.getLocalHost().getHostName() + "!\r\n");
+        String hostName;
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            log.warn("Unable to resolve local hostname", e);
+            hostName = "unknown";
+        }
+        ctx.write("Welcome to " + hostName + "!\r\n");
         ctx.write("It is " + LocalDateTime.now() + " now.\r\n");
         ctx.flush();
 
@@ -63,9 +71,10 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     public void sendToAll(ChannelHandlerContext ctx, String msg) {
+        String senderAddress = String.valueOf(ctx.channel().remoteAddress());
         for (Channel c : channels) {
             if (c != ctx.channel()) {
-                c.writeAndFlush("[" + ctx.channel().remoteAddress() + "] " + msg + "\r\n");
+                c.writeAndFlush("[" + senderAddress + "] " + msg + "\r\n");
             } else {
                 c.writeAndFlush("[you] " + msg + "\r\n");
             }
@@ -79,7 +88,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("Unexpected error", cause);
+        log.error("Unexpected error on channel {}", ctx.channel().remoteAddress(), cause);
         ctx.close();
     }
 }

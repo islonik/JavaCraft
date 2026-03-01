@@ -54,7 +54,8 @@ public class NettyStepDefinition {
         Thread.sleep(200);
         String actualResponse = nettyClient.readMessage();
 
-        Assertions.assertEquals(expectedResponse, actualResponse);
+        Assertions.assertEquals(expectedResponse, actualResponse,
+                "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
     }
 
     @Then("close the connection to the client {string}")
@@ -64,7 +65,8 @@ public class NettyStepDefinition {
         nettyClient.sendMessage("bye");
         Thread.sleep(200);
         String actualResponse = nettyClient.readMessage();
-        Assertions.assertEquals("Have a good day!", actualResponse);
+        Assertions.assertEquals("Have a good day!", actualResponse,
+                "Client '%s' did not receive expected goodbye response".formatted(client));
 
         nettyClient.close();
         connections.remove(client);

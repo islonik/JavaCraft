@@ -29,6 +29,14 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<String> {
         try {
             return messageQueue.poll(POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            // Without Thread.currentThread().interrupt(), the interrupt signal is silently swallowed.
+            // The calling code has no way to detect it happened and may continue looping indefinitely, ignoring the shutdown request.
+            //
+            // With the flag restored, the next blocking operation up the call stack (e.g., another poll(), sleep(), sync())
+            // will throw InterruptedException, allowing the interruption to properly propagate.
+            //
+            // Rule of thumb: restore the interrupt flag in methods that catch and return instead of rethrowing.
+            // Don't bother at the top of the call stack (like main() or run()) where the thread is about to terminate anyway.
             Thread.currentThread().interrupt();
             log.error("Interrupted while waiting for message", e);
             return null;

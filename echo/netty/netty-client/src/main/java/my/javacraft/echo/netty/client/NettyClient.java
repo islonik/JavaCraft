@@ -87,8 +87,9 @@ public class NettyClient {
             if (lastWriteFuture != null) {
                 lastWriteFuture.sync();
             }
-        } catch(InterruptedException | IOException ie) {
-            log.error(ie.getMessage(), ie);
+        } catch (IOException | InterruptedException e) {
+            // no need for Thread.currentThread().interrupt();
+            log.error(e.getMessage(), e);
         } finally {
             close();
         }

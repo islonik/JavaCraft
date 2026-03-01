@@ -9,6 +9,10 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -117,6 +121,32 @@ class NettyClientInitializerTest {
 
         ch1.close().sync();
         ch2.close().sync();
+    }
+
+    @Test
+    void testGetClientHandlerRestoresInterruptFlagOnInterruption() throws Exception {
+        // initChannel() never called — latch never counted down, so await() will block
+        NettyClientInitializer initializer = new NettyClientInitializer();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Boolean> future = executor.submit(() -> {
+                Thread.currentThread().interrupt();
+                try {
+                    initializer.getClientHandler();
+                    return false; // should not reach here
+                } catch (RuntimeException e) {
+                    // getClientHandler() should restore the flag before throwing
+                    return Thread.currentThread().isInterrupted();
+                }
+            });
+
+            boolean interruptFlagPreserved = future.get(2, TimeUnit.SECONDS);
+            Assertions.assertTrue(interruptFlagPreserved,
+                    "getClientHandler() should restore the interrupt flag before throwing RuntimeException");
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private int indexOfType(List<Class<?>> types, Class<?> target) {

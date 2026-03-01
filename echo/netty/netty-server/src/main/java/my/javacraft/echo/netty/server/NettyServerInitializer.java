@@ -12,13 +12,14 @@ import io.netty.handler.codec.string.StringEncoder;
  * @author Lipatov Nikita
  */
 public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
+    private static final int MAX_FRAME_LENGTH = 8192;
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
 
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
 
-        pipeline.addLast(new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
+        pipeline.addLast(new DelimiterBasedFrameDecoder(MAX_FRAME_LENGTH, Delimiters.lineDelimiter()));
 
         pipeline.addLast(DECODER);
         pipeline.addLast(ENCODER);
