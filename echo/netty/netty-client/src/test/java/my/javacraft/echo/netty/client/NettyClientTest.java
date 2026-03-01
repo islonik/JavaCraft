@@ -15,9 +15,13 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class NettyClientTest {
@@ -26,6 +30,7 @@ class NettyClientTest {
     private static Channel serverChannel;
     private static EventLoopGroup bossGroup;
     private static EventLoopGroup workerGroup;
+    private InputStream originalIn;
 
     @BeforeAll
     static void startTestServer() throws InterruptedException {
@@ -77,6 +82,16 @@ class NettyClientTest {
         if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
+    }
+
+    @BeforeEach
+    void saveStdin() {
+        originalIn = System.in;
+    }
+
+    @AfterEach
+    void restoreStdin() {
+        System.setIn(originalIn);
     }
 
     @Test
@@ -142,6 +157,45 @@ class NettyClientTest {
         NettyClient client = new NettyClient("localhost", PORT);
         // close() without openConnection() should not throw
         Assertions.assertDoesNotThrow(client::close);
+    }
+
+    @Test
+    void testRunWithInputThenEof() {
+        // Provide one line of input followed by EOF —
+        // covers the stdin loop, writeAndFlush, null-break, and lastWriteFuture.sync()
+        System.setIn(new ByteArrayInputStream("hello\n".getBytes()));
+        NettyClient client = new NettyClient("localhost", PORT);
+
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    void testRunWithEmptyStdin() {
+        // Empty stdin → readLine() returns null immediately →
+        // lastWriteFuture stays null, skipping lastWriteFuture.sync()
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        NettyClient client = new NettyClient("localhost", PORT);
+
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    void testRunWithByeCommand() {
+        // "bye" triggers ch.closeFuture().sync() — waits for server to close connection
+        System.setIn(new ByteArrayInputStream("bye\n".getBytes()));
+        NettyClient client = new NettyClient("localhost", PORT);
+
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    void testRunWithConnectionFailure() {
+        // Wrong port → openConnection() throws ConnectException (extends IOException)
+        // → caught by catch block → close() in finally
+        System.setIn(new ByteArrayInputStream("hello\n".getBytes()));
+        NettyClient client = new NettyClient("localhost", 19999);
+
+        Assertions.assertDoesNotThrow(client::run);
     }
 
 }
