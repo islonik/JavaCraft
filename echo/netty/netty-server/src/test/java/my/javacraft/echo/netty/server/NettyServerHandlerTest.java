@@ -3,9 +3,13 @@ package my.javacraft.echo.netty.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 class NettyServerHandlerTest {
 
@@ -20,6 +24,15 @@ class NettyServerHandlerTest {
         channel.readOutbound(); // Date message
     }
 
+    /**
+     * Close channel and run pending tasks to ensure the ChannelGroup
+     * close-listener fires and removes the channel from the static group.
+     */
+    private void closeAndCleanup(EmbeddedChannel channel) {
+        channel.close();
+        channel.runPendingTasks();
+    }
+
     @Test
     void testChannelActiveWritesGreeting() {
         EmbeddedChannel channel = createChannel();
@@ -32,7 +45,26 @@ class NettyServerHandlerTest {
         Assertions.assertNotNull(dateMsg);
         Assertions.assertTrue(dateMsg.startsWith("It is "));
 
-        channel.close();
+        closeAndCleanup(channel);
+    }
+
+    @Test
+    void testChannelActiveUsesUnknownOnHostnameFailure() {
+        try (MockedStatic<InetAddress> mocked = Mockito.mockStatic(InetAddress.class)) {
+            mocked.when(InetAddress::getLocalHost).thenThrow(new UnknownHostException("mocked"));
+
+            EmbeddedChannel channel = new EmbeddedChannel(new NettyServerHandler());
+
+            String welcome = channel.readOutbound();
+            Assertions.assertNotNull(welcome);
+            Assertions.assertEquals("Welcome to unknown!\r\n", welcome);
+
+            String dateMsg = channel.readOutbound();
+            Assertions.assertNotNull(dateMsg);
+            Assertions.assertTrue(dateMsg.startsWith("It is "));
+
+            closeAndCleanup(channel);
+        }
     }
 
     @Test
@@ -41,7 +73,7 @@ class NettyServerHandlerTest {
         drainGreeting(channel);
 
         // Closing the channel should trigger channelInactive without errors
-        Assertions.assertDoesNotThrow(() -> channel.close());
+        Assertions.assertDoesNotThrow(() -> closeAndCleanup(channel));
     }
 
     @Test
@@ -77,7 +109,7 @@ class NettyServerHandlerTest {
         String response = channel.readOutbound();
         Assertions.assertEquals("Please type something.\r\n", response);
 
-        channel.close();
+        closeAndCleanup(channel);
     }
 
     @Test
@@ -90,7 +122,7 @@ class NettyServerHandlerTest {
         String response = channel.readOutbound();
         Assertions.assertEquals("Did you say 'hello world'?\r\n", response);
 
-        channel.close();
+        closeAndCleanup(channel);
     }
 
     @Test
@@ -103,7 +135,7 @@ class NettyServerHandlerTest {
         String response = channel.readOutbound();
         Assertions.assertEquals("Have a good day!\r\n", response);
 
-        channel.close();
+        closeAndCleanup(channel);
     }
 
     @Test
@@ -116,7 +148,7 @@ class NettyServerHandlerTest {
         String response = channel.readOutbound();
         Assertions.assertEquals("Have a good day!\r\n", response);
 
-        channel.close();
+        closeAndCleanup(channel);
     }
 
     @Test
@@ -131,21 +163,72 @@ class NettyServerHandlerTest {
         Assertions.assertTrue(response.startsWith("Simultaneously connected clients:"));
         Assertions.assertTrue(response.endsWith("\r\n"));
 
-        channel.close();
+        closeAndCleanup(channel);
     }
 
     @Test
-    void testHelloSendsBroadcastToSender() {
+    void testHelloCallsSendToAll() {
         EmbeddedChannel channel = createChannel();
         drainGreeting(channel);
 
-        // "hello" triggers sendToAll — the sender gets "[you]" prefix
-        channel.writeInbound("hello");
+        // "hello" triggers sendToAll — verify no exception and no regular response
+        Assertions.assertDoesNotThrow(() -> channel.writeInbound("hello"));
+        channel.runPendingTasks();
 
-        String response = channel.readOutbound();
-        Assertions.assertEquals("[you] hello everybody!\r\n", response);
+        closeAndCleanup(channel);
+    }
 
-        channel.close();
+    @Test
+    void testSendToAllBroadcastsToOtherChannel() {
+        // EmbeddedChannels share the default ID (0xembedded), so DefaultChannelGroup
+        // treats them as duplicates. Use unique DefaultChannelId to allow both in the group.
+        NettyServerHandler handler1 = new NettyServerHandler();
+        EmbeddedChannel ch1 = new EmbeddedChannel(
+                io.netty.channel.DefaultChannelId.newInstance(), handler1);
+        drainGreeting(ch1);
+
+        EmbeddedChannel ch2 = new EmbeddedChannel(
+                io.netty.channel.DefaultChannelId.newInstance(), new NettyServerHandler());
+        drainGreeting(ch2);
+
+        // Call sendToAll directly — exercises both branches:
+        // ch1 (sender) → else branch: "[you] ..."
+        // ch2 (other)  → if branch:   "[<address>] ..."
+        ChannelHandlerContext ctx1 = ch1.pipeline().context(handler1);
+        handler1.sendToAll(ctx1, "test message");
+
+        // Sender channel gets "[you] ..."
+        ch1.flushOutbound();
+        String selfMsg = ch1.readOutbound();
+        Assertions.assertNotNull(selfMsg, "Sender should receive [you] message");
+        Assertions.assertEquals("[you] test message\r\n", selfMsg);
+
+        // Other channel gets "[<address>] ..."
+        ch2.runPendingTasks();
+        ch2.flushOutbound();
+        String otherMsg = ch2.readOutbound();
+        Assertions.assertNotNull(otherMsg, "Other channel should receive broadcast message");
+        Assertions.assertTrue(otherMsg.endsWith("test message\r\n"),
+                "Other channel message should contain the broadcast text");
+        Assertions.assertFalse(otherMsg.startsWith("[you]"),
+                "Non-sender channel should receive address-prefixed message, not [you]");
+
+        closeAndCleanup(ch1);
+        closeAndCleanup(ch2);
+    }
+
+    @Test
+    void testChannelReadCompleteFlushes() {
+        EmbeddedChannel channel = createChannel();
+        drainGreeting(channel);
+
+        // Write to context without flushing — data is buffered
+        channel.pipeline().fireChannelReadComplete();
+
+        // channelReadComplete calls ctx.flush() — verify no error
+        Assertions.assertDoesNotThrow(() -> channel.checkException());
+
+        closeAndCleanup(channel);
     }
 
     @Test

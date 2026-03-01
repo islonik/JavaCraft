@@ -2,6 +2,10 @@ package my.javacraft.echo.netty.server;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +63,43 @@ class NettyServerTest {
         NettyServer server = new NettyServer(18080);
         // stop() without start() should not throw
         Assertions.assertDoesNotThrow(server::stop);
+    }
+
+    @Test
+    void testRunBlocksUntilServerChannelClosed() throws Exception {
+        NettyServer server = new NettyServer(18090);
+        CountDownLatch runStarted = new CountDownLatch(1);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            executor.submit(() -> {
+                try {
+                    runStarted.countDown();
+                    server.run(); // blocks on closeFuture().sync()
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+
+            // Wait for run() to start
+            Assertions.assertTrue(runStarted.await(2, TimeUnit.SECONDS));
+            // Give the server a moment to bind
+            Thread.sleep(200);
+
+            // Verify server is accepting connections while run() blocks
+            try (Socket socket = new Socket("localhost", 18090)) {
+                Assertions.assertTrue(socket.isConnected());
+            }
+
+            // Stopping the server closes the channel, which unblocks run()
+            server.stop();
+
+            executor.shutdown();
+            Assertions.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS),
+                    "run() should have returned after stop() closed the server channel");
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
 }
