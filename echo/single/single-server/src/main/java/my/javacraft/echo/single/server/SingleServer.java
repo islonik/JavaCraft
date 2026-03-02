@@ -271,7 +271,7 @@ public class SingleServer implements Runnable {
                 response = "Have a good day!\r\n";
                 close = true;
             } else if ("stats".equalsIgnoreCase(normalizedRequest)) {
-                response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
+                response = "Simultaneously connected clients: %s\r\n".formatted(connections.get());
             } else {
                 response = "Did you say '" + normalizedRequest + "'?\r\n";
             }

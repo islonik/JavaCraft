@@ -115,7 +115,7 @@ class SingleServerTest {
             socket.setSoTimeout(2000);
 
             String response = sendAndReceive(socket, "stats");
-            Assertions.assertTrue(response.endsWith("simultaneously connected clients."));
+            Assertions.assertTrue(response.endsWith("Simultaneously connected clients: 1"));
         }
     }
 
@@ -336,25 +336,21 @@ class SingleServerTest {
         writeOp.setAccessible(true);
         writeOp.invoke(server, key);
 
-        Assertions.assertEquals("0 simultaneously connected clients.\r\n", channel.writtenText());
+        Assertions.assertEquals("Simultaneously connected clients: 0\r\n", channel.writtenText());
         Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
     }
 
     @Test
     void testAcceptOpIgnoresNullClient() throws Exception {
         SingleServer server = new SingleServer(0);
-        Selector selector = Selector.open();
-        try {
+        try (Selector selector = Selector.open()) {
             NullAcceptServerSocketChannel serverChannel = new NullAcceptServerSocketChannel();
 
-            Method acceptOp = SingleServer.class.getDeclaredMethod(
-                    "acceptOp", Selector.class, ServerSocketChannel.class);
+            Method acceptOp = SingleServer.class.getDeclaredMethod("acceptOp", Selector.class, ServerSocketChannel.class);
             acceptOp.setAccessible(true);
             acceptOp.invoke(server, selector, serverChannel);
 
             Assertions.assertEquals(0, getConnections(server));
-        } finally {
-            selector.close();
         }
     }
 
@@ -556,7 +552,7 @@ class SingleServerTest {
     void testRunHandlesBindException() throws InterruptedException {
         // PORT is already in use by our @BeforeAll server
         SingleServer duplicate = new SingleServer(PORT);
-        Thread t = new Thread(duplicate::run);
+        Thread t = new Thread(duplicate);
         t.start();
         t.join(2000);
         // run() should have caught BindException and returned
@@ -592,7 +588,7 @@ class SingleServerTest {
 
             // With 2 clients connected, stats should show at least 2
             String response = sendAndReceive(s1, "stats");
-            int count = Integer.parseInt(response.replace(" simultaneously connected clients.", ""));
+            int count = Integer.parseInt(response.replace("Simultaneously connected clients: ", ""));
             Assertions.assertTrue(count >= 2,
                     "Expected at least 2 connections but got " + count);
         }
