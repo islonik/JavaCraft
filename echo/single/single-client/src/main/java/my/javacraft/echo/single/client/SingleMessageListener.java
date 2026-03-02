@@ -2,15 +2,24 @@ package my.javacraft.echo.single.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Reads line-delimited server responses from the single client connection.
+ * <p>
+ * TCP is a byte stream, so responses can arrive fragmented across several
+ * reads or combined in a single read. This listener keeps a small decode buffer
+ * and only publishes complete framed messages to the client queue.
+ * <p>
  * @author Lipatov Nikita
  */
 @Slf4j
@@ -18,8 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleMessageListener implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
+    private static final String MESSAGE_DELIMITER = "\r\n";
 
     private final SingleNetworkManager singleNetworkManager;
+    private final StringBuilder responseBuffer = new StringBuilder();
+    private final Deque<String> pendingMessages = new ArrayDeque<>();
 
     @Override
     public void run() {
@@ -54,11 +66,7 @@ public class SingleMessageListener implements Runnable {
                             }
                             singleMessageSender.setKey(key); // message will send after it
                         } else if(key.isReadable()) {
-                            String message = newResponse(channel);
-                            if (message != null) {
-                                singleNetworkManager.addMessage(message);
-                                log.info(message);
-                            }
+                            queueAvailableResponses(channel);
                         }
                     }
                 }
@@ -78,23 +86,68 @@ public class SingleMessageListener implements Runnable {
         log.info("Listener thread terminated.");
     }
 
+    /**
+     * Drains every complete response that is already buffered for the socket.
+     * This avoids losing coalesced frames when the server sends multiple
+     * responses in a single TCP packet.
+     */
+    private void queueAvailableResponses(SocketChannel channel) {
+        while (true) {
+            String message = newResponse(channel);
+            if (message == null) {
+                return;
+            }
+            singleNetworkManager.addMessage(message);
+            log.info(message);
+        }
+    }
+
+    /**
+     * Returns the next complete response without stripping meaningful
+     * whitespace from the payload. Only the framing delimiter is removed.
+     */
     public String newResponse(SocketChannel channel) {
+        String bufferedMessage = pollPendingMessage();
+        if (bufferedMessage != null) {
+            return bufferedMessage;
+        }
+
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
+        boolean nonBlocking = !channel.isBlocking();
 
         try {
-            int numRead = channel.read(buffer); // get message from client
+            while (true) {
+                int numRead = channel.read(buffer); // get message from client
 
-            if(numRead == -1) {
-                log.debug("Connection closed by: {}", channel.getRemoteAddress());
-                channel.close();
-                return null;
+                if (numRead == -1) {
+                    log.debug("Connection closed by: {}", channel.getRemoteAddress());
+                    channel.close();
+                    return null;
+                }
+
+                if (numRead == 0) {
+                    return pollPendingMessage();
+                }
+
+                buffer.flip();
+                byte[] data = new byte[numRead];
+                buffer.get(data);
+                buffer.clear();
+
+                responseBuffer.append(new String(data, StandardCharsets.UTF_8));
+                extractCompleteFrames();
+
+                String nextMessage = pollPendingMessage();
+                if (nextMessage != null) {
+                    return nextMessage;
+                }
+
+                if (!nonBlocking) {
+                    continue;
+                }
             }
-
-            buffer.flip();
-            byte[] data = new byte[numRead];
-            buffer.get(data);
-
-            return new String(data, StandardCharsets.UTF_8).trim();
+        } catch (ClosedChannelException e) {
+            return null;
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
             try {
@@ -104,5 +157,43 @@ public class SingleMessageListener implements Runnable {
             }
         }
         return null;
+    }
+
+    /**
+     * Splits the accumulated stream into complete protocol frames while leaving
+     * any unfinished suffix in the buffer for the next read.
+     */
+    private void extractCompleteFrames() {
+        int delimiterIndex = responseBuffer.indexOf(MESSAGE_DELIMITER);
+        while (delimiterIndex >= 0) {
+            int frameEnd = delimiterIndex + MESSAGE_DELIMITER.length();
+            pendingMessages.addLast(responseBuffer.substring(0, frameEnd));
+            responseBuffer.delete(0, frameEnd);
+            delimiterIndex = responseBuffer.indexOf(MESSAGE_DELIMITER);
+        }
+    }
+
+    /**
+     * Normalizes buffered frames for callers by removing only the protocol
+     * delimiter, not leading/trailing spaces that belong to the payload.
+     */
+    private String pollPendingMessage() {
+        String framedMessage = pendingMessages.pollFirst();
+        if (framedMessage == null) {
+            return null;
+        }
+        return trimTrailingLineDelimiters(framedMessage);
+    }
+
+    private String trimTrailingLineDelimiters(String message) {
+        int end = message.length();
+        while (end > 0) {
+            char current = message.charAt(end - 1);
+            if (current != '\r' && current != '\n') {
+                break;
+            }
+            end--;
+        }
+        return message.substring(0, end);
     }
 }

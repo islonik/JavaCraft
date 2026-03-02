@@ -9,27 +9,57 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Single-threaded echo server built on top of a selector.
+ * <p>
+ * The server speaks a simple line-delimited protocol.
+ * Each connection keeps its own decode buffer so fragmented TCP reads
+ * and coalesced TCP reads are handled deterministically.
+ * <p>
  * @author Lipatov Nikita
+ * <p>
+ * Framing Strategy: Line-delimited framing with - \r\n.
+ * <p>
+ * Strategy on both sides:
+ * <p>
+ * 1) sender always appends - \r\n
+ * 2) receiver keeps a per-connection string buffer
+ * 3) each read appends raw UTF-8 text to that buffer
+ * 4) receiver extracts only complete frames ending with \r\n
+ * 5) any incomplete suffix stays buffered for the next read
+ * 6) if multiple frames arrive in one read, they are queued and processed in order
  */
 @Slf4j
 public class SingleServer implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
     private static final int MAX_EMPTY_WRITES = 1024;
+    // A CRLF-terminated text frame keeps the protocol simple and readable while
+    // still handling empty messages and fragmented/coalesced TCP packets.
+    private static final String MESSAGE_DELIMITER = "\r\n";
 
     private final AtomicInteger connections = new AtomicInteger(0);
     private final AtomicBoolean running = new AtomicBoolean(true);
 
     private final int port;
     private final ByteBuffer buffer;
+    private final Map<SocketChannel, StringBuilder> requestBuffers = new HashMap<>();
+    private final Map<SocketChannel, Deque<String>> pendingRequests = new HashMap<>();
     private volatile Selector selectorRef;
 
+    /**
+     * Allocates the shared read buffer once and keeps the rest of the per-socket
+     * state in lightweight maps keyed by the channel itself.
+     */
     public SingleServer(int port) {
         this.port = port;
         this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
@@ -37,6 +67,10 @@ public class SingleServer implements Runnable {
         log.info("Use next command: telnet localhost {}", port);
     }
 
+    /**
+     * Owns the full server lifecycle so callers only need to construct the
+     * instance and run it on a thread.
+     */
     public void run() {
         Selector selector = null;
         ServerSocketChannel server = null;
@@ -72,6 +106,10 @@ public class SingleServer implements Runnable {
         }
     }
 
+    /**
+     * Wakes the selector because a plain flag change would not unblock
+     * selector.select() promptly during shutdown.
+     */
     public void stop() {
         running.set(false);
         Selector selector = selectorRef;
@@ -119,8 +157,14 @@ public class SingleServer implements Runnable {
 
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ);
+        requestBuffers.put(client, new StringBuilder());
+        pendingRequests.put(client, new ArrayDeque<>());
     }
 
+    /**
+     * Switches the channel to write mode only after a complete framed request is
+     * available. Partial reads remain buffered for the next selector cycle.
+     */
     private void readOp(SelectionKey key) {
         log.debug("Data received, going to read them");
         SocketChannel channel = (SocketChannel) key.channel();
@@ -134,12 +178,24 @@ public class SingleServer implements Runnable {
             key.attach(result);
             key.interestOps(SelectionKey.OP_WRITE);
         } else {
+            clearChannelState(channel);
             key.cancel();
         }
     }
 
+    /**
+     * Returns the next complete request frame for the channel. The returned
+     * value still includes the line delimiter so an empty client message remains
+     * distinguishable from EOF.
+     */
     String read(SocketChannel channel) {
-        StringBuilder result = null;
+        String pendingRequest = pollPendingRequest(channel);
+        if (pendingRequest != null) {
+            return pendingRequest;
+        }
+
+        StringBuilder requestBuffer = requestBuffers.computeIfAbsent(channel, ignored -> new StringBuilder());
+        Deque<String> readyRequests = pendingRequests.computeIfAbsent(channel, ignored -> new ArrayDeque<>());
         boolean nonBlocking = !channel.isBlocking();
 
         try {
@@ -147,13 +203,11 @@ public class SingleServer implements Runnable {
                 buffer.clear();
                 int numRead = channel.read(buffer);
                 if (numRead == 0) {
-                    if (result == null) {
-                        return null;
-                    }
-                    return result.toString();
+                    return pollPendingRequest(channel);
                 }
                 if (numRead == -1) {
                     log.debug("Connection closed by: {}", channel.getRemoteAddress());
+                    clearChannelState(channel);
                     decrementConnections();
                     channel.close();
                     return "";
@@ -163,17 +217,21 @@ public class SingleServer implements Runnable {
                 byte[] data = new byte[numRead];
                 buffer.get(data);
 
-                if (result == null) {
-                    result = new StringBuilder();
+                requestBuffer.append(new String(data, StandardCharsets.UTF_8));
+                bufferCompleteRequests(requestBuffer, readyRequests);
+
+                String nextRequest = readyRequests.pollFirst();
+                if (nextRequest != null) {
+                    return nextRequest;
                 }
-                result.append(new String(data, StandardCharsets.UTF_8));
 
                 if (!nonBlocking) {
-                    return result.toString();
+                    continue;
                 }
             }
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
+            clearChannelState(channel);
             decrementConnections();
             try {
                 channel.close();
@@ -186,44 +244,64 @@ public class SingleServer implements Runnable {
         return "";
     }
 
+    /**
+     * Writes all fully buffered requests that are already ready for the channel.
+     * This keeps coalesced requests in order without waiting for another read.
+     */
     private void writeOp(SelectionKey key) {
+        SocketChannel channel = (SocketChannel) key.channel();
         String request = (String) key.attachment();
-        if (request == null || request.isEmpty()) {
-            key.interestOps(SelectionKey.OP_READ);
-            return;
+        if (request == null) {
+            request = pollPendingRequest(channel);
         }
-
-        request = trimTrailingLineDelimiters(request);
-
-        String response;
-        boolean close = false;
-        if (request.isEmpty()) {
-            response = "Please type something.\r\n";
-        } else if ("bye".equalsIgnoreCase(request)) {
-            response = "Have a good day!\r\n";
-            close = true;
-        } else if ("stats".equalsIgnoreCase(request)) {
-            response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
-        } else {
-            response = "Did you say '" + request + "'?\r\n";
-        }
-
-        if (close) {
-            if (write((SocketChannel) key.channel(), response)) {
-                decrementConnections();
-            }
-            closeKey(key);
-            return;
-        }
-
-        if (write((SocketChannel) key.channel(), response)) {
+        if (request == null) {
             key.attach(null);
             key.interestOps(SelectionKey.OP_READ);
-        } else {
-            closeKey(key);
+            return;
         }
+
+        while (request != null) {
+            String normalizedRequest = trimTrailingLineDelimiters(request);
+
+            String response;
+            boolean close = false;
+            if (normalizedRequest.isEmpty()) {
+                response = "Please type something.\r\n";
+            } else if ("bye".equalsIgnoreCase(normalizedRequest)) {
+                response = "Have a good day!\r\n";
+                close = true;
+            } else if ("stats".equalsIgnoreCase(normalizedRequest)) {
+                response = "%s simultaneously connected clients.\r\n".formatted(connections.get());
+            } else {
+                response = "Did you say '" + normalizedRequest + "'?\r\n";
+            }
+
+            if (close) {
+                if (write(channel, response)) {
+                    decrementConnections();
+                }
+                clearChannelState(channel);
+                closeKey(key);
+                return;
+            }
+
+            if (!write(channel, response)) {
+                clearChannelState(channel);
+                closeKey(key);
+                return;
+            }
+
+            request = pollPendingRequest(channel);
+        }
+
+        key.attach(null);
+        key.interestOps(SelectionKey.OP_READ);
     }
 
+    /**
+     * Removes only the protocol delimiter so embedded line breaks remain part of
+     * the echoed payload.
+     */
     private String trimTrailingLineDelimiters(String request) {
         int end = request.length();
         while (end > 0) {
@@ -236,6 +314,37 @@ public class SingleServer implements Runnable {
         return request.substring(0, end);
     }
 
+    /**
+     * Extracts every complete line-delimited request from the accumulated bytes
+     * and leaves the unfinished tail in place for the next read.
+     */
+    private void bufferCompleteRequests(StringBuilder requestBuffer, Deque<String> readyRequests) {
+        int delimiterIndex = requestBuffer.indexOf(MESSAGE_DELIMITER);
+        while (delimiterIndex >= 0) {
+            int frameEnd = delimiterIndex + MESSAGE_DELIMITER.length();
+            readyRequests.addLast(requestBuffer.substring(0, frameEnd));
+            requestBuffer.delete(0, frameEnd);
+            delimiterIndex = requestBuffer.indexOf(MESSAGE_DELIMITER);
+        }
+    }
+
+    private String pollPendingRequest(SocketChannel channel) {
+        Deque<String> readyRequests = pendingRequests.get(channel);
+        if (readyRequests == null) {
+            return null;
+        }
+        return readyRequests.pollFirst();
+    }
+
+    private void clearChannelState(SocketChannel channel) {
+        requestBuffers.remove(channel);
+        pendingRequests.remove(channel);
+    }
+
+    /**
+     * Completes the whole response before returning so the caller can safely
+     * switch the selection key back to read mode.
+     */
     boolean write(SocketChannel channel, String content) {
         try {
             ByteBuffer writeBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
@@ -277,6 +386,9 @@ public class SingleServer implements Runnable {
 
     private void closeKey(SelectionKey key) {
         try {
+            if (key.channel() instanceof SocketChannel channel) {
+                clearChannelState(channel);
+            }
             key.channel().close();
         } catch (IOException closeError) {
             log.debug("Error closing channel", closeError);

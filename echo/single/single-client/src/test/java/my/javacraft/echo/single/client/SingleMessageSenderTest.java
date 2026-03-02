@@ -84,7 +84,7 @@ class SingleMessageSenderTest {
         int len = in.read(buf);
         String received = new String(buf, 0, len);
 
-        Assertions.assertEquals("hello server", received);
+        Assertions.assertEquals("hello server\r\n", received);
     }
 
     @Test
@@ -99,7 +99,7 @@ class SingleMessageSenderTest {
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
         int totalLen = 0;
-        String expected = "firstsecondthird";
+        String expected = "first\r\nsecond\r\nthird\r\n";
         while (totalLen < expected.length()) {
             int len = in.read(buf, totalLen, buf.length - totalLen);
             if (len == -1) break;
@@ -132,6 +132,48 @@ class SingleMessageSenderTest {
     }
 
     @Test
+    void testSendPreservesExistingCrLfDelimiter() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        sender.send("already framed\r\n");
+
+        InputStream in = acceptedSocket.getInputStream();
+        byte[] buf = new byte[256];
+        int len = in.read(buf);
+
+        Assertions.assertEquals("already framed\r\n", new String(buf, 0, len));
+    }
+
+    @Test
+    void testSendNormalizesTrailingLfToCrLf() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        sender.send("unix newline\n");
+
+        InputStream in = acceptedSocket.getInputStream();
+        byte[] buf = new byte[256];
+        int len = in.read(buf);
+
+        Assertions.assertEquals("unix newline\r\n", new String(buf, 0, len));
+    }
+
+    @Test
+    void testSendNormalizesTrailingCrToCrLf() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        sender.send("carriage return only\r");
+
+        InputStream in = acceptedSocket.getInputStream();
+        byte[] buf = new byte[256];
+        int len = in.read(buf);
+
+        Assertions.assertEquals("carriage return only\r\n", new String(buf, 0, len));
+    }
+
+    @Test
     void testSendLargeMessage() throws Exception {
         SelectionKey key = createConnection();
         sender.setKey(key);
@@ -143,12 +185,12 @@ class SingleMessageSenderTest {
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[8192];
         int totalLen = 0;
-        while (totalLen < largeMessage.length()) {
+        while (totalLen < largeMessage.length() + 2) {
             int len = in.read(buf, totalLen, buf.length - totalLen);
             if (len == -1) break;
             totalLen += len;
         }
-        Assertions.assertEquals(largeMessage, new String(buf, 0, totalLen));
+        Assertions.assertEquals(largeMessage + "\r\n", new String(buf, 0, totalLen));
     }
 
     @Test
@@ -172,7 +214,7 @@ class SingleMessageSenderTest {
             InputStream in = acceptedSocket.getInputStream();
             byte[] buf = new byte[256];
             int len = in.read(buf);
-            Assertions.assertEquals("blocked", new String(buf, 0, len));
+            Assertions.assertEquals("blocked\r\n", new String(buf, 0, len));
         } finally {
             executor.shutdownNow();
         }

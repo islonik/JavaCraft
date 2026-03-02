@@ -4,8 +4,14 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,7 +50,7 @@ class SingleMessageListenerTest {
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
 
-        server.getOutputStream().write("hello world".getBytes());
+        server.getOutputStream().write("hello world\r\n".getBytes(StandardCharsets.UTF_8));
         server.getOutputStream().flush();
         Thread.sleep(50);
 
@@ -58,19 +64,19 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testNewResponseTrimsWhitespace() throws Exception {
+    void testNewResponsePreservesWhitespaceInsideFrame() throws Exception {
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
 
-        server.getOutputStream().write("  padded message  \n".getBytes());
+        server.getOutputStream().write("  padded message  \r\n".getBytes(StandardCharsets.UTF_8));
         server.getOutputStream().flush();
         Thread.sleep(50);
 
         SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
         String result = listener.newResponse(client);
 
-        Assertions.assertEquals("padded message", result);
+        Assertions.assertEquals("  padded message  ", result);
 
         client.close();
         server.close();
@@ -115,6 +121,7 @@ class SingleMessageListenerTest {
         byte[] largePayload = new byte[2000];
         java.util.Arrays.fill(largePayload, (byte) 'A');
         server.getOutputStream().write(largePayload);
+        server.getOutputStream().write("\r\n".getBytes(StandardCharsets.UTF_8));
         server.getOutputStream().flush();
         Thread.sleep(100);
 
@@ -129,24 +136,29 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testNewResponseReturnsEmptyStringForBlankMessage() throws Exception {
-        SocketChannel client = SocketChannel.open(
-                new InetSocketAddress("localhost", serverSocket.getLocalPort()));
-        Socket server = serverSocket.accept();
-
-        // Send whitespace-only message — should be trimmed to ""
-        server.getOutputStream().write("   \n  ".getBytes());
-        server.getOutputStream().flush();
-        Thread.sleep(50);
+    void testNewResponseWaitsForCompleteFrameAcrossReads() throws Exception {
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new int[] {3, 0, 4, 0},
+                new String[] {"hel", "", "lo\r\n", ""});
 
         SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
-        String result = listener.newResponse(client);
 
-        // newResponse trims, so whitespace becomes empty string
-        Assertions.assertEquals("", result);
+        Assertions.assertNull(listener.newResponse(channel),
+                "Partial data without the line delimiter must stay buffered");
+        Assertions.assertEquals("hello", listener.newResponse(channel));
+    }
 
-        client.close();
-        server.close();
+    @Test
+    void testNewResponseSplitsMultipleFramesFromSingleRead() throws Exception {
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new int[] {15, 0},
+                new String[] {"first\r\nsecond\r\n", ""});
+
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+
+        Assertions.assertEquals("first", listener.newResponse(channel));
+        Assertions.assertEquals("second", listener.newResponse(channel));
+        Assertions.assertNull(listener.newResponse(channel));
     }
 
     // ── run() integration tests ──────────────────────────────────────
@@ -203,9 +215,9 @@ class SingleMessageListenerTest {
             Thread.sleep(100);
             byte[] buf = new byte[256];
             int len = serverSide.getInputStream().read(buf);
-            Assertions.assertEquals("ping", new String(buf, 0, len));
+            Assertions.assertEquals("ping\r\n", new String(buf, 0, len));
 
-            serverSide.getOutputStream().write("pong".getBytes());
+            serverSide.getOutputStream().write("pong\r\n".getBytes(StandardCharsets.UTF_8));
             serverSide.getOutputStream().flush();
             serverSide.close(); // causes EOF after "pong" is read
             Thread.sleep(500);
@@ -284,10 +296,10 @@ class SingleMessageListenerTest {
             // Server reads and verifies
             byte[] buf = new byte[256];
             int len = serverSide.getInputStream().read(buf);
-            Assertions.assertEquals("hello", new String(buf, 0, len));
+            Assertions.assertEquals("hello\r\n", new String(buf, 0, len));
 
             // Server sends response back
-            serverSide.getOutputStream().write("echo: hello".getBytes());
+            serverSide.getOutputStream().write("echo: hello\r\n".getBytes(StandardCharsets.UTF_8));
             serverSide.getOutputStream().flush();
 
             // Wait for OP_READ to be processed
@@ -297,6 +309,40 @@ class SingleMessageListenerTest {
             Assertions.assertEquals("echo: hello", queued);
 
             serverSide.close();
+        } finally {
+            mgr.closeSocket();
+            listenerExec.shutdownNow();
+        }
+    }
+
+    @Test
+    void testRunDrainsMultipleResponsesFromSingleReadEvent() throws Exception {
+        SingleNetworkManager mgr = new SingleNetworkManager();
+        SingleMessageSender sender = new SingleMessageSender();
+        mgr.setSingleMessageSender(sender);
+
+        SingleMessageListener listener = new SingleMessageListener(mgr);
+        ExecutorService listenerExec = Executors.newSingleThreadExecutor();
+        try {
+            listenerExec.execute(listener);
+
+            mgr.openSocket("localhost", serverSocket.getLocalPort());
+            Socket serverSide = serverSocket.accept();
+
+            Thread.sleep(300);
+
+            sender.send("ping");
+            Thread.sleep(100);
+            byte[] buf = new byte[256];
+            int len = serverSide.getInputStream().read(buf);
+            Assertions.assertEquals("ping\r\n", new String(buf, 0, len));
+
+            serverSide.getOutputStream().write("reply1\r\nreply2\r\n".getBytes(StandardCharsets.UTF_8));
+            serverSide.getOutputStream().flush();
+            Thread.sleep(300);
+
+            Assertions.assertEquals("reply1", mgr.getMessage());
+            Assertions.assertEquals("reply2", mgr.getMessage());
         } finally {
             mgr.closeSocket();
             listenerExec.shutdownNow();
@@ -358,9 +404,9 @@ class SingleMessageListenerTest {
             Thread.sleep(100);
             byte[] buf = new byte[256];
             int len = serverSide.getInputStream().read(buf);
-            Assertions.assertEquals("msg1", new String(buf, 0, len));
+            Assertions.assertEquals("msg1\r\n", new String(buf, 0, len));
 
-            serverSide.getOutputStream().write("reply1".getBytes());
+            serverSide.getOutputStream().write("reply1\r\n".getBytes(StandardCharsets.UTF_8));
             serverSide.getOutputStream().flush();
             Thread.sleep(300);
 
@@ -370,9 +416,9 @@ class SingleMessageListenerTest {
             sender.send("msg2");
             Thread.sleep(100);
             len = serverSide.getInputStream().read(buf);
-            Assertions.assertEquals("msg2", new String(buf, 0, len));
+            Assertions.assertEquals("msg2\r\n", new String(buf, 0, len));
 
-            serverSide.getOutputStream().write("reply2".getBytes());
+            serverSide.getOutputStream().write("reply2\r\n".getBytes(StandardCharsets.UTF_8));
             serverSide.getOutputStream().flush();
             Thread.sleep(300);
 
@@ -382,6 +428,152 @@ class SingleMessageListenerTest {
         } finally {
             mgr.closeSocket();
             listenerExec.shutdownNow();
+        }
+    }
+
+    /**
+     * Feeds exact read chunks to the listener so framing behavior can be
+     * verified without timing-sensitive socket scheduling.
+     */
+    private static final class ScriptedSocketChannel extends SocketChannel {
+        private final int[] reads;
+        private final byte[][] payloads;
+        private int readIndex;
+        private boolean open = true;
+
+        private ScriptedSocketChannel(int[] reads, String[] payloads) {
+            super(SelectorProvider.provider());
+            this.reads = reads.clone();
+            this.payloads = new byte[payloads.length][];
+            for (int i = 0; i < payloads.length; i++) {
+                this.payloads[i] = payloads[i].getBytes(StandardCharsets.UTF_8);
+            }
+        }
+
+        @Override
+        public int read(ByteBuffer dst) throws IOException {
+            if (!open) {
+                throw new IOException("channel closed");
+            }
+            if (readIndex >= reads.length) {
+                return 0;
+            }
+
+            int next = reads[readIndex];
+            if (next <= 0) {
+                readIndex++;
+                return next;
+            }
+
+            byte[] source = payloads[readIndex];
+            int toCopy = Math.min(next, Math.min(source.length, dst.remaining()));
+            dst.put(source, 0, toCopy);
+            readIndex++;
+            return toCopy;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
+            long total = 0;
+            for (int i = offset; i < offset + length; i++) {
+                int read = read(dsts[i]);
+                if (read <= 0) {
+                    return total == 0 ? read : total;
+                }
+                total += read;
+            }
+            return total;
+        }
+
+        @Override
+        public int write(ByteBuffer src) {
+            int written = src.remaining();
+            src.position(src.limit());
+            return written;
+        }
+
+        @Override
+        public long write(ByteBuffer[] srcs, int offset, int length) {
+            long total = 0;
+            for (int i = offset; i < offset + length; i++) {
+                total += write(srcs[i]);
+            }
+            return total;
+        }
+
+        @Override
+        public SocketChannel bind(SocketAddress local) {
+            return this;
+        }
+
+        @Override
+        public <T> SocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownInput() {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownOutput() {
+            return this;
+        }
+
+        @Override
+        public Socket socket() {
+            return new Socket();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
+        }
+
+        @Override
+        public boolean isConnectionPending() {
+            return false;
+        }
+
+        @Override
+        public boolean connect(SocketAddress remote) {
+            return true;
+        }
+
+        @Override
+        public boolean finishConnect() {
+            return true;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 8077);
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() {
+            open = false;
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
         }
     }
 }

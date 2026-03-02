@@ -58,13 +58,13 @@ class SingleClientTest {
                 String response;
                 if ("bye".equalsIgnoreCase(msg)) {
                     response = "Have a good day!";
-                    out.write(response.getBytes());
+                    out.write((response + "\r\n").getBytes());
                     out.flush();
                     client.close();
                     return;
                 } else {
                     response = "Did you say '" + msg + "'?";
-                    out.write(response.getBytes());
+                    out.write((response + "\r\n").getBytes());
                     out.flush();
                 }
             }

@@ -44,7 +44,7 @@ class SingleMessageSenderEncodingTest {
         String errorOutput = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
 
         Assertions.assertEquals(0, exitCode, errorOutput);
-        Assertions.assertEquals("D09FD180D0B8D0B2D0B5D182", output);
+        Assertions.assertEquals("D09FD180D0B8D0B2D0B5D1820D0A", output);
     }
 
     private static String javaExecutable() {
