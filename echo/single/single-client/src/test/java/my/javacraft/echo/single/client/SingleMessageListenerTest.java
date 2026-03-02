@@ -99,6 +99,50 @@ class SingleMessageListenerTest {
         Assertions.assertNull(result);
     }
 
+    @Test
+    void testNewResponseHandlesLargeMessage() throws Exception {
+        SocketChannel client = SocketChannel.open(
+                new InetSocketAddress("localhost", serverSocket.getLocalPort()));
+        Socket server = serverSocket.accept();
+
+        // Send a message close to BUFFER_SIZE (2048)
+        byte[] largePayload = new byte[2000];
+        java.util.Arrays.fill(largePayload, (byte) 'A');
+        server.getOutputStream().write(largePayload);
+        server.getOutputStream().flush();
+        Thread.sleep(100);
+
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+        String result = listener.newResponse(client);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(2000, result.length());
+
+        client.close();
+        server.close();
+    }
+
+    @Test
+    void testNewResponseReturnsEmptyStringForBlankMessage() throws Exception {
+        SocketChannel client = SocketChannel.open(
+                new InetSocketAddress("localhost", serverSocket.getLocalPort()));
+        Socket server = serverSocket.accept();
+
+        // Send whitespace-only message — should be trimmed to ""
+        server.getOutputStream().write("   \n  ".getBytes());
+        server.getOutputStream().flush();
+        Thread.sleep(50);
+
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+        String result = listener.newResponse(client);
+
+        // newResponse trims, so whitespace becomes empty string
+        Assertions.assertEquals("", result);
+
+        client.close();
+        server.close();
+    }
+
     // ── run() integration tests ──────────────────────────────────────
 
     @Test
@@ -125,6 +169,85 @@ class SingleMessageListenerTest {
             sendExec.shutdownNow();
 
             serverSide.close();
+        } finally {
+            mgr.closeSocket();
+            listenerExec.shutdownNow();
+        }
+    }
+
+    @Test
+    void testRunDoesNotQueueNullResponse() throws Exception {
+        SingleNetworkManager mgr = new SingleNetworkManager();
+        SingleMessageSender sender = new SingleMessageSender();
+        mgr.setSingleMessageSender(sender);
+
+        SingleMessageListener listener = new SingleMessageListener(mgr);
+        ExecutorService listenerExec = Executors.newSingleThreadExecutor();
+        try {
+            listenerExec.execute(listener);
+
+            mgr.openSocket("localhost", serverSocket.getLocalPort());
+            Socket serverSide = serverSocket.accept();
+
+            // Wait for OP_CONNECT
+            Thread.sleep(300);
+
+            // Send a message, then close the server side to cause EOF on next read
+            sender.send("ping");
+            Thread.sleep(100);
+            byte[] buf = new byte[256];
+            int len = serverSide.getInputStream().read(buf);
+            Assertions.assertEquals("ping", new String(buf, 0, len));
+
+            serverSide.getOutputStream().write("pong".getBytes());
+            serverSide.getOutputStream().flush();
+            serverSide.close(); // causes EOF after "pong" is read
+            Thread.sleep(500);
+
+            // "pong" should be queued
+            String queued = mgr.getMessage();
+            Assertions.assertEquals("pong", queued);
+
+            // The null from EOF should NOT be queued → queue should be empty
+            String afterEof = mgr.getMessage();
+            Assertions.assertNull(afterEof);
+        } finally {
+            mgr.closeSocket();
+            listenerExec.shutdownNow();
+        }
+    }
+
+    @Test
+    void testRunClosesSocketAndResetsKeyOnConnectionFailure() throws Exception {
+        // Get a free port with nothing listening on it
+        int deadPort;
+        try (ServerSocket temp = new ServerSocket(0)) {
+            deadPort = temp.getLocalPort();
+        }
+
+        SingleNetworkManager mgr = new SingleNetworkManager();
+        SingleMessageSender sender = new SingleMessageSender();
+        mgr.setSingleMessageSender(sender);
+
+        SingleMessageListener listener = new SingleMessageListener(mgr);
+        ExecutorService listenerExec = Executors.newSingleThreadExecutor();
+        try {
+            listenerExec.execute(listener);
+
+            // Connect to dead port → finishConnect() throws ConnectException (IOException)
+            mgr.openSocket("localhost", deadPort);
+            Thread.sleep(500);
+
+            // After IOException catch, setKey(null) is called → send should block
+            ExecutorService sendExec = Executors.newSingleThreadExecutor();
+            try {
+                Future<?> future = sendExec.submit(() -> sender.send("after-error"));
+                Thread.sleep(200);
+                Assertions.assertFalse(future.isDone(),
+                        "send() should block because key was reset to null after connection failure");
+            } finally {
+                sendExec.shutdownNow();
+            }
         } finally {
             mgr.closeSocket();
             listenerExec.shutdownNow();
@@ -172,6 +295,11 @@ class SingleMessageListenerTest {
             mgr.closeSocket();
             listenerExec.shutdownNow();
         }
+    }
+
+    @Test
+    void testBufferSizeConstant() {
+        Assertions.assertEquals(2048, SingleMessageListener.BUFFER_SIZE);
     }
 
     @Test

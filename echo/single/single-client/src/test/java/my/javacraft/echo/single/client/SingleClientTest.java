@@ -154,4 +154,85 @@ class SingleClientTest {
         Assertions.assertDoesNotThrow(client::run);
     }
 
+    @Test
+    void testReadMessageReturnsNullWhenNoMessage() throws IOException {
+        SingleClient client = new SingleClient("localhost", PORT);
+        try {
+            client.connectToServer();
+            // No messages sent → queue is empty → returns null after poll timeout
+            String msg = client.readMessage();
+            Assertions.assertNull(msg);
+        } finally {
+            client.close();
+        }
+    }
+
+    @Test
+    void testMultipleRoundTrips() throws IOException, InterruptedException {
+        SingleClient client = new SingleClient("localhost", PORT);
+        try {
+            client.connectToServer();
+            Thread.sleep(200);
+
+            client.sendMessage("first");
+            Thread.sleep(200);
+            String r1 = client.readMessage();
+            Assertions.assertEquals("Did you say 'first'?", r1);
+
+            client.sendMessage("second");
+            Thread.sleep(200);
+            String r2 = client.readMessage();
+            Assertions.assertEquals("Did you say 'second'?", r2);
+        } finally {
+            client.close();
+        }
+    }
+
+    @Test
+    void testCloseIsIdempotent() throws IOException {
+        SingleClient client = new SingleClient("localhost", PORT);
+        client.connectToServer();
+
+        // Calling close() twice should not throw
+        Assertions.assertDoesNotThrow(() -> {
+            client.close();
+            client.close();
+        });
+    }
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunWithMultipleMessages() {
+        // Two messages then EOF — exercises the run() while loop multiple iterations
+        System.setIn(new ByteArrayInputStream("first\nsecond\n".getBytes()));
+        SingleClient client = new SingleClient("localhost", PORT);
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    void testCloseWithoutConnect() {
+        // Client created but never connected — close should not throw
+        SingleClient client = new SingleClient("localhost", PORT);
+        Assertions.assertDoesNotThrow(client::close);
+    }
+
+    @Test
+    void testSendAndReadMultipleMessagesSameClient() throws IOException, InterruptedException {
+        SingleClient client = new SingleClient("localhost", PORT);
+        try {
+            client.connectToServer();
+            Thread.sleep(200);
+
+            // Send 3 messages and verify all 3 responses
+            for (int i = 1; i <= 3; i++) {
+                client.sendMessage("msg" + i);
+                Thread.sleep(200);
+                String response = client.readMessage();
+                Assertions.assertEquals("Did you say 'msg" + i + "'?", response);
+            }
+        } finally {
+            client.close();
+        }
+    }
+
 }

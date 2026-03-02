@@ -116,6 +116,42 @@ class SingleMessageSenderTest {
     }
 
     @Test
+    void testSendEmptyString() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        // Send empty string — ByteBuffer.wrap("".getBytes()) has 0 remaining
+        // write loop body should not execute; interestOps should still reset
+        sender.send("");
+
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
+    void testSendLargeMessage() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        // Send a large message — exercises the write loop's hasRemaining() check
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            sb.append("X");
+        }
+        String largeMessage = sb.toString();
+        sender.send(largeMessage);
+
+        InputStream in = acceptedSocket.getInputStream();
+        byte[] buf = new byte[8192];
+        int totalLen = 0;
+        while (totalLen < largeMessage.length()) {
+            int len = in.read(buf, totalLen, buf.length - totalLen);
+            if (len == -1) break;
+            totalLen += len;
+        }
+        Assertions.assertEquals(largeMessage, new String(buf, 0, totalLen));
+    }
+
+    @Test
     void testSendBlocksUntilKeyIsSet() throws Exception {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
@@ -140,6 +176,31 @@ class SingleMessageSenderTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void testSendThrowsOnCancelledKey() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key);
+
+        // Close the channel → key becomes cancelled
+        clientChannel.close();
+
+        // send() calls key.interestOps() which throws CancelledKeyException (uncaught)
+        Assertions.assertThrows(java.nio.channels.CancelledKeyException.class,
+                () -> sender.send("after close"));
+    }
+
+    @Test
+    void testSendHandlesInterruptDuringWait() {
+        // key is null by default → send() will enter wait()
+        // With interrupt flag set, wait() immediately throws InterruptedException
+        Thread.currentThread().interrupt();
+
+        Assertions.assertDoesNotThrow(() -> sender.send("interrupted"));
+
+        // send() catches InterruptedException and re-sets the interrupt flag
+        Assertions.assertTrue(Thread.interrupted());
     }
 
     @Test
