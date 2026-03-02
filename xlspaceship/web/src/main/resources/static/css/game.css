@@ -1,0 +1,53 @@
+.empty {
+    background: white;
+    border: .25vmin solid black;
+    height: 30px;
+    width: 30px;
+}
+
+.ship {
+    background: green;
+    border: .25vmin solid black;
+    height: 30px;
+    width: 30px;
+}
+
+.shot {
+    background: white;
+    border: .25vmin solid black;
+    position: relative;
+    height: 30px;
+    width: 30px;
+    &:after {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 0;
+        color: black;
+        content: "\2B24"; /* Unicode Character -> Black Large Circle -> U+2B24 */
+        font-size: 15px;
+        line-height: 30px;
+        position: absolute;
+        text-align: center;
+    }
+}
+
+.sunk {
+    background: white;
+    border: .25vmin solid black;
+    position: relative;
+    height: 30px;
+    width: 30px;
+    &:after {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 0;
+        color: red;
+        content: "\274c"; /* Unicode Character -> Cross Mark -> U+274C */
+        font-size: 30px;
+        line-height: 35px;
+        position: absolute;
+        text-align: center;
+    }
+}
