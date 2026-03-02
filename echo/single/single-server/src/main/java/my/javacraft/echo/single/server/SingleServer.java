@@ -10,6 +10,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,11 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleServer implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
+    private static final int MAX_EMPTY_WRITES = 1024;
 
     private final AtomicInteger connections = new AtomicInteger(0);
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     private final int port;
     private final ByteBuffer buffer;
+    private volatile Selector selectorRef;
 
     public SingleServer(int port) {
         this.port = port;
@@ -41,6 +45,7 @@ public class SingleServer implements Runnable {
             log.debug("Starting server...");
 
             selector = Selector.open();
+            selectorRef = selector;
             server = ServerSocketChannel.open();
             server.socket().bind(new InetSocketAddress(port));
             server.configureBlocking(false);
@@ -52,6 +57,7 @@ public class SingleServer implements Runnable {
         } catch (Exception e) {
             log.error("Server failure", e);
         } finally {
+            selectorRef = null;
             try {
                 if (selector != null) {
                     selector.close();
@@ -66,8 +72,16 @@ public class SingleServer implements Runnable {
         }
     }
 
+    public void stop() {
+        running.set(false);
+        Selector selector = selectorRef;
+        if (selector != null) {
+            selector.wakeup();
+        }
+    }
+
     private void loop(Selector selector, ServerSocketChannel server) throws IOException {
-        while (true) {
+        while (running.get() && !Thread.currentThread().isInterrupted()) {
             int num = selector.select();
             if (num == 0) {
                 continue;
@@ -78,12 +92,17 @@ public class SingleServer implements Runnable {
                 SelectionKey key = keys.next();
                 keys.remove();
 
-                if (key.isAcceptable()) {
-                    acceptOp(selector, server);
-                } else if (key.isReadable()) {
-                    readOp(key);
-                } else if (key.isWritable()) {
-                    writeOp(key);
+                try {
+                    if (key.isAcceptable()) {
+                        acceptOp(selector, server);
+                    } else if (key.isReadable()) {
+                        readOp(key);
+                    } else if (key.isWritable()) {
+                        writeOp(key);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to process selected key", e);
+                    closeKey(key);
                 }
             }
         }
@@ -91,6 +110,9 @@ public class SingleServer implements Runnable {
 
     private void acceptOp(Selector selector, ServerSocketChannel server) throws IOException {
         SocketChannel client = server.accept();
+        if (client == null) {
+            return;
+        }
 
         log.info("New socket has been accepted!");
         connections.incrementAndGet();
@@ -104,8 +126,11 @@ public class SingleServer implements Runnable {
         SocketChannel channel = (SocketChannel) key.channel();
 
         String result = read(channel);
+        if (result == null) {
+            return;
+        }
 
-        if (result != null && !result.isEmpty()) {
+        if (!result.isEmpty()) {
             key.attach(result);
             key.interestOps(SelectionKey.OP_WRITE);
         } else {
@@ -114,28 +139,42 @@ public class SingleServer implements Runnable {
     }
 
     String read(SocketChannel channel) {
-        buffer.clear();
+        StringBuilder result = null;
+        boolean nonBlocking = !channel.isBlocking();
 
         try {
-            int numRead = channel.read(buffer);
+            while (true) {
+                buffer.clear();
+                int numRead = channel.read(buffer);
+                if (numRead == 0) {
+                    if (result == null) {
+                        return null;
+                    }
+                    return result.toString();
+                }
+                if (numRead == -1) {
+                    log.debug("Connection closed by: {}", channel.getRemoteAddress());
+                    decrementConnections();
+                    channel.close();
+                    return "";
+                }
 
-            if (numRead == -1) {
-                log.debug("Connection closed by: {}", channel.getRemoteAddress());
-                connections.decrementAndGet();
-                channel.close();
-                return "";
+                buffer.flip();
+                byte[] data = new byte[numRead];
+                buffer.get(data);
+
+                if (result == null) {
+                    result = new StringBuilder();
+                }
+                result.append(new String(data, StandardCharsets.UTF_8));
+
+                if (!nonBlocking) {
+                    return result.toString();
+                }
             }
-
-            buffer.flip();
-            byte[] data = new byte[numRead];
-            buffer.get(data);
-
-            String result = new String(data, StandardCharsets.UTF_8);
-            log.debug("Got [{}] from [{}]", result, channel.getRemoteAddress());
-            return result;
         } catch (IOException e) {
             log.error("Unable to read from channel", e);
-            connections.decrementAndGet();
+            decrementConnections();
             try {
                 channel.close();
             } catch (IOException e1) {
@@ -147,13 +186,14 @@ public class SingleServer implements Runnable {
         return "";
     }
 
-    private void writeOp(SelectionKey key) throws IOException {
+    private void writeOp(SelectionKey key) {
         String request = (String) key.attachment();
         if (request == null || request.isEmpty()) {
+            key.interestOps(SelectionKey.OP_READ);
             return;
         }
 
-        request = request.replace("\r\n", "");
+        request = request.replace("\r", "").replace("\n", "");
 
         String response;
         boolean close = false;
@@ -170,34 +210,45 @@ public class SingleServer implements Runnable {
 
         if (close) {
             if (write((SocketChannel) key.channel(), response)) {
-                connections.decrementAndGet();
+                decrementConnections();
             }
-            key.channel().close();
-            key.cancel();
+            closeKey(key);
             return;
         }
 
         if (write((SocketChannel) key.channel(), response)) {
+            key.attach(null);
             key.interestOps(SelectionKey.OP_READ);
         } else {
-            key.channel().close();
-            key.cancel();
+            closeKey(key);
         }
     }
 
     boolean write(SocketChannel channel, String content) {
         try {
-            ByteBuffer writeBuffer = ByteBuffer.wrap(content.getBytes());
+            ByteBuffer writeBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
+            int emptyWrites = 0;
             while (writeBuffer.hasRemaining()) {
-                channel.write(writeBuffer);
+                int written = channel.write(writeBuffer);
+                if (written == 0) {
+                    emptyWrites++;
+                    if (emptyWrites >= MAX_EMPTY_WRITES) {
+                        log.warn("Write made no progress for {} attempts; closing channel", MAX_EMPTY_WRITES);
+                        decrementConnections();
+                        return false;
+                    }
+                    Thread.onSpinWait();
+                } else {
+                    emptyWrites = 0;
+                }
             }
             return true;
         } catch (ClosedChannelException cce) {
-            connections.decrementAndGet();
+            decrementConnections();
             log.info("Client terminated connection.");
             return false;
         } catch (IOException e) {
-            connections.decrementAndGet();
+            decrementConnections();
             log.error("Unable to write content", e);
             try {
                 channel.close();
@@ -205,6 +256,20 @@ public class SingleServer implements Runnable {
                 // dead channel, nothing to do
             }
             return false;
+        }
+    }
+
+    private void decrementConnections() {
+        connections.updateAndGet(value -> value > 0 ? value - 1 : 0);
+    }
+
+    private void closeKey(SelectionKey key) {
+        try {
+            key.channel().close();
+        } catch (IOException closeError) {
+            log.debug("Error closing channel", closeError);
+        } finally {
+            key.cancel();
         }
     }
 

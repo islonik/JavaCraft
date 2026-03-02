@@ -68,7 +68,8 @@ public class SingleMessageListener implements Runnable {
                 singleMessageSender.setKey(null);
             } catch (Exception err) {
                 // Handles ClosedSelectorException, CancelledKeyException, etc.
-                log.error("Listener loop terminated", err);
+                // it's a normal BAU closing process, so the log level should be debug
+                log.debug("Listener loop terminated", err);
                 singleNetworkManager.closeSocket();
                 singleMessageSender.setKey(null);
                 break;

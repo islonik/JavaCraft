@@ -7,19 +7,23 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import java.time.Duration;
+import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import static org.mockito.ArgumentMatchers.any;
@@ -136,21 +140,11 @@ class SingleServerTest {
     @Test
     void testReadReturnsContent() throws Exception {
         SingleServer server = new SingleServer(0);
-        try (ServerSocket ss = new ServerSocket(0)) {
-            SocketChannel client = SocketChannel.open(
-                    new InetSocketAddress("localhost", ss.getLocalPort()));
-            Socket serverSide = ss.accept();
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {5}, new String[] {"hello"});
 
-            serverSide.getOutputStream().write("hello".getBytes());
-            serverSide.getOutputStream().flush();
-            Thread.sleep(50);
+        String result = server.read(channel);
 
-            String result = server.read(client);
-            Assertions.assertEquals("hello", result);
-
-            client.close();
-            serverSide.close();
-        }
+        Assertions.assertEquals("hello", result);
     }
 
     @Test
@@ -225,6 +219,231 @@ class SingleServerTest {
         Assertions.assertEquals(2048, SingleServer.BUFFER_SIZE);
     }
 
+    @Test
+    void testReadReturnsNullWhenNoDataAvailable() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+
+        String result = server.read(channel);
+
+        Assertions.assertNull(result, "Non-blocking read with 0 bytes should not be treated as disconnect");
+    }
+
+    @Test
+    void testReadOpAggregatesChunksAvailableInSameReadCycle() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new int[] {3, 4, 0},
+                new String[] {"hel", "lo\r\n"});
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+
+        readOp.invoke(server, key);
+        Assertions.assertEquals(SelectionKey.OP_WRITE, key.interestOps(),
+                "Complete payload should switch key to write mode");
+        Assertions.assertEquals("hello\r\n", key.attachment());
+    }
+
+    @Test
+    void testAcceptOpIgnoresNullClient() throws Exception {
+        SingleServer server = new SingleServer(0);
+        Selector selector = Selector.open();
+        try {
+            NullAcceptServerSocketChannel serverChannel = new NullAcceptServerSocketChannel();
+
+            Method acceptOp = SingleServer.class.getDeclaredMethod(
+                    "acceptOp", Selector.class, ServerSocketChannel.class);
+            acceptOp.setAccessible(true);
+            acceptOp.invoke(server, selector, serverChannel);
+
+            Assertions.assertEquals(0, getConnections(server));
+        } finally {
+            selector.close();
+        }
+    }
+
+    @Test
+    void testWriteReturnsFalseWhenChannelMakesNoProgress() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
+
+        boolean result = Assertions.assertTimeoutPreemptively(
+                Duration.ofMillis(300),
+                () -> server.write(channel, "hello"));
+
+        Assertions.assertFalse(result, "Write should fail if the channel never accepts bytes");
+    }
+
+    @Test
+    void testStopWithNullSelectorRef() {
+        SingleServer server = new SingleServer(0);
+        Assertions.assertDoesNotThrow(server::stop);
+    }
+
+    @Test
+    void testStopWakesUpSelectorWhenPresent() throws Exception {
+        SingleServer server = new SingleServer(0);
+        WakeupSelector selector = new WakeupSelector();
+
+        var selectorRef = SingleServer.class.getDeclaredField("selectorRef");
+        selectorRef.setAccessible(true);
+        selectorRef.set(server, selector);
+
+        server.stop();
+
+        Assertions.assertTrue(selector.wokenUp);
+    }
+
+    @Test
+    void testReadOpKeepsInterestOpsWhenReadReturnsNull() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+        Assertions.assertTrue(key.isValid());
+    }
+
+    @Test
+    void testWriteOpWithNullAttachmentSwitchesBackToRead() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach(null);
+
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, key);
+
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
+    void testWriteOpWithEmptyAttachmentSwitchesBackToRead() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach("");
+
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, key);
+
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
+    void testCloseKeyHandlesChannelCloseIOException() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ThrowOnCloseSocketChannel channel = new ThrowOnCloseSocketChannel();
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+
+        Method closeKey = SingleServer.class.getDeclaredMethod("closeKey", SelectionKey.class);
+        closeKey.setAccessible(true);
+        closeKey.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid());
+    }
+
+    @Test
+    void testReadOpCancelsKeyOnEof() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {-1}, new String[] {""});
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid());
+    }
+
+    @Test
+    void testWriteOpByeClosesKeyAndDecrementsConnections() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach("bye");
+
+        setConnections(server, 1);
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid());
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
+    void testWriteOpClosesKeyOnWriteFailure() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach("hello");
+
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid());
+    }
+
+    @Test
+    void testLoopHandlesSelectZeroAndStopsCleanly() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {0}, Collections.emptySet());
+        NullAcceptServerSocketChannel serverChannel = new NullAcceptServerSocketChannel();
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, serverChannel);
+
+        Assertions.assertTrue(selector.selectCalls >= 1);
+    }
+
+    @Test
+    void testLoopProcessesReadableKey() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {4, 0}, new String[] {"ping", ""});
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+        Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
+        selectedKeys.add(key);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, new NullAcceptServerSocketChannel());
+
+        Assertions.assertEquals(SelectionKey.OP_WRITE, key.interestOps());
+        Assertions.assertEquals("ping", key.attachment());
+    }
+
+    @Test
+    void testLoopCatchesProcessingExceptionAndClosesKey() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {1, 0}, new String[] {"x", ""});
+        channel.configureBlocking(false);
+        ThrowingInterestOpsKey key = new ThrowingInterestOpsKey(channel, SelectionKey.OP_READ);
+        Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
+        selectedKeys.add(key);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, new NullAcceptServerSocketChannel());
+
+        Assertions.assertFalse(key.isValid());
+    }
+
     // ── run() error handling ─────────────────────────────────────────
 
     @Test
@@ -279,49 +498,29 @@ class SingleServerTest {
     @Test
     void testReadMultipleCallsReuseBuffer() throws Exception {
         SingleServer server = new SingleServer(0);
-        try (ServerSocket ss = new ServerSocket(0)) {
-            SocketChannel client = SocketChannel.open(
-                    new InetSocketAddress("localhost", ss.getLocalPort()));
-            Socket serverSide = ss.accept();
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new int[] {5, 6},
+                new String[] {"first", "second"});
 
-            // First read
-            serverSide.getOutputStream().write("first".getBytes());
-            serverSide.getOutputStream().flush();
-            Thread.sleep(50);
-            String result1 = server.read(client);
-            Assertions.assertEquals("first", result1);
+        String result1 = server.read(channel);
+        Assertions.assertEquals("first", result1);
 
-            // Second read — verify buffer.clear() properly resets
-            serverSide.getOutputStream().write("second".getBytes());
-            serverSide.getOutputStream().flush();
-            Thread.sleep(50);
-            String result2 = server.read(client);
-            Assertions.assertEquals("second", result2);
-
-            client.close();
-            serverSide.close();
-        }
+        String result2 = server.read(channel);
+        Assertions.assertEquals("second", result2);
     }
 
     @Test
     void testReadHandlesUtf8Content() throws Exception {
         SingleServer server = new SingleServer(0);
-        try (ServerSocket ss = new ServerSocket(0)) {
-            SocketChannel client = SocketChannel.open(
-                    new InetSocketAddress("localhost", ss.getLocalPort()));
-            Socket serverSide = ss.accept();
+        String utf8Message = "Привет мир";
+        int byteCount = utf8Message.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new int[] {byteCount},
+                new String[] {utf8Message});
 
-            String utf8Message = "Привет мир";
-            serverSide.getOutputStream().write(utf8Message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            serverSide.getOutputStream().flush();
-            Thread.sleep(50);
+        String result = server.read(channel);
 
-            String result = server.read(client);
-            Assertions.assertEquals(utf8Message, result);
-
-            client.close();
-            serverSide.close();
-        }
+        Assertions.assertEquals(utf8Message, result);
     }
 
     // ── Mockito-based tests for defensive catch blocks ────────────────
@@ -408,6 +607,418 @@ class SingleServerTest {
             Assertions.assertDoesNotThrow(server::run);
 
             verify(badSelector).close();
+        }
+    }
+
+    private static int getConnections(SingleServer server) throws Exception {
+        var field = SingleServer.class.getDeclaredField("connections");
+        field.setAccessible(true);
+        return ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).get();
+    }
+
+    private static void setConnections(SingleServer server, int value) throws Exception {
+        var field = SingleServer.class.getDeclaredField("connections");
+        field.setAccessible(true);
+        ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).set(value);
+    }
+
+    private static class FakeSelectionKey extends SelectionKey {
+        private final SocketChannel channel;
+        private int interestOps;
+        private boolean valid = true;
+
+        private FakeSelectionKey(SocketChannel channel, int interestOps) {
+            this.channel = channel;
+            this.interestOps = interestOps;
+        }
+
+        @Override
+        public java.nio.channels.SelectableChannel channel() {
+            return channel;
+        }
+
+        @Override
+        public Selector selector() {
+            return null;
+        }
+
+        @Override
+        public boolean isValid() {
+            return valid;
+        }
+
+        @Override
+        public void cancel() {
+            valid = false;
+        }
+
+        @Override
+        public int interestOps() {
+            return interestOps;
+        }
+
+        @Override
+        public SelectionKey interestOps(int ops) {
+            interestOps = ops;
+            return this;
+        }
+
+        @Override
+        public int readyOps() {
+            return interestOps;
+        }
+    }
+
+    private static final class ThrowingInterestOpsKey extends FakeSelectionKey {
+        private ThrowingInterestOpsKey(SocketChannel channel, int interestOps) {
+            super(channel, interestOps);
+        }
+
+        @Override
+        public SelectionKey interestOps(int ops) {
+            throw new RuntimeException("cannot update ops");
+        }
+    }
+
+    private static final class NullAcceptServerSocketChannel extends ServerSocketChannel {
+        private NullAcceptServerSocketChannel() {
+            super(SelectorProvider.provider());
+        }
+
+        @Override
+        public SocketChannel accept() {
+            return null;
+        }
+
+        @Override
+        public ServerSocket socket() {
+            return null;
+        }
+
+        @Override
+        public ServerSocketChannel bind(SocketAddress local, int backlog) {
+            return this;
+        }
+
+        @Override
+        public <T> ServerSocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return null;
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() {
+            // no-op
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
+        }
+    }
+
+    private static final class WakeupSelector extends Selector {
+        private boolean wokenUp;
+
+        @Override
+        public boolean isOpen() {
+            return true;
+        }
+
+        @Override
+        public SelectorProvider provider() {
+            return SelectorProvider.provider();
+        }
+
+        @Override
+        public Set<SelectionKey> keys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public Set<SelectionKey> selectedKeys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public int selectNow() {
+            return 0;
+        }
+
+        @Override
+        public int select(long timeout) {
+            return 0;
+        }
+
+        @Override
+        public int select() {
+            return 0;
+        }
+
+        @Override
+        public Selector wakeup() {
+            wokenUp = true;
+            return this;
+        }
+
+        @Override
+        public void close() {
+            // no-op
+        }
+    }
+
+    private static final class ScriptedSelector extends Selector {
+        private final SingleServer server;
+        private final int[] selectResults;
+        private final Set<SelectionKey> selectedKeys;
+        private int cursor;
+        private int selectCalls;
+
+        private ScriptedSelector(SingleServer server, int[] selectResults, Set<SelectionKey> selectedKeys) {
+            this.server = server;
+            this.selectResults = Arrays.copyOf(selectResults, selectResults.length);
+            this.selectedKeys = selectedKeys;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return true;
+        }
+
+        @Override
+        public SelectorProvider provider() {
+            return SelectorProvider.provider();
+        }
+
+        @Override
+        public Set<SelectionKey> keys() {
+            return selectedKeys;
+        }
+
+        @Override
+        public Set<SelectionKey> selectedKeys() {
+            return selectedKeys;
+        }
+
+        @Override
+        public int selectNow() {
+            return 0;
+        }
+
+        @Override
+        public int select(long timeout) {
+            return select();
+        }
+
+        @Override
+        public int select() {
+            selectCalls++;
+            if (cursor < selectResults.length) {
+                int result = selectResults[cursor++];
+                server.stop();
+                return result;
+            }
+            return 0;
+        }
+
+        @Override
+        public Selector wakeup() {
+            return this;
+        }
+
+        @Override
+        public void close() {
+            // no-op
+        }
+    }
+
+    private static class ScriptedSocketChannel extends SocketChannel {
+        private static final int MAX_ZERO_WRITE_SPINS = 2048;
+
+        private final int[] reads;
+        private final byte[][] payloads;
+        private int readIndex;
+        private boolean alwaysZeroWrites;
+        private boolean open = true;
+
+        private ScriptedSocketChannel(int[] reads, String[] payloads) {
+            super(SelectorProvider.provider());
+            this.reads = Arrays.copyOf(reads, reads.length);
+            this.payloads = new byte[payloads.length][];
+            for (int i = 0; i < payloads.length; i++) {
+                this.payloads[i] = payloads[i].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
+
+        static ScriptedSocketChannel alwaysZeroWrites() {
+            ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
+            channel.alwaysZeroWrites = true;
+            return channel;
+        }
+
+        @Override
+        public int read(ByteBuffer dst) throws IOException {
+            if (!open) {
+                throw new ClosedChannelException();
+            }
+            if (readIndex >= reads.length) {
+                return 0;
+            }
+
+            int next = reads[readIndex];
+            if (next <= 0) {
+                readIndex++;
+                return next;
+            }
+
+            byte[] source = payloads[readIndex];
+            int toCopy = Math.min(next, Math.min(source.length, dst.remaining()));
+            dst.put(source, 0, toCopy);
+            readIndex++;
+            return toCopy;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
+            long total = 0;
+            for (int i = offset; i < offset + length; i++) {
+                int read = read(dsts[i]);
+                if (read <= 0) {
+                    return total == 0 ? read : total;
+                }
+                total += read;
+            }
+            return total;
+        }
+
+        @Override
+        public int write(ByteBuffer src) {
+            if (alwaysZeroWrites) {
+                return 0;
+            }
+            int len = src.remaining();
+            src.position(src.limit());
+            return len;
+        }
+
+        @Override
+        public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
+            long total = 0;
+            int zeroSpins = 0;
+            for (int i = offset; i < offset + length; i++) {
+                while (srcs[i].hasRemaining()) {
+                    int written = write(srcs[i]);
+                    if (written == 0) {
+                        zeroSpins++;
+                        if (zeroSpins >= MAX_ZERO_WRITE_SPINS) {
+                            return total;
+                        }
+                        continue;
+                    }
+                    total += written;
+                }
+            }
+            return total;
+        }
+
+        @Override
+        public SocketChannel bind(SocketAddress local) {
+            return this;
+        }
+
+        @Override
+        public <T> SocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownInput() {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownOutput() {
+            return this;
+        }
+
+        @Override
+        public Socket socket() {
+            return new Socket();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
+        }
+
+        @Override
+        public boolean isConnectionPending() {
+            return false;
+        }
+
+        @Override
+        public boolean connect(SocketAddress remote) {
+            return true;
+        }
+
+        @Override
+        public boolean finishConnect() {
+            return true;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 8077);
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws IOException {
+            open = false;
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
+        }
+    }
+
+    private static final class ThrowOnCloseSocketChannel extends ScriptedSocketChannel {
+        private ThrowOnCloseSocketChannel() {
+            super(new int[] {0}, new String[] {""});
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws IOException {
+            throw new IOException("close failed");
         }
     }
 
