@@ -61,6 +61,7 @@
         <module>soap2rest</module>
         <module>tic-tac-toe</module>
         <module>translation</module>
+        <module>xlspaceship</module>
         <module>xsd2model</module>
     </modules>
 

@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.games</groupId>
+        <groupId>my.javacraft</groupId>
         <artifactId>xlspaceship</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>impl</artifactId>
+    <artifactId>xlspaceship-impl</artifactId>
+    <name>xlspaceship-impl</name>
     <packaging>jar</packaging>
 
 
