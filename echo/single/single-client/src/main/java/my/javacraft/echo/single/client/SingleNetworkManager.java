@@ -34,14 +34,28 @@ public class SingleNetworkManager {
         if (client == null) {
             synchronized (this) {
                 if (client == null) {
-                    client = SocketChannel.open();
-                    // nonblocking I/O
-                    client.configureBlocking(false);
-                    client.connect(new InetSocketAddress(serverHost, serverPort));
-                    selector = Selector.open();
-                    client.register(selector, SelectionKey.OP_CONNECT);
+                    SocketChannel openedClient = null;
+                    Selector openedSelector = null;
+                    try {
+                        // Finish the TCP handshake before publishing the connection to callers.
+                        openedClient = SocketChannel.open();
+                        openedClient.connect(new InetSocketAddress(serverHost, serverPort));
+                        openedClient.configureBlocking(false);
 
-                    notifyAll();
+                        openedSelector = Selector.open();
+                        SelectionKey key = openedClient.register(openedSelector, SelectionKey.OP_READ);
+
+                        client = openedClient;
+                        selector = openedSelector;
+                        publishReadyKey(key, openedSelector);
+                        notifyAll();
+                    } catch (IOException e) {
+                        IOException closeFailure = closeResources(openedSelector, openedClient);
+                        if (closeFailure != null) {
+                            e.addSuppressed(closeFailure);
+                        }
+                        throw e;
+                    }
                 }
             }
         }
@@ -108,20 +122,76 @@ public class SingleNetworkManager {
     }
 
     public void closeSocket() {
-        try {
-            if (client != null) {
-                synchronized (this) {
-                    if (client != null) {
-                        selector.close();
-                        client.close();
-                        client = null;
-                        selector = null;
+        if (client != null) {
+            synchronized (this) {
+                if (client != null) {
+                    Selector selectorToClose = selector;
+                    SocketChannel clientToClose = client;
+
+                    client = null;
+                    selector = null;
+                    publishReadyKey(null, null);
+
+                    IOException closeFailure = closeResources(selectorToClose, clientToClose);
+                    if (closeFailure != null) {
+                        log.error(closeFailure.getMessage(), closeFailure);
                     }
                 }
             }
-        } catch (IOException ioe) {
-            log.error(ioe.getMessage(), ioe);
         }
+    }
+
+    /**
+     * Keeps sender setup in one place so connection creation and teardown
+     * always publish the same state to waiting senders.
+     */
+    private void publishReadyKey(SelectionKey key, Selector selector) {
+        if (singleMessageSender != null) {
+            singleMessageSender.setKey(key, selector);
+        }
+    }
+
+    /**
+     * Attempts to close every resource even when one close operation fails, so
+     * cleanup cannot leak the remaining handles because of the first exception.
+     */
+    private IOException closeResources(Selector selector, SocketChannel channel) {
+        IOException failure = null;
+        failure = closeSelector(selector, failure);
+        failure = closeChannel(channel, failure);
+        return failure;
+    }
+
+    private IOException closeSelector(Selector selector, IOException failure) {
+        if (selector == null) {
+            return failure;
+        }
+        try {
+            selector.close();
+        } catch (IOException e) {
+            return appendFailure(failure, e);
+        }
+        return failure;
+    }
+
+    private IOException closeChannel(SocketChannel channel, IOException failure) {
+        if (channel == null) {
+            return failure;
+        }
+        try {
+            channel.close();
+        } catch (IOException e) {
+            return appendFailure(failure, e);
+        }
+        return failure;
+    }
+
+    private IOException appendFailure(IOException failure, IOException nextFailure) {
+        if (failure == null) {
+            return nextFailure;
+        }
+        failure.addSuppressed(nextFailure);
+        return failure;
     }
 
 }

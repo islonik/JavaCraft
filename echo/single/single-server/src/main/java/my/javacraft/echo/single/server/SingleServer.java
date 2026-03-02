@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -76,7 +77,7 @@ public class SingleServer implements Runnable {
         ServerSocketChannel server = null;
 
         try {
-            log.debug("Starting server...");
+            log.info("Starting server...");
 
             selector = Selector.open();
             selectorRef = selector;
@@ -85,7 +86,7 @@ public class SingleServer implements Runnable {
             server.configureBlocking(false);
             server.register(selector, SelectionKey.OP_ACCEPT);
 
-            log.debug("Server ready, now ready to accept connections");
+            log.info("Server ready, now ready to accept connections...");
             loop(selector, server);
 
         } catch (Exception e) {
@@ -119,7 +120,7 @@ public class SingleServer implements Runnable {
     }
 
     private void loop(Selector selector, ServerSocketChannel server) throws IOException {
-        while (running.get() && !Thread.currentThread().isInterrupted()) {
+        while (running.get() && isNotInterrupted()) {
             int num = selector.select();
             if (num == 0) {
                 continue;
@@ -144,6 +145,10 @@ public class SingleServer implements Runnable {
                 }
             }
         }
+    }
+
+    private boolean isNotInterrupted() {
+        return !Thread.currentThread().isInterrupted();
     }
 
     private void acceptOp(Selector selector, ServerSocketChannel server) throws IOException {
@@ -184,9 +189,9 @@ public class SingleServer implements Runnable {
     }
 
     /**
-     * Returns the next complete request frame for the channel. The returned
-     * value still includes the line delimiter so an empty client message remains
-     * distinguishable from EOF.
+     * Returns the next complete request frame for the channel.
+     * <p>
+     * The returned value still includes the line delimiter so an empty client message remains distinguishable from EOF.
      */
     String read(SocketChannel channel) {
         String pendingRequest = pollPendingRequest(channel);
@@ -196,7 +201,6 @@ public class SingleServer implements Runnable {
 
         StringBuilder requestBuffer = requestBuffers.computeIfAbsent(channel, ignored -> new StringBuilder());
         Deque<String> readyRequests = pendingRequests.computeIfAbsent(channel, ignored -> new ArrayDeque<>());
-        boolean nonBlocking = !channel.isBlocking();
 
         try {
             while (true) {
@@ -223,10 +227,6 @@ public class SingleServer implements Runnable {
                 String nextRequest = readyRequests.pollFirst();
                 if (nextRequest != null) {
                     return nextRequest;
-                }
-
-                if (!nonBlocking) {
-                    continue;
                 }
             }
         } catch (IOException e) {
@@ -385,11 +385,12 @@ public class SingleServer implements Runnable {
     }
 
     private void closeKey(SelectionKey key) {
+        SelectableChannel channel = key.channel();
         try {
-            if (key.channel() instanceof SocketChannel channel) {
-                clearChannelState(channel);
+            if (channel instanceof SocketChannel socketChannel) {
+                clearChannelState(socketChannel);
             }
-            key.channel().close();
+            channel.close();
         } catch (IOException closeError) {
             log.debug("Error closing channel", closeError);
         } finally {

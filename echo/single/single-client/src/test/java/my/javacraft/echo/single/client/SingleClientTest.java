@@ -102,6 +102,24 @@ class SingleClientTest {
     }
 
     @Test
+    void testConnectToServerThrowsWhenServerUnavailable() {
+        int deadPort;
+        try (ServerSocket temp = new ServerSocket(0)) {
+            deadPort = temp.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        SingleClient client = new SingleClient("localhost", deadPort);
+        try {
+            Assertions.assertThrows(IOException.class, client::connectToServer,
+                    "connectToServer() should fail fast when nothing is listening on the target port");
+        } finally {
+            client.close();
+        }
+    }
+
+    @Test
     void testSendAndReceiveEcho() throws IOException, InterruptedException {
         SingleClient client = new SingleClient("localhost", PORT);
         try {
@@ -267,20 +285,9 @@ class SingleClientTest {
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     void testRunOuterCatchException() {
-        // Covers run() outer catch(Exception) L79-80
-        // Use a dead port so connectToServer() fails
-        int deadPort;
-        try (ServerSocket temp = new ServerSocket(0)) {
-            deadPort = temp.getLocalPort();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         System.setIn(new ByteArrayInputStream("hello\n".getBytes()));
-        // The client connects to dead port — NIO connect is async, but
-        // the subsequent send() will eventually fail or the listener will
-        // detect the connection failure. We use a mock approach instead.
-        // Use reflection to inject a mock that throws on openSocket()
+        // Inject a network manager that fails during connectToServer() so
+        // run() exercises its outer catch(Exception) path.
         SingleClient client = new SingleClient("localhost", PORT);
         try {
             java.lang.reflect.Field mgrField = SingleClient.class.getDeclaredField("singleNetworkManager");

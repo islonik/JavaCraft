@@ -136,7 +136,7 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testNewResponseWaitsForCompleteFrameAcrossReads() throws Exception {
+    void testNewResponseWaitsForCompleteFrameAcrossReads() {
         ScriptedSocketChannel channel = new ScriptedSocketChannel(
                 new int[] {3, 0, 4, 0},
                 new String[] {"hel", "", "lo\r\n", ""});
@@ -149,7 +149,7 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testNewResponseSplitsMultipleFramesFromSingleRead() throws Exception {
+    void testNewResponseSplitsMultipleFramesFromSingleRead() {
         ScriptedSocketChannel channel = new ScriptedSocketChannel(
                 new int[] {15, 0},
                 new String[] {"first\r\nsecond\r\n", ""});
@@ -236,7 +236,7 @@ class SingleMessageListenerTest {
     }
 
     @Test
-    void testRunClosesSocketAndResetsKeyOnConnectionFailure() throws Exception {
+    void testOpenSocketThrowsBeforeListenerHandlesConnectionFailure() throws Exception {
         // Get a free port with nothing listening on it
         int deadPort;
         try (ServerSocket temp = new ServerSocket(0)) {
@@ -252,20 +252,8 @@ class SingleMessageListenerTest {
         try {
             listenerExec.execute(listener);
 
-            // Connect to dead port → finishConnect() throws ConnectException (IOException)
-            mgr.openSocket("localhost", deadPort);
-            Thread.sleep(500);
-
-            // After IOException catch, setKey(null, null) is called → send should block (with timeout)
-            ExecutorService sendExec = Executors.newSingleThreadExecutor();
-            try {
-                Future<?> future = sendExec.submit(() -> sender.send("after-error"));
-                Thread.sleep(200);
-                Assertions.assertFalse(future.isDone(),
-                        "send() should block because key was reset to null after connection failure");
-            } finally {
-                sendExec.shutdownNow();
-            }
+            Assertions.assertThrows(IOException.class, () -> mgr.openSocket("localhost", deadPort),
+                    "Connection failures should be surfaced by openSocket() before the listener loop starts");
         } finally {
             mgr.closeSocket();
             listenerExec.shutdownNow();

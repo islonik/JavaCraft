@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class SingleNetworkManagerTest {
 
@@ -130,6 +131,46 @@ class SingleNetworkManagerTest {
     }
 
     @Test
+    void testOpenSocketThrowsWhenServerUnavailable() {
+        int deadPort;
+        try (ServerSocket temp = new ServerSocket(0)) {
+            deadPort = temp.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Assertions.assertThrows(IOException.class, () -> manager.openSocket("localhost", deadPort),
+                "openSocket() should surface connection failures immediately");
+    }
+
+    @Test
+    void testOpenSocketCanRecoverAfterFailedConnect() throws IOException {
+        int deadPort;
+        try (ServerSocket temp = new ServerSocket(0)) {
+            deadPort = temp.getLocalPort();
+        }
+
+        Assertions.assertThrows(IOException.class, () -> manager.openSocket("localhost", deadPort));
+
+        try (ServerSocket server = new ServerSocket(0)) {
+            int livePort = server.getLocalPort();
+            acceptAsync(server);
+
+            manager.openSocket("localhost", livePort);
+
+            SocketChannel channel = manager.getSocketChannel();
+            Selector selector = manager.getSelector();
+
+            Assertions.assertNotNull(channel);
+            Assertions.assertTrue(channel.isOpen());
+            Assertions.assertNotNull(selector);
+            Assertions.assertTrue(selector.isOpen());
+        } finally {
+            manager.closeSocket();
+        }
+    }
+
+    @Test
     void testCloseSocketWhenNotOpened() {
         // Should not throw when nothing was opened
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
@@ -236,7 +277,7 @@ class SingleNetworkManagerTest {
         Assertions.assertNull(manager.getSelector());
 
         // Clear interrupt flag (getSelector re-sets it before throwing)
-        Thread.interrupted();
+        Assertions.assertTrue(Thread.interrupted());
     }
 
     @Test
@@ -246,7 +287,7 @@ class SingleNetworkManagerTest {
         Assertions.assertThrows(RuntimeException.class, () -> manager.getSocketChannel());
 
         // Clear interrupt flag
-        Thread.interrupted();
+        Assertions.assertTrue(Thread.interrupted());
     }
 
     @Test
@@ -325,6 +366,26 @@ class SingleNetworkManagerTest {
         selectorField.set(manager, mockSelector);
 
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
+    }
+
+    @Test
+    void testCloseSocketStillAttemptsClientCloseWhenSelectorCloseFails() throws Exception {
+        Selector mockSelector = mock(Selector.class);
+        SocketChannel mockClient = mock(SocketChannel.class);
+        doThrow(new IOException("selector close failed")).when(mockSelector).close();
+        doThrow(new IOException("client close failed")).when(mockClient).close();
+
+        Field clientField = SingleNetworkManager.class.getDeclaredField("client");
+        clientField.setAccessible(true);
+        clientField.set(manager, mockClient);
+
+        Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
+        selectorField.setAccessible(true);
+        selectorField.set(manager, mockSelector);
+
+        Assertions.assertDoesNotThrow(() -> manager.closeSocket());
+        verify(mockSelector).close();
+        verify(mockClient).close();
     }
 
     // ── Helper ───────────────────────────────────────────────────────

@@ -35,7 +35,7 @@ public class SingleMessageListener implements Runnable {
 
     @Override
     public void run() {
-        while(!Thread.currentThread().isInterrupted()) {
+        while (isNotInterrupted()) {
             Selector selector = singleNetworkManager.getSelector();
             if (selector == null) {
                 log.info("Listener interrupted while waiting for selector.");
@@ -45,7 +45,7 @@ public class SingleMessageListener implements Runnable {
             SingleMessageSender singleMessageSender = singleNetworkManager.getSingleMessageSender();
 
             try {
-                while(!Thread.currentThread().isInterrupted()) {
+                while (isNotInterrupted()) {
                     selector.select(SELECTOR_TIMEOUT);
                     Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
@@ -56,14 +56,7 @@ public class SingleMessageListener implements Runnable {
                         // Get the socket channel held by the key
                         SocketChannel channel = (SocketChannel)key.channel();
 
-                        // Attempt a connection
-                        if (key.isConnectable()) { // connect command
-                            // Close pendent connections
-                            if (channel.isConnectionPending()) {
-                                channel.finishConnect();
-                            }
-                            singleMessageSender.setKey(key, selector); // message will send after it
-                        } else if(key.isReadable()) {
+                        if (key.isReadable()) {
                             queueAvailableResponses(channel);
                         }
                     }
@@ -83,6 +76,10 @@ public class SingleMessageListener implements Runnable {
             }
         }
         log.info("Listener thread terminated.");
+    }
+
+    private boolean isNotInterrupted() {
+        return !Thread.currentThread().isInterrupted();
     }
 
     /**
