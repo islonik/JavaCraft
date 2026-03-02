@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -34,7 +35,7 @@ public class SingleMessageSender {
             key.interestOps(SelectionKey.OP_WRITE);
 
             SocketChannel channel = (SocketChannel)key.channel();
-            ByteBuffer writeBuffer = ByteBuffer.wrap(command.getBytes());
+            ByteBuffer writeBuffer = ByteBuffer.wrap(command.getBytes(StandardCharsets.UTF_8));
             while (writeBuffer.hasRemaining()) {
                 channel.write(writeBuffer);
             }

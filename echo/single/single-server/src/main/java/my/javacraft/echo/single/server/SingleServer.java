@@ -193,7 +193,7 @@ public class SingleServer implements Runnable {
             return;
         }
 
-        request = request.replace("\r", "").replace("\n", "");
+        request = trimTrailingLineDelimiters(request);
 
         String response;
         boolean close = false;
@@ -222,6 +222,18 @@ public class SingleServer implements Runnable {
         } else {
             closeKey(key);
         }
+    }
+
+    private String trimTrailingLineDelimiters(String request) {
+        int end = request.length();
+        while (end > 0) {
+            char current = request.charAt(end - 1);
+            if (current != '\r' && current != '\n') {
+                break;
+            }
+            end--;
+        }
+        return request.substring(0, end);
     }
 
     boolean write(SocketChannel channel, String content) {
