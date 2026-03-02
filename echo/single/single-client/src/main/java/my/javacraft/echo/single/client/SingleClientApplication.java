@@ -1,6 +1,5 @@
 package my.javacraft.echo.single.client;
 
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -10,21 +9,30 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleClientApplication {
 
     static final int DEFAULT_PORT = 8077;
+    private static final int MIN_PORT = 0;
+    private static final int MAX_PORT = 65_535;
 
     // telnet localhost 8077
     public static void main(String[] args) {
-        int port = Optional.of(args)
-                .filter(a -> a.length > 0)
-                .map(SingleClientApplication::getPort)
-                .orElse(DEFAULT_PORT);
+        int port = getPort(args);
 
         // run() already calls close() in its own finally block
         new SingleClient("localhost", port).run();
     }
 
     static int getPort(String[] args) {
+        if (args == null || args.length == 0) {
+            return DEFAULT_PORT;
+        }
+
         try {
-            return Integer.parseInt(args[0]);
+            String rawPort = args[0];
+            int port = Integer.parseInt(rawPort);
+            if (port < MIN_PORT || port > MAX_PORT) {
+                log.warn("Port '{}' is out of range, using default {}", rawPort, DEFAULT_PORT);
+                return DEFAULT_PORT;
+            }
+            return port;
         } catch (NumberFormatException e) {
             log.warn("Invalid port '{}', using default {}", args[0], DEFAULT_PORT);
             return DEFAULT_PORT;
