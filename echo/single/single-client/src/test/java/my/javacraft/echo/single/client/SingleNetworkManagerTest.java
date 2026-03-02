@@ -230,10 +230,10 @@ class SingleNetworkManagerTest {
     // ── Interrupt handling tests ─────────────────────────────────────
 
     @Test
-    void testGetSelectorThrowsRuntimeExceptionOnInterrupt() {
+    void testGetSelectorReturnsNullOnInterrupt() {
         Thread.currentThread().interrupt();
 
-        Assertions.assertThrows(RuntimeException.class, () -> manager.getSelector());
+        Assertions.assertNull(manager.getSelector());
 
         // Clear interrupt flag (getSelector re-sets it before throwing)
         Thread.interrupted();

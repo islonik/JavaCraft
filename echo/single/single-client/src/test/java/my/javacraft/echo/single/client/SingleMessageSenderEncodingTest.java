@@ -61,7 +61,7 @@ final class SingleMessageSenderEncodingProbe {
         RecordingSocketChannel channel = new RecordingSocketChannel();
         FakeSelectionKey key = new FakeSelectionKey(channel);
         SingleMessageSender sender = new SingleMessageSender();
-        sender.setKey(key);
+        sender.setKey(key, null);
         sender.send("Привет");
         System.out.print(channel.hexDump());
     }

@@ -75,7 +75,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendWritesDataToChannel() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("hello server");
 
@@ -90,7 +90,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendMultipleMessages() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("first");
         sender.send("second");
@@ -111,7 +111,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendResetsInterestOpsToRead() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("test");
 
@@ -122,7 +122,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendEmptyString() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         // Send empty string — ByteBuffer.wrap("".getBytes()) has 0 remaining
         // write loop body should not execute; interestOps should still reset
@@ -134,7 +134,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendPreservesExistingCrLfDelimiter() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("already framed\r\n");
 
@@ -148,7 +148,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendNormalizesTrailingLfToCrLf() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("unix newline\n");
 
@@ -162,7 +162,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendNormalizesTrailingCrToCrLf() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         sender.send("carriage return only\r");
 
@@ -176,7 +176,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendLargeMessage() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         // Send a large message — exercises the write loop's hasRemaining() check
         String largeMessage = "X".repeat(5000);
@@ -205,7 +205,7 @@ class SingleMessageSenderTest {
 
             // Set the key — this should unblock send()
             SelectionKey key = createConnection();
-            sender.setKey(key);
+            sender.setKey(key, selector);
 
             future.get(2, TimeUnit.SECONDS);
             Assertions.assertTrue(future.isDone());
@@ -223,7 +223,7 @@ class SingleMessageSenderTest {
     @Test
     void testSendHandlesCancelledKey() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         // Close the channel → key becomes cancelled
         clientChannel.close();
@@ -247,10 +247,10 @@ class SingleMessageSenderTest {
     @Test
     void testSetKeyToNullCausesSendToBlockAgain() throws Exception {
         SelectionKey key = createConnection();
-        sender.setKey(key);
+        sender.setKey(key, selector);
 
         // Setting key to null should cause next send() to block
-        sender.setKey(null);
+        sender.setKey(null, null);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
@@ -274,7 +274,7 @@ class SingleMessageSenderTest {
         SelectionKey mockKey = mock(SelectionKey.class);
         when(mockKey.channel()).thenReturn(mockChannel);
 
-        sender.setKey(mockKey);
+        sender.setKey(mockKey, null);
 
         // send() should catch IOException and log it — no exception propagated
         Assertions.assertDoesNotThrow(() -> sender.send("test"));

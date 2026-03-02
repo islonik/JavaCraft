@@ -16,9 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Reads line-delimited server responses from the single client connection.
  * <p>
- * TCP is a byte stream, so responses can arrive fragmented across several
- * reads or combined in a single read. This listener keeps a small decode buffer
- * and only publishes complete framed messages to the client queue.
+ * TCP is a byte stream, so responses can arrive fragmented across several reads or combined in a single read.
+ * This listener keeps a small decode buffer and only publishes complete framed messages to the client queue.
  * <p>
  * @author Lipatov Nikita
  */
@@ -27,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleMessageListener implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
+    static final long SELECTOR_TIMEOUT = 1_000L;
     private static final String MESSAGE_DELIMITER = "\r\n";
 
     private final SingleNetworkManager singleNetworkManager;
@@ -36,19 +36,17 @@ public class SingleMessageListener implements Runnable {
     @Override
     public void run() {
         while(!Thread.currentThread().isInterrupted()) {
-            Selector selector;
-            try {
-                selector = singleNetworkManager.getSelector();
-            } catch (RuntimeException e) {
-                // getSelector() throws RuntimeException on interrupt
-                log.info("Listener interrupted while waiting for selector", e);
+            Selector selector = singleNetworkManager.getSelector();
+            if (selector == null) {
+                log.info("Listener interrupted while waiting for selector.");
                 break;
             }
+
             SingleMessageSender singleMessageSender = singleNetworkManager.getSingleMessageSender();
 
             try {
                 while(!Thread.currentThread().isInterrupted()) {
-                    selector.select();
+                    selector.select(SELECTOR_TIMEOUT);
                     Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
                     while(keys.hasNext()) {
@@ -64,7 +62,7 @@ public class SingleMessageListener implements Runnable {
                             if (channel.isConnectionPending()) {
                                 channel.finishConnect();
                             }
-                            singleMessageSender.setKey(key); // message will send after it
+                            singleMessageSender.setKey(key, selector); // message will send after it
                         } else if(key.isReadable()) {
                             queueAvailableResponses(channel);
                         }
@@ -73,13 +71,14 @@ public class SingleMessageListener implements Runnable {
             } catch (IOException err) {
                 log.error("IO error in listener, resetting connection", err);
                 singleNetworkManager.closeSocket();
-                singleMessageSender.setKey(null);
+                singleMessageSender.setKey(null, null);
+                break;
             } catch (Exception err) {
                 // Handles ClosedSelectorException, CancelledKeyException, etc.
-                // it's a normal BAU closing process, so the log level should be debug
+                // it's a normal BAU closing process, so the log level should be  'debug'
                 log.debug("Listener loop terminated", err);
                 singleNetworkManager.closeSocket();
-                singleMessageSender.setKey(null);
+                singleMessageSender.setKey(null, null);
                 break;
             }
         }
@@ -113,7 +112,6 @@ public class SingleMessageListener implements Runnable {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
-        boolean nonBlocking = !channel.isBlocking();
 
         try {
             while (true) {
@@ -140,10 +138,6 @@ public class SingleMessageListener implements Runnable {
                 String nextMessage = pollPendingMessage();
                 if (nextMessage != null) {
                     return nextMessage;
-                }
-
-                if (!nonBlocking) {
-                    continue;
                 }
             }
         } catch (ClosedChannelException e) {

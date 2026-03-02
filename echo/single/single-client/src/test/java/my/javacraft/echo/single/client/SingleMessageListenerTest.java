@@ -256,7 +256,7 @@ class SingleMessageListenerTest {
             mgr.openSocket("localhost", deadPort);
             Thread.sleep(500);
 
-            // After IOException catch, setKey(null) is called → send should block
+            // After IOException catch, setKey(null, null) is called → send should block (with timeout)
             ExecutorService sendExec = Executors.newSingleThreadExecutor();
             try {
                 Future<?> future = sendExec.submit(() -> sender.send("after-error"));

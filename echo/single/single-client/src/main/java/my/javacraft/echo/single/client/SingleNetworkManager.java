@@ -21,7 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleNetworkManager {
 
     private static final int QUEUE_CAPACITY = 10;
-    private static final long POLL_TIMEOUT_MS = 100;
+    private static final long POLL_TIMEOUT_MS = 1_000;
+    private static final long WAIT_TIMEOUT_MS = 2_000;
     private final ArrayBlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
     private volatile SocketChannel client;
     private volatile Selector selector;
@@ -49,13 +50,18 @@ public class SingleNetworkManager {
     public Selector getSelector() {
         if (selector == null) {
             synchronized (this) {
-                while(selector == null) {
+                long deadline = System.currentTimeMillis() + WAIT_TIMEOUT_MS;
+                while (selector == null) {
+                    long remaining = deadline - System.currentTimeMillis();
+                    if (remaining <= 0) {
+                        throw new RuntimeException("Timed out waiting for selector");
+                    }
                     try {
-                        wait();
+                        wait(remaining);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         log.error(e.getMessage(), e);
-                        throw new RuntimeException(e);
+                        return null;
                     }
                 }
             }
@@ -66,9 +72,14 @@ public class SingleNetworkManager {
     public SocketChannel getSocketChannel() {
         if (client == null) {
             synchronized (this) {
-                while(client == null) {
+                long deadline = System.currentTimeMillis() + WAIT_TIMEOUT_MS;
+                while (client == null) {
+                    long remaining = deadline - System.currentTimeMillis();
+                    if (remaining <= 0) {
+                        throw new RuntimeException("Timed out waiting for socket channel");
+                    }
                     try {
-                        wait();
+                        wait(remaining);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         log.error(e.getMessage(), e);

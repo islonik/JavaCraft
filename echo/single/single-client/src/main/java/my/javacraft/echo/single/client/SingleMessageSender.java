@@ -3,6 +3,7 @@ package my.javacraft.echo.single.client;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
+import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -20,16 +21,19 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleMessageSender {
 
     private static final String MESSAGE_DELIMITER = "\r\n";
+    private static final long SEND_WAIT_TIMEOUT_MS = 5_000;
 
     private volatile SelectionKey key;
+    private volatile Selector selector;
 
     /**
      * Unblocks pending senders once the selector thread has finished the
      * connection handshake and published the key for the socket channel.
      */
-    public void setKey(SelectionKey key) {
+    public void setKey(SelectionKey key, Selector selector) {
         synchronized (this) {
             this.key = key;
+            this.selector = selector;
             notifyAll();
         }
     }
@@ -42,21 +46,38 @@ public class SingleMessageSender {
         try {
             if (key == null) {
                 synchronized (this) {
-                    while(key == null) {
-                        wait();
+                    long deadline = System.currentTimeMillis() + SEND_WAIT_TIMEOUT_MS;
+                    while (key == null) {
+                        long remaining = deadline - System.currentTimeMillis();
+                        if (remaining <= 0) {
+                            log.warn("Timed out waiting for selection key");
+                            return;
+                        }
+                        wait(remaining);
                     }
                 }
             }
-            key.interestOps(SelectionKey.OP_WRITE);
 
-            SocketChannel channel = (SocketChannel)key.channel();
+            SelectionKey currentKey = key;
+            Selector currentSelector = selector;
+            if (currentKey == null) {
+                log.warn("Selection key became null before send");
+                return;
+            }
+
+            currentKey.interestOps(SelectionKey.OP_WRITE);
+
+            SocketChannel channel = (SocketChannel) currentKey.channel();
             String framedCommand = frameCommand(command);
             ByteBuffer writeBuffer = ByteBuffer.wrap(framedCommand.getBytes(StandardCharsets.UTF_8));
             while (writeBuffer.hasRemaining()) {
                 channel.write(writeBuffer);
             }
 
-            key.interestOps(SelectionKey.OP_READ);
+            currentKey.interestOps(SelectionKey.OP_READ);
+            if (currentSelector != null) {
+                currentSelector.wakeup();
+            }
 
         } catch (IOException | CancelledKeyException e) {
             log.error(e.getMessage(), e);
