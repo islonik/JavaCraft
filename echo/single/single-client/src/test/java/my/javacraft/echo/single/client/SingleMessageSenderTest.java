@@ -30,7 +30,7 @@ class SingleMessageSenderTest {
     private Selector selector;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         sender = new SingleMessageSender();
     }
 
@@ -137,11 +137,7 @@ class SingleMessageSenderTest {
         sender.setKey(key);
 
         // Send a large message — exercises the write loop's hasRemaining() check
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 5000; i++) {
-            sb.append("X");
-        }
-        String largeMessage = sb.toString();
+        String largeMessage = "X".repeat(5000);
         sender.send(largeMessage);
 
         InputStream in = acceptedSocket.getInputStream();
@@ -183,16 +179,15 @@ class SingleMessageSenderTest {
     }
 
     @Test
-    void testSendThrowsOnCancelledKey() throws Exception {
+    void testSendHandlesCancelledKey() throws Exception {
         SelectionKey key = createConnection();
         sender.setKey(key);
 
         // Close the channel → key becomes cancelled
         clientChannel.close();
 
-        // send() calls key.interestOps() which throws CancelledKeyException (uncaught)
-        Assertions.assertThrows(java.nio.channels.CancelledKeyException.class,
-                () -> sender.send("after close"));
+        // send() calls key.interestOps() which throws CancelledKeyException — now caught gracefully
+        Assertions.assertDoesNotThrow(() -> sender.send("after close"));
     }
 
     @Test

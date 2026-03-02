@@ -169,8 +169,9 @@ public class SingleServer implements Runnable {
         }
 
         if (close) {
-            write((SocketChannel) key.channel(), response);
-            connections.decrementAndGet();
+            if (write((SocketChannel) key.channel(), response)) {
+                connections.decrementAndGet();
+            }
             key.channel().close();
             key.cancel();
             return;

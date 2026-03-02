@@ -81,10 +81,9 @@ public class SingleNetworkManager {
     }
 
     public void addMessage(String message) {
-        if (messageQueue.size() >= QUEUE_CAPACITY) {
-            log.debug("Message was removed from the queue = {}", messageQueue.poll());
+        while (!messageQueue.offer(message)) {
+            messageQueue.poll();
         }
-        messageQueue.add(message);
     }
 
     public String getMessage() {

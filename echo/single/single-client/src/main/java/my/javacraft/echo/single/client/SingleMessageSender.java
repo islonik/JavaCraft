@@ -2,6 +2,7 @@ package my.javacraft.echo.single.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class SingleMessageSender {
 
             key.interestOps(SelectionKey.OP_READ);
 
-        } catch (IOException e) {
+        } catch (IOException | CancelledKeyException e) {
             log.error(e.getMessage(), e);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
