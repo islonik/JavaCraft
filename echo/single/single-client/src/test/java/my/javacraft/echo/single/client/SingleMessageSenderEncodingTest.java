@@ -18,6 +18,13 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Verifies that SingleMessageSender always writes UTF-8 bytes by launching a
+ * separate JVM with a different default charset and running a small probe inside it.
+ * <p>
+ * The probe writes through a fake SocketChannel/SelectionKey pair and prints
+ * the raw hex payload so the assertion checks encoded bytes, not decoded text.
+ */
 class SingleMessageSenderEncodingTest {
 
     @Test

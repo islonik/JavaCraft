@@ -46,13 +46,12 @@ public class SingleStepDefinition {
 
     @When("use the client {string} to send {string} message and get {string} response")
     public void sendMessage(String client, String message, String expectedResponse) {
-        SingleClient singleClient = connections.get(client);
+        assertResponse(client, message, expectedResponse);
+    }
 
-        singleClient.sendMessage(message);
-        String actualResponse = singleClient.readMessage();
-
-        Assertions.assertEquals(expectedResponse, actualResponse,
-                "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
+    @When("use the client {string} to send escaped message {string} and get escaped response {string}")
+    public void sendEscapedMessage(String client, String message, String expectedResponse) {
+        assertResponse(client, decodeEscapedText(message), decodeEscapedText(expectedResponse));
     }
 
     @Then("close the connection to the client {string}")
@@ -63,6 +62,42 @@ public class SingleStepDefinition {
         String actualResponse = singleClient.readMessage();
         Assertions.assertEquals("Have a good day!", actualResponse,
                 "Client '%s' did not receive expected goodbye response".formatted(client));
+    }
+
+    private void assertResponse(String client, String message, String expectedResponse) {
+        SingleClient singleClient = connections.get(client);
+
+        singleClient.sendMessage(message);
+        String actualResponse = singleClient.readMessage();
+
+        Assertions.assertEquals(expectedResponse, actualResponse,
+                "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
+    }
+
+    private String decodeEscapedText(String text) {
+        StringBuilder result = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char current = text.charAt(i);
+            if (current != '\\' || i + 1 >= text.length()) {
+                result.append(current);
+                continue;
+            }
+
+            char escaped = text.charAt(++i);
+            switch (escaped) {
+                case 'n' -> result.append('\n');
+                case 'r' -> result.append('\r');
+                case 't' -> result.append('\t');
+                case '\\' -> result.append('\\');
+                case '\'' -> result.append('\'');
+                case '"' -> result.append('"');
+                default -> {
+                    result.append('\\');
+                    result.append(escaped);
+                }
+            }
+        }
+        return result.toString();
     }
 
 

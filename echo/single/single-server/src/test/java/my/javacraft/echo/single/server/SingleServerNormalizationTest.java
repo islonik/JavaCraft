@@ -17,6 +17,11 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Verifies request normalization in isolation by calling the private writeOp()
+ * method via reflection and capturing the response through lightweight fake SelectionKey/SocketChannel implementations.
+ * This keeps the test focused on line-ending handling without depending on real sockets or the full server loop.
+ */
 class SingleServerNormalizationTest {
 
     @Test
