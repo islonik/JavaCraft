@@ -14,6 +14,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 class SingleClientTest {
 
@@ -233,6 +237,64 @@ class SingleClientTest {
         } finally {
             client.close();
         }
+    }
+
+    // ── Tests for defensive catch blocks ─────────────────────────────
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunInnerCatchIOException() {
+        // Covers run() inner catch(IOException) L75-77
+        // Custom InputStream that throws IOException once, then returns EOF
+        InputStream throwOnceStream = new InputStream() {
+            private boolean thrown = false;
+            @Override
+            public int read() throws IOException {
+                if (!thrown) {
+                    thrown = true;
+                    throw new IOException("stdin read failed");
+                }
+                return -1; // EOF to break the while loop
+            }
+        };
+        System.setIn(throwOnceStream);
+
+        SingleClient client = new SingleClient("localhost", PORT);
+        // run() should catch the IOException, then readLine() returns null → breaks
+        Assertions.assertDoesNotThrow(client::run);
+    }
+
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void testRunOuterCatchException() {
+        // Covers run() outer catch(Exception) L79-80
+        // Use a dead port so connectToServer() fails
+        int deadPort;
+        try (ServerSocket temp = new ServerSocket(0)) {
+            deadPort = temp.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.setIn(new ByteArrayInputStream("hello\n".getBytes()));
+        // The client connects to dead port — NIO connect is async, but
+        // the subsequent send() will eventually fail or the listener will
+        // detect the connection failure. We use a mock approach instead.
+        // Use reflection to inject a mock that throws on openSocket()
+        SingleClient client = new SingleClient("localhost", PORT);
+        try {
+            java.lang.reflect.Field mgrField = SingleClient.class.getDeclaredField("singleNetworkManager");
+            mgrField.setAccessible(true);
+            SingleNetworkManager mockMgr = mock(SingleNetworkManager.class);
+            doThrow(new IOException("connection refused")).when(mockMgr).openSocket(anyString(), anyInt());
+            mgrField.set(client, mockMgr);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // run() calls connectToServer() which calls mockMgr.openSocket() → throws
+        // The outer catch(Exception) should catch it
+        Assertions.assertDoesNotThrow(client::run);
     }
 
 }

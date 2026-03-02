@@ -3,9 +3,14 @@ package my.javacraft.echo.single.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +20,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class SingleServerTest {
 
@@ -309,6 +321,93 @@ class SingleServerTest {
 
             client.close();
             serverSide.close();
+        }
+    }
+
+    // ── Mockito-based tests for defensive catch blocks ────────────────
+
+    @Test
+    void testWriteReturnsEmptyOnGenericIOException() throws Exception {
+        // Covers write() catch(IOException) L198-206 — generic IOException (not ClosedChannelException)
+        SingleServer server = new SingleServer(0);
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("broken pipe"));
+
+        boolean result = server.write(mockChannel, "test");
+
+        Assertions.assertFalse(result);
+        verify(mockChannel).close();
+    }
+
+    @Test
+    void testWriteHandlesCloseFailureAfterIOException() throws Exception {
+        // Covers write() inner catch(IOException) on channel.close() L203-205
+        SingleServer server = new SingleServer(0);
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("broken pipe"));
+        doThrow(new IOException("close failed")).when(mockChannel).close();
+
+        boolean result = server.write(mockChannel, "test");
+
+        Assertions.assertFalse(result);
+    }
+
+    @Test
+    void testReadHandlesCloseFailureAfterIOException() throws Exception {
+        // Covers read() inner catch(IOException) on channel.close() L141-143
+        SingleServer server = new SingleServer(0);
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.read(any(ByteBuffer.class))).thenThrow(new IOException("read failed"));
+        doThrow(new IOException("close failed")).when(mockChannel).close();
+
+        String result = server.read(mockChannel);
+
+        Assertions.assertEquals("", result);
+    }
+
+    @Test
+    void testWriteOpElseBranchClosesChannelAndCancelsKey() throws Exception {
+        // Covers writeOp() else branch L181-184 — when write() returns false
+        SingleServer server = new SingleServer(0);
+
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("write failed"));
+
+        SelectionKey mockKey = mock(SelectionKey.class);
+        when(mockKey.attachment()).thenReturn("hello");
+        when(mockKey.channel()).thenReturn(mockChannel);
+
+        // Call private writeOp() via reflection
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, mockKey);
+
+        // write() returned false → else branch executed: key.channel().close() + key.cancel()
+        verify(mockKey).cancel();
+    }
+
+    @Test
+    @Timeout(value = 5, unit = TimeUnit.SECONDS)
+    void testRunFinallyCatchesExceptionOnClose() throws Exception {
+        // Covers run() finally catch(Exception) L62-64 — when selector.close() throws
+        try (MockedStatic<Selector> mockedSel = Mockito.mockStatic(Selector.class);
+             MockedStatic<ServerSocketChannel> mockedSSC = Mockito.mockStatic(ServerSocketChannel.class)) {
+
+            Selector badSelector = mock(Selector.class);
+            doThrow(new IOException("selector close failed")).when(badSelector).close();
+            mockedSel.when(Selector::open).thenReturn(badSelector);
+
+            ServerSocketChannel badSSC = mock(ServerSocketChannel.class);
+            java.net.ServerSocket mockSocket = mock(java.net.ServerSocket.class);
+            doThrow(new IOException("bind failed")).when(mockSocket).bind(any());
+            when(badSSC.socket()).thenReturn(mockSocket);
+            mockedSSC.when(ServerSocketChannel::open).thenReturn(badSSC);
+
+            SingleServer server = new SingleServer(0);
+            // run(): bind() throws → catch(Exception) → finally: selector.close() throws → catch(Exception) L62-64
+            Assertions.assertDoesNotThrow(server::run);
+
+            verify(badSelector).close();
         }
     }
 

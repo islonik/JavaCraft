@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -16,6 +17,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SingleMessageSenderTest {
 
@@ -220,5 +224,22 @@ class SingleMessageSenderTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    // ── Mockito-based test for send() catch(IOException) ─────────────
+
+    @Test
+    void testSendCatchesIOExceptionFromChannelWrite() throws Exception {
+        // Covers send() catch(IOException) L43-44
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("write failed"));
+
+        SelectionKey mockKey = mock(SelectionKey.class);
+        when(mockKey.channel()).thenReturn(mockChannel);
+
+        sender.setKey(mockKey);
+
+        // send() should catch IOException and log it — no exception propagated
+        Assertions.assertDoesNotThrow(() -> sender.send("test"));
     }
 }

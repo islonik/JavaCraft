@@ -1,6 +1,7 @@
 package my.javacraft.echo.single.client;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -11,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 class SingleNetworkManagerTest {
 
@@ -282,6 +285,46 @@ class SingleNetworkManagerTest {
         manager.setSingleMessageSender(sender);
 
         Assertions.assertSame(sender, manager.getSingleMessageSender());
+    }
+
+    // ── Mockito-based test for closeSocket() catch(IOException) ─────
+
+    @Test
+    void testCloseSocketCatchesIOExceptionFromSelectorClose() throws Exception {
+        // Covers closeSocket() catch(IOException) L112-113
+        Selector mockSelector = mock(Selector.class);
+        SocketChannel mockClient = mock(SocketChannel.class);
+        doThrow(new IOException("selector close failed")).when(mockSelector).close();
+
+        // Use reflection to inject mock objects into private volatile fields
+        Field clientField = SingleNetworkManager.class.getDeclaredField("client");
+        clientField.setAccessible(true);
+        clientField.set(manager, mockClient);
+
+        Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
+        selectorField.setAccessible(true);
+        selectorField.set(manager, mockSelector);
+
+        // closeSocket() should catch IOException and not propagate it
+        Assertions.assertDoesNotThrow(() -> manager.closeSocket());
+    }
+
+    @Test
+    void testCloseSocketCatchesIOExceptionFromClientClose() throws Exception {
+        // Covers closeSocket() catch(IOException) when client.close() throws
+        Selector mockSelector = mock(Selector.class);
+        SocketChannel mockClient = mock(SocketChannel.class);
+        doThrow(new IOException("client close failed")).when(mockClient).close();
+
+        Field clientField = SingleNetworkManager.class.getDeclaredField("client");
+        clientField.setAccessible(true);
+        clientField.set(manager, mockClient);
+
+        Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
+        selectorField.setAccessible(true);
+        selectorField.set(manager, mockSelector);
+
+        Assertions.assertDoesNotThrow(() -> manager.closeSocket());
     }
 
     // ── Helper ───────────────────────────────────────────────────────

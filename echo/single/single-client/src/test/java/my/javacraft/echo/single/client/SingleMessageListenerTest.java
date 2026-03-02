@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,6 +14,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class SingleMessageListenerTest {
 
@@ -300,6 +306,34 @@ class SingleMessageListenerTest {
     @Test
     void testBufferSizeConstant() {
         Assertions.assertEquals(2048, SingleMessageListener.BUFFER_SIZE);
+    }
+
+    // ── Mockito-based tests for defensive catch blocks ────────────────
+
+    @Test
+    void testNewResponseHandlesCloseFailureAfterReadIOException() throws Exception {
+        // Covers newResponse() inner catch(IOException) on channel.close() L86-88
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.read(any(ByteBuffer.class))).thenThrow(new IOException("read failed"));
+        doThrow(new IOException("close also failed")).when(mockChannel).close();
+
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+        String result = listener.newResponse(mockChannel);
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void testNewResponseClosesChannelOnReadIOException() throws Exception {
+        // Covers newResponse() catch(IOException) L82-89 — verifies close() is called
+        SocketChannel mockChannel = mock(SocketChannel.class);
+        when(mockChannel.read(any(ByteBuffer.class))).thenThrow(new IOException("read failed"));
+
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+        String result = listener.newResponse(mockChannel);
+
+        Assertions.assertNull(result);
+        verify(mockChannel).close();
     }
 
     @Test
