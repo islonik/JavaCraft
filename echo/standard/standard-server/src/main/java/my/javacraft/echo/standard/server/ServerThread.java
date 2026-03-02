@@ -43,7 +43,7 @@ public class ServerThread implements Runnable {
                 } else if (request.isEmpty()) {
                     response = "Please type something.\r\n";
                 } else if ("stats".equalsIgnoreCase(request)) {
-                    response = "%s simultaneously connected clients.\r\n".formatted(threads.get());
+                    response = "Simultaneously connected clients: %s\r\n".formatted(threads.get());
                 } else if ("bye".equalsIgnoreCase(request)) {
                     response = "Have a good day!\r\n";
                     isConnected = false;
