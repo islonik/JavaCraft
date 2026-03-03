@@ -1,5 +1,7 @@
 package my.javacraft.algs.leetcode.easy;
 
+import my.javacraft.algs.leetcode.model.ListNode;
+
 /**
  * 21. Merge Two Sorted Lists
  * <p>
@@ -27,17 +29,5 @@ public class MergeTwoSortedLists {
         return list1;
     }
 
-    public static class ListNode {
-        int val;
-        ListNode next;
-
-        ListNode(int val) {
-            this.val = val;
-        }
-        ListNode(int val, ListNode next) {
-            this.val = val;
-            this.next = next;
-        }
-    }
 
 }

@@ -1,6 +1,6 @@
 package my.javacraft.algs.leetcode.easy;
 
-import my.javacraft.algs.leetcode.easy.MergeTwoSortedLists.ListNode;
+import my.javacraft.algs.leetcode.model.ListNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
