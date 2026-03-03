@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleMessageListener implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
+    static final int MAX_FRAME_BYTES = 8 * BUFFER_SIZE;
     static final long SELECTOR_TIMEOUT = 1_000L;
     private static final String MESSAGE_DELIMITER = "\r\n";
     private static final byte[] MESSAGE_DELIMITER_BYTES = MESSAGE_DELIMITER.getBytes(StandardCharsets.US_ASCII);
@@ -142,7 +143,9 @@ public class SingleMessageListener implements Runnable {
                 buffer.clear();
 
                 responseBuffer.write(data, 0, numRead);
-                extractCompleteFrames();
+                if (!extractCompleteFrames(channel)) {
+                    return null;
+                }
 
                 String nextMessage = pollPendingMessage();
                 if (nextMessage != null) {
@@ -167,7 +170,7 @@ public class SingleMessageListener implements Runnable {
      * This keeps UTF-8 characters intact even when one code point is spread
      * across multiple socket reads.
      */
-    private void extractCompleteFrames() {
+    private boolean extractCompleteFrames(SocketChannel channel) {
         byte[] bufferedBytes = responseBuffer.toByteArray();
         int frameStart = 0;
 
@@ -176,16 +179,29 @@ public class SingleMessageListener implements Runnable {
                 continue;
             }
 
+            int frameLength = index - frameStart;
+            if (frameLength > MAX_FRAME_BYTES) {
+                closeOversizedFrame(channel, frameLength);
+                return false;
+            }
+
             pendingMessages.addLast(new String(
                     bufferedBytes,
                     frameStart,
-                    index - frameStart,
+                    frameLength,
                     StandardCharsets.UTF_8));
             frameStart = index + MESSAGE_DELIMITER_BYTES.length;
             index = frameStart - 1;
         }
 
+        int unreadBytes = bufferedBytes.length - frameStart;
+        if (unreadBytes > MAX_FRAME_BYTES) {
+            closeOversizedFrame(channel, unreadBytes);
+            return false;
+        }
+
         retainUnreadBytes(bufferedBytes, frameStart);
+        return true;
     }
 
     /**
@@ -212,6 +228,21 @@ public class SingleMessageListener implements Runnable {
 
         responseBuffer.reset();
         responseBuffer.write(bufferedBytes, frameStart, bufferedBytes.length - frameStart);
+    }
+
+    /**
+     * Closes the connection as soon as one frame grows beyond the protocol
+     * limit so a missing delimiter cannot keep expanding the in-memory buffer.
+     */
+    private void closeOversizedFrame(SocketChannel channel, int frameBytes) {
+        log.warn("Closing channel because frame reached {} bytes (max {})", frameBytes, MAX_FRAME_BYTES);
+        pendingMessages.clear();
+        responseBuffer.reset();
+        try {
+            channel.close();
+        } catch (IOException closeError) {
+            log.debug("Unable to close oversized frame channel", closeError);
+        }
     }
 
     private String pollPendingMessage() {

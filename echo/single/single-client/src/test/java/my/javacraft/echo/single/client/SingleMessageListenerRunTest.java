@@ -65,6 +65,24 @@ class SingleMessageListenerRunTest {
         Assertions.assertEquals(1, sender.clearCalls);
     }
 
+    @Test
+    void testRunStopsImmediatelyWhenThreadIsAlreadyInterrupted() {
+        RecordingMessageSender sender = new RecordingMessageSender();
+        RecordingSelector selector = new RecordingSelector(new WritableReadyKey());
+        RecordingNetworkManager manager = new RecordingNetworkManager(selector, sender);
+        SingleMessageListener listener = new SingleMessageListener(manager);
+
+        Thread.currentThread().interrupt();
+        try {
+            listener.run();
+        } finally {
+            Assertions.assertTrue(Thread.interrupted());
+        }
+
+        Assertions.assertFalse(manager.closeSocketCalled);
+        Assertions.assertEquals(0, sender.clearCalls);
+    }
+
     /**
      * Lets the tests inject a selector and observe whether the listener
      * requests socket cleanup from the network manager.

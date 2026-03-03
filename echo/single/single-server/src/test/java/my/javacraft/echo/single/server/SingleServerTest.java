@@ -357,13 +357,15 @@ class SingleServerTest {
     @Test
     void testWriteReturnsFalseWhenChannelMakesNoProgress() {
         SingleServer server = new SingleServer(0);
-        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
+        try (ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites()) {
+            boolean result = Assertions.assertTimeoutPreemptively(
+                    Duration.ofMillis(300),
+                    () -> server.write(channel, "hello"));
 
-        boolean result = Assertions.assertTimeoutPreemptively(
-                Duration.ofMillis(300),
-                () -> server.write(channel, "hello"));
-
-        Assertions.assertFalse(result, "Write should fail if the channel never accepts bytes");
+            Assertions.assertFalse(result, "Write should fail if the channel never accepts bytes");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -474,7 +476,7 @@ class SingleServerTest {
         FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
         key.attach("bye");
 
-        setConnections(server, 1);
+        setConnectionsToOne(server);
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
         writeOp.invoke(server, key);
@@ -495,6 +497,22 @@ class SingleServerTest {
         writeOp.invoke(server, key);
 
         Assertions.assertFalse(key.isValid());
+    }
+
+    @Test
+    void testWriteOpByeClosesKeyWhenGoodbyeWriteFails() throws Exception {
+        SingleServer server = new SingleServer(0);
+        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach("bye");
+
+        setConnectionsToOne(server);
+        Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
+        writeOp.setAccessible(true);
+        writeOp.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid());
+        Assertions.assertEquals(0, getConnections(server));
     }
 
     @Test
@@ -529,6 +547,25 @@ class SingleServerTest {
     }
 
     @Test
+    void testLoopProcessesWritableKey() throws Exception {
+        SingleServer server = new SingleServer(0);
+        RecordingScriptedSocketChannel channel = new RecordingScriptedSocketChannel(new int[] {0}, new String[] {""});
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
+        key.attach("stats\r\n");
+        Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
+        selectedKeys.add(key);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, new NullAcceptServerSocketChannel());
+
+        Assertions.assertEquals("Simultaneously connected clients: 0\r\n", channel.writtenText());
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
     void testLoopCatchesProcessingExceptionAndClosesKey() throws Exception {
         SingleServer server = new SingleServer(0);
         ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {3, 0}, new String[] {"x\r\n", ""});
@@ -548,16 +585,9 @@ class SingleServerTest {
     // ── run() error handling ─────────────────────────────────────────
 
     @Test
-    @Timeout(value = 5, unit = TimeUnit.SECONDS)
-    void testRunHandlesBindException() throws InterruptedException {
-        // PORT is already in use by our @BeforeAll server
-        SingleServer duplicate = new SingleServer(PORT);
-        Thread t = new Thread(duplicate);
-        t.start();
-        t.join(2000);
-        // run() should have caught BindException and returned
-        Assertions.assertFalse(t.isAlive(),
-                "run() should complete after BindException");
+    void testConstructorFailsWhenPortAlreadyBound() {
+        Assertions.assertThrows(java.io.UncheckedIOException.class, () -> new SingleServer(PORT),
+                "Constructor should fail fast when the listening port is already in use");
     }
 
     // ── readOp cancel and connection counter ─────────────────────────
@@ -718,10 +748,10 @@ class SingleServerTest {
         return ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).get();
     }
 
-    private static void setConnections(SingleServer server, int value) throws Exception {
+    private static void setConnectionsToOne(SingleServer server) throws Exception {
         var field = SingleServer.class.getDeclaredField("connections");
         field.setAccessible(true);
-        ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).set(value);
+        ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).set(1);
     }
 
     private static class FakeSelectionKey extends SelectionKey {
@@ -755,6 +785,7 @@ class SingleServerTest {
         }
 
         @Override
+        @SuppressWarnings("MagicConstant")
         public int interestOps() {
             return interestOps;
         }
@@ -766,6 +797,7 @@ class SingleServerTest {
         }
 
         @Override
+        @SuppressWarnings("MagicConstant")
         public int readyOps() {
             return interestOps;
         }
@@ -802,6 +834,7 @@ class SingleServerTest {
         }
 
         @Override
+        @SuppressWarnings("MagicConstant")
         public int interestOps() {
             return interestOps;
         }
@@ -813,6 +846,7 @@ class SingleServerTest {
         }
 
         @Override
+        @SuppressWarnings("MagicConstant")
         public int readyOps() {
             return interestOps;
         }
@@ -1065,7 +1099,7 @@ class SingleServerTest {
         }
 
         @Override
-        public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
+        public long write(ByteBuffer[] srcs, int offset, int length) {
             long total = 0;
             int zeroSpins = 0;
             for (int i = offset; i < offset + length; i++) {

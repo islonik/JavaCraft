@@ -2,6 +2,7 @@ package my.javacraft.echo.single.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -44,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleServer implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
+    static final int MAX_FRAME_BYTES = 8 * BUFFER_SIZE;
     private static final int MAX_EMPTY_WRITES = 1024;
     // A CRLF-terminated text frame keeps the protocol simple and readable while
     // still handling empty messages and fragmented/coalesced TCP packets.
@@ -55,6 +57,7 @@ public class SingleServer implements Runnable {
 
     private final int port;
     private final ByteBuffer buffer;
+    private final ServerSocketChannel server;
     private final Map<SocketChannel, ByteArrayOutputStream> requestBuffers = new HashMap<>();
     private final Map<SocketChannel, Deque<String>> pendingRequests = new HashMap<>();
     private volatile Selector selectorRef;
@@ -66,6 +69,11 @@ public class SingleServer implements Runnable {
     public SingleServer(int port) {
         this.port = port;
         this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
+        try {
+            this.server = port > 0 ? openServerChannel() : null;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to bind server socket on port " + port, e);
+        }
 
         log.info("Use next command: telnet localhost {}", port);
     }
@@ -83,8 +91,7 @@ public class SingleServer implements Runnable {
 
             selector = Selector.open();
             selectorRef = selector;
-            server = ServerSocketChannel.open();
-            server.socket().bind(new InetSocketAddress(port));
+            server = this.server != null ? this.server : openServerChannel();
             server.configureBlocking(false);
             server.register(selector, SelectionKey.OP_ACCEPT);
 
@@ -119,6 +126,16 @@ public class SingleServer implements Runnable {
         if (selector != null) {
             selector.wakeup();
         }
+    }
+
+    /**
+     * Centralizes server-socket creation so constructor reservation and the
+     * port-zero startup path cannot drift apart.
+     */
+    private ServerSocketChannel openServerChannel() throws IOException {
+        ServerSocketChannel server = ServerSocketChannel.open();
+        server.socket().bind(new InetSocketAddress(port));
+        return server;
     }
 
     private void loop(Selector selector, ServerSocketChannel server) throws IOException {
@@ -224,7 +241,10 @@ public class SingleServer implements Runnable {
                 buffer.get(data);
 
                 requestBuffer.write(data, 0, numRead);
-                bufferCompleteRequests(requestBuffer, readyRequests);
+                if (!bufferCompleteRequests(requestBuffer, readyRequests)) {
+                    closeOversizedRequest(channel);
+                    return "";
+                }
 
                 String nextRequest = readyRequests.pollFirst();
                 if (nextRequest != null) {
@@ -320,7 +340,7 @@ public class SingleServer implements Runnable {
      * Extracts complete frames from raw bytes before decoding them. This avoids
      * corrupting UTF-8 characters that arrive split across socket reads.
      */
-    private void bufferCompleteRequests(ByteArrayOutputStream requestBuffer, Deque<String> readyRequests) {
+    private boolean bufferCompleteRequests(ByteArrayOutputStream requestBuffer, Deque<String> readyRequests) {
         byte[] bufferedBytes = requestBuffer.toByteArray();
         int frameStart = 0;
 
@@ -329,16 +349,26 @@ public class SingleServer implements Runnable {
                 continue;
             }
 
+            int frameLength = index - frameStart;
+            if (frameLength > MAX_FRAME_BYTES) {
+                return false;
+            }
+
             readyRequests.addLast(new String(
                     bufferedBytes,
                     frameStart,
-                    index - frameStart,
+                    frameLength,
                     StandardCharsets.UTF_8) + MESSAGE_DELIMITER);
             frameStart = index + MESSAGE_DELIMITER_BYTES.length;
             index = frameStart - 1;
         }
 
+        if (bufferedBytes.length - frameStart > MAX_FRAME_BYTES) {
+            return false;
+        }
+
         retainUnreadBytes(requestBuffer, bufferedBytes, frameStart);
+        return true;
     }
 
     /**
@@ -378,6 +408,21 @@ public class SingleServer implements Runnable {
     private void clearChannelState(SocketChannel channel) {
         requestBuffers.remove(channel);
         pendingRequests.remove(channel);
+    }
+
+    /**
+     * Treats an oversized request as a protocol violation and closes the
+     * client so one unterminated frame cannot consume memory indefinitely.
+     */
+    private void closeOversizedRequest(SocketChannel channel) {
+        log.warn("Closing channel because request exceeded {} bytes", MAX_FRAME_BYTES);
+        clearChannelState(channel);
+        decrementConnections();
+        try {
+            channel.close();
+        } catch (IOException closeError) {
+            log.debug("Unable to close oversized request channel", closeError);
+        }
     }
 
     /**

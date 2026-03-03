@@ -33,11 +33,105 @@ class SingleMessageListenerUtf8Test {
         Assertions.assertEquals("Привет", result);
     }
 
+    @Test
+    void testNewResponseClosesChannelWhenFrameExceedsMaxBytes() {
+        byte[] oversizedFrame = new byte[SingleMessageListener.MAX_FRAME_BYTES + 1];
+        Arrays.fill(oversizedFrame, (byte) 'A');
+        ScriptedByteSocketChannel channel = new ScriptedByteSocketChannel(
+                splitIntoChunks(oversizedFrame));
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+
+        String result = listener.newResponse(channel);
+
+        Assertions.assertNull(result);
+        Assertions.assertFalse(channel.isOpen(), "Oversized frame should close the channel");
+    }
+
+    @Test
+    void testNewResponseIgnoresCloseFailureWhenOversizedFrameIsRejected() {
+        byte[] oversizedFrame = new byte[SingleMessageListener.MAX_FRAME_BYTES + 1];
+        Arrays.fill(oversizedFrame, (byte) 'A');
+        CloseFailingScriptedByteSocketChannel channel = new CloseFailingScriptedByteSocketChannel(
+                splitIntoChunks(oversizedFrame));
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+
+        String result = listener.newResponse(channel);
+
+        Assertions.assertNull(result);
+        Assertions.assertEquals(1, channel.closeAttempts, "Oversized frame should still attempt channel close");
+    }
+
+    @Test
+    void testNewResponseClosesChannelWhenDelimitedFrameExceedsMaxBytes() {
+        byte[] oversizedFrame = new byte[SingleMessageListener.MAX_FRAME_BYTES + 3];
+        Arrays.fill(oversizedFrame, 0, SingleMessageListener.MAX_FRAME_BYTES + 1, (byte) 'A');
+        oversizedFrame[SingleMessageListener.MAX_FRAME_BYTES + 1] = '\r';
+        oversizedFrame[SingleMessageListener.MAX_FRAME_BYTES + 2] = '\n';
+        ScriptedByteSocketChannel channel = new ScriptedByteSocketChannel(
+                splitIntoChunks(oversizedFrame));
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+
+        String result = listener.newResponse(channel);
+
+        Assertions.assertNull(result);
+        Assertions.assertFalse(channel.isOpen(), "Delimited oversized frame should close the channel");
+    }
+
+    @Test
+    void testNewResponseIgnoresCloseFailureWhenDelimitedFrameIsRejected() {
+        byte[] oversizedFrame = new byte[SingleMessageListener.MAX_FRAME_BYTES + 3];
+        Arrays.fill(oversizedFrame, 0, SingleMessageListener.MAX_FRAME_BYTES + 1, (byte) 'A');
+        oversizedFrame[SingleMessageListener.MAX_FRAME_BYTES + 1] = '\r';
+        oversizedFrame[SingleMessageListener.MAX_FRAME_BYTES + 2] = '\n';
+        CloseFailingScriptedByteSocketChannel channel = new CloseFailingScriptedByteSocketChannel(
+                splitIntoChunks(oversizedFrame));
+        SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
+
+        String result = listener.newResponse(channel);
+
+        Assertions.assertNull(result);
+        Assertions.assertEquals(1, channel.closeAttempts, "Delimited oversized frame should still attempt channel close");
+    }
+
+    /**
+     * Splits a large synthetic payload into read-sized chunks so the scripted
+     * channel behaves like the production non-blocking socket reads.
+     */
+    private static byte[][] splitIntoChunks(byte[] payload) {
+        int chunkSize = SingleMessageListener.BUFFER_SIZE;
+        int chunks = (payload.length + chunkSize - 1) / chunkSize;
+        byte[][] result = new byte[chunks][];
+        for (int index = 0; index < chunks; index++) {
+            int start = index * chunkSize;
+            int end = Math.min(payload.length, start + chunkSize);
+            result[index] = Arrays.copyOfRange(payload, start, end);
+        }
+        return result;
+    }
+
+    /**
+     * Lets the oversized-frame test hit the defensive close-error branch
+     * without relying on a real socket that fails during close().
+     */
+    private static final class CloseFailingScriptedByteSocketChannel extends ScriptedByteSocketChannel {
+        private int closeAttempts;
+
+        private CloseFailingScriptedByteSocketChannel(byte[]... chunks) {
+            super(chunks);
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws java.io.IOException {
+            closeAttempts++;
+            throw new java.nio.channels.ClosedChannelException();
+        }
+    }
+
     /**
      * Feeds raw byte chunks directly so the test can split a UTF-8 code point
      * across reads without converting the bytes into broken Strings first.
      */
-    private static final class ScriptedByteSocketChannel extends SocketChannel {
+    private static class ScriptedByteSocketChannel extends SocketChannel {
         private final byte[][] chunks;
         private int chunkIndex;
 
@@ -152,7 +246,7 @@ class SingleMessageListenerUtf8Test {
         }
 
         @Override
-        protected void implCloseSelectableChannel() {
+        protected void implCloseSelectableChannel() throws java.io.IOException {
             // no-op
         }
 

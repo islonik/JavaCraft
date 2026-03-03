@@ -40,6 +40,40 @@ class SingleMessageListenerReadyKeyTest {
         Assertions.assertEquals("pong", manager.getMessage());
     }
 
+    @Test
+    void testProcessReadyKeyReadsWithoutFlushingWhenOnlyReadable() throws IOException {
+        SingleNetworkManager manager = new SingleNetworkManager();
+        RecordingMessageSender sender = new RecordingMessageSender();
+        manager.setSingleMessageSender(sender);
+        SingleMessageListener listener = new SingleMessageListener(manager);
+
+        ReadableSocketChannel channel = new ReadableSocketChannel("pong\r\n");
+        ReadyKey key = new ReadyKey(channel, SelectionKey.OP_READ);
+
+        listener.processReadyKey(key, sender);
+
+        Assertions.assertFalse(sender.flushCalled);
+        Assertions.assertEquals("pong", manager.getMessage());
+        Assertions.assertTrue(channel.readCalls > 0, "Readable key should consume response bytes");
+    }
+
+    @Test
+    void testProcessReadyKeyFlushesWithoutReadingWhenOnlyWritable() throws IOException {
+        SingleNetworkManager manager = new SingleNetworkManager();
+        RecordingMessageSender sender = new RecordingMessageSender();
+        manager.setSingleMessageSender(sender);
+        SingleMessageListener listener = new SingleMessageListener(manager);
+
+        ReadableSocketChannel channel = new ReadableSocketChannel("pong\r\n");
+        ReadyKey key = new ReadyKey(channel, SelectionKey.OP_WRITE);
+
+        listener.processReadyKey(key, sender);
+
+        Assertions.assertTrue(sender.flushCalled);
+        Assertions.assertNull(manager.getMessage());
+        Assertions.assertEquals(0, channel.readCalls, "Writable-only key should not read response bytes");
+    }
+
     /**
      * Records whether the listener asks the sender to flush queued writes.
      */
@@ -113,6 +147,7 @@ class SingleMessageListenerReadyKeyTest {
     private static final class ReadableSocketChannel extends SocketChannel {
         private final byte[] payload;
         private int position;
+        private int readCalls;
         private boolean open = true;
 
         private ReadableSocketChannel(String payload) {
@@ -125,6 +160,7 @@ class SingleMessageListenerReadyKeyTest {
             if (!open) {
                 throw new IOException("channel closed");
             }
+            readCalls++;
             if (position >= payload.length) {
                 return 0;
             }
