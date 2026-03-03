@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
@@ -221,6 +222,37 @@ class SingleClientTest {
     }
 
     @Test
+    void testRunPreservesMeaningfulWhitespaceInConsoleInput() {
+        // Verifies that run() forwards console lines exactly as typed, including leading, trailing, and all-space input.
+        System.setIn(new ByteArrayInputStream("  padded message  \n   \n".getBytes()));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        CapturingMessageSender sender = new CapturingMessageSender();
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertEquals(1, networkManager.openAttempts);
+        Assertions.assertEquals(List.of("  padded message  ", "   "), sender.commands);
+    }
+
+    @Test
+    void testRunStopsOnlyOnExactByeCommand() {
+        // Verifies that only an exact bye line ends the loop, while whitespace-padded bye is sent as normal input.
+        System.setIn(new ByteArrayInputStream(" bye \nbye\nignored\n".getBytes()));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        CapturingMessageSender sender = new CapturingMessageSender();
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertEquals(List.of(" bye ", "bye"), sender.commands);
+    }
+
+    @Test
     void testReadMessageReturnsNullWhenNoMessage() throws IOException {
         SingleClient client = new SingleClient("localhost", PORT);
         try {
@@ -363,6 +395,19 @@ class SingleClientTest {
             if (failure != null) {
                 throw failure;
             }
+        }
+    }
+
+    /**
+     * Captures exactly what run() forwards to sendMessage() so console
+     * whitespace handling can be asserted without real sockets.
+     */
+    private static final class CapturingMessageSender extends SingleMessageSender {
+        private final List<String> commands = new ArrayList<>();
+
+        @Override
+        public void send(String command) {
+            commands.add(command);
         }
     }
 

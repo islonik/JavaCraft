@@ -75,11 +75,10 @@ public class SingleClient {
             boolean working = true;
             while (working) {
                 try {
-                    String line = keyboard.readLine();
-                    if (line == null) {
+                    String inputCommand = keyboard.readLine();
+                    if (inputCommand == null) {
                         break;
                     }
-                    String inputCommand = line.trim();
 
                     sendMessage(inputCommand);
 
