@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -14,27 +15,26 @@ import lombok.extern.slf4j.Slf4j;
 public class SingleClient {
     private final SingleNetworkManager singleNetworkManager;
     private final ExecutorService listenerExecutor;
+    private Future<?> listenerTask;
 
     private final String host;
     private final int port;
 
     public SingleClient(String host, int port) {
+        this(host, port, new SingleNetworkManager(), Executors.newSingleThreadExecutor());
+    }
+
+    SingleClient(String host, int port, SingleNetworkManager singleNetworkManager, ExecutorService listenerExecutor) {
         this.host = host;
         this.port = port;
-
-        singleNetworkManager = new SingleNetworkManager();
-
-        final SingleMessageSender singleMessageSender = new SingleMessageSender();
-        singleNetworkManager.setSingleMessageSender(singleMessageSender);
-
-        SingleMessageListener singleMessageListener = new SingleMessageListener(singleNetworkManager);
-
-        listenerExecutor = Executors.newSingleThreadExecutor();
-        listenerExecutor.execute(singleMessageListener);
+        this.singleNetworkManager = singleNetworkManager;
+        this.listenerExecutor = listenerExecutor;
+        ensureMessageSenderConfigured();
     }
 
     public void connectToServer() throws IOException {
         singleNetworkManager.openSocket(host, port);
+        startListenerIfNeeded();
         log.info("You connected to the server.");
     }
 
@@ -49,6 +49,20 @@ public class SingleClient {
     public void close() {
         listenerExecutor.shutdownNow();
         singleNetworkManager.closeSocket();
+    }
+
+    private void ensureMessageSenderConfigured() {
+        if (singleNetworkManager.getSingleMessageSender() == null) {
+            singleNetworkManager.setSingleMessageSender(new SingleMessageSender());
+        }
+    }
+
+    private void startListenerIfNeeded() {
+        synchronized (this) {
+            if (listenerTask == null || listenerTask.isDone()) {
+                listenerTask = listenerExecutor.submit(new SingleMessageListener(singleNetworkManager));
+            }
+        }
     }
 
     public void run() {
