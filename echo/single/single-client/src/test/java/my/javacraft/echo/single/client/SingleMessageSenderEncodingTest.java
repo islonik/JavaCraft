@@ -20,9 +20,10 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Verifies that SingleMessageSender always writes UTF-8 bytes by launching a
- * separate JVM with a different default charset and running a small probe inside it.
+ * separate JVM with a different default charset and running this test class in
+ * a small standalone mode.
  * <p>
- * The probe writes through a fake SocketChannel/SelectionKey pair and prints
+ * The standalone mode writes through a fake SocketChannel/SelectionKey pair and prints
  * the raw hex payload so the assertion checks encoded bytes, not decoded text.
  */
 class SingleMessageSenderEncodingTest {
@@ -34,7 +35,8 @@ class SingleMessageSenderEncodingTest {
                 "-Dfile.encoding=ISO-8859-1",
                 "-cp",
                 System.getProperty("java.class.path"),
-                SingleMessageSenderEncodingProbe.class.getName());
+                SingleMessageSenderEncodingTest.class.getName(),
+                "--probe");
         processBuilder.environment().remove("JAVA_TOOL_OPTIONS");
 
         Process process = processBuilder.start();
@@ -50,20 +52,22 @@ class SingleMessageSenderEncodingTest {
     private static String javaExecutable() {
         return System.getProperty("java.home") + "/bin/java";
     }
-}
 
-final class SingleMessageSenderEncodingProbe {
-
-    private SingleMessageSenderEncodingProbe() {
-    }
-
+    /**
+     * Gives the forked JVM a tiny standalone entrypoint so the test can verify
+     * encoding under a different default charset without introducing a separate probe class.
+     */
     public static void main(String[] args) throws IOException {
+        if (args.length == 0 || !"--probe".equals(args[0])) {
+            return;
+        }
+
         RecordingSocketChannel channel = new RecordingSocketChannel();
         FakeSelectionKey key = new FakeSelectionKey(channel);
         SingleMessageSender sender = new SingleMessageSender();
         sender.setKey(key, null);
         sender.send("Привет");
-        // send() now only queues outbound bytes; flush them so the probe can
+        // send() now only queues outbound bytes; flush them so the forked JVM can
         // assert the exact encoded payload written to the channel.
         sender.flushPendingWrites();
         System.out.print(channel.hexDump());
