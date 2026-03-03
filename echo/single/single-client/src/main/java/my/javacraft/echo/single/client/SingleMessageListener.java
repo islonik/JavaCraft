@@ -53,12 +53,7 @@ public class SingleMessageListener implements Runnable {
                         SelectionKey key = keys.next();
                         keys.remove();
 
-                        // Get the socket channel held by the key
-                        SocketChannel channel = (SocketChannel)key.channel();
-
-                        if (key.isReadable()) {
-                            queueAvailableResponses(channel);
-                        }
+                        processReadyKey(key, singleMessageSender);
                     }
                 }
             } catch (IOException err) {
@@ -80,6 +75,21 @@ public class SingleMessageListener implements Runnable {
 
     private boolean isNotInterrupted() {
         return !Thread.currentThread().isInterrupted();
+    }
+
+    /**
+     * Handles both writable and readable readiness for the same key because a
+     * non-blocking socket can report both states in one selector cycle.
+     */
+    void processReadyKey(SelectionKey key, SingleMessageSender singleMessageSender) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
+
+        if (key.isWritable()) {
+            singleMessageSender.flushPendingWrites();
+        }
+        if (key.isReadable()) {
+            queueAvailableResponses(channel);
+        }
     }
 
     /**

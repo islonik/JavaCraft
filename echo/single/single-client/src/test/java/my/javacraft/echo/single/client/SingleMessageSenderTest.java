@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -72,12 +73,22 @@ class SingleMessageSenderTest {
         return clientChannel.register(selector, SelectionKey.OP_READ);
     }
 
+    /**
+     * The sender now queues outbound data first and relies on the selector
+     * thread to flush it later. Tests call flushPendingWrites() directly so the
+     * old socket assertions can still verify the bytes that would be written.
+     */
+    private void flushQueuedWrites() throws IOException {
+        sender.flushPendingWrites();
+    }
+
     @Test
     void testSendWritesDataToChannel() throws Exception {
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
         sender.send("hello server");
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
@@ -95,6 +106,7 @@ class SingleMessageSenderTest {
         sender.send("first");
         sender.send("second");
         sender.send("third");
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
@@ -114,8 +126,10 @@ class SingleMessageSenderTest {
         sender.setKey(key, selector);
 
         sender.send("test");
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
+        flushQueuedWrites();
 
-        // After send(), interestOps should be restored to OP_READ
+        // After the queued write is flushed, the key should return to read mode.
         Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
     }
 
@@ -124,9 +138,10 @@ class SingleMessageSenderTest {
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
-        // Send empty string — ByteBuffer.wrap("".getBytes()) has 0 remaining
-        // write loop body should not execute; interestOps should still reset
+        // Empty input still becomes a framed CRLF message and is flushed later.
         sender.send("");
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
+        flushQueuedWrites();
 
         Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
     }
@@ -137,6 +152,7 @@ class SingleMessageSenderTest {
         sender.setKey(key, selector);
 
         sender.send("already framed\r\n");
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
@@ -151,6 +167,7 @@ class SingleMessageSenderTest {
         sender.setKey(key, selector);
 
         sender.send("unix newline\n");
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
@@ -165,6 +182,7 @@ class SingleMessageSenderTest {
         sender.setKey(key, selector);
 
         sender.send("carriage return only\r");
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[256];
@@ -181,6 +199,7 @@ class SingleMessageSenderTest {
         // Send a large message — exercises the write loop's hasRemaining() check
         String largeMessage = "X".repeat(5000);
         sender.send(largeMessage);
+        flushQueuedWrites();
 
         InputStream in = acceptedSocket.getInputStream();
         byte[] buf = new byte[8192];
@@ -195,8 +214,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendBlocksUntilKeyIsSet() throws Exception {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             Future<?> future = executor.submit(() -> sender.send("blocked"));
 
             // Give time for send() to enter wait()
@@ -209,14 +227,13 @@ class SingleMessageSenderTest {
 
             future.get(2, TimeUnit.SECONDS);
             Assertions.assertTrue(future.isDone());
+            flushQueuedWrites();
 
-            // Verify data was written
+            // Verify the queued bytes are written once the selector flushes them.
             InputStream in = acceptedSocket.getInputStream();
             byte[] buf = new byte[256];
             int len = in.read(buf);
             Assertions.assertEquals("blocked\r\n", new String(buf, 0, len));
-        } finally {
-            executor.shutdownNow();
         }
     }
 
@@ -252,31 +269,39 @@ class SingleMessageSenderTest {
         // Setting key to null should cause next send() to block
         sender.setKey(null, null);
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             Future<?> future = executor.submit(() -> sender.send("should block"));
 
             Thread.sleep(150);
             Assertions.assertFalse(future.isDone(), "send() should block after key was set to null");
-        } finally {
-            executor.shutdownNow();
         }
     }
 
-    // ── Mockito-based test for send() catch(IOException) ─────────────
-
     @Test
-    void testSendCatchesIOExceptionFromChannelWrite() throws Exception {
-        // Covers send() catch(IOException) L43-44
+    @SuppressWarnings("MagicConstant")
+    void testFlushPendingWritesThrowsIOExceptionFromChannelWrite() throws Exception {
         SocketChannel mockChannel = mock(SocketChannel.class);
         when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("write failed"));
 
         SelectionKey mockKey = mock(SelectionKey.class);
         when(mockKey.channel()).thenReturn(mockChannel);
+        when(mockKey.interestOps()).thenReturn(SelectionKey.OP_READ);
+        when(mockKey.interestOps(anyInt())).thenReturn(mockKey);
 
         sender.setKey(mockKey, null);
+        sender.send("test");
 
-        // send() should catch IOException and log it — no exception propagated
-        Assertions.assertDoesNotThrow(() -> sender.send("test"));
+        Assertions.assertThrows(IOException.class, () -> sender.flushPendingWrites());
+    }
+
+    @Test
+    void testFlushPendingWritesHandlesCancelledKeyDuringRestore() throws Exception {
+        SelectionKey key = createConnection();
+        sender.setKey(key, selector);
+
+        sender.send("after flush");
+        clientChannel.close();
+
+        Assertions.assertThrows(IOException.class, () -> sender.flushPendingWrites());
     }
 }

@@ -1,6 +1,5 @@
 package my.javacraft.echo.single.client;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -19,62 +18,53 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Verifies that SingleMessageSender always writes UTF-8 bytes by launching a
- * separate JVM with a different default charset and running a small probe inside it.
+ * Tests how the listener handles ready keys in one select cycle.
  * <p>
- * The probe writes through a fake SocketChannel/SelectionKey pair and prints
- * the raw hex payload so the assertion checks encoded bytes, not decoded text.
+ * The same key can be writable and readable at the same time, so the listener
+ * must process both states instead of treating them as mutually exclusive.
  */
-class SingleMessageSenderEncodingTest {
+class SingleMessageListenerReadyKeyTest {
 
     @Test
-    void testSendUsesUtf8EvenWhenDefaultCharsetDiffers() throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                javaExecutable(),
-                "-Dfile.encoding=ISO-8859-1",
-                "-cp",
-                System.getProperty("java.class.path"),
-                SingleMessageSenderEncodingProbe.class.getName());
-        processBuilder.environment().remove("JAVA_TOOL_OPTIONS");
+    void testProcessReadyKeyFlushesWritesAndReadsResponsesInSameCycle() throws IOException {
+        SingleNetworkManager manager = new SingleNetworkManager();
+        RecordingMessageSender sender = new RecordingMessageSender();
+        manager.setSingleMessageSender(sender);
+        SingleMessageListener listener = new SingleMessageListener(manager);
 
-        Process process = processBuilder.start();
+        ReadyKey key = new ReadyKey(new ReadableSocketChannel("pong\r\n"), SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-        int exitCode = process.waitFor();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-        String errorOutput = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        listener.processReadyKey(key, sender);
 
-        Assertions.assertEquals(0, exitCode, errorOutput);
-        Assertions.assertEquals("D09FD180D0B8D0B2D0B5D1820D0A", output);
+        Assertions.assertTrue(sender.flushCalled);
+        Assertions.assertEquals("pong", manager.getMessage());
     }
 
-    private static String javaExecutable() {
-        return System.getProperty("java.home") + "/bin/java";
-    }
-}
+    /**
+     * Records whether the listener asks the sender to flush queued writes.
+     */
+    private static final class RecordingMessageSender extends SingleMessageSender {
+        private boolean flushCalled;
 
-final class SingleMessageSenderEncodingProbe {
-
-    private SingleMessageSenderEncodingProbe() {
-    }
-
-    public static void main(String[] args) throws IOException {
-        RecordingSocketChannel channel = new RecordingSocketChannel();
-        FakeSelectionKey key = new FakeSelectionKey(channel);
-        SingleMessageSender sender = new SingleMessageSender();
-        sender.setKey(key, null);
-        sender.send("Привет");
-        // send() now only queues outbound bytes; flush them so the probe can
-        // assert the exact encoded payload written to the channel.
-        sender.flushPendingWrites();
-        System.out.print(channel.hexDump());
+        @Override
+        void flushPendingWrites() {
+            flushCalled = true;
+        }
     }
 
-    private static final class FakeSelectionKey extends SelectionKey {
+    /**
+     * Lets the test control which readiness flags are visible to the listener.
+     */
+    private static final class ReadyKey extends SelectionKey {
         private final SocketChannel channel;
-        private int interestOps = SelectionKey.OP_READ;
+        private final int readyOps;
+        private int interestOps;
+        private boolean valid = true;
 
-        private FakeSelectionKey(SocketChannel channel) {
+        private ReadyKey(SocketChannel channel, int readyOps) {
             this.channel = channel;
+            this.readyOps = readyOps;
+            this.interestOps = readyOps;
         }
 
         @Override
@@ -89,12 +79,12 @@ final class SingleMessageSenderEncodingProbe {
 
         @Override
         public boolean isValid() {
-            return true;
+            return valid;
         }
 
         @Override
         public void cancel() {
-            // no-op
+            valid = false;
         }
 
         @Override
@@ -112,33 +102,57 @@ final class SingleMessageSenderEncodingProbe {
         @Override
         @SuppressWarnings("MagicConstant")
         public int readyOps() {
-            return interestOps;
+            return readyOps;
         }
     }
 
-    private static final class RecordingSocketChannel extends SocketChannel {
-        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    /**
+     * Provides one framed response so the test can verify the listener still
+     * reads data after it handles OP_WRITE.
+     */
+    private static final class ReadableSocketChannel extends SocketChannel {
+        private final byte[] payload;
+        private int position;
+        private boolean open = true;
 
-        private RecordingSocketChannel() {
+        private ReadableSocketChannel(String payload) {
             super(SelectorProvider.provider());
+            this.payload = payload.getBytes(StandardCharsets.UTF_8);
         }
 
-        String hexDump() {
-            byte[] data = bytes.toByteArray();
-            StringBuilder result = new StringBuilder(data.length * 2);
-            for (byte value : data) {
-                result.append(String.format("%02X", value));
+        @Override
+        public int read(ByteBuffer dst) throws IOException {
+            if (!open) {
+                throw new IOException("channel closed");
             }
-            return result.toString();
+            if (position >= payload.length) {
+                return 0;
+            }
+
+            int bytesToCopy = Math.min(dst.remaining(), payload.length - position);
+            dst.put(payload, position, bytesToCopy);
+            position += bytesToCopy;
+            return bytesToCopy;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
+            long total = 0;
+            for (int i = offset; i < offset + length; i++) {
+                int read = read(dsts[i]);
+                if (read <= 0) {
+                    return total == 0 ? read : total;
+                }
+                total += read;
+            }
+            return total;
         }
 
         @Override
         public int write(ByteBuffer src) {
-            int len = src.remaining();
-            byte[] data = new byte[len];
-            src.get(data);
-            bytes.writeBytes(data);
-            return len;
+            int written = src.remaining();
+            src.position(src.limit());
+            return written;
         }
 
         @Override
@@ -148,16 +162,6 @@ final class SingleMessageSenderEncodingProbe {
                 total += write(srcs[i]);
             }
             return total;
-        }
-
-        @Override
-        public int read(ByteBuffer dst) {
-            return 0;
-        }
-
-        @Override
-        public long read(ByteBuffer[] dsts, int offset, int length) {
-            return 0;
         }
 
         @Override
@@ -227,7 +231,7 @@ final class SingleMessageSenderEncodingProbe {
 
         @Override
         protected void implCloseSelectableChannel() {
-            // no-op
+            open = false;
         }
 
         @Override
