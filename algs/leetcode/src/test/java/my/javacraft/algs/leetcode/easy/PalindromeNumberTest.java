@@ -28,4 +28,10 @@ public class PalindromeNumberTest {
         PalindromeNumber solution = new PalindromeNumber();
         Assertions.assertTrue(solution.isPalindrome(2222));
     }
+
+    @Test
+    void testCase5() {
+        PalindromeNumber solution = new PalindromeNumber();
+        Assertions.assertTrue(solution.isPalindrome2(2222));
+    }
 }

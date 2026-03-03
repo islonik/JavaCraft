@@ -69,4 +69,17 @@ public class TwoSumTest {
         Assertions.assertEquals(expectedResult[0], actualResult[0]);
         Assertions.assertEquals(expectedResult[1], actualResult[1]);
     }
+
+    @Test
+    void testSimpleCase6() {
+        TwoSum solution = new TwoSum();
+
+        int []nums = {-3,4,3,90};
+        int target = 0;
+
+        int []expectedResult = {0,2};
+        int []actualResult = solution.twoSum2(nums, target);
+        Assertions.assertEquals(expectedResult[0], actualResult[0]);
+        Assertions.assertEquals(expectedResult[1], actualResult[1]);
+    }
 }

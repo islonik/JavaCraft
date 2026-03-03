@@ -1,6 +1,8 @@
 package my.javacraft.algs.leetcode.medium;
 
 /**
+ * 12. Integer to Roman
+ * <p>
  * Seven different symbols represent Roman numerals with the following values:
  * <p>
  * Symbol	Value
@@ -26,12 +28,7 @@ public class IntegerToRoman {
     private final static String[] UNITS = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
 
     public String intToRoman(int number) {
-        StringBuilder roman = new StringBuilder();
-        roman.append(THOUSANDS[number / 1000]);
-        roman.append(HUNDREDS[(number % 1000) / 100]);
-        roman.append(TENS[(number % 100) / 10]);
-        roman.append(UNITS[number % 10]);
-        return roman.toString();
+        return THOUSANDS[number / 1000] + HUNDREDS[(number % 1000) / 100] + TENS[(number % 100) / 10] + UNITS[number % 10];
     }
 
 }

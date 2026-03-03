@@ -1,6 +1,8 @@
 package my.javacraft.algs.leetcode.easy;
 
 /**
+ * 21. Merge Two Sorted Lists
+ * <p>
  * You are given the heads of two sorted linked lists list1 and list2.
  * <p>
  * Merge the two lists into one sorted list. The list should be made by splicing together the nodes of the first two lists.
@@ -28,8 +30,7 @@ public class MergeTwoSortedLists {
     public static class ListNode {
         int val;
         ListNode next;
-        ListNode() {
-        }
+
         ListNode(int val) {
             this.val = val;
         }

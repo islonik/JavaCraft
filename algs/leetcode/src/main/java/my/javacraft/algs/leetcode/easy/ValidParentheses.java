@@ -1,6 +1,8 @@
 package my.javacraft.algs.leetcode.easy;
 
 /**
+ * 20. Valid Parentheses
+ * <p>
  * Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
  * <p>
  * An input string is valid if:

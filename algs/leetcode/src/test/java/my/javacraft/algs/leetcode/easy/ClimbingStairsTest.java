@@ -1,6 +1,5 @@
-package my.javacraft.algs.leetcode;
+package my.javacraft.algs.leetcode.easy;
 
-import my.javacraft.algs.leetcode.easy.ClimbingStairs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

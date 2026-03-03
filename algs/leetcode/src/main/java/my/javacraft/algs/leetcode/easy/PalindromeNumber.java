@@ -1,6 +1,8 @@
 package my.javacraft.algs.leetcode.easy;
 
 /**
+ * 9. Palindrome Number
+ * <p>
  * Given an integer x, return true if x is a palindrome, and false otherwise.
  */
 public class PalindromeNumber {
