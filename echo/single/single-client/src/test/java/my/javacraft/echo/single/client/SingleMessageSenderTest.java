@@ -1,5 +1,6 @@
 package my.javacraft.echo.single.client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -8,17 +9,21 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.spi.AbstractSelectableChannel;
+import java.nio.channels.spi.AbstractSelector;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,6 +91,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendWritesDataToChannel() throws Exception {
+        // Verifies that a normal queued command is flushed to the socket verbatim.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -102,6 +108,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendMultipleMessages() throws Exception {
+        // Verifies that multiple queued commands keep their order when flushed.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -124,6 +131,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendResetsInterestOpsToRead() throws Exception {
+        // Verifies that draining the queue removes OP_WRITE and leaves OP_READ enabled.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -137,6 +145,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendEmptyString() throws Exception {
+        // Verifies that an empty command still becomes one framed CRLF message.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -150,6 +159,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendPreservesExistingCrLfDelimiter() throws Exception {
+        // Verifies that already framed commands are not double-terminated.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -165,6 +175,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendNormalizesTrailingLfToCrLf() throws Exception {
+        // Verifies that Unix line endings are normalized to the wire delimiter.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -180,6 +191,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendNormalizesTrailingCrToCrLf() throws Exception {
+        // Verifies that a trailing CR is completed into one CRLF delimiter.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -195,6 +207,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendLargeMessage() throws Exception {
+        // Verifies that long payloads are fully flushed without truncation.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -216,6 +229,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendBlocksUntilKeyIsSet() throws Exception {
+        // Verifies that send() waits for the listener to publish a selection key.
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             Future<?> future = executor.submit(() -> sender.send("blocked"));
 
@@ -241,6 +255,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendHandlesCancelledKey() throws Exception {
+        // Verifies that a cancelled key does not escape send() as an exception.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -253,6 +268,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSendHandlesInterruptDuringWait() {
+        // Verifies that send() preserves the interrupt flag when wait() is interrupted.
         // key is null by default → send() will enter wait()
         // With interrupt flag set, wait() immediately throws InterruptedException
         Thread.currentThread().interrupt();
@@ -265,6 +281,7 @@ class SingleMessageSenderTest {
 
     @Test
     void testSetKeyToNullCausesSendToBlockAgain() throws Exception {
+        // Verifies that clearing the key makes later sends wait for a new connection again.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -281,7 +298,8 @@ class SingleMessageSenderTest {
 
     @Test
     void testFlushPendingWritesThrowsIOExceptionFromChannelWrite() {
-        WriteFailingSocketChannel channel = new WriteFailingSocketChannel();
+        // Verifies that a channel write failure is propagated out of the flush step.
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel(new IOException("write failed"));
         SelectionKey key = new FakeSelectionKey(channel);
 
         sender.setKey(key, null);
@@ -291,7 +309,16 @@ class SingleMessageSenderTest {
     }
 
     @Test
+    void testFlushPendingWritesReturnsWhenKeyMissing() {
+        // Verifies that flushPendingWrites() becomes a no-op when no connection key is available.
+        sender.setKey(null, null);
+
+        Assertions.assertDoesNotThrow(() -> sender.flushPendingWrites());
+    }
+
+    @Test
     void testFlushPendingWritesHandlesCancelledKeyDuringRestore() throws Exception {
+        // Verifies that a channel becoming invalid during restore still fails the flush.
         SelectionKey key = createConnection();
         sender.setKey(key, selector);
 
@@ -301,23 +328,301 @@ class SingleMessageSenderTest {
         Assertions.assertThrows(IOException.class, () -> sender.flushPendingWrites());
     }
 
+    @Test
+    void testSendUsesUtf8EvenWhenDefaultCharsetDiffers() throws Exception {
+        // Verifies that the sender always frames bytes as UTF-8, regardless of JVM default charset.
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                javaExecutable(),
+                "-Dfile.encoding=ISO-8859-1",
+                "-cp",
+                System.getProperty("java.class.path"),
+                SingleMessageSenderTest.class.getName(),
+                "--encoding-probe");
+        processBuilder.environment().remove("JAVA_TOOL_OPTIONS");
+
+        Process process = processBuilder.start();
+
+        int exitCode = process.waitFor();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        String errorOutput = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+
+        Assertions.assertEquals(0, exitCode, errorOutput);
+        Assertions.assertEquals("D09FD180D0B8D0B2D0B5D1820D0A", output);
+    }
+
+    @Test
+    void testSendQueuesMessageAndEnablesWriteInterestWithoutWritingImmediately() {
+        // Verifies that send() only queues data and leaves the actual write for the selector thread.
+        TrackingSelector trackingSelector = new TrackingSelector();
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel();
+        FakeSelectionKey key = new FakeSelectionKey(channel);
+        sender.setKey(key, trackingSelector);
+
+        Assertions.assertDoesNotThrow(() -> sender.send("hello"));
+
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
+        Assertions.assertEquals("", channel.writtenText());
+        Assertions.assertTrue(trackingSelector.wakeupCount > 0);
+    }
+
+    @Test
+    void testFlushPendingWritesStopsOnZeroWriteAndKeepsWriteInterest() throws IOException {
+        // Verifies that a zero-byte non-blocking write keeps OP_WRITE enabled for a retry later.
+        TrackingSelector trackingSelector = new TrackingSelector();
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel(null, 3, 0, 4);
+        FakeSelectionKey key = new FakeSelectionKey(channel);
+        sender.setKey(key, trackingSelector);
+
+        sender.send("hello");
+        sender.flushPendingWrites();
+
+        Assertions.assertEquals("hel", channel.writtenText());
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
+    }
+
+    @Test
+    void testFlushPendingWritesRestoresReadInterestAfterQueueDrains() throws IOException {
+        // Verifies that finishing the queued write turns OP_WRITE back off.
+        TrackingSelector trackingSelector = new TrackingSelector();
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel(null, 3, 0, 4);
+        FakeSelectionKey key = new FakeSelectionKey(channel);
+        sender.setKey(key, trackingSelector);
+
+        sender.send("hello");
+        sender.flushPendingWrites();
+        sender.flushPendingWrites();
+
+        Assertions.assertEquals("hello\r\n", channel.writtenText());
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
+    void testSendReturnsWhenKeyIsClearedBeforeQueueing() throws Exception {
+        // Verifies the race where key exists before awaitSelectionKey() returns but is cleared before queueing.
+        TrackingSelector trackingSelector = new TrackingSelector();
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel();
+        FakeSelectionKey key = new FakeSelectionKey(channel);
+        sender.setKey(key, trackingSelector);
+        Thread senderThread = new Thread(() -> sender.send("lost"));
+        SingleMessageSender lockedSender = sender;
+
+        synchronized (lockedSender) {
+            senderThread.start();
+            waitForBlockedState(senderThread);
+            clearSenderState();
+        }
+
+        senderThread.join(TimeUnit.SECONDS.toMillis(2));
+
+        Assertions.assertFalse(senderThread.isAlive());
+        Assertions.assertEquals("", channel.writtenText());
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+        Assertions.assertEquals(0, trackingSelector.wakeupCount);
+    }
+
     /**
-     * Forces flushPendingWrites() down its write-exception path without
-     * relying on Mockito to stub final JDK channel methods.
+     * Gives the forked JVM a small standalone probe so the UTF-8 test can reuse
+     * this class instead of keeping a separate encoding-only test class.
      */
-    private static final class WriteFailingSocketChannel extends SocketChannel {
-        private WriteFailingSocketChannel() {
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0 || !"--encoding-probe".equals(args[0])) {
+            return;
+        }
+
+        ScriptedWriteSocketChannel channel = new ScriptedWriteSocketChannel();
+        FakeSelectionKey key = new FakeSelectionKey(channel);
+        SingleMessageSender sender = new SingleMessageSender();
+        sender.setKey(key, null);
+        sender.send("Привет");
+        sender.flushPendingWrites();
+        System.out.print(channel.hexDump());
+    }
+
+    private static String javaExecutable() {
+        return System.getProperty("java.home") + "/bin/java";
+    }
+
+    /**
+     * Uses reflection to recreate the narrow race where another thread clears
+     * the sender state after awaitSelectionKey() returns but before queueing starts.
+     */
+    private void clearSenderState() throws Exception {
+        java.lang.reflect.Field keyField = SingleMessageSender.class.getDeclaredField("key");
+        keyField.setAccessible(true);
+        keyField.set(sender, null);
+
+        java.lang.reflect.Field selectorField = SingleMessageSender.class.getDeclaredField("selector");
+        selectorField.setAccessible(true);
+        selectorField.set(sender, null);
+    }
+
+    /**
+     * Supplies the sender with a minimal selection key so the test can focus
+     * on sender state changes instead of selector framework setup.
+     */
+    private static final class FakeSelectionKey extends SelectionKey {
+        private final SocketChannel channel;
+        private int interestOps = SelectionKey.OP_READ;
+
+        private FakeSelectionKey(SocketChannel channel) {
+            this.channel = channel;
+        }
+
+        @Override
+        public SelectableChannel channel() {
+            return channel;
+        }
+
+        @Override
+        public Selector selector() {
+            return null;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public void cancel() {
+            // no-op
+        }
+
+        @Override
+        @SuppressWarnings("MagicConstant")
+        public int interestOps() {
+            return interestOps;
+        }
+
+        @Override
+        public SelectionKey interestOps(int ops) {
+            interestOps = ops;
+            return this;
+        }
+
+        @Override
+        @SuppressWarnings("MagicConstant")
+        public int readyOps() {
+            return interestOps;
+        }
+    }
+
+    /**
+     * Records wakeups so state-based tests can verify that send() notifies the
+     * selector when new outbound data is queued.
+     */
+    private static final class TrackingSelector extends AbstractSelector {
+        private int wakeupCount;
+
+        private TrackingSelector() {
             super(SelectorProvider.provider());
         }
 
         @Override
+        protected void implCloseSelector() {
+            // no-op
+        }
+
+        @Override
+        protected SelectionKey register(AbstractSelectableChannel ch, int ops, Object att) {
+            throw new UnsupportedOperationException("register is not used in this test");
+        }
+
+        @Override
+        public Set<SelectionKey> keys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public Set<SelectionKey> selectedKeys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public int selectNow() {
+            return 0;
+        }
+
+        @Override
+        public int select(long timeout) {
+            return 0;
+        }
+
+        @Override
+        public int select() {
+            return 0;
+        }
+
+        @Override
+        public Selector wakeup() {
+            wakeupCount++;
+            return this;
+        }
+    }
+
+    /**
+     * Replays scripted non-blocking write behavior and records the emitted
+     * bytes so sender tests can cover queueing, backpressure, encoding, and errors.
+     */
+    private static final class ScriptedWriteSocketChannel extends SocketChannel {
+        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        private final IOException writeFailure;
+        private final int[] writeResults;
+        private int writeIndex;
+
+        private ScriptedWriteSocketChannel(int... writeResults) {
+            this(null, writeResults);
+        }
+
+        private ScriptedWriteSocketChannel(IOException writeFailure, int... writeResults) {
+            super(SelectorProvider.provider());
+            this.writeFailure = writeFailure;
+            this.writeResults = writeResults.clone();
+        }
+
+        String writtenText() {
+            return bytes.toString(StandardCharsets.UTF_8);
+        }
+
+        String hexDump() {
+            byte[] data = bytes.toByteArray();
+            StringBuilder result = new StringBuilder(data.length * 2);
+            for (byte value : data) {
+                result.append(String.format("%02X", value));
+            }
+            return result.toString();
+        }
+
+        @Override
         public int write(ByteBuffer src) throws IOException {
-            throw new IOException("write failed");
+            if (writeFailure != null) {
+                throw writeFailure;
+            }
+            if (writeIndex < writeResults.length) {
+                int scriptedResult = writeResults[writeIndex++];
+                if (scriptedResult == 0) {
+                    return 0;
+                }
+                return copyBytes(src, scriptedResult);
+            }
+            return copyBytes(src, src.remaining());
+        }
+
+        private int copyBytes(ByteBuffer src, int requestedBytes) {
+            int bytesToCopy = Math.min(requestedBytes, src.remaining());
+            byte[] data = new byte[bytesToCopy];
+            src.get(data);
+            bytes.writeBytes(data);
+            return bytesToCopy;
         }
 
         @Override
         public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
-            throw new IOException("write failed");
+            long total = 0;
+            for (int i = offset; i < offset + length; i++) {
+                total += write(srcs[i]);
+            }
+            return total;
         }
 
         @Override
@@ -377,7 +682,7 @@ class SingleMessageSenderTest {
 
         @Override
         public SocketAddress getRemoteAddress() {
-            return InetSocketAddress.createUnresolved("localhost", 0);
+            return InetSocketAddress.createUnresolved("localhost", 8077);
         }
 
         @Override
@@ -407,53 +712,14 @@ class SingleMessageSenderTest {
     }
 
     /**
-     * Supplies the sender with a minimal selection key so the test can focus
-     * on the write failure instead of selector framework setup.
+     * Waits until the background sender thread is blocked on the sender monitor
+     * so the race test can clear the key at the precise point it needs.
      */
-    private static final class FakeSelectionKey extends SelectionKey {
-        private final SocketChannel channel;
-        private int interestOps = SelectionKey.OP_READ;
-
-        private FakeSelectionKey(SocketChannel channel) {
-            this.channel = channel;
+    private void waitForBlockedState(Thread thread) {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1);
+        while (thread.getState() != Thread.State.BLOCKED && System.currentTimeMillis() < deadline) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
         }
-
-        @Override
-        public SelectableChannel channel() {
-            return channel;
-        }
-
-        @Override
-        public Selector selector() {
-            return null;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public void cancel() {
-            // no-op
-        }
-
-        @Override
-        @SuppressWarnings("MagicConstant")
-        public int interestOps() {
-            return interestOps;
-        }
-
-        @Override
-        public SelectionKey interestOps(int ops) {
-            interestOps = ops;
-            return this;
-        }
-
-        @Override
-        @SuppressWarnings("MagicConstant")
-        public int readyOps() {
-            return interestOps;
-        }
+        Assertions.assertEquals(Thread.State.BLOCKED, thread.getState());
     }
 }
