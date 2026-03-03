@@ -115,6 +115,7 @@ public class SingleServer implements Runnable {
             log.error("Server failure", e);
         } finally {
             selectorRef = null;
+            closeTrackedClients();
             try {
                 if (selector != null) {
                     selector.close();
@@ -127,6 +128,28 @@ public class SingleServer implements Runnable {
                 log.error(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Closes every client channel still referenced by the server state so
+     * shutdown does not leak accepted sockets after the selector stops.
+     */
+    private void closeTrackedClients() {
+        Set<SocketChannel> trackedClients = new HashSet<>();
+        trackedClients.addAll(requestBuffers.keySet());
+        trackedClients.addAll(pendingRequests.keySet());
+        trackedClients.addAll(pendingWrites.keySet());
+        trackedClients.addAll(closeAfterWrite);
+
+        for (SocketChannel client : trackedClients) {
+            clearChannelState(client);
+            try {
+                client.close();
+            } catch (IOException closeError) {
+                log.debug("Error closing tracked client", closeError);
+            }
+        }
+        connections.set(0);
     }
 
     /**
