@@ -1,5 +1,6 @@
 package my.javacraft.echo.single.client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  * Reads line-delimited server responses from the single client connection.
  * <p>
  * TCP is a byte stream, so responses can arrive fragmented across several reads or combined in a single read.
- * This listener keeps a small decode buffer and only publishes complete framed messages to the client queue.
+ * This listener keeps a small raw-byte buffer and only decodes complete framed messages for the client queue.
  * <p>
  * @author Lipatov Nikita
  */
@@ -28,9 +29,10 @@ public class SingleMessageListener implements Runnable {
     static final int BUFFER_SIZE = 2 * 1024;
     static final long SELECTOR_TIMEOUT = 1_000L;
     private static final String MESSAGE_DELIMITER = "\r\n";
+    private static final byte[] MESSAGE_DELIMITER_BYTES = MESSAGE_DELIMITER.getBytes(StandardCharsets.US_ASCII);
 
     private final SingleNetworkManager singleNetworkManager;
-    private final StringBuilder responseBuffer = new StringBuilder();
+    private final ByteArrayOutputStream responseBuffer = new ByteArrayOutputStream();
     private final Deque<String> pendingMessages = new ArrayDeque<>();
 
     @Override
@@ -139,7 +141,7 @@ public class SingleMessageListener implements Runnable {
                 buffer.get(data);
                 buffer.clear();
 
-                responseBuffer.append(new String(data, StandardCharsets.UTF_8));
+                responseBuffer.write(data, 0, numRead);
                 extractCompleteFrames();
 
                 String nextMessage = pollPendingMessage();
@@ -161,40 +163,58 @@ public class SingleMessageListener implements Runnable {
     }
 
     /**
-     * Splits the accumulated stream into complete protocol frames while leaving
-     * any unfinished suffix in the buffer for the next read.
+     * Splits the accumulated raw bytes into complete frames before decoding.
+     * This keeps UTF-8 characters intact even when one code point is spread
+     * across multiple socket reads.
      */
     private void extractCompleteFrames() {
-        int delimiterIndex = responseBuffer.indexOf(MESSAGE_DELIMITER);
-        while (delimiterIndex >= 0) {
-            int frameEnd = delimiterIndex + MESSAGE_DELIMITER.length();
-            pendingMessages.addLast(responseBuffer.substring(0, frameEnd));
-            responseBuffer.delete(0, frameEnd);
-            delimiterIndex = responseBuffer.indexOf(MESSAGE_DELIMITER);
+        byte[] bufferedBytes = responseBuffer.toByteArray();
+        int frameStart = 0;
+
+        for (int index = 0; index <= bufferedBytes.length - MESSAGE_DELIMITER_BYTES.length; index++) {
+            if (!matchesDelimiter(bufferedBytes, index)) {
+                continue;
+            }
+
+            pendingMessages.addLast(new String(
+                    bufferedBytes,
+                    frameStart,
+                    index - frameStart,
+                    StandardCharsets.UTF_8));
+            frameStart = index + MESSAGE_DELIMITER_BYTES.length;
+            index = frameStart - 1;
         }
+
+        retainUnreadBytes(bufferedBytes, frameStart);
     }
 
     /**
-     * Normalizes buffered frames for callers by removing only the protocol
-     * delimiter, not leading/trailing spaces that belong to the payload.
+     * Compares raw bytes against the delimiter so framing stays correct before
+     * any UTF-8 decoding happens.
      */
-    private String pollPendingMessage() {
-        String framedMessage = pendingMessages.pollFirst();
-        if (framedMessage == null) {
-            return null;
+    private boolean matchesDelimiter(byte[] bufferedBytes, int index) {
+        for (int delimiterOffset = 0; delimiterOffset < MESSAGE_DELIMITER_BYTES.length; delimiterOffset++) {
+            if (bufferedBytes[index + delimiterOffset] != MESSAGE_DELIMITER_BYTES[delimiterOffset]) {
+                return false;
+            }
         }
-        return trimTrailingLineDelimiters(framedMessage);
+        return true;
     }
 
-    private String trimTrailingLineDelimiters(String message) {
-        int end = message.length();
-        while (end > 0) {
-            char current = message.charAt(end - 1);
-            if (current != '\r' && current != '\n') {
-                break;
-            }
-            end--;
+    /**
+     * Drops already-consumed bytes while keeping any unfinished UTF-8 suffix
+     * for the next read call.
+     */
+    private void retainUnreadBytes(byte[] bufferedBytes, int frameStart) {
+        if (frameStart == 0) {
+            return;
         }
-        return message.substring(0, end);
+
+        responseBuffer.reset();
+        responseBuffer.write(bufferedBytes, frameStart, bufferedBytes.length - frameStart);
+    }
+
+    private String pollPendingMessage() {
+        return pendingMessages.pollFirst();
     }
 }

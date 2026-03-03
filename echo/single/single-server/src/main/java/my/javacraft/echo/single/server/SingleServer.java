@@ -1,5 +1,6 @@
 package my.javacraft.echo.single.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -33,9 +34,9 @@ import lombok.extern.slf4j.Slf4j;
  * Strategy on both sides:
  * <p>
  * 1) sender always appends - \r\n
- * 2) receiver keeps a per-connection string buffer
- * 3) each read appends raw UTF-8 text to that buffer
- * 4) receiver extracts only complete frames ending with \r\n
+ * 2) receiver keeps a per-connection raw byte buffer
+ * 3) each read appends raw bytes to that buffer
+ * 4) receiver extracts only complete frames ending with \r\n and then decodes them as UTF-8
  * 5) any incomplete suffix stays buffered for the next read
  * 6) if multiple frames arrive in one read, they are queued and processed in order
  */
@@ -47,13 +48,14 @@ public class SingleServer implements Runnable {
     // A CRLF-terminated text frame keeps the protocol simple and readable while
     // still handling empty messages and fragmented/coalesced TCP packets.
     private static final String MESSAGE_DELIMITER = "\r\n";
+    private static final byte[] MESSAGE_DELIMITER_BYTES = MESSAGE_DELIMITER.getBytes(StandardCharsets.US_ASCII);
 
     private final AtomicInteger connections = new AtomicInteger(0);
     private final AtomicBoolean running = new AtomicBoolean(true);
 
     private final int port;
     private final ByteBuffer buffer;
-    private final Map<SocketChannel, StringBuilder> requestBuffers = new HashMap<>();
+    private final Map<SocketChannel, ByteArrayOutputStream> requestBuffers = new HashMap<>();
     private final Map<SocketChannel, Deque<String>> pendingRequests = new HashMap<>();
     private volatile Selector selectorRef;
 
@@ -162,7 +164,7 @@ public class SingleServer implements Runnable {
 
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ);
-        requestBuffers.put(client, new StringBuilder());
+        requestBuffers.put(client, new ByteArrayOutputStream());
         pendingRequests.put(client, new ArrayDeque<>());
     }
 
@@ -199,7 +201,7 @@ public class SingleServer implements Runnable {
             return pendingRequest;
         }
 
-        StringBuilder requestBuffer = requestBuffers.computeIfAbsent(channel, ignored -> new StringBuilder());
+        ByteArrayOutputStream requestBuffer = requestBuffers.computeIfAbsent(channel, ignored -> new ByteArrayOutputStream());
         Deque<String> readyRequests = pendingRequests.computeIfAbsent(channel, ignored -> new ArrayDeque<>());
 
         try {
@@ -221,7 +223,7 @@ public class SingleServer implements Runnable {
                 byte[] data = new byte[numRead];
                 buffer.get(data);
 
-                requestBuffer.append(new String(data, StandardCharsets.UTF_8));
+                requestBuffer.write(data, 0, numRead);
                 bufferCompleteRequests(requestBuffer, readyRequests);
 
                 String nextRequest = readyRequests.pollFirst();
@@ -315,17 +317,54 @@ public class SingleServer implements Runnable {
     }
 
     /**
-     * Extracts every complete line-delimited request from the accumulated bytes
-     * and leaves the unfinished tail in place for the next read.
+     * Extracts complete frames from raw bytes before decoding them. This avoids
+     * corrupting UTF-8 characters that arrive split across socket reads.
      */
-    private void bufferCompleteRequests(StringBuilder requestBuffer, Deque<String> readyRequests) {
-        int delimiterIndex = requestBuffer.indexOf(MESSAGE_DELIMITER);
-        while (delimiterIndex >= 0) {
-            int frameEnd = delimiterIndex + MESSAGE_DELIMITER.length();
-            readyRequests.addLast(requestBuffer.substring(0, frameEnd));
-            requestBuffer.delete(0, frameEnd);
-            delimiterIndex = requestBuffer.indexOf(MESSAGE_DELIMITER);
+    private void bufferCompleteRequests(ByteArrayOutputStream requestBuffer, Deque<String> readyRequests) {
+        byte[] bufferedBytes = requestBuffer.toByteArray();
+        int frameStart = 0;
+
+        for (int index = 0; index <= bufferedBytes.length - MESSAGE_DELIMITER_BYTES.length; index++) {
+            if (!matchesDelimiter(bufferedBytes, index)) {
+                continue;
+            }
+
+            readyRequests.addLast(new String(
+                    bufferedBytes,
+                    frameStart,
+                    index - frameStart,
+                    StandardCharsets.UTF_8) + MESSAGE_DELIMITER);
+            frameStart = index + MESSAGE_DELIMITER_BYTES.length;
+            index = frameStart - 1;
         }
+
+        retainUnreadBytes(requestBuffer, bufferedBytes, frameStart);
+    }
+
+    /**
+     * Compares raw bytes with the CRLF delimiter so frame detection stays
+     * independent from UTF-8 character boundaries.
+     */
+    private boolean matchesDelimiter(byte[] bufferedBytes, int index) {
+        for (int delimiterOffset = 0; delimiterOffset < MESSAGE_DELIMITER_BYTES.length; delimiterOffset++) {
+            if (bufferedBytes[index + delimiterOffset] != MESSAGE_DELIMITER_BYTES[delimiterOffset]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Removes already-decoded frames and keeps only the unfinished byte suffix
+     * for the next non-blocking read event.
+     */
+    private void retainUnreadBytes(ByteArrayOutputStream requestBuffer, byte[] bufferedBytes, int frameStart) {
+        if (frameStart == 0) {
+            return;
+        }
+
+        requestBuffer.reset();
+        requestBuffer.write(bufferedBytes, frameStart, bufferedBytes.length - frameStart);
     }
 
     private String pollPendingRequest(SocketChannel channel) {
