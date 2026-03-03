@@ -5,10 +5,16 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -17,10 +23,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class SingleMessageSenderTest {
 
@@ -278,17 +280,11 @@ class SingleMessageSenderTest {
     }
 
     @Test
-    @SuppressWarnings("MagicConstant")
-    void testFlushPendingWritesThrowsIOExceptionFromChannelWrite() throws Exception {
-        SocketChannel mockChannel = mock(SocketChannel.class);
-        when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("write failed"));
+    void testFlushPendingWritesThrowsIOExceptionFromChannelWrite() {
+        WriteFailingSocketChannel channel = new WriteFailingSocketChannel();
+        SelectionKey key = new FakeSelectionKey(channel);
 
-        SelectionKey mockKey = mock(SelectionKey.class);
-        when(mockKey.channel()).thenReturn(mockChannel);
-        when(mockKey.interestOps()).thenReturn(SelectionKey.OP_READ);
-        when(mockKey.interestOps(anyInt())).thenReturn(mockKey);
-
-        sender.setKey(mockKey, null);
+        sender.setKey(key, null);
         sender.send("test");
 
         Assertions.assertThrows(IOException.class, () -> sender.flushPendingWrites());
@@ -303,5 +299,161 @@ class SingleMessageSenderTest {
         clientChannel.close();
 
         Assertions.assertThrows(IOException.class, () -> sender.flushPendingWrites());
+    }
+
+    /**
+     * Forces flushPendingWrites() down its write-exception path without
+     * relying on Mockito to stub final JDK channel methods.
+     */
+    private static final class WriteFailingSocketChannel extends SocketChannel {
+        private WriteFailingSocketChannel() {
+            super(SelectorProvider.provider());
+        }
+
+        @Override
+        public int write(ByteBuffer src) throws IOException {
+            throw new IOException("write failed");
+        }
+
+        @Override
+        public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
+            throw new IOException("write failed");
+        }
+
+        @Override
+        public int read(ByteBuffer dst) {
+            return 0;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) {
+            return 0;
+        }
+
+        @Override
+        public SocketChannel bind(SocketAddress local) {
+            return this;
+        }
+
+        @Override
+        public <T> SocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownInput() {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownOutput() {
+            return this;
+        }
+
+        @Override
+        public Socket socket() {
+            return new Socket();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
+        }
+
+        @Override
+        public boolean isConnectionPending() {
+            return false;
+        }
+
+        @Override
+        public boolean connect(SocketAddress remote) {
+            return true;
+        }
+
+        @Override
+        public boolean finishConnect() {
+            return true;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() {
+            // no-op
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
+        }
+    }
+
+    /**
+     * Supplies the sender with a minimal selection key so the test can focus
+     * on the write failure instead of selector framework setup.
+     */
+    private static final class FakeSelectionKey extends SelectionKey {
+        private final SocketChannel channel;
+        private int interestOps = SelectionKey.OP_READ;
+
+        private FakeSelectionKey(SocketChannel channel) {
+            this.channel = channel;
+        }
+
+        @Override
+        public SelectableChannel channel() {
+            return channel;
+        }
+
+        @Override
+        public Selector selector() {
+            return null;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public void cancel() {
+            // no-op
+        }
+
+        @Override
+        @SuppressWarnings("MagicConstant")
+        public int interestOps() {
+            return interestOps;
+        }
+
+        @Override
+        public SelectionKey interestOps(int ops) {
+            interestOps = ops;
+            return this;
+        }
+
+        @Override
+        @SuppressWarnings("MagicConstant")
+        public int readyOps() {
+            return interestOps;
+        }
     }
 }

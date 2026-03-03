@@ -38,11 +38,11 @@ public class SingleNetworkManager {
                     Selector openedSelector = null;
                     try {
                         // Finish the TCP handshake before publishing the connection to callers.
-                        openedClient = SocketChannel.open();
+                        openedClient = openSocketChannel();
                         openedClient.connect(new InetSocketAddress(serverHost, serverPort));
                         openedClient.configureBlocking(false);
 
-                        openedSelector = Selector.open();
+                        openedSelector = openSelector();
                         SelectionKey key = openedClient.register(openedSelector, SelectionKey.OP_READ);
 
                         client = openedClient;
@@ -139,6 +139,22 @@ public class SingleNetworkManager {
                 }
             }
         }
+    }
+
+    /**
+     * Keeps channel creation overridable in tests so cleanup branches can be
+     * exercised without depending on real network sockets.
+     */
+    SocketChannel openSocketChannel() throws IOException {
+        return SocketChannel.open();
+    }
+
+    /**
+     * Keeps selector creation overridable in tests for the same reason as
+     * openSocketChannel().
+     */
+    Selector openSelector() throws IOException {
+        return Selector.open();
     }
 
     /**

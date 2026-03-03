@@ -2,19 +2,34 @@ package my.javacraft.echo.single.client;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.channels.Selector;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class SingleNetworkManagerTest {
 
@@ -171,6 +186,55 @@ class SingleNetworkManagerTest {
     }
 
     @Test
+    void testOpenSocketAddsSuppressedCloseFailureWhenCleanupFails() {
+        SocketChannel channel = new ScriptedSocketChannel(
+                new IOException("connect failed"),
+                new IOException("channel close failed"));
+        SingleNetworkManager failingManager = new TestableNetworkManager(channel, null);
+
+        IOException thrown = Assertions.assertThrows(
+                IOException.class,
+                () -> failingManager.openSocket("localhost", 8080));
+
+        Assertions.assertEquals("connect failed", thrown.getMessage());
+        Assertions.assertEquals(1, thrown.getSuppressed().length);
+        Assertions.assertEquals("channel close failed", thrown.getSuppressed()[0].getMessage());
+    }
+
+    @Test
+    void testConcurrentOpenSocketUsesInnerGuardAndPublishesConnectionOnce() throws Exception {
+        assumeSocketBindingAvailable();
+        try (ServerSocket server = new ServerSocket(0);
+             ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            int port = server.getLocalPort();
+            acceptAsync(server);
+            SingleMessageSender sender = mock(SingleMessageSender.class);
+            CountDownLatch ready = new CountDownLatch(2);
+            CountDownLatch go = new CountDownLatch(1);
+            SingleNetworkManager lockedManager = manager;
+            manager.setSingleMessageSender(sender);
+
+            Future<?> first;
+            Future<?> second;
+            synchronized (lockedManager) {
+                first = submitOpenSocket(lockedManager, executor, ready, go, port);
+                second = submitOpenSocket(lockedManager, executor, ready, go, port);
+
+                Assertions.assertTrue(ready.await(1, TimeUnit.SECONDS));
+                go.countDown();
+            }
+
+            first.get(2, TimeUnit.SECONDS);
+            second.get(2, TimeUnit.SECONDS);
+
+            verify(sender, times(1)).setKey(any(SelectionKey.class), any(Selector.class));
+            Assertions.assertNotNull(manager.getSocketChannel());
+            Assertions.assertNotNull(manager.getSelector());
+            manager.closeSocket();
+        }
+    }
+
+    @Test
     void testCloseSocketWhenNotOpened() {
         // Should not throw when nothing was opened
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
@@ -195,6 +259,25 @@ class SingleNetworkManagerTest {
     }
 
     @Test
+    void testOpenSocketPublishesReadyKeyToSenderWhenSenderPresent() throws IOException {
+        assumeSocketBindingAvailable();
+        try (ServerSocket server = new ServerSocket(0)) {
+            int port = server.getLocalPort();
+            acceptAsync(server);
+            RecordingMessageSender sender = new RecordingMessageSender();
+            manager.setSingleMessageSender(sender);
+
+            manager.openSocket("localhost", port);
+
+            Assertions.assertEquals(1, sender.setKeyCalls);
+            Assertions.assertNotNull(sender.lastKey);
+            Assertions.assertSame(manager.getSelector(), sender.lastSelector);
+            Assertions.assertSame(manager.getSocketChannel(), sender.lastKey.channel());
+            manager.closeSocket();
+        }
+    }
+
+    @Test
     void testGetSocketChannelFastPathWhenAlreadyOpen() throws IOException {
         try (ServerSocket server = new ServerSocket(0)) {
             int port = server.getLocalPort();
@@ -210,6 +293,20 @@ class SingleNetworkManagerTest {
             Assertions.assertSame(ch1, ch2);
             manager.closeSocket();
         }
+    }
+
+    @Test
+    void testGetSelectorThrowsAfterTimeoutWhenSocketNeverOpens() {
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> manager.getSelector());
+
+        Assertions.assertEquals("Timed out waiting for selector", thrown.getMessage());
+    }
+
+    @Test
+    void testGetSocketChannelThrowsAfterTimeoutWhenSocketNeverOpens() {
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> manager.getSocketChannel());
+
+        Assertions.assertEquals("Timed out waiting for socket channel", thrown.getMessage());
     }
 
     // ── Blocking wait/notify tests ───────────────────────────────────
@@ -334,13 +431,13 @@ class SingleNetworkManagerTest {
     void testCloseSocketCatchesIOExceptionFromSelectorClose() throws Exception {
         // Covers closeSocket() catch(IOException) L112-113
         Selector mockSelector = mock(Selector.class);
-        SocketChannel mockClient = mock(SocketChannel.class);
+        ScriptedSocketChannel client = new ScriptedSocketChannel(null, null);
         doThrow(new IOException("selector close failed")).when(mockSelector).close();
 
         // Use reflection to inject mock objects into private volatile fields
         Field clientField = SingleNetworkManager.class.getDeclaredField("client");
         clientField.setAccessible(true);
-        clientField.set(manager, mockClient);
+        clientField.set(manager, client);
 
         Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
         selectorField.setAccessible(true);
@@ -348,36 +445,36 @@ class SingleNetworkManagerTest {
 
         // closeSocket() should catch IOException and not propagate it
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
+        Assertions.assertEquals(1, client.getCloseCalls());
     }
 
     @Test
     void testCloseSocketCatchesIOExceptionFromClientClose() throws Exception {
         // Covers closeSocket() catch(IOException) when client.close() throws
-        Selector mockSelector = mock(Selector.class);
-        SocketChannel mockClient = mock(SocketChannel.class);
-        doThrow(new IOException("client close failed")).when(mockClient).close();
+        Selector selector = Selector.open();
+        ScriptedSocketChannel client = new ScriptedSocketChannel(null, new IOException("client close failed"));
 
         Field clientField = SingleNetworkManager.class.getDeclaredField("client");
         clientField.setAccessible(true);
-        clientField.set(manager, mockClient);
+        clientField.set(manager, client);
 
         Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
         selectorField.setAccessible(true);
-        selectorField.set(manager, mockSelector);
+        selectorField.set(manager, selector);
 
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
+        Assertions.assertEquals(1, client.getCloseCalls());
     }
 
     @Test
     void testCloseSocketStillAttemptsClientCloseWhenSelectorCloseFails() throws Exception {
         Selector mockSelector = mock(Selector.class);
-        SocketChannel mockClient = mock(SocketChannel.class);
+        ScriptedSocketChannel client = new ScriptedSocketChannel(null, new IOException("client close failed"));
         doThrow(new IOException("selector close failed")).when(mockSelector).close();
-        doThrow(new IOException("client close failed")).when(mockClient).close();
 
         Field clientField = SingleNetworkManager.class.getDeclaredField("client");
         clientField.setAccessible(true);
-        clientField.set(manager, mockClient);
+        clientField.set(manager, client);
 
         Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
         selectorField.setAccessible(true);
@@ -385,10 +482,240 @@ class SingleNetworkManagerTest {
 
         Assertions.assertDoesNotThrow(() -> manager.closeSocket());
         verify(mockSelector).close();
-        verify(mockClient).close();
+        Assertions.assertEquals(1, client.getCloseCalls());
+    }
+
+    @Test
+    void testCloseSocketClearsSenderKeyWhenSenderPresent() throws Exception {
+        assumeSocketBindingAvailable();
+        try (ServerSocket server = new ServerSocket(0)) {
+            int port = server.getLocalPort();
+            acceptAsync(server);
+            SingleMessageSender sender = mock(SingleMessageSender.class);
+            ArgumentCaptor<SelectionKey> keyCaptor = ArgumentCaptor.forClass(SelectionKey.class);
+            ArgumentCaptor<Selector> selectorCaptor = ArgumentCaptor.forClass(Selector.class);
+            manager.setSingleMessageSender(sender);
+            manager.openSocket("localhost", port);
+
+            manager.closeSocket();
+
+            verify(sender, times(2)).setKey(keyCaptor.capture(), selectorCaptor.capture());
+            Assertions.assertNotNull(keyCaptor.getAllValues().get(0));
+            Assertions.assertNotNull(selectorCaptor.getAllValues().get(0));
+            Assertions.assertNull(keyCaptor.getAllValues().get(1));
+            Assertions.assertNull(selectorCaptor.getAllValues().get(1));
+        }
+    }
+
+    @Test
+    void testCloseSocketClearsPublishedSelectorAndClient() throws Exception {
+        try (Selector selector = Selector.open();
+             SocketChannel client = SocketChannel.open()) {
+            setConnectionState(client, selector);
+
+            manager.closeSocket();
+
+            Assertions.assertNull(readField("client"));
+            Assertions.assertNull(readField("selector"));
+            Assertions.assertFalse(selector.isOpen());
+            Assertions.assertFalse(client.isOpen());
+        }
+    }
+
+    @Test
+    void testCloseSocketSkipsInnerCloseWhenClientClearedBeforeLock() throws Exception {
+        try (Selector selector = Selector.open();
+             SocketChannel client = SocketChannel.open()) {
+            SingleMessageSender sender = mock(SingleMessageSender.class);
+            CountDownLatch started = new CountDownLatch(1);
+            SingleNetworkManager lockedManager = manager;
+            Thread closer = new Thread(() -> {
+                started.countDown();
+                lockedManager.closeSocket();
+            });
+            manager.setSingleMessageSender(sender);
+            setConnectionState(client, selector);
+
+            synchronized (lockedManager) {
+                closer.start();
+                Assertions.assertTrue(started.await(1, TimeUnit.SECONDS));
+                waitForBlockedState(closer);
+                setConnectionState(null, null);
+            }
+
+            closer.join(TimeUnit.SECONDS.toMillis(2));
+
+            Assertions.assertFalse(closer.isAlive());
+            verifyNoInteractions(sender);
+            Assertions.assertNull(readField("client"));
+            Assertions.assertNull(readField("selector"));
+            Assertions.assertTrue(selector.isOpen());
+            Assertions.assertTrue(client.isOpen());
+        }
+    }
+
+    @Test
+    void testConcurrentCloseSocketUsesInnerGuardAndClosesOnce() throws Exception {
+        try (Selector selector = Selector.open();
+             SocketChannel client = SocketChannel.open();
+             ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            CountDownLatch ready = new CountDownLatch(2);
+            CountDownLatch go = new CountDownLatch(1);
+            SingleMessageSender sender = mock(SingleMessageSender.class);
+            SingleNetworkManager lockedManager = manager;
+            manager.setSingleMessageSender(sender);
+            setConnectionState(client, selector);
+
+            Future<?> first;
+            Future<?> second;
+            synchronized (lockedManager) {
+                first = submitCloseSocket(lockedManager, executor, ready, go);
+                second = submitCloseSocket(lockedManager, executor, ready, go);
+
+                Assertions.assertTrue(ready.await(1, TimeUnit.SECONDS));
+                go.countDown();
+            }
+
+            first.get(2, TimeUnit.SECONDS);
+            second.get(2, TimeUnit.SECONDS);
+
+            verify(sender, times(1)).setKey(isNull(), isNull());
+            Assertions.assertNull(readField("client"));
+            Assertions.assertNull(readField("selector"));
+            Assertions.assertFalse(selector.isOpen());
+            Assertions.assertFalse(client.isOpen());
+        }
+    }
+
+    @Test
+    void testPublishReadyKeyDelegatesWhenSenderPresent() throws Exception {
+        SingleMessageSender sender = mock(SingleMessageSender.class);
+        Selector selector = mock(Selector.class);
+        manager.setSingleMessageSender(sender);
+
+        invokePublishReadyKey(selector);
+
+        verify(sender).setKey(isNull(), same(selector));
+    }
+
+    @Test
+    void testCloseResourcesReturnsNullWhenNothingNeedsClosing() throws Exception {
+        IOException result = invokeCloseResources(null, null);
+
+        Assertions.assertNull(result);
+    }
+
+    @Test
+    void testCloseResourcesSuppressesSecondCloseFailure() throws Exception {
+        Selector selector = mock(Selector.class);
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(null, new IOException("channel close failed"));
+        doThrow(new IOException("selector close failed")).when(selector).close();
+
+        IOException result = invokeCloseResources(selector, channel);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals("selector close failed", result.getMessage());
+        Assertions.assertEquals(1, result.getSuppressed().length);
+        Assertions.assertEquals("channel close failed", result.getSuppressed()[0].getMessage());
+        Assertions.assertEquals(1, channel.getCloseCalls());
     }
 
     // ── Helper ───────────────────────────────────────────────────────
+
+    /**
+     * Centralizes reflective connection-state setup so close tests do not
+     * duplicate field access details.
+     */
+    private void setConnectionState(SocketChannel client, Selector selector) throws Exception {
+        Field clientField = SingleNetworkManager.class.getDeclaredField("client");
+        clientField.setAccessible(true);
+        clientField.set(manager, client);
+
+        Field selectorField = SingleNetworkManager.class.getDeclaredField("selector");
+        selectorField.setAccessible(true);
+        selectorField.set(manager, selector);
+    }
+
+    /**
+     * Starts one openSocket() call behind a barrier so concurrency tests can
+     * force both callers through the outer null-check before either gets the lock.
+     */
+    private Future<?> submitOpenSocket(
+            SingleNetworkManager networkManager,
+            ExecutorService executor,
+            CountDownLatch ready,
+            CountDownLatch go,
+            int port) {
+        return executor.submit(() -> {
+            ready.countDown();
+            go.await();
+            networkManager.openSocket("localhost", port);
+            return null;
+        });
+    }
+
+    /**
+     * Starts one closeSocket() call behind a barrier so concurrency tests can
+     * force both callers through the outer null-check before the first clears state.
+     */
+    private Future<?> submitCloseSocket(
+            SingleNetworkManager networkManager,
+            ExecutorService executor,
+            CountDownLatch ready,
+            CountDownLatch go) {
+        return executor.submit(() -> {
+            ready.countDown();
+            go.await();
+            networkManager.closeSocket();
+            return null;
+        });
+    }
+
+    /**
+     * Exercises the sender-publication helper directly so tests can cover the
+     * branch without depending on a live socket connection.
+     */
+    private void invokePublishReadyKey(Selector selector) throws Exception {
+        java.lang.reflect.Method publishReadyKey = SingleNetworkManager.class
+                .getDeclaredMethod("publishReadyKey", SelectionKey.class, Selector.class);
+        publishReadyKey.setAccessible(true);
+        publishReadyKey.invoke(manager, null, selector);
+    }
+
+    /**
+     * Invokes the cleanup helper directly so failure-suppression behavior can
+     * be verified with deterministic close-failing test doubles.
+     */
+    private IOException invokeCloseResources(Selector selector, SocketChannel channel) throws Exception {
+        java.lang.reflect.Method closeResources = SingleNetworkManager.class
+                .getDeclaredMethod("closeResources", Selector.class, SocketChannel.class);
+        closeResources.setAccessible(true);
+        return (IOException) closeResources.invoke(manager, selector, channel);
+    }
+
+    /**
+     * Reads one private field so state-reset tests can assert the manager no
+     * longer publishes stale connection objects after close().
+     */
+    private Object readField(String fieldName) throws Exception {
+        Field field = SingleNetworkManager.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(manager);
+    }
+
+    /**
+     * Skips socket-based tests when the environment forbids local bind/connect,
+     * which happens in this sandbox but not in normal local runs.
+     */
+    private static void assumeSocketBindingAvailable() {
+        try (ServerSocket server = new ServerSocket(0);
+             SocketChannel client = SocketChannel.open()) {
+            client.connect(new InetSocketAddress("localhost", server.getLocalPort()));
+            server.accept().close();
+        } catch (Exception blocked) {
+            Assumptions.assumeTrue(false, "Local socket binding is unavailable in this environment");
+        }
+    }
 
     private static void acceptAsync(ServerSocket server) {
         Thread thread = new Thread(() -> {
@@ -399,5 +726,179 @@ class SingleNetworkManagerTest {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * Records published sender state for tests that need the actual key values
+     * instead of only verifying that one interaction happened.
+     */
+    private static final class RecordingMessageSender extends SingleMessageSender {
+        private int setKeyCalls;
+        private SelectionKey lastKey;
+        private Selector lastSelector;
+
+        @Override
+        public void setKey(SelectionKey key, Selector selector) {
+            setKeyCalls++;
+            lastKey = key;
+            lastSelector = selector;
+        }
+    }
+
+    /**
+     * Waits until a worker is blocked on the manager monitor so tests can force
+     * the inner closeSocket() guard down its false branch deterministically.
+     */
+    private void waitForBlockedState(Thread thread) {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1);
+        while (thread.getState() != Thread.State.BLOCKED && System.currentTimeMillis() < deadline) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        }
+        Assertions.assertEquals(Thread.State.BLOCKED, thread.getState());
+    }
+
+    /**
+     * Overrides resource creation so openSocket() cleanup can be verified in
+     * the current JVM and counted by the coverage report.
+     */
+    private static final class TestableNetworkManager extends SingleNetworkManager {
+        private final SocketChannel socketChannel;
+        private final Selector selector;
+
+        private TestableNetworkManager(SocketChannel socketChannel, Selector selector) {
+            this.socketChannel = socketChannel;
+            this.selector = selector;
+        }
+
+        @Override
+        SocketChannel openSocketChannel() {
+            return socketChannel;
+        }
+
+        @Override
+        Selector openSelector() {
+            return selector;
+        }
+    }
+
+    /**
+     * Keeps the few SocketChannel failure paths that Mockito cannot stub
+     * reliably on final JDK methods under one configurable test double.
+     */
+    private static final class ScriptedSocketChannel extends SocketChannel {
+        private final IOException connectFailure;
+        private final IOException closeFailure;
+        private int closeCalls;
+
+        private ScriptedSocketChannel(IOException connectFailure, IOException closeFailure) {
+            super(SelectorProvider.provider());
+            this.connectFailure = connectFailure;
+            this.closeFailure = closeFailure;
+        }
+
+        @Override
+        public int read(java.nio.ByteBuffer dst) {
+            return 0;
+        }
+
+        @Override
+        public long read(java.nio.ByteBuffer[] dsts, int offset, int length) {
+            return 0;
+        }
+
+        @Override
+        public int write(java.nio.ByteBuffer src) {
+            return 0;
+        }
+
+        @Override
+        public long write(java.nio.ByteBuffer[] srcs, int offset, int length) {
+            return 0;
+        }
+
+        @Override
+        public SocketChannel bind(SocketAddress local) {
+            return this;
+        }
+
+        @Override
+        public <T> SocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownInput() {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownOutput() {
+            return this;
+        }
+
+        @Override
+        public Socket socket() {
+            return new Socket();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return connectFailure == null;
+        }
+
+        @Override
+        public boolean isConnectionPending() {
+            return false;
+        }
+
+        @Override
+        public boolean connect(SocketAddress remote) throws IOException {
+            if (connectFailure != null) {
+                throw connectFailure;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean finishConnect() {
+            return connectFailure == null;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public java.util.Set<SocketOption<?>> supportedOptions() {
+            return java.util.Collections.emptySet();
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws IOException {
+            closeCalls++;
+            if (closeFailure != null) {
+                throw closeFailure;
+            }
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
+        }
+
+        int getCloseCalls() {
+            return closeCalls;
+        }
     }
 }

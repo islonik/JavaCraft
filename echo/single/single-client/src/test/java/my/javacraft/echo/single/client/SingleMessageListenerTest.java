@@ -18,22 +18,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class SingleMessageListenerTest {
 
     private ServerSocket serverSocket;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        serverSocket = new ServerSocket(0);
-    }
 
     @AfterEach
     void tearDown() throws IOException {
@@ -46,6 +35,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testNewResponseReadsMessage() throws Exception {
+        openServerSocket();
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
@@ -65,6 +55,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testNewResponsePreservesWhitespaceInsideFrame() throws Exception {
+        openServerSocket();
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
@@ -84,6 +75,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testNewResponseReturnsNullOnEof() throws Exception {
+        openServerSocket();
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
@@ -100,6 +92,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testNewResponseReturnsNullOnClosedChannel() throws Exception {
+        openServerSocket();
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         serverSocket.accept(); // complete the handshake
@@ -113,6 +106,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testNewResponseHandlesLargeMessage() throws Exception {
+        openServerSocket();
         SocketChannel client = SocketChannel.open(
                 new InetSocketAddress("localhost", serverSocket.getLocalPort()));
         Socket server = serverSocket.accept();
@@ -165,6 +159,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testRunSetsKeyOnSenderAfterConnect() throws Exception {
+        openServerSocket();
         SingleNetworkManager mgr = new SingleNetworkManager();
         SingleMessageSender sender = new SingleMessageSender();
         mgr.setSingleMessageSender(sender);
@@ -195,6 +190,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testRunDoesNotQueueNullResponse() throws Exception {
+        openServerSocket();
         SingleNetworkManager mgr = new SingleNetworkManager();
         SingleMessageSender sender = new SingleMessageSender();
         mgr.setSingleMessageSender(sender);
@@ -262,6 +258,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testRunQueuesReceivedMessages() throws Exception {
+        openServerSocket();
         SingleNetworkManager mgr = new SingleNetworkManager();
         SingleMessageSender sender = new SingleMessageSender();
         mgr.setSingleMessageSender(sender);
@@ -305,6 +302,7 @@ class SingleMessageListenerTest {
 
     @Test
     void testRunDrainsMultipleResponsesFromSingleReadEvent() throws Exception {
+        openServerSocket();
         SingleNetworkManager mgr = new SingleNetworkManager();
         SingleMessageSender sender = new SingleMessageSender();
         mgr.setSingleMessageSender(sender);
@@ -345,33 +343,30 @@ class SingleMessageListenerTest {
     // ── Mockito-based tests for defensive catch blocks ────────────────
 
     @Test
-    void testNewResponseHandlesCloseFailureAfterReadIOException() throws Exception {
-        // Covers newResponse() inner catch(IOException) on channel.close() L86-88
-        SocketChannel mockChannel = mock(SocketChannel.class);
-        when(mockChannel.read(any(ByteBuffer.class))).thenThrow(new IOException("read failed"));
-        doThrow(new IOException("close also failed")).when(mockChannel).close();
+    void testNewResponseHandlesCloseFailureAfterReadIOException() {
+        ReadFailingSocketChannel channel = new ReadFailingSocketChannel(new IOException("close also failed"));
 
         SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
-        String result = listener.newResponse(mockChannel);
+        String result = listener.newResponse(channel);
 
         Assertions.assertNull(result);
+        Assertions.assertEquals(1, channel.getCloseCalls());
     }
 
     @Test
-    void testNewResponseClosesChannelOnReadIOException() throws Exception {
-        // Covers newResponse() catch(IOException) L82-89 — verifies close() is called
-        SocketChannel mockChannel = mock(SocketChannel.class);
-        when(mockChannel.read(any(ByteBuffer.class))).thenThrow(new IOException("read failed"));
+    void testNewResponseClosesChannelOnReadIOException() {
+        ReadFailingSocketChannel channel = new ReadFailingSocketChannel(null);
 
         SingleMessageListener listener = new SingleMessageListener(new SingleNetworkManager());
-        String result = listener.newResponse(mockChannel);
+        String result = listener.newResponse(channel);
 
         Assertions.assertNull(result);
-        verify(mockChannel).close();
+        Assertions.assertEquals(1, channel.getCloseCalls());
     }
 
     @Test
     void testRunQueuesMultipleMessages() throws Exception {
+        openServerSocket();
         SingleNetworkManager mgr = new SingleNetworkManager();
         SingleMessageSender sender = new SingleMessageSender();
         mgr.setSingleMessageSender(sender);
@@ -420,10 +415,18 @@ class SingleMessageListenerTest {
     }
 
     /**
+     * Opens the local server only for tests that exercise real socket I/O.
+     * Pure unit tests use scripted channels and do not need a bound port.
+     */
+    private void openServerSocket() throws IOException {
+        serverSocket = new ServerSocket(0);
+    }
+
+    /**
      * Feeds exact read chunks to the listener so framing behavior can be
      * verified without timing-sensitive socket scheduling.
      */
-    private static final class ScriptedSocketChannel extends SocketChannel {
+    private static class ScriptedSocketChannel extends SocketChannel {
         private final int[] reads;
         private final byte[][] payloads;
         private int readIndex;
@@ -555,13 +558,44 @@ class SingleMessageListenerTest {
         }
 
         @Override
-        protected void implCloseSelectableChannel() {
+        protected void implCloseSelectableChannel() throws IOException {
             open = false;
         }
 
         @Override
         protected void implConfigureBlocking(boolean block) {
             // no-op
+        }
+    }
+
+    /**
+     * Forces a read failure and counts close attempts so the listener error
+     * handling can be verified without mocking final JDK channel methods.
+     */
+    private static final class ReadFailingSocketChannel extends ScriptedSocketChannel {
+        private final IOException closeFailure;
+        private int closeCalls;
+
+        private ReadFailingSocketChannel(IOException closeFailure) {
+            super(new int[0], new String[0]);
+            this.closeFailure = closeFailure;
+        }
+
+        int getCloseCalls() {
+            return closeCalls;
+        }
+
+        @Override
+        public int read(ByteBuffer dst) throws IOException {
+            throw new IOException("read failed");
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws IOException {
+            closeCalls++;
+            if (closeFailure != null) {
+                throw closeFailure;
+            }
         }
     }
 }
