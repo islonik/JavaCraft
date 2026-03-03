@@ -185,7 +185,7 @@ class SingleServerTest {
         }
     }
 
-    // ── Direct unit tests for write() ────────────────────────────────
+    // ── Direct unit tests for queued drainPendingWrites() ────────────
 
     @Test
     void testWriteReturnsTrueOnSuccess() throws Exception {
@@ -195,8 +195,9 @@ class SingleServerTest {
                     new InetSocketAddress("localhost", ss.getLocalPort()));
             Socket serverSide = ss.accept();
 
-            boolean result = server.write(client, "hello");
-            Assertions.assertTrue(result);
+            queueResponse(server, client, "hello");
+            Object result = drainPendingWrites(server, client);
+            Assertions.assertEquals("COMPLETE", result.toString());
 
             byte[] buf = new byte[256];
             int len = serverSide.getInputStream().read(buf);
@@ -216,8 +217,9 @@ class SingleServerTest {
             ss.accept();
             client.close(); // close before write
 
-            boolean result = server.write(client, "hello");
-            Assertions.assertFalse(result);
+            queueResponse(server, client, "hello");
+            Object result = drainPendingWrites(server, client);
+            Assertions.assertEquals("FAILED", result.toString());
         }
     }
 
@@ -249,9 +251,9 @@ class SingleServerTest {
         readOp.setAccessible(true);
 
         readOp.invoke(server, key);
-        Assertions.assertEquals(SelectionKey.OP_WRITE, key.interestOps(),
-                "Complete payload should switch key to write mode");
-        Assertions.assertEquals("hello\r\n", key.attachment());
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps(),
+                "Complete payload should keep read interest while enabling queued writes");
+        Assertions.assertNull(key.attachment());
     }
 
     @Test
@@ -271,7 +273,7 @@ class SingleServerTest {
                 "Partial data without the line delimiter must stay buffered");
 
         readOp.invoke(server, key);
-        Assertions.assertEquals(SelectionKey.OP_WRITE, key.interestOps());
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
 
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
@@ -318,8 +320,7 @@ class SingleServerTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void testWriteOpPullsBufferedPendingRequestWhenAttachmentMissing() throws Exception {
+    void testWriteOpFlushesBufferedPendingWriteWhenAttachmentMissing() throws Exception {
         SingleServer server = new SingleServer(0);
         RecordingScriptedSocketChannel channel = new RecordingScriptedSocketChannel(
                 new int[] {0},
@@ -327,10 +328,7 @@ class SingleServerTest {
         FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
         key.attach(null);
 
-        var pendingRequestsField = SingleServer.class.getDeclaredField("pendingRequests");
-        pendingRequestsField.setAccessible(true);
-        var pendingRequests = (java.util.Map<SocketChannel, java.util.Deque<String>>) pendingRequestsField.get(server);
-        pendingRequests.put(channel, new java.util.ArrayDeque<>(java.util.List.of("stats\r\n")));
+        queueResponse(server, channel, "Simultaneously connected clients: 0\r\n");
 
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
@@ -358,11 +356,15 @@ class SingleServerTest {
     void testWriteReturnsFalseWhenChannelMakesNoProgress() {
         SingleServer server = new SingleServer(0);
         try (ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites()) {
-            boolean result = Assertions.assertTimeoutPreemptively(
+            Object result = Assertions.assertTimeoutPreemptively(
                     Duration.ofMillis(300),
-                    () -> server.write(channel, "hello"));
+                    () -> {
+                        queueResponse(server, channel, "hello");
+                        return drainPendingWrites(server, channel);
+                    });
 
-            Assertions.assertFalse(result, "Write should fail if the channel never accepts bytes");
+            Assertions.assertEquals("PENDING", result.toString(),
+                    "Queued writes should stay pending if the channel never accepts bytes");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -472,11 +474,14 @@ class SingleServerTest {
     @Test
     void testWriteOpByeClosesKeyAndDecrementsConnections() throws Exception {
         SingleServer server = new SingleServer(0);
-        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {0}, new String[] {""});
-        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
-        key.attach("bye");
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {5, 0}, new String[] {"bye\r\n", ""});
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
 
         setConnectionsToOne(server);
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
         writeOp.invoke(server, key);
@@ -486,33 +491,43 @@ class SingleServerTest {
     }
 
     @Test
-    void testWriteOpClosesKeyOnWriteFailure() throws Exception {
+    void testWriteOpKeepsKeyOpenWhenWriteIsPending() throws Exception {
         SingleServer server = new SingleServer(0);
-        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
-        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
-        key.attach("hello");
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {7, 0}, new String[] {"hello\r\n", ""});
+        channel.alwaysZeroWrites = true;
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
 
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
         writeOp.invoke(server, key);
 
-        Assertions.assertFalse(key.isValid());
+        Assertions.assertTrue(key.isValid());
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
     }
 
     @Test
-    void testWriteOpByeClosesKeyWhenGoodbyeWriteFails() throws Exception {
+    void testWriteOpByeKeepsKeyOpenWhenGoodbyeWriteIsPending() throws Exception {
         SingleServer server = new SingleServer(0);
-        ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites();
-        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
-        key.attach("bye");
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {5, 0}, new String[] {"bye\r\n", ""});
+        channel.alwaysZeroWrites = true;
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
 
         setConnectionsToOne(server);
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+
         Method writeOp = SingleServer.class.getDeclaredMethod("writeOp", SelectionKey.class);
         writeOp.setAccessible(true);
         writeOp.invoke(server, key);
 
-        Assertions.assertFalse(key.isValid());
-        Assertions.assertEquals(0, getConnections(server));
+        Assertions.assertTrue(key.isValid());
+        Assertions.assertEquals(1, getConnections(server));
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
     }
 
     @Test
@@ -542,8 +557,8 @@ class SingleServerTest {
         loop.setAccessible(true);
         loop.invoke(server, selector, new NullAcceptServerSocketChannel());
 
-        Assertions.assertEquals(SelectionKey.OP_WRITE, key.interestOps());
-        Assertions.assertEquals("ping\r\n", key.attachment());
+        Assertions.assertEquals(SelectionKey.OP_READ | SelectionKey.OP_WRITE, key.interestOps());
+        Assertions.assertNull(key.attachment());
     }
 
     @Test
@@ -552,7 +567,7 @@ class SingleServerTest {
         RecordingScriptedSocketChannel channel = new RecordingScriptedSocketChannel(new int[] {0}, new String[] {""});
         channel.configureBlocking(false);
         FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_WRITE);
-        key.attach("stats\r\n");
+        queueResponse(server, channel, "Simultaneously connected clients: 0\r\n");
         Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
         selectedKeys.add(key);
         ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
@@ -659,28 +674,30 @@ class SingleServerTest {
 
     @Test
     void testWriteReturnsEmptyOnGenericIOException() throws Exception {
-        // Covers write() catch(IOException) L198-206 — generic IOException (not ClosedChannelException)
+        // Covers queued write failure on a generic IOException (not ClosedChannelException)
         SingleServer server = new SingleServer(0);
         SocketChannel mockChannel = mock(SocketChannel.class);
         when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("broken pipe"));
 
-        boolean result = server.write(mockChannel, "test");
+        queueResponse(server, mockChannel, "test");
+        Object result = drainPendingWrites(server, mockChannel);
 
-        Assertions.assertFalse(result);
+        Assertions.assertEquals("FAILED", result.toString());
         verify(mockChannel).close();
     }
 
     @Test
     void testWriteHandlesCloseFailureAfterIOException() throws Exception {
-        // Covers write() inner catch(IOException) on channel.close() L203-205
+        // Covers queued write close failure after the write itself throws
         SingleServer server = new SingleServer(0);
         SocketChannel mockChannel = mock(SocketChannel.class);
         when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("broken pipe"));
         doThrow(new IOException("close failed")).when(mockChannel).close();
 
-        boolean result = server.write(mockChannel, "test");
+        queueResponse(server, mockChannel, "test");
+        Object result = drainPendingWrites(server, mockChannel);
 
-        Assertions.assertFalse(result);
+        Assertions.assertEquals("FAILED", result.toString());
     }
 
     @Test
@@ -705,7 +722,8 @@ class SingleServerTest {
         when(mockChannel.write(any(ByteBuffer.class))).thenThrow(new IOException("write failed"));
 
         SelectionKey mockKey = mock(SelectionKey.class);
-        when(mockKey.attachment()).thenReturn("hello");
+        queueResponse(server, mockChannel, "Did you say 'hello'?\r\n");
+        when(mockKey.attachment()).thenReturn(null);
         when(mockKey.channel()).thenReturn(mockChannel);
 
         // Call private writeOp() via reflection
@@ -746,6 +764,26 @@ class SingleServerTest {
         var field = SingleServer.class.getDeclaredField("connections");
         field.setAccessible(true);
         return ((java.util.concurrent.atomic.AtomicInteger) field.get(server)).get();
+    }
+
+    /**
+     * Seeds one encoded response buffer without exposing the production helper
+     * publicly just for test setup.
+     */
+    private static void queueResponse(SingleServer server, SocketChannel channel, String response) throws Exception {
+        Method queueResponse = SingleServer.class.getDeclaredMethod("queueResponse", SocketChannel.class, String.class);
+        queueResponse.setAccessible(true);
+        queueResponse.invoke(server, channel, response);
+    }
+
+    /**
+     * Invokes the private queued-write drain helper so the old direct write
+     * tests can verify the new selector-driven behavior.
+     */
+    private static Object drainPendingWrites(SingleServer server, SocketChannel channel) throws Exception {
+        Method drainPendingWrites = SingleServer.class.getDeclaredMethod("drainPendingWrites", SocketChannel.class);
+        drainPendingWrites.setAccessible(true);
+        return drainPendingWrites.invoke(server, channel);
     }
 
     private static void setConnectionsToOne(SingleServer server) throws Exception {

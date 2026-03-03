@@ -15,8 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +48,6 @@ public class SingleServer implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
     static final int MAX_FRAME_BYTES = 8 * BUFFER_SIZE;
-    private static final int MAX_EMPTY_WRITES = 1024;
     // A CRLF-terminated text frame keeps the protocol simple and readable while
     // still handling empty messages and fragmented/coalesced TCP packets.
     private static final String MESSAGE_DELIMITER = "\r\n";
@@ -60,7 +61,19 @@ public class SingleServer implements Runnable {
     private final ServerSocketChannel server;
     private final Map<SocketChannel, ByteArrayOutputStream> requestBuffers = new HashMap<>();
     private final Map<SocketChannel, Deque<String>> pendingRequests = new HashMap<>();
+    private final Map<SocketChannel, Deque<ByteBuffer>> pendingWrites = new HashMap<>();
+    private final Set<SocketChannel> closeAfterWrite = new HashSet<>();
     private volatile Selector selectorRef;
+
+    /**
+     * Tells writeOp() whether a channel still has queued bytes, finished cleanly,
+     * or failed and must be closed.
+     */
+    private enum WriteDrainResult {
+        COMPLETE,
+        PENDING,
+        FAILED
+    }
 
     /**
      * Allocates the shared read buffer once and keeps the rest of the per-socket
@@ -186,8 +199,8 @@ public class SingleServer implements Runnable {
     }
 
     /**
-     * Switches the channel to write mode only after a complete framed request is
-     * available. Partial reads remain buffered for the next selector cycle.
+     * Queues responses once a complete framed request is available and keeps
+     * read interest enabled so the selector can handle both directions.
      */
     private void readOp(SelectionKey key) {
         log.debug("Data received, going to read them");
@@ -199,8 +212,9 @@ public class SingleServer implements Runnable {
         }
 
         if (!result.isEmpty()) {
-            key.attach(result);
-            key.interestOps(SelectionKey.OP_WRITE);
+            queueReadyResponses(channel, result);
+            key.attach(null);
+            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         } else {
             clearChannelState(channel);
             key.cancel();
@@ -267,53 +281,27 @@ public class SingleServer implements Runnable {
     }
 
     /**
-     * Writes all fully buffered requests that are already ready for the channel.
-     * This keeps coalesced requests in order without waiting for another read.
+     * Flushes queued response bytes only when the selector reports the channel
+     * writable, which avoids spinning on zero-byte non-blocking writes.
      */
     private void writeOp(SelectionKey key) {
         SocketChannel channel = (SocketChannel) key.channel();
-        String request = (String) key.attachment();
-        if (request == null) {
-            request = pollPendingRequest(channel);
-        }
-        if (request == null) {
-            key.attach(null);
-            key.interestOps(SelectionKey.OP_READ);
+        WriteDrainResult drainResult = drainPendingWrites(channel);
+        if (drainResult == WriteDrainResult.FAILED) {
+            clearChannelState(channel);
+            closeKey(key);
             return;
         }
-
-        while (request != null) {
-            String normalizedRequest = trimTrailingLineDelimiters(request);
-
-            String response;
-            boolean close = false;
-            if (normalizedRequest.isEmpty()) {
-                response = "Please type something.\r\n";
-            } else if ("bye".equalsIgnoreCase(normalizedRequest)) {
-                response = "Have a good day!\r\n";
-                close = true;
-            } else if ("stats".equalsIgnoreCase(normalizedRequest)) {
-                response = "Simultaneously connected clients: %s\r\n".formatted(connections.get());
-            } else {
-                response = "Did you say '" + normalizedRequest + "'?\r\n";
-            }
-
-            if (close) {
-                if (write(channel, response)) {
-                    decrementConnections();
-                }
-                clearChannelState(channel);
-                closeKey(key);
-                return;
-            }
-
-            if (!write(channel, response)) {
-                clearChannelState(channel);
-                closeKey(key);
-                return;
-            }
-
-            request = pollPendingRequest(channel);
+        if (drainResult == WriteDrainResult.PENDING) {
+            key.attach(null);
+            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            return;
+        }
+        if (closeAfterWrite.remove(channel)) {
+            decrementConnections();
+            clearChannelState(channel);
+            closeKey(key);
+            return;
         }
 
         key.attach(null);
@@ -334,6 +322,81 @@ public class SingleServer implements Runnable {
             end--;
         }
         return request.substring(0, end);
+    }
+
+    /**
+     * Converts every ready request into queued UTF-8 response bytes so the
+     * selector thread can flush them incrementally across writable events.
+     */
+    private void queueReadyResponses(SocketChannel channel, String firstRequest) {
+        String request = firstRequest;
+        while (request != null) {
+            String normalizedRequest = trimTrailingLineDelimiters(request);
+            if (normalizedRequest.isEmpty()) {
+                queueResponse(channel, "Please type something.\r\n");
+            } else if ("bye".equalsIgnoreCase(normalizedRequest)) {
+                queueResponse(channel, "Have a good day!\r\n");
+                closeAfterWrite.add(channel);
+                clearReadState(channel);
+                return;
+            } else if ("stats".equalsIgnoreCase(normalizedRequest)) {
+                queueResponse(channel, "Simultaneously connected clients: %s\r\n".formatted(connections.get()));
+            } else {
+                queueResponse(channel, "Did you say '" + normalizedRequest + "'?\r\n");
+            }
+            request = pollPendingRequest(channel);
+        }
+    }
+
+    /**
+     * Stores encoded response buffers per channel so partial writes can resume
+     * from the exact remaining byte position on the next writable callback.
+     */
+    private void queueResponse(SocketChannel channel, String response) {
+        pendingWrites.computeIfAbsent(channel, ignored -> new ArrayDeque<>())
+                .addLast(ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /**
+     * Drains queued response buffers until the socket stops making progress,
+     * all bytes are sent, or one write fails.
+     */
+    private WriteDrainResult drainPendingWrites(SocketChannel channel) {
+        Deque<ByteBuffer> queuedWrites = pendingWrites.get(channel);
+        if (queuedWrites == null || queuedWrites.isEmpty()) {
+            pendingWrites.remove(channel);
+            return WriteDrainResult.COMPLETE;
+        }
+
+        try {
+            ByteBuffer currentWrite = queuedWrites.peekFirst();
+            while (currentWrite != null) {
+                int written = channel.write(currentWrite);
+                if (written == 0) {
+                    return WriteDrainResult.PENDING;
+                }
+                if (!currentWrite.hasRemaining()) {
+                    queuedWrites.removeFirst();
+                }
+                currentWrite = queuedWrites.peekFirst();
+            }
+
+            pendingWrites.remove(channel);
+            return WriteDrainResult.COMPLETE;
+        } catch (ClosedChannelException cce) {
+            decrementConnections();
+            log.info("Client terminated connection.");
+            return WriteDrainResult.FAILED;
+        } catch (IOException e) {
+            decrementConnections();
+            log.error("Unable to write content", e);
+            try {
+                channel.close();
+            } catch (IOException e1) {
+                // dead channel, nothing to do
+            }
+            return WriteDrainResult.FAILED;
+        }
     }
 
     /**
@@ -405,9 +468,19 @@ public class SingleServer implements Runnable {
         return readyRequests.pollFirst();
     }
 
-    private void clearChannelState(SocketChannel channel) {
+    /**
+     * Drops only inbound framing state so a close-after-write request can still
+     * finish sending its queued response bytes.
+     */
+    private void clearReadState(SocketChannel channel) {
         requestBuffers.remove(channel);
         pendingRequests.remove(channel);
+    }
+
+    private void clearChannelState(SocketChannel channel) {
+        clearReadState(channel);
+        pendingWrites.remove(channel);
+        closeAfterWrite.remove(channel);
     }
 
     /**
@@ -422,45 +495,6 @@ public class SingleServer implements Runnable {
             channel.close();
         } catch (IOException closeError) {
             log.debug("Unable to close oversized request channel", closeError);
-        }
-    }
-
-    /**
-     * Completes the whole response before returning so the caller can safely
-     * switch the selection key back to read mode.
-     */
-    boolean write(SocketChannel channel, String content) {
-        try {
-            ByteBuffer writeBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
-            int emptyWrites = 0;
-            while (writeBuffer.hasRemaining()) {
-                int written = channel.write(writeBuffer);
-                if (written == 0) {
-                    emptyWrites++;
-                    if (emptyWrites >= MAX_EMPTY_WRITES) {
-                        log.warn("Write made no progress for {} attempts; closing channel", MAX_EMPTY_WRITES);
-                        decrementConnections();
-                        return false;
-                    }
-                    Thread.onSpinWait();
-                } else {
-                    emptyWrites = 0;
-                }
-            }
-            return true;
-        } catch (ClosedChannelException cce) {
-            decrementConnections();
-            log.info("Client terminated connection.");
-            return false;
-        } catch (IOException e) {
-            decrementConnections();
-            log.error("Unable to write content", e);
-            try {
-                channel.close();
-            } catch (IOException e1) {
-                // dead channel, nothing to do
-            }
-            return false;
         }
     }
 
