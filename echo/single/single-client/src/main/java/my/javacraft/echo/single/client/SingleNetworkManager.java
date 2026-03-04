@@ -7,6 +7,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +38,9 @@ public class SingleNetworkManager {
                     SocketChannel openedClient = null;
                     Selector openedSelector = null;
                     try {
-                        // Finish the TCP handshake before publishing the connection to callers.
                         openedClient = openSocketChannel();
-                        openedClient.connect(new InetSocketAddress(serverHost, serverPort));
                         openedClient.configureBlocking(false);
+                        connectNonBlocking(openedClient, new InetSocketAddress(serverHost, serverPort));
 
                         openedSelector = openSelector();
                         SelectionKey key = openedClient.register(openedSelector, SelectionKey.OP_READ);
@@ -58,6 +58,23 @@ public class SingleNetworkManager {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Completes the initial TCP handshake without switching back to blocking
+     * mode, so callers keep the selector-driven startup path and a clear timeout.
+     */
+    private void connectNonBlocking(SocketChannel channel, InetSocketAddress serverAddress) throws IOException {
+        if (channel.connect(serverAddress)) {
+            return;
+        }
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(WAIT_TIMEOUT_MS);
+        while (!channel.finishConnect()) {
+            if (System.nanoTime() >= deadline) {
+                throw new IOException("Timed out waiting for socket connection");
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
         }
     }
 

@@ -202,6 +202,59 @@ class SingleNetworkManagerTest {
     }
 
     @Test
+    void testOpenSocketConfiguresNonBlockingBeforeConnect() {
+        ScriptedSocketChannel channel = new ScriptedSocketChannel(
+                new IOException("connect order verified"),
+                null,
+                true,
+                0);
+        SingleNetworkManager orderCheckingManager = new TestableNetworkManager(channel, null);
+
+        IOException thrown = Assertions.assertThrows(
+                IOException.class,
+                () -> orderCheckingManager.openSocket("localhost", 8080));
+
+        Assertions.assertEquals("connect order verified", thrown.getMessage());
+        Assertions.assertEquals(1, channel.getConnectCalls());
+    }
+
+    @Test
+    void testConnectNonBlockingReturnsImmediatelyWhenConnectCompletes() throws Exception {
+        try (ScriptedSocketChannel channel = new ScriptedSocketChannel(null, null)) {
+            channel.configureBlocking(false);
+
+            Assertions.assertDoesNotThrow(() -> invokeConnectNonBlocking(channel));
+
+            Assertions.assertEquals(1, channel.getConnectCalls());
+            Assertions.assertEquals(0, channel.getFinishConnectCalls());
+        }
+    }
+
+    @Test
+    void testConnectNonBlockingWaitsForPendingConnectionToFinish() throws Exception {
+        try (ScriptedSocketChannel channel = new ScriptedSocketChannel(null, null, false, 1)) {
+            channel.configureBlocking(false);
+
+            Assertions.assertDoesNotThrow(() -> invokeConnectNonBlocking(channel));
+
+            Assertions.assertEquals(1, channel.getConnectCalls());
+            Assertions.assertEquals(2, channel.getFinishConnectCalls());
+        }
+    }
+
+    @Test
+    void testConnectNonBlockingTimesOutWhenConnectionStaysPending() throws Exception {
+        try (ScriptedSocketChannel channel = new ScriptedSocketChannel(null, null, false, Integer.MAX_VALUE)) {
+            channel.configureBlocking(false);
+
+            IOException thrown = Assertions.assertThrows(IOException.class, () -> invokeConnectNonBlocking(channel));
+
+            Assertions.assertEquals("Timed out waiting for socket connection", thrown.getMessage());
+            Assertions.assertTrue(channel.getFinishConnectCalls() > 0);
+        }
+    }
+
+    @Test
     void testConcurrentOpenSocketUsesInnerGuardAndPublishesConnectionOnce() throws Exception {
         assumeSocketBindingAvailable();
         try (ServerSocket server = new ServerSocket(0);
@@ -694,6 +747,25 @@ class SingleNetworkManagerTest {
     }
 
     /**
+     * Invokes the connect helper directly so timeout and pending-connect
+     * behavior can be verified without relying on flaky real network timing.
+     */
+    private void invokeConnectNonBlocking(SocketChannel channel) throws Exception {
+        java.lang.reflect.Method connectNonBlocking = SingleNetworkManager.class
+                .getDeclaredMethod("connectNonBlocking", SocketChannel.class, InetSocketAddress.class);
+        connectNonBlocking.setAccessible(true);
+        try {
+            connectNonBlocking.invoke(manager, channel, new InetSocketAddress("localhost", 8080));
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Reads one private field so state-reset tests can assert the manager no
      * longer publishes stale connection objects after close().
      */
@@ -788,12 +860,26 @@ class SingleNetworkManagerTest {
     private static final class ScriptedSocketChannel extends SocketChannel {
         private final IOException connectFailure;
         private final IOException closeFailure;
+        private final boolean requireNonBlockingAtConnect;
+        private final int pendingFinishConnectAttempts;
         private int closeCalls;
+        private int connectCalls;
+        private int finishConnectCalls;
 
         private ScriptedSocketChannel(IOException connectFailure, IOException closeFailure) {
+            this(connectFailure, closeFailure, false, 0);
+        }
+
+        private ScriptedSocketChannel(
+                IOException connectFailure,
+                IOException closeFailure,
+                boolean requireNonBlockingAtConnect,
+                int pendingFinishConnectAttempts) {
             super(SelectorProvider.provider());
             this.connectFailure = connectFailure;
             this.closeFailure = closeFailure;
+            this.requireNonBlockingAtConnect = requireNonBlockingAtConnect;
+            this.pendingFinishConnectAttempts = pendingFinishConnectAttempts;
         }
 
         @Override
@@ -843,7 +929,7 @@ class SingleNetworkManagerTest {
 
         @Override
         public boolean isConnected() {
-            return connectFailure == null;
+            return connectFailure == null && finishConnectCalls > pendingFinishConnectAttempts;
         }
 
         @Override
@@ -853,15 +939,23 @@ class SingleNetworkManagerTest {
 
         @Override
         public boolean connect(SocketAddress remote) throws IOException {
+            connectCalls++;
+            if (requireNonBlockingAtConnect && isBlocking()) {
+                throw new IOException("connect called before non-blocking mode");
+            }
             if (connectFailure != null) {
                 throw connectFailure;
             }
-            return true;
+            return pendingFinishConnectAttempts == 0;
         }
 
         @Override
-        public boolean finishConnect() {
-            return connectFailure == null;
+        public boolean finishConnect() throws IOException {
+            finishConnectCalls++;
+            if (connectFailure != null) {
+                throw connectFailure;
+            }
+            return finishConnectCalls > pendingFinishConnectAttempts;
         }
 
         @Override
@@ -899,6 +993,14 @@ class SingleNetworkManagerTest {
 
         int getCloseCalls() {
             return closeCalls;
+        }
+
+        int getConnectCalls() {
+            return connectCalls;
+        }
+
+        int getFinishConnectCalls() {
+            return finishConnectCalls;
         }
     }
 }
