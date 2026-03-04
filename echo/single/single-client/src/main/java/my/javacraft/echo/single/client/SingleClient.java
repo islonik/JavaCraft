@@ -73,16 +73,20 @@ public class SingleClient {
             connectToServer();
 
             boolean working = true;
+            int pendingResponses = 0;
             while (working) {
                 try {
                     String inputCommand = keyboard.readLine();
                     if (inputCommand == null) {
+                        awaitPendingResponses(pendingResponses);
                         break;
                     }
 
                     sendMessage(inputCommand);
+                    pendingResponses++;
 
                     if ("bye".equalsIgnoreCase(inputCommand)) {
+                        awaitPendingResponses(pendingResponses);
                         working = false;
                     }
                 } catch (IOException e) {
@@ -93,6 +97,16 @@ public class SingleClient {
             log.error(error.getMessage(), error);
         } finally {
             close();
+        }
+    }
+
+    /**
+     * Waits for the outstanding CLI replies before shutdown so the listener can
+     * drain and log the final server responses instead of losing them on close.
+     */
+    private void awaitPendingResponses(int pendingResponses) {
+        for (int responseIndex = 0; responseIndex < pendingResponses; responseIndex++) {
+            readMessage();
         }
     }
 }

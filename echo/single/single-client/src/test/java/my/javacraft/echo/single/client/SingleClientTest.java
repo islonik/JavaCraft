@@ -253,6 +253,61 @@ class SingleClientTest {
     }
 
     @Test
+    void testRunWaitsForByeResponseBeforeClosing() {
+        // Verifies that the CLI waits for the goodbye response instead of closing immediately after sending bye.
+        System.setIn(new ByteArrayInputStream("bye\n".getBytes()));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        networkManager.queueResponse("Have a good day!");
+        CapturingMessageSender sender = new CapturingMessageSender();
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertEquals(List.of("bye"), sender.commands);
+        Assertions.assertEquals(1, networkManager.getMessageCalls);
+        Assertions.assertEquals(List.of("openSocket", "getMessage", "closeSocket"), networkManager.lifecycleEvents);
+    }
+
+    @Test
+    void testRunWaitsForPendingResponsesBeforeClosingOnEof() {
+        // Verifies that EOF after queued commands still waits for one response per sent message before close.
+        System.setIn(new ByteArrayInputStream("first\nsecond\n".getBytes()));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        networkManager.queueResponse("Did you say 'first'?");
+        networkManager.queueResponse("Did you say 'second'?");
+        CapturingMessageSender sender = new CapturingMessageSender();
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertEquals(List.of("first", "second"), sender.commands);
+        Assertions.assertEquals(2, networkManager.getMessageCalls);
+        Assertions.assertEquals(List.of("openSocket", "getMessage", "getMessage", "closeSocket"),
+                networkManager.lifecycleEvents);
+    }
+
+    @Test
+    void testRunWithEmptyStdinDoesNotWaitForResponsesBeforeClosing() {
+        // Verifies that the final-response wait is skipped when no command was ever sent.
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        CapturingMessageSender sender = new CapturingMessageSender();
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertTrue(sender.commands.isEmpty());
+        Assertions.assertEquals(0, networkManager.getMessageCalls);
+        Assertions.assertEquals(List.of("openSocket", "closeSocket"), networkManager.lifecycleEvents);
+    }
+
+    @Test
     void testReadMessageReturnsNullWhenNoMessage() throws IOException {
         SingleClient client = new SingleClient("localhost", PORT);
         try {
@@ -382,19 +437,43 @@ class SingleClientTest {
 
     private static final class RecordingNetworkManager extends SingleNetworkManager {
         private final Deque<IOException> failures = new ArrayDeque<>();
+        private final Deque<String> queuedResponses = new ArrayDeque<>();
+        private final List<String> lifecycleEvents = new ArrayList<>();
         private int openAttempts;
+        private int getMessageCalls;
 
         private void failNextOpen(IOException failure) {
             failures.addLast(failure);
         }
 
+        /**
+         * Supplies canned listener responses so run() tests can verify whether
+         * shutdown waits for pending server replies.
+         */
+        private void queueResponse(String response) {
+            queuedResponses.addLast(response);
+        }
+
         @Override
         public void openSocket(String serverHost, int serverPort) throws IOException {
+            lifecycleEvents.add("openSocket");
             openAttempts++;
             IOException failure = failures.pollFirst();
             if (failure != null) {
                 throw failure;
             }
+        }
+
+        @Override
+        public String getMessage() {
+            lifecycleEvents.add("getMessage");
+            getMessageCalls++;
+            return queuedResponses.pollFirst();
+        }
+
+        @Override
+        public void closeSocket() {
+            lifecycleEvents.add("closeSocket");
         }
     }
 
