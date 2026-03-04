@@ -3,6 +3,9 @@ package my.javacraft.echo.netty.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -14,9 +17,17 @@ import org.mockito.Mockito;
 class NettyServerHandlerTest {
 
     private EmbeddedChannel createChannel() {
+        return createChannel(createGroup());
+    }
+
+    private EmbeddedChannel createChannel(ChannelGroup channels) {
         // Test the handler directly without codecs —
         // EmbeddedChannel passes Strings as-is without encoding to ByteBuf
-        return new EmbeddedChannel(new NettyServerHandler());
+        return new EmbeddedChannel(new NettyServerHandler(channels));
+    }
+
+    private ChannelGroup createGroup() {
+        return new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     }
 
     private void drainGreeting(EmbeddedChannel channel) {
@@ -26,7 +37,7 @@ class NettyServerHandlerTest {
 
     /**
      * Close channel and run pending tasks to ensure the ChannelGroup
-     * close-listener fires and removes the channel from the static group.
+     * close-listener fires and removes the channel from the test group.
      */
     private void closeAndCleanup(EmbeddedChannel channel) {
         channel.close();
@@ -53,7 +64,7 @@ class NettyServerHandlerTest {
         try (MockedStatic<InetAddress> mocked = Mockito.mockStatic(InetAddress.class)) {
             mocked.when(InetAddress::getLocalHost).thenThrow(new UnknownHostException("mocked"));
 
-            EmbeddedChannel channel = new EmbeddedChannel(new NettyServerHandler());
+            EmbeddedChannel channel = new EmbeddedChannel(new NettyServerHandler(createGroup()));
 
             String welcome = channel.readOutbound();
             Assertions.assertNotNull(welcome);
@@ -83,7 +94,7 @@ class NettyServerHandlerTest {
         AtomicBoolean downstreamNotified = new AtomicBoolean(false);
 
         EmbeddedChannel channel = new EmbeddedChannel(
-                new NettyServerHandler(),
+                new NettyServerHandler(createGroup()),
                 new ChannelInboundHandlerAdapter() {
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) {
@@ -182,13 +193,14 @@ class NettyServerHandlerTest {
     void testSendToAllBroadcastsToOtherChannel() {
         // EmbeddedChannels share the default ID (0xembedded), so DefaultChannelGroup
         // treats them as duplicates. Use unique DefaultChannelId to allow both in the group.
-        NettyServerHandler handler1 = new NettyServerHandler();
+        ChannelGroup channels = createGroup();
+        NettyServerHandler handler1 = new NettyServerHandler(channels);
         EmbeddedChannel ch1 = new EmbeddedChannel(
                 io.netty.channel.DefaultChannelId.newInstance(), handler1);
         drainGreeting(ch1);
 
         EmbeddedChannel ch2 = new EmbeddedChannel(
-                io.netty.channel.DefaultChannelId.newInstance(), new NettyServerHandler());
+                io.netty.channel.DefaultChannelId.newInstance(), new NettyServerHandler(channels));
         drainGreeting(ch2);
 
         // Call sendToAll directly — exercises both branches:
@@ -218,6 +230,54 @@ class NettyServerHandlerTest {
     }
 
     @Test
+    void testStatsAndBroadcastAreIsolatedPerChannelGroup() {
+        ChannelGroup serverOneChannels = createGroup();
+        ChannelGroup serverTwoChannels = createGroup();
+
+        NettyServerHandler serverOnePrimaryHandler = new NettyServerHandler(serverOneChannels);
+        EmbeddedChannel serverOnePrimary = new EmbeddedChannel(
+                io.netty.channel.DefaultChannelId.newInstance(), serverOnePrimaryHandler);
+        drainGreeting(serverOnePrimary);
+
+        EmbeddedChannel serverOneSecondary = new EmbeddedChannel(
+                io.netty.channel.DefaultChannelId.newInstance(), new NettyServerHandler(serverOneChannels));
+        drainGreeting(serverOneSecondary);
+
+        NettyServerHandler serverTwoHandler = new NettyServerHandler(serverTwoChannels);
+        EmbeddedChannel serverTwoClient = new EmbeddedChannel(
+                io.netty.channel.DefaultChannelId.newInstance(), serverTwoHandler);
+        drainGreeting(serverTwoClient);
+
+        serverOnePrimary.writeInbound("stats");
+        Assertions.assertEquals("Simultaneously connected clients: 2\r\n", serverOnePrimary.readOutbound());
+
+        serverTwoClient.writeInbound("stats");
+        Assertions.assertEquals("Simultaneously connected clients: 1\r\n", serverTwoClient.readOutbound());
+
+        ChannelHandlerContext serverOneContext = serverOnePrimary.pipeline().context(serverOnePrimaryHandler);
+        serverOnePrimaryHandler.sendToAll(serverOneContext, "hello everybody!");
+
+        serverOnePrimary.flushOutbound();
+        serverOneSecondary.flushOutbound();
+        serverTwoClient.flushOutbound();
+
+        String senderMessage = serverOnePrimary.readOutbound();
+        Assertions.assertEquals("[you] hello everybody!\r\n", senderMessage);
+
+        String sameServerMessage = serverOneSecondary.readOutbound();
+        Assertions.assertNotNull(sameServerMessage);
+        Assertions.assertTrue(sameServerMessage.endsWith("hello everybody!\r\n"));
+        Assertions.assertFalse(sameServerMessage.startsWith("[you]"));
+
+        Assertions.assertNull(serverTwoClient.readOutbound(),
+                "Broadcast should stay inside one server's channel group");
+
+        closeAndCleanup(serverOnePrimary);
+        closeAndCleanup(serverOneSecondary);
+        closeAndCleanup(serverTwoClient);
+    }
+
+    @Test
     void testChannelReadCompleteFlushes() {
         EmbeddedChannel channel = createChannel();
         drainGreeting(channel);
@@ -226,7 +286,7 @@ class NettyServerHandlerTest {
         channel.pipeline().fireChannelReadComplete();
 
         // channelReadComplete calls ctx.flush() — verify no error
-        Assertions.assertDoesNotThrow(() -> channel.checkException());
+        Assertions.assertDoesNotThrow(channel::checkException);
 
         closeAndCleanup(channel);
     }

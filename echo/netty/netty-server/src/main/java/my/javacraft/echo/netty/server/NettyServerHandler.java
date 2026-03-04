@@ -6,11 +6,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -19,7 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NettyServerHandler extends SimpleChannelInboundHandler<String> {
 
-    private static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private final ChannelGroup channels;
+
+    public NettyServerHandler(ChannelGroup channels) {
+        this.channels = Objects.requireNonNull(channels, "channels");
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
