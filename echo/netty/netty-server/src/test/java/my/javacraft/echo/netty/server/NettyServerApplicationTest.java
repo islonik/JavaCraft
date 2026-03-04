@@ -12,9 +12,17 @@ class NettyServerApplicationTest {
     }
 
     @Test
+    void testGetPortWithNoArgumentsFallsBackToDefault() {
+        int port = NettyServerApplication.getPort(new String[0]);
+        Assertions.assertEquals(NettyServerApplication.DEFAULT_PORT, port,
+                "Missing port should fall back to DEFAULT_PORT");
+    }
+
+    @Test
     void testGetPortWithInvalidArgument() {
         int port = NettyServerApplication.getPort(new String[]{"notANumber"});
-        Assertions.assertEquals(8076, port, "Invalid port should fall back to DEFAULT_PORT");
+        Assertions.assertEquals(NettyServerApplication.DEFAULT_PORT, port,
+                "Invalid port should fall back to DEFAULT_PORT");
     }
 
     @Test
@@ -27,6 +35,20 @@ class NettyServerApplicationTest {
     void testGetPortWithMaxPort() {
         int port = NettyServerApplication.getPort(new String[]{"65535"});
         Assertions.assertEquals(65535, port);
+    }
+
+    @Test
+    void testGetPortWithNegativePortFallsBackToDefault() {
+        int port = NettyServerApplication.getPort(new String[]{"-1"});
+        Assertions.assertEquals(NettyServerApplication.DEFAULT_PORT, port,
+                "Negative port should fall back to DEFAULT_PORT");
+    }
+
+    @Test
+    void testGetPortWithPortAboveMaxFallsBackToDefault() {
+        int port = NettyServerApplication.getPort(new String[]{"65536"});
+        Assertions.assertEquals(NettyServerApplication.DEFAULT_PORT, port,
+                "Port above 65535 should fall back to DEFAULT_PORT");
     }
 
 }
