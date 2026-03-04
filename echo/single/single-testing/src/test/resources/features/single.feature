@@ -101,9 +101,9 @@ Feature: Single-thread server behavior
 
   Rule: High load behavior
 
-    Scenario: The server handles 100 clients and 10,000 echo messages
+    Scenario: The server handles 100 clients sending 10,000 messages from separate threads
       Given the single-thread server is running on port 8095
       When 100 clients with prefix "Load" connect on port 8095
       Then client "Load-001" sends "stats" and receives "Simultaneously connected clients: 100"
-      When 100 clients with prefix "Load" each send 100 echo messages
+      When 100 clients with prefix "Load" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
       Then 100 clients with prefix "Load" disconnect with goodbye

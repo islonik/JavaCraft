@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import my.javacraft.echo.single.client.SingleClient;
@@ -79,15 +81,32 @@ public class SingleStepDefinition {
         }
     }
 
-    @When("{int} clients with prefix {string} each send {int} echo messages")
-    public void clientsWithPrefixEachSendEchoMessages(int clientCount, String prefix, int messagesPerClient) {
+    @When("{int} clients with prefix {string} each send {int} echo messages from their own thread with a random delay between {int} and {int} milliseconds")
+    public void clientsWithPrefixEachSendEchoMessagesFromTheirOwnThreadWithRandomDelay(
+            int clientCount,
+            String prefix,
+            int messagesPerClient,
+            int minDelayMs,
+            int maxDelayMs) {
+        List<Thread> clientThreads = new ArrayList<>(clientCount);
+        ConcurrentLinkedQueue<Throwable> failures = new ConcurrentLinkedQueue<>();
+
         for (int clientIndex = 1; clientIndex <= clientCount; clientIndex++) {
-            String clientName = clientName(prefix, clientIndex);
-            for (int messageIndex = 1; messageIndex <= messagesPerClient; messageIndex++) {
-                String message = "%s message %03d".formatted(clientName, messageIndex);
-                assertResponse(clientName, message, "Did you say '%s'?".formatted(message));
-            }
+            String currentClientName = clientName(prefix, clientIndex);
+            Thread clientThread = Thread.ofPlatform()
+                    .name("single-load-" + currentClientName)
+                    .unstarted(() -> sendMessagesWithRandomDelay(
+                            currentClientName,
+                            messagesPerClient,
+                            minDelayMs,
+                            maxDelayMs,
+                            failures));
+            clientThreads.add(clientThread);
         }
+
+        clientThreads.forEach(Thread::start);
+        waitForClientThreads(clientThreads, failures);
+        failIfAnyClientThreadFailed(failures);
     }
 
     @Then("{int} clients with prefix {string} disconnect with goodbye")
@@ -105,6 +124,72 @@ public class SingleStepDefinition {
 
         Assertions.assertEquals(expectedResponse, actualResponse,
                 "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
+    }
+
+    /**
+     * Runs the load-work loop for one client thread so the high-load scenario
+     * matches the requirement that every client uses its own system thread.
+     */
+    private void sendMessagesWithRandomDelay(
+            String clientName,
+            int messagesPerClient,
+            int minDelayMs,
+            int maxDelayMs,
+            ConcurrentLinkedQueue<Throwable> failures) {
+        try {
+            for (int messageIndex = 1; messageIndex <= messagesPerClient; messageIndex++) {
+                String message = "%s message %03d".formatted(clientName, messageIndex);
+                assertResponse(clientName, message, "Did you say '%s'?".formatted(message));
+                if (messageIndex < messagesPerClient) {
+                    pauseRandomlyBetweenMessages(minDelayMs, maxDelayMs);
+                }
+            }
+        } catch (Throwable failure) {
+            failures.add(failure);
+        }
+    }
+
+    /**
+     * Keeps the random pacing in one place so the high-load step stays easy to
+     * read and the delay rules are applied consistently for every client.
+     */
+    private void pauseRandomlyBetweenMessages(int minDelayMs, int maxDelayMs) throws InterruptedException {
+        long delay = ThreadLocalRandom.current().nextLong(minDelayMs, maxDelayMs + 1L);
+        Thread.sleep(delay);
+    }
+
+    /**
+     * Waits for every client thread to finish and records timeouts or
+     * interruptions as test failures instead of losing them in background work.
+     */
+    private void waitForClientThreads(List<Thread> clientThreads, ConcurrentLinkedQueue<Throwable> failures) {
+        for (Thread clientThread : clientThreads) {
+            try {
+                clientThread.join(TimeUnit.SECONDS.toMillis(30));
+                if (clientThread.isAlive()) {
+                    failures.add(new AssertionError(
+                            "Load client thread '%s' did not finish in time".formatted(clientThread.getName())));
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                failures.add(e);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Surfaces the first threaded load failure after all workers finish, while
+     * keeping the remaining failures attached for easier debugging.
+     */
+    private void failIfAnyClientThreadFailed(ConcurrentLinkedQueue<Throwable> failures) {
+        if (failures.isEmpty()) {
+            return;
+        }
+
+        AssertionError combinedFailure = new AssertionError("High-load client threads reported failures");
+        failures.forEach(combinedFailure::addSuppressed);
+        throw combinedFailure;
     }
 
     /**
