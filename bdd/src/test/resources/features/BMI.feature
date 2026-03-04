@@ -21,8 +21,8 @@ Feature: BMI service
     Given the BMI calculator is available
     When we classify BMI values into categories
    #  | BMI   | message                                                  |
-      | 0.01  | Severe thinness as your BMI is less than 15.99           |
-      | 15.99 | Severe thinness as your BMI is less than 15.99           |
+      | 0.01  | Severe thinness as your BMI is less than 16.00           |
+      | 15.99 | Severe thinness as your BMI is less than 16.00           |
       | 16.00 | Moderate thinness as your BMI is between 16.00 and 16.99 |
       | 16.99 | Moderate thinness as your BMI is between 16.00 and 16.99 |
       | 17.00 | Mild thinness as your BMI is between 17.00 and 18.49     |

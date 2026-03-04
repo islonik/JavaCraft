@@ -116,8 +116,8 @@ class BMIServiceTest {
     @Test
     void testBmiToCategoryReturnsExpectedCategoryForBoundaryValues() {
         List<Object[]> testCases = List.of(
-                new Object[] {new BigDecimal("0.01"), "Severe thinness as your BMI is less than 15.99"},
-                new Object[] {new BigDecimal("15.99"), "Severe thinness as your BMI is less than 15.99"},
+                new Object[] {new BigDecimal("0.01"), "Severe thinness as your BMI is less than 16.00"},
+                new Object[] {new BigDecimal("15.99"), "Severe thinness as your BMI is less than 16.00"},
                 new Object[] {new BigDecimal("16.00"), "Moderate thinness as your BMI is between 16.00 and 16.99"},
                 new Object[] {new BigDecimal("16.99"), "Moderate thinness as your BMI is between 16.00 and 16.99"},
                 new Object[] {new BigDecimal("17.00"), "Mild thinness as your BMI is between 17.00 and 18.49"},

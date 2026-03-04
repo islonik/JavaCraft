@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  * stays declarative and easy to extend.
  */
 public enum BmiCategory {
-    SEVERE_THINNESS(null, "15.99", "Severe thinness as your BMI is less than 15.99"),
+    SEVERE_THINNESS(null, "15.99", "Severe thinness as your BMI is less than 16.00"),
     MODERATE_THINNESS(SEVERE_THINNESS, "16.99", "Moderate thinness as your BMI is between 16.00 and 16.99"),
     MILD_THINNESS(MODERATE_THINNESS, "18.49", "Mild thinness as your BMI is between 17.00 and 18.49"),
     NORMAL_RANGE(MILD_THINNESS, "24.99", "Normal range as your BMI is between 18.50 and 24.99"),
