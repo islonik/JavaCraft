@@ -213,12 +213,28 @@ public class SingleServer implements Runnable {
         }
 
         log.info("New socket has been accepted!");
-        connections.incrementAndGet();
+        try {
+            client.configureBlocking(false);
+            client.register(selector, SelectionKey.OP_READ);
+            requestBuffers.put(client, new ByteArrayOutputStream());
+            pendingRequests.put(client, new ArrayDeque<>());
+            connections.incrementAndGet();
+        } catch (Exception setupError) {
+            closeAcceptedClient(client, setupError);
+        }
+    }
 
-        client.configureBlocking(false);
-        client.register(selector, SelectionKey.OP_READ);
-        requestBuffers.put(client, new ByteArrayOutputStream());
-        pendingRequests.put(client, new ArrayDeque<>());
+    /**
+     * Cleans up a half-initialized accepted client so setup failures do not
+     * bubble up to the server accept key and stop new connections.
+     */
+    private void closeAcceptedClient(SocketChannel client, Exception setupError) {
+        log.error("Unable to initialize accepted client", setupError);
+        try {
+            client.close();
+        } catch (IOException closeError) {
+            log.debug("Unable to close accepted client after setup failure", closeError);
+        }
     }
 
     /**

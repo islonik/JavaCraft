@@ -16,6 +16,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.AbstractSelectableChannel;
+import java.nio.channels.spi.AbstractSelector;
 import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -355,6 +357,57 @@ class SingleServerTest {
     }
 
     @Test
+    void testAcceptOpTracksClientAfterSuccessfulSetup() throws Exception {
+        // Verifies that a fully initialized accepted client is registered and counted once.
+        SingleServer server = new SingleServer(0);
+        AcceptingServerSocketChannel serverChannel = new AcceptingServerSocketChannel(new SetupAwareSocketChannel());
+        try (RegisteringSelector selector = new RegisteringSelector()) {
+            Method acceptOp = SingleServer.class.getDeclaredMethod("acceptOp", Selector.class, ServerSocketChannel.class);
+            acceptOp.setAccessible(true);
+            acceptOp.invoke(server, selector, serverChannel);
+        }
+
+        Assertions.assertEquals(1, getConnections(server));
+        Assertions.assertEquals(1, trackedRequestBuffers(server).size());
+        Assertions.assertEquals(1, trackedPendingRequests(server).size());
+    }
+
+    @Test
+    void testAcceptOpClosesAcceptedClientWhenSetupFails() throws Exception {
+        // Verifies that a client-setup failure closes only the accepted socket and leaves the server state unchanged.
+        SingleServer server = new SingleServer(0);
+        SetupAwareSocketChannel acceptedClient = SetupAwareSocketChannel.failOnConfigure();
+        AcceptingServerSocketChannel serverChannel = new AcceptingServerSocketChannel(acceptedClient);
+        try (RegisteringSelector selector = new RegisteringSelector()) {
+            Method acceptOp = SingleServer.class.getDeclaredMethod("acceptOp", Selector.class, ServerSocketChannel.class);
+            acceptOp.setAccessible(true);
+
+            Assertions.assertDoesNotThrow(() -> acceptOp.invoke(server, selector, serverChannel));
+        }
+        Assertions.assertEquals(1, acceptedClient.closeAttempts);
+        Assertions.assertFalse(acceptedClient.isOpen());
+        Assertions.assertEquals(0, getConnections(server));
+        Assertions.assertTrue(trackedRequestBuffers(server).isEmpty());
+        Assertions.assertTrue(trackedPendingRequests(server).isEmpty());
+    }
+
+    @Test
+    void testAcceptOpIgnoresAcceptedClientCloseFailureAfterSetupFails() throws Exception {
+        // Verifies that cleanup still swallows a close failure after client setup already failed.
+        SingleServer server = new SingleServer(0);
+        SetupAwareSocketChannel acceptedClient = SetupAwareSocketChannel.failOnConfigureAndClose();
+        AcceptingServerSocketChannel serverChannel = new AcceptingServerSocketChannel(acceptedClient);
+        try (RegisteringSelector selector = new RegisteringSelector()) {
+            Method acceptOp = SingleServer.class.getDeclaredMethod("acceptOp", Selector.class, ServerSocketChannel.class);
+            acceptOp.setAccessible(true);
+
+            Assertions.assertDoesNotThrow(() -> acceptOp.invoke(server, selector, serverChannel));
+        }
+        Assertions.assertEquals(1, acceptedClient.closeAttempts);
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
     void testWriteReturnsFalseWhenChannelMakesNoProgress() {
         SingleServer server = new SingleServer(0);
         try (ScriptedSocketChannel channel = ScriptedSocketChannel.alwaysZeroWrites()) {
@@ -648,6 +701,24 @@ class SingleServerTest {
         loop.invoke(server, selector, new NullAcceptServerSocketChannel());
 
         Assertions.assertFalse(key.isValid());
+    }
+
+    @Test
+    void testLoopKeepsServerAcceptKeyOpenWhenAcceptedClientSetupFails() throws Exception {
+        // Verifies the accept regression: a broken accepted client must not cause the listening key to be closed.
+        SingleServer server = new SingleServer(0);
+        AcceptingServerSocketChannel serverChannel = new AcceptingServerSocketChannel(SetupAwareSocketChannel.failOnConfigure());
+        FakeServerSelectionKey key = new FakeServerSelectionKey(serverChannel, SelectionKey.OP_ACCEPT);
+        Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
+        selectedKeys.add(key);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, serverChannel);
+
+        Assertions.assertTrue(key.isValid());
+        Assertions.assertEquals(0, getConnections(server));
     }
 
     // ── run() error handling ─────────────────────────────────────────
@@ -1156,6 +1227,114 @@ class SingleServerTest {
         }
     }
 
+    /**
+     * Returns one scripted client from accept() so accept-path tests can drive
+     * server-socket behavior without binding a real listening port.
+     */
+    private static final class AcceptingServerSocketChannel extends ServerSocketChannel {
+        private final SocketChannel acceptedClient;
+
+        private AcceptingServerSocketChannel(SocketChannel acceptedClient) {
+            super(SelectorProvider.provider());
+            this.acceptedClient = acceptedClient;
+        }
+
+        @Override
+        public SocketChannel accept() {
+            return acceptedClient;
+        }
+
+        @Override
+        public ServerSocket socket() {
+            return null;
+        }
+
+        @Override
+        public ServerSocketChannel bind(SocketAddress local, int backlog) {
+            return this;
+        }
+
+        @Override
+        public <T> ServerSocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return null;
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() {
+            // no-op
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) {
+            // no-op
+        }
+    }
+
+    /**
+     * Supplies a minimal selector registration path for acceptOp() tests so a
+     * synthetic accepted socket can be registered without a real selector.
+     */
+    private static final class RegisteringSelector extends AbstractSelector {
+        private RegisteringSelector() {
+            super(SelectorProvider.provider());
+        }
+
+        @Override
+        protected void implCloseSelector() {
+            // no-op
+        }
+
+        @Override
+        protected SelectionKey register(AbstractSelectableChannel ch, int ops, Object att) {
+            return new FakeSelectionKey((SocketChannel) ch, ops);
+        }
+
+        @Override
+        public Set<SelectionKey> keys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public Set<SelectionKey> selectedKeys() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public int selectNow() {
+            return 0;
+        }
+
+        @Override
+        public int select(long timeout) {
+            return 0;
+        }
+
+        @Override
+        public int select() {
+            return 0;
+        }
+
+        @Override
+        public Selector wakeup() {
+            return this;
+        }
+    }
+
     private static final class WakeupSelector extends Selector {
         private boolean wokenUp;
 
@@ -1433,6 +1612,140 @@ class SingleServerTest {
         @Override
         protected void implConfigureBlocking(boolean block) {
             // no-op
+        }
+    }
+
+    /**
+     * Lets acceptOp() tests force client setup and close failures without
+     * depending on real accepted sockets.
+     */
+    private static class SetupAwareSocketChannel extends SocketChannel {
+        private final IOException configureFailure;
+        private final IOException closeFailure;
+        private int closeAttempts;
+
+        private SetupAwareSocketChannel(IOException configureFailure, IOException closeFailure) {
+            super(SelectorProvider.provider());
+            this.configureFailure = configureFailure;
+            this.closeFailure = closeFailure;
+        }
+
+        static SetupAwareSocketChannel failOnConfigure() {
+            return new SetupAwareSocketChannel(new IOException("configure failed"), null);
+        }
+
+        static SetupAwareSocketChannel failOnConfigureAndClose() {
+            return new SetupAwareSocketChannel(new IOException("configure failed"), new IOException("close failed"));
+        }
+
+        private SetupAwareSocketChannel() {
+            this(null, null);
+        }
+
+        @Override
+        public int read(ByteBuffer dst) {
+            return 0;
+        }
+
+        @Override
+        public long read(ByteBuffer[] dsts, int offset, int length) {
+            return 0;
+        }
+
+        @Override
+        public int write(ByteBuffer src) {
+            int written = src.remaining();
+            src.position(src.limit());
+            return written;
+        }
+
+        @Override
+        public long write(ByteBuffer[] srcs, int offset, int length) {
+            long total = 0;
+            for (int index = offset; index < offset + length; index++) {
+                total += write(srcs[index]);
+            }
+            return total;
+        }
+
+        @Override
+        public SocketChannel bind(SocketAddress local) {
+            return this;
+        }
+
+        @Override
+        public <T> SocketChannel setOption(SocketOption<T> name, T value) {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownInput() {
+            return this;
+        }
+
+        @Override
+        public SocketChannel shutdownOutput() {
+            return this;
+        }
+
+        @Override
+        public Socket socket() {
+            return new Socket();
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
+        }
+
+        @Override
+        public boolean isConnectionPending() {
+            return false;
+        }
+
+        @Override
+        public boolean connect(SocketAddress remote) {
+            return true;
+        }
+
+        @Override
+        public boolean finishConnect() {
+            return true;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 8077);
+        }
+
+        @Override
+        public SocketAddress getLocalAddress() {
+            return InetSocketAddress.createUnresolved("localhost", 0);
+        }
+
+        @Override
+        public <T> T getOption(SocketOption<T> name) {
+            return null;
+        }
+
+        @Override
+        public Set<SocketOption<?>> supportedOptions() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        protected void implCloseSelectableChannel() throws IOException {
+            closeAttempts++;
+            if (closeFailure != null) {
+                throw closeFailure;
+            }
+        }
+
+        @Override
+        protected void implConfigureBlocking(boolean block) throws IOException {
+            if (configureFailure != null) {
+                throw configureFailure;
+            }
         }
     }
 
