@@ -62,12 +62,10 @@ public class BMIStepDefinition {
     public void classifyBmiValuesIntoCategories(DataTable table) {
         List<List<String>> rows = table.cells();
         for (List<String> row : rows) {
-            BigDecimal bmi = new BigDecimal(row.get(0).trim());
+            BigDecimal bmi = new BigDecimal(row.getFirst().trim());
             String expectedCategory = row.get(1).trim();
 
-            String actualCategory = bmiService.bmi2category(bmi);
-
-            Assertions.assertEquals(expectedCategory, actualCategory,
+            Assertions.assertEquals(expectedCategory, bmiService.bmiToCategory(bmi),
                     "Category mismatch for BMI " + bmi);
         }
     }

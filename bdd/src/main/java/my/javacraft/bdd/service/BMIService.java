@@ -1,9 +1,9 @@
 package my.javacraft.bdd.service;
 
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import my.javacraft.bdd.model.BmiCategory;
+import org.springframework.stereotype.Service;
 
 /**
  * Body mass index (BMI) is a measurement of a person's weight in relation to their height.
@@ -52,29 +52,13 @@ public class BMIService {
      * Obese class II 35.00 - 39.99
      * Obese class III ≥40.00
      */
-    public String bmi2category(BigDecimal bmi) {
+    public String bmiToCategory(BigDecimal bmi) {
         if (bmi == null) {
             throw new IllegalArgumentException("BMI must not be null");
         }
         if (bmi.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("BMI must be positive");
         }
-        if (bmi.compareTo(BigDecimal.valueOf(16.00)) < 0) {
-            return "Severe thinness as your BMI is less than 16.00";
-        } else if (bmi.compareTo(BigDecimal.valueOf(16.99)) <= 0) {
-            return "Moderate thinness as your BMI is up to 16.99";
-        } else if (bmi.compareTo(BigDecimal.valueOf(18.49)) <= 0) {
-            return "Mild thinness as your BMI is up to 18.49";
-        } else if (bmi.compareTo(BigDecimal.valueOf(24.99)) <= 0) {
-            return "Normal range as your BMI is up to 24.99";
-        } else if (bmi.compareTo(BigDecimal.valueOf(29.99)) <= 0) {
-            return "Pre-obese as your BMI is up to 29.99";
-        } else if (bmi.compareTo(BigDecimal.valueOf(34.99)) <= 0) {
-            return "Obese class I as your BMI is up to 34.99";
-        } else if (bmi.compareTo(BigDecimal.valueOf(39.99)) <= 0) {
-            return "Obese class II as your BMI is up to 39.99";
-        } else {
-            return "Obese class III as your BMI is over 40";
-        }
+        return BmiCategory.from(bmi).message();
     }
 }

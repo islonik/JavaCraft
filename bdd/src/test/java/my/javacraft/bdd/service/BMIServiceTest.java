@@ -1,6 +1,7 @@
 package my.javacraft.bdd.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -86,30 +87,56 @@ class BMIServiceTest {
     }
 
     @Test
-    void testBmi2categoryThrowsExceptionWhenBmiIsNull() {
+    void testBmiToCategoryThrowsExceptionWhenBmiIsNull() {
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> bmiService.bmi2category(null)
+                () -> bmiService.bmiToCategory(null)
         );
         Assertions.assertEquals("BMI must not be null", ex.getMessage());
     }
 
     @Test
-    void testBmi2categoryThrowsExceptionWhenBmiIsZero() {
+    void testBmiToCategoryThrowsExceptionWhenBmiIsZero() {
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> bmiService.bmi2category(BigDecimal.ZERO)
+                () -> bmiService.bmiToCategory(BigDecimal.ZERO)
         );
         Assertions.assertEquals("BMI must be positive", ex.getMessage());
     }
 
     @Test
-    void testBmi2categoryThrowsExceptionWhenBmiIsNegative() {
+    void testBmiToCategoryThrowsExceptionWhenBmiIsNegative() {
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> bmiService.bmi2category(BigDecimal.valueOf(-1))
+                () -> bmiService.bmiToCategory(BigDecimal.valueOf(-1))
         );
         Assertions.assertEquals("BMI must be positive", ex.getMessage());
+    }
+
+    @Test
+    void testBmiToCategoryReturnsExpectedCategoryForBoundaryValues() {
+        List<Object[]> testCases = List.of(
+                new Object[] {new BigDecimal("0.01"), "Severe thinness as your BMI is less than 15.99"},
+                new Object[] {new BigDecimal("15.99"), "Severe thinness as your BMI is less than 15.99"},
+                new Object[] {new BigDecimal("16.00"), "Moderate thinness as your BMI is between 16.00 and 16.99"},
+                new Object[] {new BigDecimal("16.99"), "Moderate thinness as your BMI is between 16.00 and 16.99"},
+                new Object[] {new BigDecimal("17.00"), "Mild thinness as your BMI is between 17.00 and 18.49"},
+                new Object[] {new BigDecimal("18.49"), "Mild thinness as your BMI is between 17.00 and 18.49"},
+                new Object[] {new BigDecimal("18.50"), "Normal range as your BMI is between 18.50 and 24.99"},
+                new Object[] {new BigDecimal("24.99"), "Normal range as your BMI is between 18.50 and 24.99"},
+                new Object[] {new BigDecimal("25.00"), "Pre-obese as your BMI is between 25.00 and 29.99"},
+                new Object[] {new BigDecimal("29.99"), "Pre-obese as your BMI is between 25.00 and 29.99"},
+                new Object[] {new BigDecimal("30.00"), "Obese class I as your BMI is between 30.00 and 34.99"},
+                new Object[] {new BigDecimal("34.99"), "Obese class I as your BMI is between 30.00 and 34.99"},
+                new Object[] {new BigDecimal("35.00"), "Obese class II as your BMI is between 35.00 and 39.99"},
+                new Object[] {new BigDecimal("39.99"), "Obese class II as your BMI is between 35.00 and 39.99"},
+                new Object[] {new BigDecimal("40.00"), "Obese class III as your BMI is 40.00 or more"},
+                new Object[] {new BigDecimal("41.00"), "Obese class III as your BMI is 40.00 or more"}
+        );
+
+        for (Object[] testCase : testCases) {
+            Assertions.assertEquals(testCase[1], bmiService.bmiToCategory((BigDecimal) testCase[0]));
+        }
     }
 
 }
