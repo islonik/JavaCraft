@@ -1,26 +1,15 @@
-package my.javacraft.echo.standard.server;
+package my.javacraft.echo.standard.client.tools;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author Lipatov Nikita
- */
 @Slf4j
-public class StandardServerApplication {
-
+public class PortValidator {
     static final int DEFAULT_PORT = 8075;
 
     private static final int MIN_PORT = 0;
     private static final int MAX_PORT = 65_535;
 
-    // telnet localhost 8075
-    public static void main(String[] args) {
-        int port = getPort(args);
-
-        new MultithreadedServer(port).run();
-    }
-
-    static int getPort(String[] args) {
+    public static int getPort(String[] args) {
         if (args == null || args.length == 0) {
             return DEFAULT_PORT;
         }
