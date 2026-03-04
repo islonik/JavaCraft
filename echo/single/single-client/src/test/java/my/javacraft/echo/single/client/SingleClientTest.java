@@ -254,10 +254,9 @@ class SingleClientTest {
 
     @Test
     void testRunWaitsForByeResponseBeforeClosing() {
-        // Verifies that the CLI waits for the goodbye response instead of closing immediately after sending bye.
+        // Verifies that the CLI waits for one outstanding goodbye reply instead of closing immediately.
         System.setIn(new ByteArrayInputStream("bye\n".getBytes()));
         RecordingNetworkManager networkManager = new RecordingNetworkManager();
-        networkManager.queueResponse("Have a good day!");
         CapturingMessageSender sender = new CapturingMessageSender();
         networkManager.setSingleMessageSender(sender);
         RecordingExecutorService executor = new RecordingExecutorService();
@@ -266,17 +265,17 @@ class SingleClientTest {
         Assertions.assertDoesNotThrow(client::run);
 
         Assertions.assertEquals(List.of("bye"), sender.commands);
-        Assertions.assertEquals(1, networkManager.getMessageCalls);
-        Assertions.assertEquals(List.of("openSocket", "getMessage", "closeSocket"), networkManager.lifecycleEvents);
+        Assertions.assertEquals(Collections.singletonList(1), networkManager.awaitedTargetCounts);
+        Assertions.assertEquals(0, networkManager.getMessageCalls);
+        Assertions.assertEquals(List.of("openSocket", "awaitReceivedMessageCount", "closeSocket"),
+                networkManager.lifecycleEvents);
     }
 
     @Test
     void testRunWaitsForPendingResponsesBeforeClosingOnEof() {
-        // Verifies that EOF after queued commands still waits for one response per sent message before close.
+        // Verifies that EOF waits only once for the full outstanding reply count instead of polling per command.
         System.setIn(new ByteArrayInputStream("first\nsecond\n".getBytes()));
         RecordingNetworkManager networkManager = new RecordingNetworkManager();
-        networkManager.queueResponse("Did you say 'first'?");
-        networkManager.queueResponse("Did you say 'second'?");
         CapturingMessageSender sender = new CapturingMessageSender();
         networkManager.setSingleMessageSender(sender);
         RecordingExecutorService executor = new RecordingExecutorService();
@@ -285,8 +284,9 @@ class SingleClientTest {
         Assertions.assertDoesNotThrow(client::run);
 
         Assertions.assertEquals(List.of("first", "second"), sender.commands);
-        Assertions.assertEquals(2, networkManager.getMessageCalls);
-        Assertions.assertEquals(List.of("openSocket", "getMessage", "getMessage", "closeSocket"),
+        Assertions.assertEquals(Collections.singletonList(2), networkManager.awaitedTargetCounts);
+        Assertions.assertEquals(0, networkManager.getMessageCalls);
+        Assertions.assertEquals(List.of("openSocket", "awaitReceivedMessageCount", "closeSocket"),
                 networkManager.lifecycleEvents);
     }
 
@@ -303,6 +303,25 @@ class SingleClientTest {
         Assertions.assertDoesNotThrow(client::run);
 
         Assertions.assertTrue(sender.commands.isEmpty());
+        Assertions.assertEquals(0, networkManager.getMessageCalls);
+        Assertions.assertTrue(networkManager.awaitedTargetCounts.isEmpty());
+        Assertions.assertEquals(List.of("openSocket", "closeSocket"), networkManager.lifecycleEvents);
+    }
+
+    @Test
+    void testRunDoesNotWaitForResponsesAlreadyReceivedDuringSession() {
+        // Verifies that shutdown skips waiting when every sent command already has a received reply count.
+        System.setIn(new ByteArrayInputStream("one\ntwo\nthree\n".getBytes()));
+        RecordingNetworkManager networkManager = new RecordingNetworkManager();
+        CapturingMessageSender sender = new CapturingMessageSender(networkManager::recordReceivedResponse);
+        networkManager.setSingleMessageSender(sender);
+        RecordingExecutorService executor = new RecordingExecutorService();
+        SingleClient client = new SingleClient("localhost", PORT, networkManager, executor);
+
+        Assertions.assertDoesNotThrow(client::run);
+
+        Assertions.assertEquals(List.of("one", "two", "three"), sender.commands);
+        Assertions.assertTrue(networkManager.awaitedTargetCounts.isEmpty());
         Assertions.assertEquals(0, networkManager.getMessageCalls);
         Assertions.assertEquals(List.of("openSocket", "closeSocket"), networkManager.lifecycleEvents);
     }
@@ -439,19 +458,21 @@ class SingleClientTest {
         private final Deque<IOException> failures = new ArrayDeque<>();
         private final Deque<String> queuedResponses = new ArrayDeque<>();
         private final List<String> lifecycleEvents = new ArrayList<>();
+        private final List<Integer> awaitedTargetCounts = new ArrayList<>();
         private int openAttempts;
         private int getMessageCalls;
+        private int receivedResponseCount;
 
         private void failNextOpen(IOException failure) {
             failures.addLast(failure);
         }
 
         /**
-         * Supplies canned listener responses so run() tests can verify whether
-         * shutdown waits for pending server replies.
+         * Advances the observed listener count so run() tests can model replies
+         * that already arrived before shutdown begins.
          */
-        private void queueResponse(String response) {
-            queuedResponses.addLast(response);
+        private void recordReceivedResponse() {
+            receivedResponseCount++;
         }
 
         @Override
@@ -472,6 +493,18 @@ class SingleClientTest {
         }
 
         @Override
+        public int getReceivedMessageCount() {
+            return receivedResponseCount;
+        }
+
+        @Override
+        public boolean awaitReceivedMessageCount(int targetCount, long timeoutMs) {
+            lifecycleEvents.add("awaitReceivedMessageCount");
+            awaitedTargetCounts.add(targetCount);
+            return receivedResponseCount >= targetCount;
+        }
+
+        @Override
         public void closeSocket() {
             lifecycleEvents.add("closeSocket");
         }
@@ -483,10 +516,20 @@ class SingleClientTest {
      */
     private static final class CapturingMessageSender extends SingleMessageSender {
         private final List<String> commands = new ArrayList<>();
+        private final Runnable afterSend;
+
+        private CapturingMessageSender() {
+            this(() -> { });
+        }
+
+        private CapturingMessageSender(Runnable afterSend) {
+            this.afterSend = afterSend;
+        }
 
         @Override
         public void send(String command) {
             commands.add(command);
+            afterSend.run();
         }
     }
 

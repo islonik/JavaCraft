@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SingleClient {
+    private static final long SHUTDOWN_RESPONSE_WAIT_MS = 2_000L;
+
     private final SingleNetworkManager singleNetworkManager;
     private final ExecutorService listenerExecutor;
     private Future<?> listenerTask;
@@ -73,20 +75,21 @@ public class SingleClient {
             connectToServer();
 
             boolean working = true;
-            int pendingResponses = 0;
+            int sentCommands = 0;
+            int receivedMessagesAtConnect = singleNetworkManager.getReceivedMessageCount();
             while (working) {
                 try {
                     String inputCommand = keyboard.readLine();
                     if (inputCommand == null) {
-                        awaitPendingResponses(pendingResponses);
+                        awaitPendingResponses(sentCommands, receivedMessagesAtConnect);
                         break;
                     }
 
                     sendMessage(inputCommand);
-                    pendingResponses++;
+                    sentCommands++;
 
                     if ("bye".equalsIgnoreCase(inputCommand)) {
-                        awaitPendingResponses(pendingResponses);
+                        awaitPendingResponses(sentCommands, receivedMessagesAtConnect);
                         working = false;
                     }
                 } catch (IOException e) {
@@ -101,12 +104,19 @@ public class SingleClient {
     }
 
     /**
-     * Waits for the outstanding CLI replies before shutdown so the listener can
-     * drain and log the final server responses instead of losing them on close.
+     * Waits only for replies the listener has not seen yet, so shutdown time is
+     * based on outstanding work instead of the total number of commands ever sent.
      */
-    private void awaitPendingResponses(int pendingResponses) {
-        for (int responseIndex = 0; responseIndex < pendingResponses; responseIndex++) {
-            readMessage();
+    private void awaitPendingResponses(int sentCommands, int receivedMessagesAtConnect) {
+        if (sentCommands == 0) {
+            return;
         }
+
+        int targetReceivedCount = receivedMessagesAtConnect + sentCommands;
+        if (singleNetworkManager.getReceivedMessageCount() >= targetReceivedCount) {
+            return;
+        }
+
+        singleNetworkManager.awaitReceivedMessageCount(targetReceivedCount, SHUTDOWN_RESPONSE_WAIT_MS);
     }
 }

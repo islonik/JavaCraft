@@ -105,6 +105,29 @@ class SingleNetworkManagerTest {
         Assertions.assertTrue(elapsed >= 80, "Expected poll to wait ~100ms but took " + elapsed + "ms");
     }
 
+    @Test
+    void testAwaitReceivedMessageCountReturnsTrueImmediatelyWhenTargetAlreadyReached() {
+        // Verifies the fast path when the listener has already observed enough replies before shutdown starts waiting.
+        manager.addMessage("hello");
+
+        Assertions.assertTrue(manager.awaitReceivedMessageCount(1, 100));
+    }
+
+    @Test
+    void testAwaitReceivedMessageCountReturnsFalseWhenTimeoutExpires() {
+        // Verifies the timeout branch when no additional reply arrives before the deadline.
+        Assertions.assertFalse(manager.awaitReceivedMessageCount(1, 0));
+    }
+
+    @Test
+    void testAwaitReceivedMessageCountReturnsFalseWhenInterruptedWhileWaiting() {
+        // Verifies that shutdown waiting stops and restores the interrupt flag when the waiting thread is interrupted.
+        Thread.currentThread().interrupt();
+
+        Assertions.assertFalse(manager.awaitReceivedMessageCount(1, 100));
+        Assertions.assertTrue(Thread.interrupted());
+    }
+
     // ── Socket open / close tests ────────────────────────────────────
 
     @Test

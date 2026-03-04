@@ -7,6 +7,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +26,7 @@ public class SingleNetworkManager {
     private static final long POLL_TIMEOUT_MS = 1_000;
     private static final long WAIT_TIMEOUT_MS = 2_000;
     private final ArrayBlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+    private final AtomicInteger receivedMessageCount = new AtomicInteger();
     private volatile SocketChannel client;
     private volatile Selector selector;
     @Setter
@@ -126,6 +128,10 @@ public class SingleNetworkManager {
         while (!messageQueue.offer(message)) {
             messageQueue.poll();
         }
+        receivedMessageCount.incrementAndGet();
+        synchronized (this) {
+            notifyAll();
+        }
     }
 
     public String getMessage() {
@@ -136,6 +142,43 @@ public class SingleNetworkManager {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Reports how many replies the listener has already observed, even if the
+     * bounded queue later evicts some older payloads.
+     */
+    public int getReceivedMessageCount() {
+        return receivedMessageCount.get();
+    }
+
+    /**
+     * Waits until the listener has seen at least targetCount replies or the
+     * timeout expires, so shutdown can wait on missing replies instead of
+     * draining one queue poll per command that was ever sent.
+     */
+    public boolean awaitReceivedMessageCount(int targetCount, long timeoutMs) {
+        if (receivedMessageCount.get() >= targetCount) {
+            return true;
+        }
+
+        synchronized (this) {
+            long deadline = System.currentTimeMillis() + timeoutMs;
+            while (receivedMessageCount.get() < targetCount) {
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) {
+                    return false;
+                }
+                try {
+                    wait(remaining);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error(e.getMessage(), e);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public void closeSocket() {
