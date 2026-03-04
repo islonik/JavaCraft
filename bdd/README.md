@@ -1,82 +1,70 @@
-# Behaviour Driven Development
+# BDD BMI Module
 
-This micro sample demonstrates how to use Cucumber library with Spring boot.
+This module demonstrates Behavior-Driven Development (BDD) with Cucumber and Spring Boot
+using a BMI calculator domain.
 
-## Content
-* [Maven](#maven)
-* [Tests](#tests)
+## Contents
 
-### Maven
-Add cucumber libraries in your dependecies:
-```xml
-<dependency>
-    <groupId>io.cucumber</groupId>
-    <artifactId>cucumber-spring</artifactId>
-    <version>${cucumber.version}</version>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>io.cucumber</groupId>
-    <artifactId>cucumber-java</artifactId>
-    <version>${cucumber.version}</version>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>io.cucumber</groupId>
-    <artifactId>cucumber-junit-platform-engine</artifactId>
-    <version>${cucumber.version}</version>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>org.junit.platform</groupId>
-    <artifactId>junit-platform-suite</artifactId>
-    <version>${junit.platform.suite.version}</version>
-    <scope>test</scope>
-</dependency>
+- [What this module covers](#what-this-module-covers)
+- [Test architecture](#test-architecture)
+- [How to run tests](#how-to-run-tests)
+- [Expected output](#expected-output)
+
+## What this module covers
+
+`BMI.feature` currently verifies four business scenarios:
+
+1. A person gets BMI from metric input (`kg`/`m`).
+2. A person gets BMI from imperial input (`lbs`/`inches`).
+3. Several BMI calculations can be checked in one batch table.
+4. BMI category messages are validated on boundary values.
+
+In addition to Cucumber scenarios, unit tests cover:
+
+- BMI formula and input validation (`BMIServiceTest`)
+- Category boundary behavior, including values with more than two decimals
+  normalized before category lookup
+
+## Test architecture
+
+- `CucumberRunner` runs feature tests on JUnit Platform with Cucumber.
+- `CucumberSpringConfiguration` boots a minimal Spring context for Cucumber steps.
+- `BMIStepDefinition` maps Gherkin steps to `BMIService` calls.
+
+## How to run tests
+
+Run all tests (unit + Cucumber):
+
+```bash
+mvn -pl bdd test
 ```
 
-Plugin to run Cucumber and JUnit 5 tests in <b>maven</b> builds
-```xml
-<build>
-    <plugins>
-        <!-- makes cucumber and junit5 tests run in maven -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven.surefire.plugin.version}</version>
-            <configuration>
-                <includes>
-                    <include>**/CucumberRunner.java</include>
-                    <include>**/*Test.java</include>
-                </includes>
-            </configuration>
-        </plugin>
-    </plugins>
-</build>
+Run only unit tests:
+
+```bash
+mvn -pl bdd -Dtest='*Test' test
 ```
 
-### Tests
+Run only Cucumber scenarios:
 
-CucumberRunner is necessary to specify Cucumber configuration.
-```java
-@Suite
-@IncludeEngines("cucumber")
-@SelectPackages("features")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME,
-        value = "pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "my.javacraft.bdd.cucumber")
-public class CucumberRunner {
-}
+```bash
+mvn -pl bdd -Dtest=CucumberRunner test
 ```
 
-CucumberSpringConfiguration is necessary to inject cucumber in java Application.
-```java
-@CucumberContextConfiguration
-@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
-public class CucumberSpringConfiguration {
-}
+## Expected output
+
+When tests pass, Maven prints a summary similar to:
+
+```text
+Tests run: <n>, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
 ```
 
-Java class BMIStepDefinition provides actual @Given, @When and @Then implementation.
+For Cucumber runs, feature steps are printed in the console and reports are generated at:
 
-Resource file <b>BMI.feature</b> uses built-in <b>DataTable</b> to supply a table with data.
+- `bdd/target/cucumber-reports/cucumber.html`
+- `bdd/target/cucumber-reports/cucumber.json`
+
+Surefire unit-test reports are generated at:
+
+- `bdd/target/surefire-reports/`
