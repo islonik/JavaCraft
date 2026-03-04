@@ -5,13 +5,18 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import my.javacraft.echo.single.client.SingleClient;
+import my.javacraft.echo.single.client.SingleNetworkManager;
 import my.javacraft.echo.single.server.SingleServer;
 import org.junit.jupiter.api.Assertions;
 
@@ -29,6 +34,7 @@ public class SingleStepDefinition {
     }
 
     @Given("socket server started up on port = '{int}'")
+    @Given("the single-thread server is running on port {int}")
     public void startUpSocketServer(int port) {
         SingleServer server = new SingleServer(port);
 
@@ -38,40 +44,146 @@ public class SingleStepDefinition {
     }
 
     @When("create a new client {string} for the server with the port = '{int}'")
-    public void createANewClientNikitaForTheServerWithThePort(String client, int port) throws IOException {
-        SingleClient singleClient = new SingleClient("localhost", port);
-        singleClient.connectToServer();
-        connections.putIfAbsent(client, singleClient);
+    @When("client {string} connects on port {int}")
+    public void createANewClientForTheServerWithThePort(String client, int port) throws IOException {
+        connectClient(client, port);
     }
 
     @When("use the client {string} to send {string} message and get {string} response")
+    @Then("client {string} sends {string} and receives {string}")
     public void sendMessage(String client, String message, String expectedResponse) {
         assertResponse(client, message, expectedResponse);
     }
 
     @When("use the client {string} to send escaped message {string} and get escaped response {string}")
+    @Then("client {string} sends escaped message {string} and receives escaped response {string}")
     public void sendEscapedMessage(String client, String message, String expectedResponse) {
         assertResponse(client, decodeEscapedText(message), decodeEscapedText(expectedResponse));
     }
 
     @Then("close the connection to the client {string}")
+    @Then("client {string} disconnects with goodbye")
     public void closeClientConnection(String client) {
-        SingleClient singleClient = connections.get(client);
+        disconnectClientWithGoodbye(client);
+    }
 
-        singleClient.sendMessage("bye");
-        String actualResponse = singleClient.readMessage();
-        Assertions.assertEquals("Have a good day!", actualResponse,
-                "Client '%s' did not receive expected goodbye response".formatted(client));
+    @Then("client {string} socket is closed")
+    public void clientSocketIsClosed(String client) throws Exception {
+        assertClientSocketClosed(client);
+    }
+
+    @When("{int} clients with prefix {string} connect on port {int}")
+    public void connectClientsWithPrefix(int clientCount, String prefix, int port) throws IOException {
+        for (int clientIndex = 1; clientIndex <= clientCount; clientIndex++) {
+            connectClient(clientName(prefix, clientIndex), port);
+        }
+    }
+
+    @When("{int} clients with prefix {string} each send {int} echo messages")
+    public void clientsWithPrefixEachSendEchoMessages(int clientCount, String prefix, int messagesPerClient) {
+        for (int clientIndex = 1; clientIndex <= clientCount; clientIndex++) {
+            String clientName = clientName(prefix, clientIndex);
+            for (int messageIndex = 1; messageIndex <= messagesPerClient; messageIndex++) {
+                String message = "%s message %03d".formatted(clientName, messageIndex);
+                assertResponse(clientName, message, "Did you say '%s'?".formatted(message));
+            }
+        }
+    }
+
+    @Then("{int} clients with prefix {string} disconnect with goodbye")
+    public void clientsWithPrefixDisconnectWithGoodbye(int clientCount, String prefix) {
+        for (int clientIndex = 1; clientIndex <= clientCount; clientIndex++) {
+            disconnectClientWithGoodbye(clientName(prefix, clientIndex));
+        }
     }
 
     private void assertResponse(String client, String message, String expectedResponse) {
-        SingleClient singleClient = connections.get(client);
+        SingleClient singleClient = getClient(client);
 
         singleClient.sendMessage(message);
         String actualResponse = singleClient.readMessage();
 
         Assertions.assertEquals(expectedResponse, actualResponse,
                 "Client '%s' sent '%s' but got unexpected response".formatted(client, message));
+    }
+
+    /**
+     * Creates and registers one named client so feature steps can reuse the
+     * same connection setup logic for both small and large scenarios.
+     */
+    private void connectClient(String clientName, int port) throws IOException {
+        SingleClient singleClient = new SingleClient("localhost", port);
+        singleClient.connectToServer();
+
+        SingleClient previousClient = connections.putIfAbsent(clientName, singleClient);
+        if (previousClient != null) {
+            singleClient.close();
+            Assertions.fail("Client '%s' already exists in this scenario".formatted(clientName));
+        }
+    }
+
+    /**
+     * Keeps goodbye handling in one place so every scenario verifies the final
+     * response with the same behavior and error message.
+     */
+    private void disconnectClientWithGoodbye(String clientName) {
+        SingleClient singleClient = getClient(clientName);
+
+        singleClient.sendMessage("bye");
+        String actualResponse = singleClient.readMessage();
+        Assertions.assertEquals("Have a good day!", actualResponse,
+                "Client '%s' did not receive expected goodbye response".formatted(clientName));
+    }
+
+    /**
+     * Provides a predictable client name pattern for bulk scenarios so the
+     * feature file stays readable while still covering many connections.
+     */
+    private String clientName(String prefix, int clientIndex) {
+        return "%s-%03d".formatted(prefix, clientIndex);
+    }
+
+    /**
+     * Fails fast when a scenario refers to a client name that was never created.
+     */
+    private SingleClient getClient(String clientName) {
+        SingleClient singleClient = connections.get(clientName);
+        Assertions.assertNotNull(singleClient, "Client '%s' was not created in this scenario".formatted(clientName));
+        return singleClient;
+    }
+
+    /**
+     * Polls the client connection state for a short time because the listener
+     * closes the socket asynchronously after the goodbye response is read.
+     */
+    private void assertClientSocketClosed(String clientName) throws Exception {
+        SingleClient singleClient = getClient(clientName);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (System.nanoTime() < deadline) {
+            SocketChannel channel = getClientChannel(singleClient);
+            if (channel == null || !channel.isOpen()) {
+                return;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        }
+
+        SocketChannel channel = getClientChannel(singleClient);
+        Assertions.assertTrue(channel == null || !channel.isOpen(),
+                "Client '%s' socket should be closed after goodbye".formatted(clientName));
+    }
+
+    /**
+     * Reads the current client socket from SingleClient so Cucumber can assert
+     * connection shutdown without changing the production API for tests.
+     */
+    private SocketChannel getClientChannel(SingleClient singleClient) throws Exception {
+        Field networkManagerField = SingleClient.class.getDeclaredField("singleNetworkManager");
+        networkManagerField.setAccessible(true);
+        SingleNetworkManager networkManager = (SingleNetworkManager) networkManagerField.get(singleClient);
+
+        Field clientField = SingleNetworkManager.class.getDeclaredField("client");
+        clientField.setAccessible(true);
+        return (SocketChannel) clientField.get(networkManager);
     }
 
     private String decodeEscapedText(String text) {

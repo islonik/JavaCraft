@@ -1,88 +1,109 @@
-Feature: testing Single Thread Server
+Feature: Single-thread server behavior
 
-  Scenario: test a single connection
-    Given socket server started up on port = '8040'
-    When create a new client 'Nikita' for the server with the port = '8040'
-    When use the client 'Nikita' to send 'stats' message and get 'Simultaneously connected clients: 1' response
-    Then close the connection to the client 'Nikita'
+  Rule: Simple connection flows
 
-  Scenario: test several connections
-    Given socket server started up on port = '8045'
-    When create a new client 'Nikita' for the server with the port = '8045'
-    When use the client 'Nikita' to send 'stats' message and get 'Simultaneously connected clients: 1' response
-    When create a new client 'Ava' for the server with the port = '8045'
-    When use the client 'Ava' to send 'stats' message and get 'Simultaneously connected clients: 2' response
-    When create a new client 'Alyssa' for the server with the port = '8045'
-    When use the client 'Alyssa' to send 'stats' message and get 'Simultaneously connected clients: 3' response
-    When use the client 'Nikita' to send 'Hello World!' message and get "Did you say 'Hello World!'?" response
-    When use the client 'Ava' to send 'Java 21' message and get "Did you say 'Java 21'?" response
-    When use the client 'Alyssa' to send 'mimimi' message and get "Did you say 'mimimi'?" response
-    Then close the connection to the client 'Nikita'
-    Then close the connection to the client 'Ava'
-    Then close the connection to the client 'Alyssa'
+    Scenario: One client can connect, check the current client count, and disconnect
+      Given the single-thread server is running on port 8040
+      When client "Nikita" connects on port 8040
+      Then client "Nikita" sends "stats" and receives "Simultaneously connected clients: 1"
+      And client "Nikita" disconnects with goodbye
 
-  Scenario: test echo response
-    Given socket server started up on port = '8050'
-    When create a new client 'Echo' for the server with the port = '8050'
-    When use the client 'Echo' to send 'hello world' message and get "Did you say 'hello world'?" response
-    Then close the connection to the client 'Echo'
+    Scenario: Several clients see the correct number of connected users
+      Given the single-thread server is running on port 8045
+      When client "Nikita" connects on port 8045
+      And client "Ava" connects on port 8045
+      And client "Alyssa" connects on port 8045
+      Then client "Nikita" sends "stats" and receives "Simultaneously connected clients: 3"
+      And client "Ava" sends "stats" and receives "Simultaneously connected clients: 3"
+      And client "Alyssa" sends "stats" and receives "Simultaneously connected clients: 3"
+      And client "Nikita" sends "Hello World!" and receives "Did you say 'Hello World!'?"
+      And client "Ava" sends "Java 21" and receives "Did you say 'Java 21'?"
+      And client "Alyssa" sends "mimimi" and receives "Did you say 'mimimi'?"
+      And client "Nikita" disconnects with goodbye
+      And client "Ava" disconnects with goodbye
+      And client "Alyssa" disconnects with goodbye
 
-  Scenario: test multiple round trips on the same connection
-    Given socket server started up on port = '8055'
-    When create a new client 'Repeat' for the server with the port = '8055'
-    When use the client 'Repeat' to send 'first' message and get "Did you say 'first'?" response
-    When use the client 'Repeat' to send 'StAtS' message and get 'Simultaneously connected clients: 1' response
-    When use the client 'Repeat' to send 'second' message and get "Did you say 'second'?" response
-    Then close the connection to the client 'Repeat'
+    Scenario: A client gets an echo response for regular text
+      Given the single-thread server is running on port 8050
+      When client "Echo" connects on port 8050
+      Then client "Echo" sends "hello world" and receives "Did you say 'hello world'?"
+      And client "Echo" disconnects with goodbye
 
-  Scenario: test connection count after one client disconnects
-    Given socket server started up on port = '8060'
-    When create a new client 'Primary' for the server with the port = '8060'
-    When create a new client 'Secondary' for the server with the port = '8060'
-    When use the client 'Primary' to send 'stats' message and get 'Simultaneously connected clients: 2' response
-    When use the client 'Secondary' to send 'BYE' message and get 'Have a good day!' response
-    When use the client 'Primary' to send 'stats' message and get 'Simultaneously connected clients: 1' response
-    Then close the connection to the client 'Primary'
+    Scenario: One client can send several messages on the same connection
+      Given the single-thread server is running on port 8055
+      When client "Repeat" connects on port 8055
+      Then client "Repeat" sends "first" and receives "Did you say 'first'?"
+      And client "Repeat" sends "StAtS" and receives "Simultaneously connected clients: 1"
+      And client "Repeat" sends "second" and receives "Did you say 'second'?"
+      And client "Repeat" disconnects with goodbye
 
-  Scenario: test empty message from line delimiters only
-    Given socket server started up on port = '8065'
-    When create a new client 'Empty' for the server with the port = '8065'
-    When use the client 'Empty' to send escaped message '\r\n' and get escaped response 'Please type something.'
-    Then close the connection to the client 'Empty'
+    Scenario: The connected client count drops after one client leaves
+      Given the single-thread server is running on port 8060
+      When client "Primary" connects on port 8060
+      And client "Secondary" connects on port 8060
+      Then client "Primary" sends "stats" and receives "Simultaneously connected clients: 2"
+      And client "Secondary" sends "BYE" and receives "Have a good day!"
+      And client "Primary" sends "stats" and receives "Simultaneously connected clients: 1"
+      And client "Secondary" socket is closed
+      And client "Primary" disconnects with goodbye
 
-  Scenario: test multiline echo preserves embedded line breaks
-    Given socket server started up on port = '8070'
-    When create a new client 'Multiline' for the server with the port = '8070'
-    When use the client 'Multiline' to send escaped message 'hello\nworld\r\n' and get escaped response "Did you say 'hello\nworld'?"
-    Then close the connection to the client 'Multiline'
+    Scenario: A client socket closes after goodbye
+      Given the single-thread server is running on port 8062
+      When client "Closer" connects on port 8062
+      Then client "Closer" sends "bye" and receives "Have a good day!"
+      And client "Closer" socket is closed
 
-  Scenario: test client can continue after an empty message
-    Given socket server started up on port = '8075'
-    When create a new client 'Recover' for the server with the port = '8075'
-    When use the client 'Recover' to send escaped message '\r\n' and get escaped response 'Please type something.'
-    When use the client 'Recover' to send 'stats' message and get 'Simultaneously connected clients: 1' response
-    When use the client 'Recover' to send 'still here' message and get "Did you say 'still here'?" response
-    Then close the connection to the client 'Recover'
+    Scenario: The connected client count recovers after a client says bye
+      Given the single-thread server is running on port 8085
+      When client "First" connects on port 8085
+      And client "Second" connects on port 8085
+      Then client "First" sends "stats" and receives "Simultaneously connected clients: 2"
+      And client "Second" sends "bye" and receives "Have a good day!"
+      When client "Replacement" connects on port 8085
+      Then client "Replacement" sends "stats" and receives "Simultaneously connected clients: 2"
+      And client "Second" socket is closed
+      And client "First" disconnects with goodbye
+      And client "Replacement" disconnects with goodbye
 
-  Scenario: test echo preserves surrounding spaces while trimming line delimiters
-    Given socket server started up on port = '8080'
-    When create a new client 'Spaces' for the server with the port = '8080'
-    When use the client 'Spaces' to send escaped message '  keep surrounding spaces  \r\n' and get escaped response "Did you say '  keep surrounding spaces  '?"
-    Then close the connection to the client 'Spaces'
+  Rule: Edge case and message format behavior
 
-  Scenario: test connection count recovers after a client says bye
-    Given socket server started up on port = '8085'
-    When create a new client 'First' for the server with the port = '8085'
-    When create a new client 'Second' for the server with the port = '8085'
-    When use the client 'First' to send 'stats' message and get 'Simultaneously connected clients: 2' response
-    When use the client 'Second' to send 'bye' message and get 'Have a good day!' response
-    When create a new client 'Replacement' for the server with the port = '8085'
-    When use the client 'Replacement' to send 'stats' message and get 'Simultaneously connected clients: 2' response
-    Then close the connection to the client 'First'
-    Then close the connection to the client 'Replacement'
+    Scenario: An empty message made only of line breaks gets guidance
+      Given the single-thread server is running on port 8065
+      When client "Empty" connects on port 8065
+      Then client "Empty" sends escaped message "\r\n" and receives escaped response "Please type something."
+      And client "Empty" disconnects with goodbye
 
-  Scenario: test echo preserves tabs and backslashes
-    Given socket server started up on port = '8090'
-    When create a new client 'Escapes' for the server with the port = '8090'
-    When use the client 'Escapes' to send escaped message 'left\tright\\tail\r\n' and get escaped response "Did you say 'left\tright\\tail'?"
-    Then close the connection to the client 'Escapes'
+    Scenario: A multiline message keeps the line break inside the echo
+      Given the single-thread server is running on port 8070
+      When client "Multiline" connects on port 8070
+      Then client "Multiline" sends escaped message "hello\nworld\r\n" and receives escaped response "Did you say 'hello\nworld'?"
+      And client "Multiline" disconnects with goodbye
+
+    Scenario: A client can continue after sending an empty message
+      Given the single-thread server is running on port 8075
+      When client "Recover" connects on port 8075
+      Then client "Recover" sends escaped message "\r\n" and receives escaped response "Please type something."
+      And client "Recover" sends "stats" and receives "Simultaneously connected clients: 1"
+      And client "Recover" sends "still here" and receives "Did you say 'still here'?"
+      And client "Recover" disconnects with goodbye
+
+    Scenario: Surrounding spaces are preserved while line endings are trimmed
+      Given the single-thread server is running on port 8080
+      When client "Spaces" connects on port 8080
+      Then client "Spaces" sends escaped message "  keep surrounding spaces  \r\n" and receives escaped response "Did you say '  keep surrounding spaces  '?"
+      And client "Spaces" disconnects with goodbye
+
+    Scenario: Tabs and backslashes are preserved in the echo response
+      Given the single-thread server is running on port 8090
+      When client "Escapes" connects on port 8090
+      Then client "Escapes" sends escaped message "left\tright\\tail\r\n" and receives escaped response "Did you say 'left\tright\\tail'?"
+      And client "Escapes" disconnects with goodbye
+
+  Rule: High load behavior
+
+    Scenario: The server handles 100 clients and 10,000 echo messages
+      Given the single-thread server is running on port 8095
+      When 100 clients with prefix "Load" connect on port 8095
+      Then client "Load-001" sends "stats" and receives "Simultaneously connected clients: 100"
+      When 100 clients with prefix "Load" each send 100 echo messages
+      Then 100 clients with prefix "Load" disconnect with goodbye
