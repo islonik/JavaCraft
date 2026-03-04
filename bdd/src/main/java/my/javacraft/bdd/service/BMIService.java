@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BMIService {
+    private static final int BMI_CATEGORY_SCALE = 2;
 
     /**
      * BMI = Weight (kg) / Height (m)²
@@ -59,6 +60,14 @@ public class BMIService {
         if (bmi.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("BMI must be positive");
         }
-        return BmiCategory.from(bmi).message();
+        return BmiCategory.from(normalizeBmiForCategory(bmi)).message();
+    }
+
+    /**
+     * Category boundaries are defined to two decimal places, so classification
+     * uses the same normalization strategy as BMI calculation output.
+     */
+    private BigDecimal normalizeBmiForCategory(BigDecimal bmi) {
+        return bmi.setScale(BMI_CATEGORY_SCALE, RoundingMode.HALF_EVEN);
     }
 }
