@@ -687,6 +687,27 @@ class SingleServerTest {
     }
 
     @Test
+    void testLoopProcessesReadAndWriteWhenBothStatesAreReady() throws Exception {
+        // Verifies that one selected key can drain a ready read and a ready write in the same selector cycle.
+        SingleServer server = new SingleServer(0);
+        RecordingScriptedSocketChannel channel = new RecordingScriptedSocketChannel(
+                new int[] {6, 0},
+                new String[] {"ping\r\n", ""});
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        Set<SelectionKey> selectedKeys = new java.util.LinkedHashSet<>();
+        selectedKeys.add(key);
+        ScriptedSelector selector = new ScriptedSelector(server, new int[] {1}, selectedKeys);
+
+        Method loop = SingleServer.class.getDeclaredMethod("loop", Selector.class, ServerSocketChannel.class);
+        loop.setAccessible(true);
+        loop.invoke(server, selector, new NullAcceptServerSocketChannel());
+
+        Assertions.assertEquals("Did you say 'ping'?\r\n", channel.writtenText());
+        Assertions.assertEquals(SelectionKey.OP_READ, key.interestOps());
+    }
+
+    @Test
     void testLoopCatchesProcessingExceptionAndClosesKey() throws Exception {
         SingleServer server = new SingleServer(0);
         ScriptedSocketChannel channel = new ScriptedSocketChannel(new int[] {3, 0}, new String[] {"x\r\n", ""});
@@ -850,6 +871,83 @@ class SingleServerTest {
     }
 
     @Test
+    void testReadOpClosesSlowClientWhenQueuedResponsesExceedMaxBytes() throws Exception {
+        // Verifies that one slow client cannot accumulate an unlimited outbound response backlog.
+        SingleServer server = new SingleServer(0);
+        String requestPayload = "x".repeat(maxEchoPayloadThatFitsQueuedWriteLimit());
+        byte[] combinedPayload = (requestPayload + "\r\n" + requestPayload + "\r\n").getBytes(StandardCharsets.UTF_8);
+        ScriptedByteSocketChannel channel = new ScriptedByteSocketChannel(splitIntoChunks(combinedPayload));
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+        setConnectionsToOne(server);
+
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+        Assertions.assertTrue(key.isValid(), "The first queued response should fit within the configured backlog limit");
+
+        readOp.invoke(server, key);
+
+        Assertions.assertFalse(key.isValid(), "The key should be cancelled once the queued response backlog exceeds the limit");
+        Assertions.assertFalse(channel.isOpen(), "The slow client should be closed when its queued responses exceed the limit");
+        Assertions.assertFalse(trackedPendingWrites(server).containsKey(channel));
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
+    void testReadOpReturnsFalseForEmptyMessageWhenQueuedGuidanceWouldOverflowAndCloseFails() throws Exception {
+        // Verifies the empty-message overload branch and the defensive close-failure catch for overloaded clients.
+        SingleServer server = new SingleServer(0);
+        CloseFailingScriptedByteSocketChannel channel = new CloseFailingScriptedByteSocketChannel("\r\n".getBytes(StandardCharsets.UTF_8));
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+        setConnectionsToOne(server);
+        seedQueuedBytes(server, channel, SingleServer.MAX_PENDING_WRITE_BYTES - "Please type something.\r\n".length() + 1);
+
+        invokeReadOp(server, key);
+
+        Assertions.assertFalse(key.isValid());
+        Assertions.assertEquals(1, channel.closeAttempts);
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
+    void testReadOpReturnsFalseForByeWhenQueuedGoodbyeWouldOverflow() throws Exception {
+        // Verifies the goodbye overload branch so a slow client cannot queue an unbounded final response.
+        SingleServer server = new SingleServer(0);
+        ScriptedByteSocketChannel channel = new ScriptedByteSocketChannel("bye\r\n".getBytes(StandardCharsets.UTF_8));
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+        setConnectionsToOne(server);
+        seedQueuedBytes(server, channel, SingleServer.MAX_PENDING_WRITE_BYTES - "Have a good day!\r\n".length() + 1);
+
+        invokeReadOp(server, key);
+
+        Assertions.assertFalse(key.isValid());
+        Assertions.assertFalse(channel.isOpen());
+        Assertions.assertFalse(trackedCloseAfterWrite(server).contains(channel));
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
+    void testReadOpReturnsFalseForStatsWhenQueuedStatsWouldOverflow() throws Exception {
+        // Verifies the stats overload branch so the server closes a slow client instead of growing the write queue.
+        SingleServer server = new SingleServer(0);
+        ScriptedByteSocketChannel channel = new ScriptedByteSocketChannel("stats\r\n".getBytes(StandardCharsets.UTF_8));
+        channel.configureBlocking(false);
+        FakeSelectionKey key = new FakeSelectionKey(channel, SelectionKey.OP_READ);
+        setConnectionsToOne(server);
+        String statsResponse = "Simultaneously connected clients: 1\r\n";
+        seedQueuedBytes(server, channel, SingleServer.MAX_PENDING_WRITE_BYTES - statsResponse.length() + 1);
+
+        invokeReadOp(server, key);
+
+        Assertions.assertFalse(key.isValid());
+        Assertions.assertFalse(channel.isOpen());
+        Assertions.assertEquals(0, getConnections(server));
+    }
+
+    @Test
     void testOpenServerChannelCreatesSocketWhenPortIsZero() throws Exception {
         assumeSocketBindingAvailable();
         SingleServer server = new SingleServer(0);
@@ -980,6 +1078,16 @@ class SingleServerTest {
     }
 
     /**
+     * Invokes the private read readiness handler so overload tests can drive
+     * the same path the selector loop uses in production.
+     */
+    private static void invokeReadOp(SingleServer server, SelectionKey key) throws Exception {
+        Method readOp = SingleServer.class.getDeclaredMethod("readOp", SelectionKey.class);
+        readOp.setAccessible(true);
+        readOp.invoke(server, key);
+    }
+
+    /**
      * Invokes the shutdown cleanup helper directly so the tests can verify that
      * tracked clients are always closed even without running the full server loop.
      */
@@ -1029,6 +1137,16 @@ class SingleServerTest {
     }
 
     /**
+     * Seeds queued bytes directly so overload tests can put one client just
+     * past the backlog limit without going through the capped production helper.
+     */
+    private static void seedQueuedBytes(SingleServer server, SocketChannel channel, int queuedBytes) throws Exception {
+        trackedPendingWrites(server).put(
+                channel,
+                new java.util.ArrayDeque<>(java.util.List.of(ByteBuffer.wrap(new byte[queuedBytes]))));
+    }
+
+    /**
      * Exposes the close-after-write set so shutdown tests can cover goodbye
      * clients whose reads were already cleared before shutdown.
      */
@@ -1067,14 +1185,24 @@ class SingleServerTest {
         }
     }
 
+    /**
+     * Keeps the slow-client backlog test aligned with the real echo framing so
+     * the first response fits exactly once and the second one crosses the cap.
+     */
+    private static int maxEchoPayloadThatFitsQueuedWriteLimit() {
+        return SingleServer.MAX_PENDING_WRITE_BYTES - "Did you say ''?\r\n".length();
+    }
+
     private static class FakeSelectionKey extends SelectionKey {
         private final SocketChannel channel;
         private int interestOps;
+        private final int readyOps;
         private boolean valid = true;
 
         private FakeSelectionKey(SocketChannel channel, int interestOps) {
             this.channel = channel;
             this.interestOps = interestOps;
+            this.readyOps = interestOps;
         }
 
         @Override
@@ -1112,18 +1240,20 @@ class SingleServerTest {
         @Override
         @SuppressWarnings("MagicConstant")
         public int readyOps() {
-            return interestOps;
+            return readyOps;
         }
     }
 
     private static final class FakeServerSelectionKey extends SelectionKey {
         private final java.nio.channels.SelectableChannel channel;
         private int interestOps;
+        private final int readyOps;
         private boolean valid = true;
 
         private FakeServerSelectionKey(java.nio.channels.SelectableChannel channel, int interestOps) {
             this.channel = channel;
             this.interestOps = interestOps;
+            this.readyOps = interestOps;
         }
 
         @Override
@@ -1161,7 +1291,7 @@ class SingleServerTest {
         @Override
         @SuppressWarnings("MagicConstant")
         public int readyOps() {
-            return interestOps;
+            return readyOps;
         }
     }
 

@@ -48,6 +48,7 @@ public class SingleServer implements Runnable {
 
     static final int BUFFER_SIZE = 2 * 1024;
     static final int MAX_FRAME_BYTES = 8 * BUFFER_SIZE;
+    static final int MAX_PENDING_WRITE_BYTES = MAX_FRAME_BYTES;
     // A CRLF-terminated text frame keeps the protocol simple and readable while
     // still handling empty messages and fragmented/coalesced TCP packets.
     private static final String MESSAGE_DELIMITER = "\r\n";
@@ -189,9 +190,11 @@ public class SingleServer implements Runnable {
                 try {
                     if (key.isAcceptable()) {
                         acceptOp(selector, server);
-                    } else if (key.isReadable()) {
+                    }
+                    if (key.isValid() && key.isReadable()) {
                         readOp(key);
-                    } else if (key.isWritable()) {
+                    }
+                    if (key.isValid() && key.isWritable()) {
                         writeOp(key);
                     }
                 } catch (Exception e) {
@@ -251,7 +254,10 @@ public class SingleServer implements Runnable {
         }
 
         if (!result.isEmpty()) {
-            queueReadyResponses(channel, result);
+            if (!queueReadyResponses(channel, result)) {
+                key.cancel();
+                return;
+            }
             key.attach(null);
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         } else {
@@ -367,33 +373,91 @@ public class SingleServer implements Runnable {
      * Converts every ready request into queued UTF-8 response bytes so the
      * selector thread can flush them incrementally across writable events.
      */
-    private void queueReadyResponses(SocketChannel channel, String firstRequest) {
+    private boolean queueReadyResponses(SocketChannel channel, String firstRequest) {
         String request = firstRequest;
         while (request != null) {
             String normalizedRequest = trimTrailingLineDelimiters(request);
             if (normalizedRequest.isEmpty()) {
-                queueResponse(channel, "Please type something.\r\n");
+                if (tryQueueResponse(channel, "Please type something.\r\n")) {
+                    request = pollPendingRequest(channel);
+                    continue;
+                }
+                return false;
             } else if ("bye".equalsIgnoreCase(normalizedRequest)) {
-                queueResponse(channel, "Have a good day!\r\n");
-                closeAfterWrite.add(channel);
-                clearReadState(channel);
-                return;
+                if (tryQueueResponse(channel, "Have a good day!\r\n")) {
+                    closeAfterWrite.add(channel);
+                    clearReadState(channel);
+                    return true;
+                }
+                return false;
             } else if ("stats".equalsIgnoreCase(normalizedRequest)) {
-                queueResponse(channel, "Simultaneously connected clients: %s\r\n".formatted(connections.get()));
+                if (tryQueueResponse(channel, "Simultaneously connected clients: %s\r\n".formatted(connections.get()))) {
+                    request = pollPendingRequest(channel);
+                    continue;
+                }
+                return false;
             } else {
-                queueResponse(channel, "Did you say '" + normalizedRequest + "'?\r\n");
+                if (tryQueueResponse(channel, "Did you say '" + normalizedRequest + "'?\r\n")) {
+                    request = pollPendingRequest(channel);
+                    continue;
+                }
+                return false;
             }
-            request = pollPendingRequest(channel);
         }
+        return true;
     }
 
     /**
      * Stores encoded response buffers per channel so partial writes can resume
      * from the exact remaining byte position on the next writable callback.
      */
-    private void queueResponse(SocketChannel channel, String response) {
-        pendingWrites.computeIfAbsent(channel, ignored -> new ArrayDeque<>())
-                .addLast(ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8)));
+    private boolean queueResponse(SocketChannel channel, String response) {
+        byte[] encodedResponse = response.getBytes(StandardCharsets.UTF_8);
+        Deque<ByteBuffer> queuedWrites = pendingWrites.computeIfAbsent(channel, ignored -> new ArrayDeque<>());
+        if (queuedResponseBytes(queuedWrites) + encodedResponse.length > MAX_PENDING_WRITE_BYTES) {
+            return false;
+        }
+        queuedWrites.addLast(ByteBuffer.wrap(encodedResponse));
+        return true;
+    }
+
+    /**
+     * Closes a slow client as soon as its queued response backlog exceeds the
+     * configured cap so reads cannot grow server memory without bound.
+     */
+    private boolean tryQueueResponse(SocketChannel channel, String response) {
+        if (queueResponse(channel, response)) {
+            return true;
+        }
+        closeOverloadedClient(channel);
+        return false;
+    }
+
+    /**
+     * Counts only the remaining bytes because partially flushed buffers should
+     * contribute just their unfinished portion to the backlog cap.
+     */
+    private int queuedResponseBytes(Deque<ByteBuffer> queuedWrites) {
+        int queuedBytes = 0;
+        for (ByteBuffer queuedWrite : queuedWrites) {
+            queuedBytes += queuedWrite.remaining();
+        }
+        return queuedBytes;
+    }
+
+    /**
+     * Treats an oversized outbound backlog as a slow-client failure so one
+     * connection cannot keep accumulating unsent server responses forever.
+     */
+    private void closeOverloadedClient(SocketChannel channel) {
+        log.warn("Closing channel because queued responses exceeded {} bytes", MAX_PENDING_WRITE_BYTES);
+        clearChannelState(channel);
+        decrementConnections();
+        try {
+            channel.close();
+        } catch (IOException closeError) {
+            log.debug("Unable to close overloaded client channel", closeError);
+        }
     }
 
     /**
