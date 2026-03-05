@@ -194,15 +194,17 @@ public class LockServiceTest {
 
         // could be any user
         Assertions.assertTrue(lockService.getUser(weblogic).getLogin().startsWith("nikita"));
+        String actualResult = nodePrinter.print(nodeService.getRoot());
         Assertions.assertTrue(
-                nodePrinter.print(nodeService.getRoot()).startsWith(
+                actualResult.startsWith(
                         """
                         /
                         |__home
                         |  |__servers
                         |  |  |__weblogic [Locked by nikita2 ]
                         """
-                )
+                ),
+                actualResult
         );
     }
 

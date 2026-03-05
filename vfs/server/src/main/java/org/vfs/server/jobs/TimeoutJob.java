@@ -51,11 +51,11 @@ public class TimeoutJob {
             String login = userSession.getUser().getLogin();
             int diff = userSession.getTimer().difference();
             System.out.println("DEBUG: " + "key = " + key + " login = " + login + " diff = " + diff);
-            if(diff >= 1 && Strings.isNullOrEmpty(login)) { // empty session case
+            if (diff >= 1 && Strings.isNullOrEmpty(login)) { // empty session case
                 System.out.println("Empty session was killed!");
                 userSessionService.stopSession(key);
             }
-            if(diff >= timeout && !Strings.isNullOrEmpty(login)) { // kill session
+            if (diff >= timeout && !Strings.isNullOrEmpty(login)) { // kill session
                 System.out.println("DEBUG: " + "Connection was killed!");
 
                 userSession.getClientWriter().send(

@@ -9,18 +9,20 @@ import org.vfs.server.network.ClientWriter;
  * @author Lipatov Nikita
  */
 public class UserSession {
+
+    private final Timer timer;
+    private final ClientWriter clientWriter;
+
     @Setter
     @Getter
     private volatile User user;
-    private final Timer timer;
-    private final ClientWriter clientWriter;
 
     @Getter
     private volatile Node node;
 
-    public UserSession(User user, ClientWriter clientWriter) {
+    public UserSession(User user, Timer timer, ClientWriter clientWriter) {
         this.user = user;
-        this.timer = new Timer();
+        this.timer = timer;
         this.clientWriter = clientWriter;
     }
 

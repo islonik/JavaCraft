@@ -6,6 +6,7 @@ import org.vfs.core.exceptions.QuitException;
 import org.vfs.core.network.protocol.Protocol.Request;
 import org.vfs.core.network.protocol.Protocol.Response;
 import org.vfs.server.CommandLine;
+import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
 import org.vfs.server.services.UserSessionService;
 
@@ -30,7 +31,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Request> {
     public void channelRead0(ChannelHandlerContext ctx, Request request) {
         UserSession userSession;
         if(request.getUser().getId().equals(VFSConstants.NEW_USER)) {
-            userSession = userSessionService.startSession(new ClientWriter(ctx, this));
+            userSession = userSessionService.startSession(new ClientWriter(ctx, this), new Timer());
 
             userId = userSession.getUser().getId();
         } else {

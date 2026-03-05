@@ -3,6 +3,7 @@ package org.vfs.server.services;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
 import org.vfs.server.network.ClientWriter;
 
@@ -24,7 +25,7 @@ public class UserSessionServiceTest {
         // UserSession #1
         ClientWriter nikitaCWMock = Mockito.mock(ClientWriter.class);
 
-        UserSession userSession = userSessionService.startSession(nikitaCWMock);
+        UserSession userSession = userSessionService.startSession(nikitaCWMock, new Timer());
         userSessionService.attachUser(userSession.getUser().getId(), "nikita");
 
         Assertions.assertNotNull(userSessionService.getSession(userSession.getUser().getId()));
@@ -41,7 +42,7 @@ public class UserSessionServiceTest {
         // UserSession #1
         ClientWriter nikitaCWMock = Mockito.mock(ClientWriter.class);
 
-        UserSession userSession = userSessionService.startSession(nikitaCWMock);
+        UserSession userSession = userSessionService.startSession(nikitaCWMock, new Timer());
         userSessionService.attachUser(userSession.getUser().getId(), "nikita");
 
         Assertions.assertEquals(1, userSessionService.getRegistry().size());

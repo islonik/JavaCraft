@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.vfs.core.network.protocol.RequestFactory;
 import org.vfs.server.commands.Command;
+import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
 import org.vfs.server.network.ClientWriter;
 import org.vfs.server.services.NodeService;
@@ -53,7 +54,7 @@ public class CommandLineTest {
 
         // UserSession #1
         ClientWriter clientWriter1 = mock(ClientWriter.class);
-        UserSession userSession1 = userSessionService.startSession(clientWriter1);
+        UserSession userSession1 = userSessionService.startSession(clientWriter1, new Timer());
         String id1 = userSession1.getUser().getId();
         String login1 = "nikita";
         userSessionService.attachUser(id1, login1);
@@ -61,7 +62,7 @@ public class CommandLineTest {
 
         // UserSession #2
         ClientWriter clientWriter2 = mock(ClientWriter.class);
-        UserSession userSession2 = userSessionService.startSession(clientWriter2);
+        UserSession userSession2 = userSessionService.startSession(clientWriter2, new Timer());
         String id2 = userSession2.getUser().getId();
         String login2 = "r2d2";
         userSessionService.attachUser(id2, login2);

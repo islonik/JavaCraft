@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.vfs.core.network.protocol.Protocol.Response.ResponseType;
 import org.vfs.core.network.protocol.Protocol.User;
 import org.vfs.server.model.Node;
+import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
 import org.vfs.server.network.ClientWriter;
 
@@ -32,14 +33,14 @@ public class UserSessionService {
         this.lockService = lockService;
     }
 
-    public UserSession startSession(ClientWriter clientWriter) {
+    public UserSession startSession(ClientWriter clientWriter, Timer timer) {
         String sessionId = UUID.randomUUID().toString();
         User user = User.newBuilder()
                 .setId(sessionId)
                 .setLogin("")
                 .build();
 
-        UserSession userSession = new UserSession(user, clientWriter);
+        UserSession userSession = new UserSession(user, timer, clientWriter);
 
         registry.put(sessionId, userSession);
         return userSession;
@@ -61,7 +62,7 @@ public class UserSessionService {
         for (String key : keySet) {
             UserSession userSession = registry.get(key);
             String userLogin = userSession.getUser().getLogin();
-            if (userLogin != null && userLogin.equals(login)) {
+            if (userLogin.equals(login)) {
                 return true;
             }
         }
@@ -72,9 +73,6 @@ public class UserSessionService {
         return registry.get(id);
     }
 
-    /**
-     * @param id
-     */
     public void stopSession(String id) {
         UserSession userSession = registry.remove(id);
         if (userSession != null) { // can be null
