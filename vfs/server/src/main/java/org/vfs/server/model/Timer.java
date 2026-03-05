@@ -1,21 +1,28 @@
 package org.vfs.server.model;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * @author Lipatov Nikita
  */
 public class Timer {
 
-    private volatile Date lastMessageDate;
+    private final Clock clock;
+    private volatile Instant lastMessageTime;
 
     public Timer() {
-        lastMessageDate = new Date();
+        this(Clock.systemUTC());
+    }
+
+    Timer(Clock clock) {
+        this.clock = clock;
+        this.lastMessageTime = Instant.now(clock);
     }
 
     public void updateTime() {
-        lastMessageDate = new Date();
+        lastMessageTime = Instant.now(clock);
     }
 
     /**
@@ -23,8 +30,6 @@ public class Timer {
      * @return number of minutes
      */
     public int difference() {
-        long diff = new Date().getTime() - lastMessageDate.getTime();
-        diff = TimeUnit.MILLISECONDS.toMinutes(diff);
-        return (int) diff;
+        return (int) Duration.between(lastMessageTime, Instant.now(clock)).toMinutes();
     }
 }
