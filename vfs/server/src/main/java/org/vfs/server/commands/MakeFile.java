@@ -28,15 +28,12 @@ public class MakeFile extends AbstractCommand implements Command {
         Node node = nodeService.getNode(directory, createNode);
         if (node == null) {
             node = nodeService.createNode(directory, createNode, NodeTypes.FILE);
-            if(node != null) {
-                sendOK(String.format("New file '%s' was created!", nodeService.getFullPath(node)));
-                userSessionService.notifyUsers(
-                        userSession.getUser().getId(),
-                        String.format("New file '%s' was created by user '%s'", nodeService.getFullPath(node), userSession.getUser().getLogin())
-                );
-            } else {
-                sendFail("New file was not created!");
-            }
+
+            sendOK(String.format("New file '%s' was created!", nodeService.getFullPath(node)));
+            userSessionService.notifyUsers(
+                    userSession.getUser().getId(),
+                    String.format("New file '%s' was created by user '%s'", nodeService.getFullPath(node), userSession.getUser().getLogin())
+            );
         } else {
             sendFail("New file could not be created!");
         }

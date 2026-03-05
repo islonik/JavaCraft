@@ -429,6 +429,40 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testMakeFile() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkfile logs/app.log"));
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        |__logs
+                        |  |__app.log
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "mkfile logs/app.log");
+        Assertions.assertEquals("New file could not be created!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock logs");
+        Assertions.assertEquals("You has locked the node by path '/logs'", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "mkfile logs/error.log");
+        Assertions.assertEquals(
+                "Parent node /logs is locked! Please wait until this node will be unlocked!",
+                actualResponse
+        );
+    }
+
+    @Test
     public void testMove() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
