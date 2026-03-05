@@ -13,6 +13,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.vfs.core.network.protocol.RequestFactory;
+import org.vfs.core.network.protocol.Protocol;
 import org.vfs.server.commands.Command;
 import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
@@ -22,6 +23,9 @@ import org.vfs.server.services.UserSessionService;
 import org.vfs.server.utils.NodePrinter;
 
 import java.util.Map;
+
+import org.mockito.ArgumentCaptor;
+
 
 import static org.mockito.Mockito.*;
 
@@ -242,6 +246,19 @@ public class CommandLineTest {
                 """,
                 nodePrinter.print(nodeService.getRoot())
         );
+
+        ClientWriter r2d2Writer = r2d2Session.getClientWriter();
+        clearInvocations(r2d2Writer);
+        cmd2.onUserInput(r2d2Session, RequestFactory.newRequest(id2, login2, "lock not_existing_folder"));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(r2d2Writer, times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.FAIL,
+                responseCaptor.getValue().getCode()
+        );
+        Assertions.assertEquals("Destination node is not found!", responseCaptor.getValue().getMessage());
     }
 
     @Test
@@ -353,6 +370,52 @@ public class CommandLineTest {
                 nodePrinter.print(nodeService.getRoot())
         );
 
+    }
+
+    @Test
+    public void testUnknownCommandSendsHelpMessage() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+        ClientWriter clientWriter = nikitaSession.getClientWriter();
+
+        clearInvocations(clientWriter);
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "unknown-command"));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(clientWriter, times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.OK,
+                responseCaptor.getValue().getCode()
+        );
+        Assertions.assertEquals(
+                "No such command! Please check you syntax or type 'help'!",
+                responseCaptor.getValue().getMessage()
+        );
+    }
+
+    @Test
+    public void testKnownCommandExceptionSendsFailMessage() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        ClientWriter clientWriter = nikitaSession.getClientWriter();
+        Command failingCommand = mock(Command.class);
+        doThrow(new IllegalArgumentException("broken command")).when(failingCommand)
+                .apply(eq(nikitaSession), any());
+        CommandLine cmd = new CommandLine(Map.of("boom", failingCommand));
+
+        clearInvocations(clientWriter);
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "boom"));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(clientWriter, times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.FAIL,
+                responseCaptor.getValue().getCode()
+        );
+        Assertions.assertEquals("broken command", responseCaptor.getValue().getMessage());
     }
 
 }
