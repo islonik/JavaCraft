@@ -48,6 +48,12 @@
         <buddy.version>1.18.5</buddy.version>
         <cucumber.version>7.34.2</cucumber.version>
         <wiremock.version>3.13.2</wiremock.version>
+
+        <!--
+            If test.jvm.args is undefined, some runs pass a raw placeholder
+            to the forked JVM and tests fail to start.
+        -->
+        <test.jvm.args> </test.jvm.args>
     </properties>
 
     <modules>
@@ -87,6 +93,15 @@
                             <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- to make sure mockito can run in the future -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>${test.jvm.args} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                 </configuration>
             </plugin>
         </plugins>

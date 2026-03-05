@@ -2,6 +2,11 @@ package org.vfs.client;
 
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.vfs.client.network.MessageSender;
@@ -9,6 +14,7 @@ import org.vfs.client.network.NetworkManager;
 import org.vfs.client.network.UserManager;
 import org.vfs.core.VFSConstants;
 import org.vfs.core.command.CommandParser;
+import org.vfs.core.exceptions.QuitException;
 
 import org.vfs.core.network.protocol.Protocol;
 
@@ -139,4 +145,107 @@ public class CommandLineTest {
         verify(messageSender, atLeastOnce()).send(user, "default");
     }
 
+    @Test
+    public void testConnectCommandHandlesConnectExceptionAndPrintsWarning() throws Exception {
+        NetworkManager networkManager = mock(NetworkManager.class);
+        UserManager userManager = mock(UserManager.class);
+        MessageSender messageSender = mock(MessageSender.class);
+        when(userManager.isAuthorized()).thenReturn(false);
+        when(networkManager.getMessageSender()).thenReturn(messageSender);
+        doThrow(new ConnectException("refused")).when(networkManager).openSocket("localhost", "4499");
+
+        CommandLine cmd = new CommandLine(userManager, networkManager);
+
+        String errOutput = withCapturedErr(() -> cmd.execute("connect localhost:4499 nikita"));
+
+        Assertions.assertTrue(errOutput.contains("Warning : Server is unavailable or you typed wrong host:port."));
+        verify(userManager, never()).setUser(any());
+        verify(messageSender, never()).send(any(), anyString());
+    }
+
+    @Test
+    public void testConnectCommandHandlesIoExceptionAndPrintsError() throws Exception {
+        NetworkManager networkManager = mock(NetworkManager.class);
+        UserManager userManager = mock(UserManager.class);
+        MessageSender messageSender = mock(MessageSender.class);
+        when(userManager.isAuthorized()).thenReturn(false);
+        when(networkManager.getMessageSender()).thenReturn(messageSender);
+        doThrow(new IOException("boom")).when(networkManager).openSocket("localhost", "4499");
+
+        CommandLine cmd = new CommandLine(userManager, networkManager);
+
+        String errOutput = withCapturedErr(() -> cmd.execute("connect localhost:4499 nikita"));
+
+        Assertions.assertTrue(errOutput.contains("CommandLine.IOException.Message=boom"));
+        verify(userManager, never()).setUser(any());
+        verify(messageSender, never()).send(any(), anyString());
+    }
+
+    @Test
+    public void testExitCommandSendsQuitWhenAuthorized() {
+        NetworkManager networkManager = mock(NetworkManager.class);
+        UserManager userManager = mock(UserManager.class);
+        MessageSender messageSender = mock(MessageSender.class);
+        when(networkManager.getMessageSender()).thenReturn(messageSender);
+        when(userManager.isAuthorized()).thenReturn(true);
+        Protocol.User user = Protocol.User.newBuilder()
+                .setId(VFSConstants.NEW_USER)
+                .setLogin("nikita")
+                .build();
+        when(userManager.getUser()).thenReturn(user);
+
+        CommandLine cmd = new CommandLine(userManager, networkManager);
+
+        QuitException thrown = Assertions.assertThrows(QuitException.class, () -> cmd.execute("exit"));
+
+        Assertions.assertEquals("Successful exit!", thrown.getMessage());
+        verify(messageSender, atLeastOnce()).send(user, "quit");
+    }
+
+    @Test
+    public void testExitCommandThrowsWithoutSendingWhenNotAuthorized() {
+        NetworkManager networkManager = mock(NetworkManager.class);
+        UserManager userManager = mock(UserManager.class);
+        MessageSender messageSender = mock(MessageSender.class);
+        when(networkManager.getMessageSender()).thenReturn(messageSender);
+        when(userManager.isAuthorized()).thenReturn(false);
+
+        CommandLine cmd = new CommandLine(userManager, networkManager);
+
+        QuitException thrown = Assertions.assertThrows(QuitException.class, () -> cmd.execute("exit"));
+
+        Assertions.assertEquals("Successful exit!", thrown.getMessage());
+        verify(messageSender, never()).send(any(), anyString());
+    }
+
+    @Test
+    public void testUnknownCommandRoutesToDefaultWithTrimmedSource() {
+        NetworkManager networkManager = mock(NetworkManager.class);
+        UserManager userManager = mock(UserManager.class);
+        MessageSender messageSender = mock(MessageSender.class);
+        when(networkManager.getMessageSender()).thenReturn(messageSender);
+        when(userManager.isAuthorized()).thenReturn(true);
+        Protocol.User user = Protocol.User.newBuilder()
+                .setId(VFSConstants.NEW_USER)
+                .setLogin("nikita")
+                .build();
+        when(userManager.getUser()).thenReturn(user);
+
+        CommandLine cmd = new CommandLine(userManager, networkManager);
+        cmd.execute("   stats   ");
+
+        verify(messageSender, atLeastOnce()).send(user, "stats");
+    }
+
+    private String withCapturedErr(Runnable runnable) {
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(errContent, true, StandardCharsets.UTF_8));
+        try {
+            runnable.run();
+        } finally {
+            System.setErr(originalErr);
+        }
+        return errContent.toString(StandardCharsets.UTF_8);
+    }
 }
