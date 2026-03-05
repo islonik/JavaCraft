@@ -471,7 +471,31 @@ public class CommandLineTest {
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers/weblogic"));
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "move applications logs"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkfile destination.txt"));
+
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "move not_existing logs");
+        Assertions.assertEquals("Source path/node not found!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "move applications not_existing");
+        Assertions.assertEquals("Destination path/node not found!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "move applications destination.txt");
+        Assertions.assertEquals("Destination path is not directory", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock logs");
+        Assertions.assertEquals("You has locked the node by path '/logs'", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "move applications logs");
+        Assertions.assertEquals("Node or children nodes is/are locked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "unlock logs");
+        Assertions.assertEquals("Node '/logs' was unlocked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "move applications logs");
+        Assertions.assertEquals(
+                "You has moved source node by path '/applications' to destination node by path '/logs'",
+                actualResponse
+        );
 
         Assertions.assertEquals(
                 """
@@ -483,6 +507,7 @@ public class CommandLineTest {
                         |  |__applications
                         |  |  |__servers
                         |  |  |  |__weblogic
+                        |__destination.txt
                         """,
                 nodePrinter.print(nodeService.getRoot())
         );
