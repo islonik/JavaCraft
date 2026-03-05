@@ -618,6 +618,56 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testUnlock() {
+        String id1 = nikitaSession.getUser().getId();
+        String login1 = nikitaSession.getUser().getLogin();
+        String id2 = r2d2Session.getUser().getId();
+        String login2 = r2d2Session.getUser().getLogin();
+        CommandLine cmd1 = new CommandLine(commands);
+        CommandLine cmd2 = new CommandLine(commands);
+
+        cmd1.onUserInput(nikitaSession, RequestFactory.newRequest(id1, login1, "cd ../.."));
+        cmd2.onUserInput(r2d2Session, RequestFactory.newRequest(id2, login2, "cd ../.."));
+        cmd1.onUserInput(nikitaSession, RequestFactory.newRequest(id1, login1, "mkfile applications/servers/weblogic/logs/weblogic.log"));
+
+        String actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "unlock not_existing");
+        Assertions.assertEquals("Node is not found!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd1, id1, login1, "unlock applications");
+        Assertions.assertEquals("Node is already unlocked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "lock applications/servers");
+        Assertions.assertEquals("You has locked the node by path '/applications/servers'", actualResponse);
+
+        actualResponse = okResponse(r2d2Session, cmd2, id2, login2, "unlock applications/servers");
+        Assertions.assertEquals("Node is locked by different user!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "unlock applications/servers");
+        Assertions.assertEquals("Node '/applications/servers' was unlocked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "lock -r applications");
+        Assertions.assertEquals("You has locked the node by path '/applications'", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "unlock -r applications");
+        Assertions.assertEquals("Node '/applications' was unlocked!", actualResponse);
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__applications
+                        |  |__servers
+                        |  |  |__weblogic
+                        |  |  |  |__logs
+                        |  |  |  |  |__weblogic.log
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+    }
+
+    @Test
     public void testNoSuchCommand() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
