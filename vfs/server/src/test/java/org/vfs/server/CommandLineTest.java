@@ -514,7 +514,33 @@ public class CommandLineTest {
     }
 
     @Test
-    public void testRm() {
+    public void testPrint() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers"));
+
+        String actualResponse = okResponse(nikitaSession, cmd, id, login, "lock applications");
+        Assertions.assertEquals("You has locked the node by path '/applications'", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "print");
+        Assertions.assertEquals(
+                """
+                /
+                |__applications [Locked by nikita ]
+                |  |__servers
+                |__home
+                |  |__nikita
+                |  |__r2d2
+                """,
+                actualResponse
+        );
+    }
+
+    @Test
+    public void testRemove() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         CommandLine cmd = new CommandLine(commands);
