@@ -12,19 +12,13 @@ import javax.swing.*;
 public class Options extends JFrame implements ActionListener {
     private static Options instance = null;
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel computerLabel;
     private javax.swing.JCheckBox isFirstAlwaysMovePlayerOne;
     private javax.swing.JCheckBox isFirstAlwaysMovePlayerTwo;
     private javax.swing.JCheckBox isSecondPlayerComputer;
     private javax.swing.JCheckBox isSecondPlayerHuman;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel mediumPanel;
     private javax.swing.JTextField nameComputer;
     private javax.swing.JTextField namePlayerOne;
     private javax.swing.JTextField namePlayerTwo;
-    private javax.swing.JLabel playerOneLabel;
-    private javax.swing.JLabel playerTwoLabel;
-    private javax.swing.JPanel topPanel;
     private Options() {
         initComponents();
         setLocation(480, 240);
@@ -34,7 +28,6 @@ public class Options extends JFrame implements ActionListener {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                System.gc();
                 e.getWindow().setVisible(false);
                 e.getWindow().dispose();
             }
@@ -78,17 +71,17 @@ public class Options extends JFrame implements ActionListener {
 //    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        topPanel = new javax.swing.JPanel();
+        javax.swing.JPanel topPanel = new javax.swing.JPanel();
         isSecondPlayerHuman = new javax.swing.JCheckBox();
         isSecondPlayerComputer = new javax.swing.JCheckBox();
-        mediumPanel = new javax.swing.JPanel();
-        playerOneLabel = new javax.swing.JLabel();
-        playerTwoLabel = new javax.swing.JLabel();
+        javax.swing.JPanel mediumPanel = new javax.swing.JPanel();
+        javax.swing.JLabel playerOneLabel = new javax.swing.JLabel();
+        javax.swing.JLabel playerTwoLabel = new javax.swing.JLabel();
         namePlayerOne = new javax.swing.JTextField();
         namePlayerTwo = new javax.swing.JTextField();
-        computerLabel = new javax.swing.JLabel();
+        javax.swing.JLabel computerLabel = new javax.swing.JLabel();
         nameComputer = new javax.swing.JTextField();
-        jPanel1 = new javax.swing.JPanel();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         isFirstAlwaysMovePlayerOne = new javax.swing.JCheckBox();
         isFirstAlwaysMovePlayerTwo = new javax.swing.JCheckBox();
 
