@@ -81,4 +81,51 @@ public class CommandParserTest {
         Assertions.assertEquals("r", values.getNextKey());
         Assertions.assertEquals("applications", values.getNextParam());
     }
+
+    @Test
+    public void testCommandStartsWithDashThrowsException() {
+        CommandParser parser = new CommandParser();
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> parser.parse("-wrong"));
+
+        Assertions.assertEquals("Command error : -wrong", exception.getMessage());
+    }
+
+    @Test
+    public void testDashOnlyTokenIsIgnoredAsKey() {
+        CommandParser parser = new CommandParser();
+
+        parser.parse("lock -- applications");
+        CommandValues values = parser.getCommandValues();
+
+        Assertions.assertEquals("lock", values.getCommand());
+        Assertions.assertNull(values.getNextKey());
+        Assertions.assertEquals("applications", values.getNextParam());
+    }
+
+    @Test
+    public void testMultipleKeysAreParsedInOrder() {
+        CommandParser parser = new CommandParser();
+
+        parser.parse("copy --f --v source target");
+        CommandValues values = parser.getCommandValues();
+
+        Assertions.assertEquals("copy", values.getCommand());
+        Assertions.assertEquals("f", values.getNextKey());
+        Assertions.assertEquals("v", values.getNextKey());
+        Assertions.assertEquals("source", values.getNextParam());
+        Assertions.assertEquals("target", values.getNextParam());
+    }
+
+    @Test
+    public void testParsePreservesSourceAndTrimsForCommandExtraction() {
+        CommandParser parser = new CommandParser();
+        String commandWithSpaces = "   stats   ";
+
+        parser.parse(commandWithSpaces);
+        CommandValues values = parser.getCommandValues();
+
+        Assertions.assertEquals(commandWithSpaces, values.getSource());
+        Assertions.assertEquals("stats", values.getCommand());
+    }
 }
