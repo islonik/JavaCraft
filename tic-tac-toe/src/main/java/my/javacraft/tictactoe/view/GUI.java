@@ -2,6 +2,7 @@ package my.javacraft.tictactoe.view;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
@@ -66,10 +67,6 @@ public class GUI extends JFrame implements ActionListener {
         return instance;
     }
 
-    public Controller getController() {
-        return controller;
-    }
-
     public void setController(Controller controller) {
         this.controller = controller;
     }
@@ -104,11 +101,7 @@ public class GUI extends JFrame implements ActionListener {
         for (int i = 1; i < 10; i++) {
             Cell cell = new Cell(i);
             cell.setPreferredSize(new Dimension(96, 96));
-            cell.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    buttonActionPerformed(evt);
-                }
-            });
+            cell.addActionListener(this::buttonActionPerformed);
             cells.add(cell);
         }
 
@@ -135,7 +128,7 @@ public class GUI extends JFrame implements ActionListener {
                         .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                         .addComponent(cells.get(4 - 1), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(cells.get(0), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(cells.getFirst(), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addGroup(mainPanelLayout.createSequentialGroup()
@@ -157,7 +150,7 @@ public class GUI extends JFrame implements ActionListener {
                 mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(cells.get(0), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(cells.getFirst(), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(cells.get(2 - 1), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(cells.get(3 - 1), javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -238,15 +231,30 @@ public class GUI extends JFrame implements ActionListener {
         }
 
         try {
-            ImageIcon image;
+            String imagePath;
             if (gameSettings.isFirstGamerMove()) {
-                image = new ImageIcon(getClass().getResource(imageOptions.getPictureOne()));
+                imagePath = imageOptions.getPictureOne();
             } else {
-                image = new ImageIcon(getClass().getResource(imageOptions.getPictureTwo()));
+                imagePath = imageOptions.getPictureTwo();
             }
 
+            URL imageUrl = getClass().getResource(imagePath);
+            if (imageUrl == null) {
+                cells.get(button - 1).setAlreadyPressed(false);
+                JOptionPane.showMessageDialog
+                        (
+                                this,
+                                "Game is broken",
+                                "FATAL ERROR",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                return;
+            }
+
+            ImageIcon image = new ImageIcon(imageUrl);
             cells.get(button - 1).setIcon(image);
         } catch (Exception e) {
+            cells.get(button - 1).setAlreadyPressed(false);
             JOptionPane.showMessageDialog
                     (
                             this,
@@ -286,7 +294,7 @@ public class GUI extends JFrame implements ActionListener {
     public void unlockAllCells() {
         for (Cell cell : cells) {
             cell.setAlreadyPressed(false);
-            cell.setIcon(new ImageIcon());
+            cell.setIcon(null);
         }
     }
 
