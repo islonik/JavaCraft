@@ -57,16 +57,10 @@ public class NetworkManager {
     }
 
     public void closeSocket() {
-        try {
-            if (channel != null) {
-                synchronized (this) {
-                    while(channel != null) {
-                        channel = null;
-                    }
-                }
+        if (channel != null) {
+            synchronized (this) {
+                channel = null;
             }
-        } catch (Exception ioe) {
-            System.err.println("NetworkManager.closeSocket().IOException.Message=" + ioe.getMessage());
         }
     }
 
