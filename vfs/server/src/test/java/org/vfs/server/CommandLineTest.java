@@ -148,6 +148,42 @@ public class CommandLineTest {
                         """,
                 nodePrinter.print(nodeService.getRoot())
         );
+
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "copy not_existing not_existing");
+        Assertions.assertEquals("Source path/node is not found!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "copy home not_existing");
+        Assertions.assertEquals("Destination path/node is not found!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock logs/applications");
+        Assertions.assertEquals("You has locked the node by path '/logs/applications'", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "mkfile copy_test.txt");
+        Assertions.assertEquals("New file '/copy_test.txt' was created!", actualResponse);
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__applications
+                        |  |__servers
+                        |  |  |__weblogic
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        |__logs
+                        |  |__applications [Locked by nikita ]
+                        |  |  |__servers
+                        |  |  |  |__weblogic
+                        |__copy_test.txt
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "copy copy_test.txt logs/applications");
+        Assertions.assertEquals("Node or children nodes is/are locked!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "copy home/nikita copy_test.txt");
+        Assertions.assertEquals("Destination path is not directory", actualResponse);
     }
 
     @Test
