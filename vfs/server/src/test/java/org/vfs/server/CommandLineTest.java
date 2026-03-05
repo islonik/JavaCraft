@@ -377,6 +377,58 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testMakeDirectory() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers/weblogic"));
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__applications
+                        |  |__servers
+                        |  |  |__weblogic
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "mkdir applications/servers/weblogic");
+        Assertions.assertEquals("New directory could not be created!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock applications");
+        Assertions.assertEquals("You has locked the node by path '/applications'", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "mkdir applications/new_folder");
+        Assertions.assertEquals(
+                "Parent node /applications is locked! Please wait until this node will be unlocked!",
+                actualResponse
+        );
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "mkdir logs");
+        Assertions.assertEquals("New directory '/logs' was created!", actualResponse);
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__applications [Locked by nikita ]
+                        |  |__servers
+                        |  |  |__weblogic
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        |__logs
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+    }
+
+    @Test
     public void testMove() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();

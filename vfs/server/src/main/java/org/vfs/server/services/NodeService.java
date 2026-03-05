@@ -89,7 +89,7 @@ public class NodeService {
     public Node createNode(Node root, String path, NodeTypes nodeType) {
         if (path.contains(separator)) {
             String directoryName = path.substring(0, path.indexOf(separator));
-            path = path.substring(path.indexOf(separator) + 1, path.length());
+            path = path.substring(path.indexOf(separator) + 1);
             if (directoryName.isEmpty()) {
                 return createNode(root, path, nodeType);
             }
@@ -107,7 +107,7 @@ public class NodeService {
 
             return this.createNode(directoryNode, path, nodeType);
         } else {
-            if(lockService.isLocked(root)) {
+            if (lockService.isLocked(root)) {
                 throw new IllegalAccessError("Parent node " + getFullPath(root) + " is locked! Please wait until this node will be unlocked!");
             }
             Node leafNode = findByName(root, path);
@@ -121,13 +121,13 @@ public class NodeService {
     }
 
     public Node getNode(Node root, String path) {
-        if(path == null){
+        if (path == null){
             return null;
         }
         if (path.contains(separator)) {
             String directoryName = path.substring(0, path.indexOf(separator));
             if (directoryName.isEmpty()) {
-                directoryName = path.substring(path.indexOf(separator) + 1, path.length());
+                directoryName = path.substring(path.indexOf(separator) + 1);
                 return getNode(root, directoryName);
             }
             Node directoryNode = findByName(root, directoryName);
@@ -139,7 +139,7 @@ public class NodeService {
             if (directoryNode.getType() == NodeTypes.FILE) {
                 return directoryNode;
             } else {
-                path = path.substring(path.indexOf(separator) + 1, path.length());
+                path = path.substring(path.indexOf(separator) + 1);
                 return getNode(directoryNode, path);
             }
         } else {
@@ -150,7 +150,7 @@ public class NodeService {
     public boolean removeNode(Node root, String path) {
         if (path.contains(separator)) {
             String directoryName = path.substring(0, path.indexOf(separator));
-            path = path.substring(path.indexOf(separator) + 1, path.length());
+            path = path.substring(path.indexOf(separator) + 1);
             if (directoryName.isEmpty()) {
                 return removeNode(root, path);
             }

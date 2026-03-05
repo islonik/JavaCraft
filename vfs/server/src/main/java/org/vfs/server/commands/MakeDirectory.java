@@ -28,15 +28,11 @@ public class MakeDirectory extends AbstractCommand implements Command {
         Node node = nodeService.getNode(directory, newNodeName);
         if (node == null) {
             node = nodeService.createNode(directory, newNodeName, NodeTypes.DIR);
-            if (node != null) {
-                sendOK(String.format("New directory '%s' was created!", nodeService.getFullPath(node)));
-                userSessionService.notifyUsers(
-                        userSession.getUser().getId(),
-                        String.format("New directory '%s' was created by user '%s'", nodeService.getFullPath(node), userSession.getUser().getLogin())
-                );
-            } else {
-                sendFail("New directory was not created!");
-            }
+            sendOK(String.format("New directory '%s' was created!", nodeService.getFullPath(node)));
+            userSessionService.notifyUsers(
+                    userSession.getUser().getId(),
+                    String.format("New directory '%s' was created by user '%s'", nodeService.getFullPath(node), userSession.getUser().getLogin())
+            );
         } else {
             sendFail("New directory could not be created!");
         }
