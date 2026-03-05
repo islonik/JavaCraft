@@ -11,6 +11,8 @@
 * [soap2rest](soap2rest/README.md) - soap to rest
 * [tic-tac-toe](tic-tac-toe/README.md) - Tic-tac-toe game with GUI
 * [translation](translation/README.md) - translation
+* [vfs](vfs/README.md) - Virtual File Server
+* [xlspaceship](xlspaceship/README.md) - Battleship game
 * [xsd2model](xsd2model/README.md) - xsd2model
 
 ## Dependency management
