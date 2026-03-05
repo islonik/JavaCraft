@@ -28,7 +28,7 @@ public class ChangeDirectory extends AbstractCommand implements Command {
         Node node = nodeService.getNode(directory, source);
         if (node != null) {
             if (node.getType() == NodeTypes.FILE) {
-                sendFail("Source node is file!");
+                sendFail("Destination node is file!");
             } else {
                 userSession.setNode(node);
                 sendOK(nodeService.getFullPath(node));

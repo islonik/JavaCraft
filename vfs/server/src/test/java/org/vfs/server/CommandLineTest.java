@@ -78,9 +78,16 @@ public class CommandLineTest {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         CommandLine cmd = new CommandLine(commands);
+        String actualResponse;
 
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "cd ../..");
+        Assertions.assertEquals("/", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "cd ../..");
+        Assertions.assertEquals("/", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "cd");
+        Assertions.assertEquals("/", actualResponse);
 
         Assertions.assertEquals(
                 """
@@ -91,6 +98,27 @@ public class CommandLineTest {
                 """,
                 nodePrinter.print(nodeService.getRoot())
         );
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "mkfile test_file.txt");
+        Assertions.assertEquals("New file '/test_file.txt' was created!", actualResponse);
+
+        Assertions.assertEquals(
+                """
+                /
+                |__home
+                |  |__nikita
+                |  |__r2d2
+                |__test_file.txt
+                """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "cd test_file.txt");
+        Assertions.assertEquals("Destination node is file!", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "cd not_existing_folder");
+        Assertions.assertEquals("Destination node is not found!", actualResponse);
+
     }
 
     @Test
@@ -249,15 +277,10 @@ public class CommandLineTest {
 
         ClientWriter r2d2Writer = r2d2Session.getClientWriter();
         clearInvocations(r2d2Writer);
+
         cmd2.onUserInput(r2d2Session, RequestFactory.newRequest(id2, login2, "lock not_existing_folder"));
 
-        ArgumentCaptor<Protocol.Response> responseCaptor =
-                ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(r2d2Writer, times(1)).send(responseCaptor.capture());
-        Assertions.assertEquals(
-                Protocol.Response.ResponseType.FAIL,
-                responseCaptor.getValue().getCode()
-        );
+        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(r2d2Writer);
         Assertions.assertEquals("Destination node is not found!", responseCaptor.getValue().getMessage());
     }
 
@@ -382,13 +405,7 @@ public class CommandLineTest {
         clearInvocations(clientWriter);
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "unknown-command"));
 
-        ArgumentCaptor<Protocol.Response> responseCaptor =
-                ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(clientWriter, times(1)).send(responseCaptor.capture());
-        Assertions.assertEquals(
-                Protocol.Response.ResponseType.OK,
-                responseCaptor.getValue().getCode()
-        );
+        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForOk(clientWriter);
         Assertions.assertEquals(
                 "No such command! Please check you syntax or type 'help'!",
                 responseCaptor.getValue().getMessage()
@@ -408,6 +425,50 @@ public class CommandLineTest {
         clearInvocations(clientWriter);
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "boom"));
 
+        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(clientWriter);
+        Assertions.assertEquals("broken command", responseCaptor.getValue().getMessage());
+    }
+
+    private String okResponse(
+            UserSession userSession,
+            CommandLine cmd,
+            String id,
+            String login,
+            String command) {
+        clearInvocations(userSession.getClientWriter());
+
+        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForOk(userSession.getClientWriter());
+        return responseCaptor.getValue().getMessage();
+    }
+
+    private String failResponse(
+            UserSession userSession,
+            CommandLine cmd,
+            String id,
+            String login,
+            String command) {
+        clearInvocations(userSession.getClientWriter());
+
+        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(userSession.getClientWriter());
+        return responseCaptor.getValue().getMessage();
+    }
+
+    private ArgumentCaptor<Protocol.Response> getResponseCaptorForOk(ClientWriter clientWriter) {
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(clientWriter, times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.OK,
+                responseCaptor.getValue().getCode()
+        );
+        return responseCaptor;
+    }
+
+    private ArgumentCaptor<Protocol.Response> getResponseCaptorForFail(ClientWriter clientWriter) {
         ArgumentCaptor<Protocol.Response> responseCaptor =
                 ArgumentCaptor.forClass(Protocol.Response.class);
         verify(clientWriter, times(1)).send(responseCaptor.capture());
@@ -415,7 +476,9 @@ public class CommandLineTest {
                 Protocol.Response.ResponseType.FAIL,
                 responseCaptor.getValue().getCode()
         );
-        Assertions.assertEquals("broken command", responseCaptor.getValue().getMessage());
+        return responseCaptor;
     }
+
+
 
 }
