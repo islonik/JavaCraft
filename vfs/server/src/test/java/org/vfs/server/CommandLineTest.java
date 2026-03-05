@@ -588,6 +588,49 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testQuit() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        ClientWriter nikitaWriter = nikitaSession.getClientWriter();
+        ClientWriter r2d2Writer = r2d2Session.getClientWriter();
+        CommandLine cmd = new CommandLine(commands);
+
+        clearInvocations(nikitaWriter, r2d2Writer);
+
+        QuitException exception = Assertions.assertThrows(
+                QuitException.class,
+                () -> cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "quit"))
+        );
+        Assertions.assertEquals("User 'nikita' has been disconnected", exception.getMessage());
+        Assertions.assertNull(userSessionService.getSession(id));
+
+        ArgumentCaptor<Protocol.Response> ownResponseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(nikitaWriter, times(1)).send(ownResponseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.SUCCESS_QUIT,
+                ownResponseCaptor.getValue().getCode()
+        );
+        Assertions.assertEquals(
+                "You are disconnected from server!",
+                ownResponseCaptor.getValue().getMessage()
+        );
+
+        // confirm that the other user also was notified about that action
+        ArgumentCaptor<Protocol.Response> notificationCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(r2d2Writer, times(1)).send(notificationCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.OK,
+                notificationCaptor.getValue().getCode()
+        );
+        Assertions.assertEquals(
+                "User 'nikita' has been disconnected",
+                notificationCaptor.getValue().getMessage()
+        );
+    }
+
+    @Test
     public void testRemove() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
