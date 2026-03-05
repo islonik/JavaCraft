@@ -22,11 +22,6 @@ public class GUI extends JFrame implements ActionListener {
     private final ImageOptions imageOptions;
     private final GameSettings gameSettings;
     private Controller controller;
-    private javax.swing.JMenu optionsMenu;
-    private javax.swing.JMenu aboutMenu;
-    private javax.swing.JMenu gameMenu;
-    private javax.swing.JPanel mainPanel;
-    private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem aboutItem;
     // </editor-fold>//GEN-END:initComponents
     private javax.swing.JMenuItem imageItem;
@@ -94,7 +89,7 @@ public class GUI extends JFrame implements ActionListener {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        mainPanel = new javax.swing.JPanel();
+        javax.swing.JPanel mainPanel = new javax.swing.JPanel();
 
         cells = new ArrayList<>(9);
 
@@ -105,13 +100,13 @@ public class GUI extends JFrame implements ActionListener {
             cells.add(cell);
         }
 
-        menuBar = new javax.swing.JMenuBar();
-        gameMenu = new javax.swing.JMenu();
+        javax.swing.JMenuBar menuBar = new javax.swing.JMenuBar();
+        javax.swing.JMenu gameMenu = new javax.swing.JMenu();
         newGameItem = new javax.swing.JMenuItem();
-        optionsMenu = new javax.swing.JMenu();
+        javax.swing.JMenu optionsMenu = new javax.swing.JMenu();
         optionsItem = new javax.swing.JMenuItem();
         imageItem = new javax.swing.JMenuItem();
-        aboutMenu = new javax.swing.JMenu();
+        javax.swing.JMenu aboutMenu = new javax.swing.JMenu();
         aboutItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -218,18 +213,6 @@ public class GUI extends JFrame implements ActionListener {
      **/
     public void setUpImage(int button) {
         cells.get(button - 1).setAlreadyPressed(true);
-        try {
-            Thread.sleep(50);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog
-                    (
-                            this,
-                            "Game is broken",
-                            "FATAL ERROR",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-        }
-
         try {
             String imagePath;
             if (gameSettings.isFirstGamerMove()) {
