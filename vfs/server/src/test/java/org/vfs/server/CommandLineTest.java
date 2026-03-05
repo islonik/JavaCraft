@@ -579,36 +579,42 @@ public class CommandLineTest {
 
     @Test
     public void testRename() {
-        String id1 = nikitaSession.getUser().getId();
-        String login1 = nikitaSession.getUser().getLogin();
-        String id2 = r2d2Session.getUser().getId();
-        String login2 = r2d2Session.getUser().getLogin();
-        CommandLine cmd1 = new CommandLine(commands);
-        CommandLine cmd2 = new CommandLine(commands);
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
 
-        cmd1.onUserInput(nikitaSession, RequestFactory.newRequest(id1, login1, "cd ../.."));
-        cmd2.onUserInput(r2d2Session,   RequestFactory.newRequest(id2, login2, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkfile applications/servers/weblogic/logs/weblogic.log"));
 
-        cmd1.onUserInput(nikitaSession, RequestFactory.newRequest(id1, login1, "mkfile applications/servers/weblogic/logs/weblogic.log"));
-        cmd1.onUserInput(nikitaSession, RequestFactory.newRequest(id1, login1, "lock -r applications/servers/weblogic"));
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "rename not_existing new_name");
+        Assertions.assertEquals("Node is not found!", actualResponse);
 
-        cmd2.onUserInput(r2d2Session,   RequestFactory.newRequest(id2, login2, "rename applications/servers web-servers"));
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock applications/servers/weblogic");
+        Assertions.assertEquals("You has locked the node by path '/applications/servers/weblogic'", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "rename applications/servers/weblogic web-servers");
+        Assertions.assertEquals("Node is locked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "unlock applications/servers/weblogic");
+        Assertions.assertEquals("Node '/applications/servers/weblogic' was unlocked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "rename applications/servers/weblogic web-servers");
+        Assertions.assertEquals("Node 'weblogic' was renamed to 'web-servers'", actualResponse);
 
         Assertions.assertEquals(
                 """
                         /
                         |__applications
-                        |  |__web-servers
-                        |  |  |__weblogic [Locked by nikita ]
-                        |  |  |  |__logs [Locked by nikita ]
-                        |  |  |  |  |__weblogic.log [Locked by nikita ]
+                        |  |__servers
+                        |  |  |__web-servers
+                        |  |  |  |__logs
+                        |  |  |  |  |__weblogic.log
                         |__home
                         |  |__nikita
                         |  |__r2d2
                         """,
                 nodePrinter.print(nodeService.getRoot())
         );
-
     }
 
     @Test
