@@ -15,14 +15,11 @@ public class UserServices {
     private String fullName;
     private boolean isAI = false;
 
+    // is called from Application
     public void setUpAI() {
         isAI = true;
         userId = "AI";
         fullName = String.format("AI-%s", randomServices.generateAI());
-    }
-
-    public boolean isAI() {
-        return isAI;
     }
 
 }
