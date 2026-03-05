@@ -37,6 +37,16 @@ public class TicTacToeTest {
     }
 
     @Test
+    public void testTicTacToe_initialState() {
+        Player playerOne = new Player("Player 1", false);
+        Player playerTwo = new Player("Computer", true);
+        TicTacToe ticTacToe = new TicTacToe(playerOne, playerTwo);
+
+        Assertions.assertNull(ticTacToe.getWinner());
+        Assertions.assertEquals(0, ticTacToe.getComputerMove());
+    }
+
+    @Test
     public void testTicTacToe_makeHumanMoveForSecondPlayerWhenConfigured() {
         GameSettings.getInstance().setFirstGamerMove(false);
 

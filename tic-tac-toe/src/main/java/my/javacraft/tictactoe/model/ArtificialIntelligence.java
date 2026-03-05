@@ -37,12 +37,16 @@ public class ArtificialIntelligence {
     }
 
     public void makeMove(Player player) {
-        this.makeDiagonalMove(player);
-        this.makeVerticalMove(player);
+        if (this.makeDiagonalMove(player)) {
+            return;
+        }
+        if (this.makeVerticalMove(player)) {
+            return;
+        }
         this.makeHorizontalMove(player);
     }
 
-    private void makeDiagonalMove(Player player) {
+    private boolean makeDiagonalMove(Player player) {
         int diagonalDown = 0;
         int diagonalUp = 0;
         for (int i = 0; i < 3; i++) {
@@ -59,6 +63,7 @@ public class ArtificialIntelligence {
                 if (this.gameField.getGameField()[i][i] == null) {
                     this.gameField.getGameField()[i][i] = computer;
                     this.nextMove = i * 3 + i + 1;
+                    return true;
                 }
             }
         }
@@ -68,12 +73,14 @@ public class ArtificialIntelligence {
                 if (this.gameField.getGameField()[2 - i][i] == null) {
                     this.gameField.getGameField()[2 - i][i] = computer;
                     this.nextMove = (7 - (2 * i));
+                    return true;
                 }
             }
         }
+        return false;
     }
 
-    private void makeVerticalMove(Player player) {
+    private boolean makeVerticalMove(Player player) {
         for (int i = 0; i < 3; i++) {
             int verticals = 0;
             for (int y = 0; y < 3; y++) {
@@ -88,13 +95,15 @@ public class ArtificialIntelligence {
                     if (anotherPlayer == null) {
                         this.gameField.setPlayer(computer, i * 3 + y + 1);
                         this.nextMove = i * 3 + y + 1;
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
-    private void makeHorizontalMove(Player player) {
+    private boolean makeHorizontalMove(Player player) {
         for (int i = 0; i < 3; i++) {
             int horizontals = 0;
             for (int y = 0; y < 3; y++) {
@@ -109,10 +118,12 @@ public class ArtificialIntelligence {
                     if (anotherPlayer == null) {
                         this.gameField.setPlayer(computer, y * 3 + i + 1);
                         this.nextMove = y * 3 + i + 1;
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     private void makeRandomMove() {

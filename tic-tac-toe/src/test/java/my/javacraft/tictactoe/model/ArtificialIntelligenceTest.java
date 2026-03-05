@@ -149,6 +149,29 @@ public class ArtificialIntelligenceTest {
         }
     }
 
+    @Test
+    public void testArtificialIntelligenceMakesOnlyOneMovePerTurn() {
+        GameField gameField = new GameField();
+        gameField.setPlayer(computer, 1);
+        gameField.setPlayer(computer, 2);
+        gameField.setPlayer(computer, 4);
+
+        ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, gameField);
+        ai.computerBrain();
+
+        int computerCells = 0;
+        for (int cell = 1; cell <= 9; cell++) {
+            if (gameField.getPlayer(cell) == computer) {
+                computerCells++;
+            }
+        }
+
+        Assertions.assertEquals(4, computerCells);
+        boolean thirdCellTaken = gameField.getPlayer(3) == computer;
+        boolean seventhCellTaken = gameField.getPlayer(7) == computer;
+        Assertions.assertTrue(thirdCellTaken ^ seventhCellTaken);
+    }
+
 
 
 }
