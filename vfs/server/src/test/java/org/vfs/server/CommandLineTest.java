@@ -151,56 +151,35 @@ public class CommandLineTest {
     }
 
     @Test
-    public void testMove() {
+    public void testHelp() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         CommandLine cmd = new CommandLine(commands);
 
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers/weblogic"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "move applications logs"));
+        String actualResponse = okResponse(nikitaSession, cmd, id, login, "help");
 
-        Assertions.assertEquals(
-                """
-                        /
-                        |__home
-                        |  |__nikita
-                        |  |__r2d2
-                        |__logs
-                        |  |__applications
-                        |  |  |__servers
-                        |  |  |  |__weblogic
-                        """,
-                nodePrinter.print(nodeService.getRoot())
-        );
+        Assertions.assertEquals("""
+                You can use next commands:
+                    * - cd directory\s
+                    * - connect server_name:port login\s
+                    * - copy node directory\s
+                    * - help\s
+                    * - lock [-r] node\s
+                        -r - enable recursive mode\s
+                    * - mkdir directory\s
+                    * - mkfile file
+                    * - move node directory\s
+                    * - print\s
+                    * - quit\s
+                    * - rename node name\s
+                    * - rm node\s
+                    * - unlock [-r] node\s
+                        -r - enable recursive mode\s
+                """, actualResponse);
     }
 
     @Test
-    public void testRm() {
-        String id = nikitaSession.getUser().getId();
-        String login = nikitaSession.getUser().getLogin();
-        CommandLine cmd = new CommandLine(commands);
-
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "rm applications"));
-
-        Assertions.assertEquals(
-                """
-                        /
-                        |__home
-                        |  |__nikita
-                        |  |__r2d2
-                        |__logs
-                        """,
-                nodePrinter.print(nodeService.getRoot())
-        );
-    }
-
-    @Test
-    public void testLockScenario() {
+    public void testLock() {
         String id1 = nikitaSession.getUser().getId();
         String login1 = nikitaSession.getUser().getLogin();
         String id2 = r2d2Session.getUser().getId();
@@ -285,7 +264,7 @@ public class CommandLineTest {
     }
 
     @Test
-    public void testRecursiveLockScenario() {
+    public void testLockRecursive() {
         String id1 = nikitaSession.getUser().getId();
         String login1 = nikitaSession.getUser().getLogin();
         String id2 = r2d2Session.getUser().getId();
@@ -362,6 +341,55 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testMove() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers/weblogic"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "move applications logs"));
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        |__logs
+                        |  |__applications
+                        |  |  |__servers
+                        |  |  |  |__weblogic
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+    }
+
+    @Test
+    public void testRm() {
+        String id = nikitaSession.getUser().getId();
+        String login = nikitaSession.getUser().getLogin();
+        CommandLine cmd = new CommandLine(commands);
+
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "rm applications"));
+
+        Assertions.assertEquals(
+                """
+                        /
+                        |__home
+                        |  |__nikita
+                        |  |__r2d2
+                        |__logs
+                        """,
+                nodePrinter.print(nodeService.getRoot())
+        );
+    }
+
+    @Test
     public void testRename() {
         String id1 = nikitaSession.getUser().getId();
         String login1 = nikitaSession.getUser().getLogin();
@@ -396,7 +424,7 @@ public class CommandLineTest {
     }
 
     @Test
-    public void testUnknownCommandSendsHelpMessage() {
+    public void testNoSuchCommand() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         CommandLine cmd = new CommandLine(commands);
@@ -413,12 +441,12 @@ public class CommandLineTest {
     }
 
     @Test
-    public void testKnownCommandExceptionSendsFailMessage() {
+    public void testExceptionCausedByCommand() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         ClientWriter clientWriter = nikitaSession.getClientWriter();
         Command failingCommand = mock(Command.class);
-        doThrow(new IllegalArgumentException("broken command")).when(failingCommand)
+        doThrow(new IllegalArgumentException("exception caused by a command")).when(failingCommand)
                 .apply(eq(nikitaSession), any());
         CommandLine cmd = new CommandLine(Map.of("boom", failingCommand));
 
@@ -426,7 +454,7 @@ public class CommandLineTest {
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "boom"));
 
         ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(clientWriter);
-        Assertions.assertEquals("broken command", responseCaptor.getValue().getMessage());
+        Assertions.assertEquals("exception caused by a command", responseCaptor.getValue().getMessage());
     }
 
     private String okResponse(
