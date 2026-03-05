@@ -30,10 +30,6 @@ public class TicTacToe {
         } else {
             this.gameField.setPlayer(playerOne, button);
         }
-
-        Player winner = gameField.getWinner();
-        if (winner != null) {
-        }
     }
 
     public void makeComputerMove() {

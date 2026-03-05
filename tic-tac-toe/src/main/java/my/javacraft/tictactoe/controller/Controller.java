@@ -21,10 +21,6 @@ public class Controller {
         newGame(Options.getInstance());
     }
 
-    public GUI getView() {
-        return view;
-    }
-
     public void setView(GUI view) {
         this.view = view;
     }
@@ -63,13 +59,20 @@ public class Controller {
             playerTwo.setName(options.getNamePlayerTwo());
         }
 
-
-        TicTacToe game = new TicTacToe(playerOne, playerTwo);
-        this.model = game;
+        this.model = new TicTacToe(playerOne, playerTwo);
     }
 
     public void action(int type) {
+        if (isGameOver()) {
+            return;
+        }
+
         model.makeHumanMove(type);
+
+        if (isGameOver()) {
+            return;
+        }
+
         settings.changeGamerMove();
 
         if (settings.isComputer() && view.hasFreeCells()) {
@@ -79,16 +82,23 @@ public class Controller {
             settings.changeGamerMove();
         }
 
+        isGameOver();
+    }
+
+    boolean isGameOver() {
         Player winner = model.getWinner();
         if (winner != null) {
             view.lockAllCells();
             view.showWinner(winner.getName());
+            return true;
         }
 
-        if (winner == null && !view.hasFreeCells()) {
+        if (!view.hasFreeCells()) {
             view.lockAllCells();
             view.showDraw();
+            return true;
         }
+        return false;
     }
 
     public void makeFirstComputerMove() {

@@ -2,6 +2,12 @@ package my.javacraft.tictactoe.model;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
+
+import java.util.Random;
+
+import static org.mockito.Mockito.when;
 
 /**
  * User: Lipatov Nikita
@@ -30,14 +36,14 @@ public class ArtificialIntelligenceTest {
     }
 
     @Test
-    public void testArtificialIntelligence_firstMove() {
+    public void testArtificialIntelligenceFirstMove() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, new GameField());
         ai.computerBrain();
         Assertions.assertNotSame(0, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_firstMoveNotInTheCentre() {
+    public void testArtificialIntelligenceFirstMoveNotInTheCentre() {
         GameField gameField = new GameField();
         gameField.setPlayer(gamer, 5);
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, gameField);
@@ -46,61 +52,102 @@ public class ArtificialIntelligenceTest {
     }
 
     @Test
-    public void testArtificialIntelligence_horizontal_testCase01() {
+    public void testArtificialIntelligenceHorizontalTestCase01() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(1, 2, 4, 5));
         ai.makeMove(this.computer);
         Assertions.assertEquals(6, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_horizontal_testCase02() {
+    public void testArtificialIntelligenceHorizontalTestCase02() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(4, 5, 8, 9));
         ai.makeMove(this.computer);
         Assertions.assertEquals(7, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_vertical_testCase01() {
+    public void testArtificialIntelligenceVerticalTestCase01() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(1, 4, 2, 5));
         ai.makeMove(this.computer);
         Assertions.assertEquals(8, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_vertical_testCase02() {
+    public void testArtificialIntelligenceVerticalTestCase02() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(4, 7, 3, 6));
         ai.makeMove(this.computer);
         Assertions.assertEquals(9, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_diagonal_attack_testCase01() {
+    public void testArtificialIntelligenceDiagonalAttackTestCase01() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(3, 7, 1, 9));
         ai.makeMove(this.computer);
         Assertions.assertEquals(5, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_diagonal_attack_testCase02() {
+    public void testArtificialIntelligenceDiagonalAttackTestCase02() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(2, 8, 3, 5));
         ai.makeMove(this.computer);
         Assertions.assertEquals(7, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_diagonal_defense_testCase01() {
+    public void testArtificialIntelligenceDiagonalDefenseTestCase01() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(1, 5, 8));
         ai.computerBrain();
         Assertions.assertEquals(9, ai.getNextMove());
     }
 
     @Test
-    public void testArtificialIntelligence_diagonal_defense_testCase02() {
+    public void testArtificialIntelligenceDiagonalDefenseTestCase02() {
         ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(3, 7, 2));
         ai.computerBrain();
         Assertions.assertEquals(5, ai.getNextMove());
     }
 
+    @Test
+    public void testArtificialIntelligenceComputerBrainWinningMoveHasPriority() {
+        ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, createTestGameField(1, 2, 4, 5));
+        ai.computerBrain();
+        Assertions.assertEquals(6, ai.getNextMove());
+    }
+
+    @Test
+    public void testArtificialIntelligenceNoFreeCells() {
+        GameField gameField = new GameField();
+        for (int i = 1; i <= 9; i++) {
+            gameField.setPlayer(gamer, i);
+        }
+
+        ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, gameField);
+        ai.computerBrain();
+
+        Assertions.assertEquals(0, ai.getNextMove());
+    }
+
+    @Test
+    public void testArtificialIntelligenceRandomRetry() {
+        GameField gameField = new GameField();
+        gameField.setPlayer(gamer, 2);
+        gameField.setPlayer(computer, 3);
+        gameField.setPlayer(computer, 4);
+        gameField.setPlayer(gamer, 5);
+        gameField.setPlayer(gamer, 6);
+        gameField.setPlayer(gamer, 7);
+        gameField.setPlayer(computer, 8);
+        gameField.setPlayer(computer, 9);
+
+        try (MockedConstruction<Random> ignored = Mockito.mockConstruction(
+                Random.class,
+                (mock, context) -> when(mock.nextInt(9)).thenReturn(3, 8, 0)
+        )) {
+            ArtificialIntelligence ai = new ArtificialIntelligence(gamer, computer, gameField);
+            ai.computerBrain();
+            Assertions.assertEquals(1, ai.getNextMove());
+        }
+    }
 
 
 

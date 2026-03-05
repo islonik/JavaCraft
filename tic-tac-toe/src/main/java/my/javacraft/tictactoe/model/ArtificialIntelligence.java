@@ -118,14 +118,13 @@ public class ArtificialIntelligence {
     private void makeRandomMove() {
         Random randomGenerator = new Random();
         int randomNumber;
-        randomNumber = randomGenerator.nextInt(9) + 1;
         // force order
         if (this.gameField.getGameField()[1][1] == null) {
             this.gameField.getGameField()[1][1] = computer;
             this.nextMove = 5;
             return;
         }
-        List<Integer> newArray = new ArrayList<Integer>();
+        List<Integer> newArray = new ArrayList<>();
         // find free cells
         for (int i = 0; i < 3; i++) {
             for (int y = 0; y < 3; y++) {
@@ -135,27 +134,19 @@ public class ArtificialIntelligence {
             }
         }
         // no free cells - game over
-        if (newArray.size() == 0) {
+        if (newArray.isEmpty()) {
             return;
         }
         // try to generate random number
-        for (; ; ) {
+        do {
             randomNumber = randomGenerator.nextInt(9) + 1;
-            if (newArray.contains(randomNumber)) {
-                break;
-            }
-        }
+        } while (!newArray.contains(randomNumber));
 
         // activate random number
-        for (int i = 0; i < 3; i++) {
-            for (int y = 0; y < 3; y++) {
-                if (((3 * i) + y + 1) == randomNumber) {
-                    this.gameField.getGameField()[i][y] = computer;
-                    this.nextMove = 3 * i + y + 1;
-                    return;
-                }
-            }
-        }
+        int row = (randomNumber - 1) / 3;
+        int column = (randomNumber - 1) % 3;
+        this.gameField.getGameField()[row][column] = computer;
+        this.nextMove = randomNumber;
     }
 
 

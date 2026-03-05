@@ -15,6 +15,7 @@ public class ControllerTest {
     @Test
     public void testControllerSingleGame() {
         GUI gui = Mockito.mock(GUI.class);
+        Mockito.when(gui.hasFreeCells()).thenReturn(true);
 
         Controller controller = new Controller();
         controller.setView(gui);
@@ -43,6 +44,7 @@ public class ControllerTest {
     @Test
     public void testControllerTwoGames() {
         GUI gui = Mockito.mock(GUI.class);
+        Mockito.when(gui.hasFreeCells()).thenReturn(true);
 
         Controller controller = new Controller();
         controller.setView(gui);
