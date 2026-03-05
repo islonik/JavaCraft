@@ -546,9 +546,23 @@ public class CommandLineTest {
         CommandLine cmd = new CommandLine(commands);
 
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "cd ../.."));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers"));
+        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir applications/servers/weblogic"));
         cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "mkdir logs"));
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "rm applications"));
+
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "rm not_existing");
+        Assertions.assertEquals("Node is not found!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "lock applications");
+        Assertions.assertEquals("You has locked the node by path '/applications'", actualResponse);
+
+        actualResponse = failResponse(nikitaSession, cmd, id, login, "rm applications");
+        Assertions.assertEquals("Node or children nodes is / are locked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "unlock applications");
+        Assertions.assertEquals("Node '/applications' was unlocked!", actualResponse);
+
+        actualResponse = okResponse(nikitaSession, cmd, id, login, "rm applications");
+        Assertions.assertEquals("Node 'applications' was deleted! Removal status = 'true'", actualResponse);
 
         Assertions.assertEquals(
                 """
@@ -560,6 +574,7 @@ public class CommandLineTest {
                         """,
                 nodePrinter.print(nodeService.getRoot())
         );
+
     }
 
     @Test

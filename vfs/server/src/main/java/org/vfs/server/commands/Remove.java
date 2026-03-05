@@ -35,16 +35,12 @@ public class Remove extends AbstractCommand implements Command {
             }
 
             boolean isRemoved = nodeService.removeNode(directory, nodeName);
-            if (isRemoved) {
-                sendOK(String.format("Node '%s' was deleted!", nodeName));
+            sendOK(String.format("Node '%s' was deleted! Removal status = '%s'", nodeName, isRemoved));
 
-                userSessionService.notifyUsers(
-                        userSession.getUser().getId(),
-                        String.format("Node '%s' was deleted by user '%s'", nodeName, userSession.getUser().getLogin())
-                );
-            } else {
-                sendFail("Node was found, but wasn't deleted!");
-            }
+            userSessionService.notifyUsers(
+                    userSession.getUser().getId(),
+                    String.format("Node '%s' was deleted by user '%s'", nodeName, userSession.getUser().getLogin())
+            );
         } else {
             sendFail("Node is not found!");
         }

@@ -28,9 +28,9 @@ public class Rename extends AbstractCommand implements Command {
         String newName = values.getNextParam();
 
         Node node = nodeService.getNode(directory, renameNode);
-        String oldName = node.getName();
 
         if (node != null) {
+            String oldName = node.getName();
             if (lockService.isLocked(node, false)) {
                 sendFail("Node is locked!");
                 return;
