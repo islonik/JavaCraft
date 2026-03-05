@@ -290,13 +290,9 @@ public class CommandLineTest {
                 nodePrinter.print(nodeService.getRoot())
         );
 
-        ClientWriter r2d2Writer = r2d2Session.getClientWriter();
-        clearInvocations(r2d2Writer);
 
-        cmd2.onUserInput(r2d2Session, RequestFactory.newRequest(id2, login2, "lock not_existing_folder"));
-
-        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(r2d2Writer);
-        Assertions.assertEquals("Destination node is not found!", responseCaptor.getValue().getMessage());
+        String actualResponse = failResponse(r2d2Session, cmd2, id2, login2, "lock not_existing_folder");
+        Assertions.assertEquals("Destination node is not found!", actualResponse);
     }
 
     @Test
@@ -668,19 +664,31 @@ public class CommandLineTest {
     }
 
     @Test
+    public void testWhoami() {
+        String id1 = nikitaSession.getUser().getId();
+        String login1 = nikitaSession.getUser().getLogin();
+        String id2 = r2d2Session.getUser().getId();
+        String login2 = r2d2Session.getUser().getLogin();
+        CommandLine cmd1 = new CommandLine(commands);
+        CommandLine cmd2 = new CommandLine(commands);
+
+        String actualResponse = okResponse(nikitaSession, cmd1, id1, login1, "whoami");
+        Assertions.assertEquals("nikita", actualResponse);
+
+        actualResponse = okResponse(r2d2Session, cmd2, id2, login2, "whoami");
+        Assertions.assertEquals("r2d2", actualResponse);
+    }
+
+    @Test
     public void testNoSuchCommand() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
         CommandLine cmd = new CommandLine(commands);
-        ClientWriter clientWriter = nikitaSession.getClientWriter();
 
-        clearInvocations(clientWriter);
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "unknown-command"));
-
-        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForOk(clientWriter);
+        String actualResponse = okResponse(nikitaSession, cmd, id, login, "unknown-command");
         Assertions.assertEquals(
                 "No such command! Please check you syntax or type 'help'!",
-                responseCaptor.getValue().getMessage()
+                actualResponse
         );
     }
 
@@ -688,17 +696,13 @@ public class CommandLineTest {
     public void testExceptionCausedByCommand() {
         String id = nikitaSession.getUser().getId();
         String login = nikitaSession.getUser().getLogin();
-        ClientWriter clientWriter = nikitaSession.getClientWriter();
         Command failingCommand = mock(Command.class);
         doThrow(new IllegalArgumentException("exception caused by a command")).when(failingCommand)
                 .apply(eq(nikitaSession), any());
         CommandLine cmd = new CommandLine(Map.of("boom", failingCommand));
 
-        clearInvocations(clientWriter);
-        cmd.onUserInput(nikitaSession, RequestFactory.newRequest(id, login, "boom"));
-
-        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(clientWriter);
-        Assertions.assertEquals("exception caused by a command", responseCaptor.getValue().getMessage());
+        String actualResponse = failResponse(nikitaSession, cmd, id, login, "boom");
+        Assertions.assertEquals("exception caused by a command", actualResponse);
     }
 
     private String okResponse(
@@ -711,7 +715,12 @@ public class CommandLineTest {
 
         cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
 
-        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForOk(userSession.getClientWriter());
+        ArgumentCaptor<Protocol.Response> responseCaptor = ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.OK,
+                responseCaptor.getValue().getCode()
+        );
         return responseCaptor.getValue().getMessage();
     }
 
@@ -725,30 +734,54 @@ public class CommandLineTest {
 
         cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
 
-        ArgumentCaptor<Protocol.Response> responseCaptor = getResponseCaptorForFail(userSession.getClientWriter());
-        return responseCaptor.getValue().getMessage();
-    }
-
-    private ArgumentCaptor<Protocol.Response> getResponseCaptorForOk(ClientWriter clientWriter) {
         ArgumentCaptor<Protocol.Response> responseCaptor =
                 ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(clientWriter, times(1)).send(responseCaptor.capture());
-        Assertions.assertEquals(
-                Protocol.Response.ResponseType.OK,
-                responseCaptor.getValue().getCode()
-        );
-        return responseCaptor;
-    }
-
-    private ArgumentCaptor<Protocol.Response> getResponseCaptorForFail(ClientWriter clientWriter) {
-        ArgumentCaptor<Protocol.Response> responseCaptor =
-                ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(clientWriter, times(1)).send(responseCaptor.capture());
+        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
         Assertions.assertEquals(
                 Protocol.Response.ResponseType.FAIL,
                 responseCaptor.getValue().getCode()
         );
-        return responseCaptor;
+        return responseCaptor.getValue().getMessage();
+    }
+
+    private String connectResponse(
+            UserSession userSession,
+            CommandLine cmd,
+            String id,
+            String login,
+            String command) {
+        clearInvocations(userSession.getClientWriter());
+
+        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.SUCCESS_CONNECT,
+                responseCaptor.getValue().getCode()
+        );
+        return responseCaptor.getValue().getMessage();
+    }
+
+    private String quitResponse(
+            UserSession userSession,
+            CommandLine cmd,
+            String id,
+            String login,
+            String command) {
+        clearInvocations(userSession.getClientWriter());
+
+        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
+
+        ArgumentCaptor<Protocol.Response> responseCaptor =
+                ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
+        Assertions.assertEquals(
+                Protocol.Response.ResponseType.SUCCESS_QUIT,
+                responseCaptor.getValue().getCode()
+        );
+        return responseCaptor.getValue().getMessage();
     }
 
 
