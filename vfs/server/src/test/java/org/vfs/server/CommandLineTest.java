@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.vfs.core.network.protocol.RequestFactory;
 import org.vfs.core.network.protocol.Protocol;
+import org.vfs.core.exceptions.QuitException;
 import org.vfs.server.commands.Command;
 import org.vfs.server.model.Timer;
 import org.vfs.server.model.UserSession;
@@ -119,6 +120,57 @@ public class CommandLineTest {
         actualResponse = failResponse(nikitaSession, cmd, id, login, "cd not_existing_folder");
         Assertions.assertEquals("Destination node is not found!", actualResponse);
 
+    }
+
+    @Test
+    public void testConnect() {
+        ClientWriter nikitaWriter = nikitaSession.getClientWriter();
+        ClientWriter r2d2Writer = r2d2Session.getClientWriter();
+        clearInvocations(nikitaWriter, r2d2Writer);
+
+        CommandLine cmd = new CommandLine(commands);
+
+        ClientWriter newUserWriter = mock(ClientWriter.class);
+        UserSession newUserSession = userSessionService.startSession(newUserWriter, new Timer());
+        String newUserId = newUserSession.getUser().getId();
+        cmd.onUserInput(newUserSession, RequestFactory.newRequest(newUserId, "", "connect neo"));
+
+        ArgumentCaptor<Protocol.Response> successCaptor = ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(newUserWriter, times(1)).send(successCaptor.capture());
+        Assertions.assertEquals(Protocol.Response.ResponseType.SUCCESS_CONNECT, successCaptor.getValue().getCode());
+        Assertions.assertEquals("/home/neo", successCaptor.getValue().getMessage());
+        Assertions.assertEquals(newUserId, successCaptor.getValue().getSpecificCode());
+
+        // already existing user 1 get notification
+        ArgumentCaptor<Protocol.Response> nikitaNotifyCaptor = ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(nikitaWriter, times(1)).send(nikitaNotifyCaptor.capture());
+        Assertions.assertEquals(Protocol.Response.ResponseType.OK, nikitaNotifyCaptor.getValue().getCode());
+        Assertions.assertEquals("User 'neo' has connected to server!", nikitaNotifyCaptor.getValue().getMessage());
+
+        // already existing user 2 get notification
+        ArgumentCaptor<Protocol.Response> r2d2NotifyCaptor = ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(r2d2Writer, times(1)).send(r2d2NotifyCaptor.capture());
+        Assertions.assertEquals(Protocol.Response.ResponseType.OK, r2d2NotifyCaptor.getValue().getCode());
+        Assertions.assertEquals("User 'neo' has connected to server!", r2d2NotifyCaptor.getValue().getMessage());
+
+        // confirm user session has newly connected user
+        Assertions.assertEquals("neo", userSessionService.getSession(newUserId).getUser().getLogin());
+
+        // try to connect again under the same name
+        ClientWriter duplicateUserWriter = mock(ClientWriter.class);
+        UserSession duplicateUserSession = userSessionService.startSession(duplicateUserWriter, new Timer());
+        String duplicateUserId = duplicateUserSession.getUser().getId();
+        QuitException exception = Assertions.assertThrows(
+                QuitException.class,
+                () -> cmd.onUserInput(duplicateUserSession, RequestFactory.newRequest(duplicateUserId, "", "connect nikita"))
+        );
+        Assertions.assertEquals("Such user already exist!", exception.getMessage());
+
+        ArgumentCaptor<Protocol.Response> failCaptor = ArgumentCaptor.forClass(Protocol.Response.class);
+        verify(duplicateUserWriter, times(1)).send(failCaptor.capture());
+        Assertions.assertEquals(Protocol.Response.ResponseType.FAIL_CONNECT, failCaptor.getValue().getCode());
+        Assertions.assertEquals("Such user already exits. Please, change the login!", failCaptor.getValue().getMessage());
+        Assertions.assertEquals("", failCaptor.getValue().getSpecificCode());
     }
 
     @Test
@@ -743,47 +795,5 @@ public class CommandLineTest {
         );
         return responseCaptor.getValue().getMessage();
     }
-
-    private String connectResponse(
-            UserSession userSession,
-            CommandLine cmd,
-            String id,
-            String login,
-            String command) {
-        clearInvocations(userSession.getClientWriter());
-
-        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
-
-        ArgumentCaptor<Protocol.Response> responseCaptor =
-                ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
-        Assertions.assertEquals(
-                Protocol.Response.ResponseType.SUCCESS_CONNECT,
-                responseCaptor.getValue().getCode()
-        );
-        return responseCaptor.getValue().getMessage();
-    }
-
-    private String quitResponse(
-            UserSession userSession,
-            CommandLine cmd,
-            String id,
-            String login,
-            String command) {
-        clearInvocations(userSession.getClientWriter());
-
-        cmd.onUserInput(userSession, RequestFactory.newRequest(id, login, command));
-
-        ArgumentCaptor<Protocol.Response> responseCaptor =
-                ArgumentCaptor.forClass(Protocol.Response.class);
-        verify(userSession.getClientWriter(), times(1)).send(responseCaptor.capture());
-        Assertions.assertEquals(
-                Protocol.Response.ResponseType.SUCCESS_QUIT,
-                responseCaptor.getValue().getCode()
-        );
-        return responseCaptor.getValue().getMessage();
-    }
-
-
 
 }
