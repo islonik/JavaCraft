@@ -262,7 +262,7 @@ public class GUI extends JFrame implements ActionListener {
         JOptionPane.showMessageDialog
                 (
                         this,
-                        "Congratulations!!! " + strWinner + " is won",
+                        "Congratulations!!! " + strWinner + " is the winner!",
                         "Winner",
                         JOptionPane.INFORMATION_MESSAGE
                 );
