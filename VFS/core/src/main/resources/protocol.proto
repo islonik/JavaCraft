@@ -1,0 +1,29 @@
+package protocol;
+
+option java_package = "org.vfs.core.network.protocol";
+option java_outer_classname = "Protocol";
+
+message User {
+    required string id = 1;
+    required string login = 2;
+}
+
+message Request {
+    required User user = 1;
+    required string command = 2;
+}
+
+message Response {
+    enum ResponseType {
+        OK = 0;
+        FAIL = 1;
+        SUCCESS_CONNECT = 2;
+        FAIL_CONNECT = 3;
+        SUCCESS_QUIT = 4;
+        FAIL_QUIT = 5;
+    }
+
+    required ResponseType code = 1;
+    required string message = 2;
+    optional string specificCode = 3;
+}
