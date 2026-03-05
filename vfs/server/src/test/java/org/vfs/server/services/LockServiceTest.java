@@ -1,5 +1,7 @@
 package org.vfs.server.services;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +15,6 @@ import org.vfs.server.model.Node;
 import org.vfs.server.model.NodeTypes;
 import org.vfs.server.utils.NodePrinter;
 
-import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -174,25 +175,20 @@ public class LockServiceTest {
 
         int threads = 100;
 
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
-        final HashMap<Integer, User> users = new HashMap<>();
+        try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
+            final Map<Integer, User> users = new ConcurrentHashMap<>();
 
-        for (final AtomicInteger aint = new AtomicInteger(1); aint.get() <= threads; aint.incrementAndGet()) {
-            users.put(aint.get(), User.newBuilder()
-                    .setId(aint.toString())
-                    .setLogin("nikita" + aint)
-                    .build()
-            );
-            Runnable thread = () -> {
-                User user = users.get(aint.get());
-                if (!lockService.isLocked(weblogic)) {
-                    lockService.lock(user, weblogic);
-                }
-            };
-            executor.execute(thread);
+            for (final AtomicInteger aint = new AtomicInteger(1); aint.get() <= threads; aint.incrementAndGet()) {
+                users.put(aint.get(), User.newBuilder().setId(aint.toString()).setLogin("nikita" + aint).build());
+                Runnable thread = () -> {
+                    User user = users.get(aint.get());
+                    if (!lockService.isLocked(weblogic)) {
+                        lockService.lock(user, weblogic);
+                    }
+                };
+                executor.execute(thread);
+            }
         }
-
-        executor.shutdown();
 
         Assertions.assertTrue(lockService.isLocked(weblogic));
 

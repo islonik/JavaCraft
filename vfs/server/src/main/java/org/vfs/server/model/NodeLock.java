@@ -2,6 +2,7 @@ package org.vfs.server.model;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import lombok.Getter;
 import org.vfs.core.network.protocol.Protocol.User;
 
 /**
@@ -9,6 +10,7 @@ import org.vfs.core.network.protocol.Protocol.User;
  */
 public class NodeLock {
 
+    @Getter
     private volatile User user;
     private final Lock lock;
 
@@ -21,19 +23,17 @@ public class NodeLock {
     }
 
     public void lock(User user) {
-        boolean result = lock.tryLock();
-        if(result) {
-            this.user = user;
+        if (user != null) {
+            boolean result = lock.tryLock();
+            if (result) {
+                this.user = user;
+            }
         }
     }
 
     public void unlock() {
         user = null;
         lock.unlock();
-    }
-
-    public User getUser() {
-        return user;
     }
 
 }
