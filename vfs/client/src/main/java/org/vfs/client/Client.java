@@ -53,8 +53,6 @@ public class Client {
             if (!error.getLocalizedMessage().isEmpty()) {
                 System.err.println(error.getLocalizedMessage());
             }
-        } finally {
-            System.exit(1);
         }
     }
 }
