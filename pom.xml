@@ -48,6 +48,7 @@
         <buddy.version>1.18.5</buddy.version>
         <cucumber.version>7.34.2</cucumber.version>
         <wiremock.version>3.13.2</wiremock.version>
+        <rest-assured.version>5.5.7</rest-assured.version>
 
         <!--
             If test.jvm.args is undefined, some runs pass a raw placeholder
