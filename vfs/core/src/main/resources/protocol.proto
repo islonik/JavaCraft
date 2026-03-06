@@ -1,3 +1,4 @@
+syntax = "proto2";
 package protocol;
 
 option java_package = "org.vfs.core.network.protocol";
