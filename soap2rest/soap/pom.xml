@@ -104,6 +104,16 @@
                 <configuration>
                     <!-- use all wsdl files from there -->
                     <wsdlDirectory>${project.basedir}/src/main/resources/wsdl</wsdlDirectory>
+                    <!--
+                        wsdlLocation forces classpath-based wsdl location in generated WebServiceClient (DeliverServiceWS)
+
+                        That prevents generating DeliverServiceWS with next warning:
+                        URL(java.lang.String) in java.net.URL has been deprecated
+
+                        Tradeoff: Generated client now relies on /wsdl/ds.wsdl being present on runtime classpath
+                        (it is, via src/main/resources/wsdl/ds.wsdl).
+                    -->
+                    <wsdlLocation>/wsdl/ds.wsdl</wsdlLocation>
                     <packageName>my.javacraft.soap2rest.soap.generated.ds.ws</packageName>
                     <sourceDestDir>${project.build.directory}/generated-sources</sourceDestDir>
                 </configuration>
