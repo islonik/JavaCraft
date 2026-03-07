@@ -68,11 +68,11 @@ public class ElectricController {
             description = "API to delete all electric metrics"
     )
     @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> deleteAllElectricMetrics() {
+    public ResponseEntity<Integer> deleteAllElectricMetrics(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(electricService.deleteAll());
+                .body(electricService.deleteAllByAccountId(id));
     }
 
 }

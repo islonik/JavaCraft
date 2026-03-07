@@ -48,15 +48,16 @@ public class ElectricDefinition {
         HttpEntity<String> entity = prepareHttpEntity();
         RestTemplate restTemplate = new RestTemplate();
 
-        HttpEntity<Boolean> httpResponse = restTemplate.exchange(
+        HttpEntity<Integer> httpResponse = restTemplate.exchange(
                 "http://localhost:%s/api/v1/smart/%s/electric".formatted(port, accountId),
                 HttpMethod.DELETE,
                 entity,
-                Boolean.class
+                Integer.class
         );
 
         Assertions.assertNotNull(httpResponse);
-        Assertions.assertEquals(true, httpResponse.getBody());
+        Assertions.assertNotNull(httpResponse.getBody());
+        Assertions.assertTrue(httpResponse.getBody() >= 0);
     }
     @When("an account {long} submits a PUT request with a new electric reading: {long}, {bigdecimal}, {string}")
     public void applyPutRequestWithElectricReading(

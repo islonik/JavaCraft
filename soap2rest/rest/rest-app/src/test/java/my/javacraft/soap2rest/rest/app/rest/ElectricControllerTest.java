@@ -62,12 +62,13 @@ public class ElectricControllerTest {
     public void testDeleteAllElectricMetrics() {
         ElectricController electricController = new ElectricController(electricService);
 
-        when(electricService.deleteAll()).thenReturn(Boolean.TRUE);
+        when(electricService.deleteAllByAccountId(anyLong())).thenReturn(3);
 
-        ResponseEntity<Boolean> response = electricController.deleteAllElectricMetrics();
+        ResponseEntity<Integer> response = electricController.deleteAllElectricMetrics(1L);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(electricService, atLeastOnce()).deleteAll();
+        Assertions.assertEquals(3, response.getBody());
+        verify(electricService, atLeastOnce()).deleteAllByAccountId(1L);
     }
 
     private List<Metric> createMetricList() {

@@ -51,4 +51,8 @@ public class ElectricService {
         electricMetricDao.deleteAll();
         return true;
     }
+
+    public int deleteAllByAccountId(Long accountId) {
+        return electricMetricDao.deleteByAccountId(accountId);
+    }
 }
