@@ -39,3 +39,13 @@ Feature: GasResource
 
       Then check the latest gas reading for the account = 1 and meterId = 200 is equal = 239.333
       And account 1 has gas metrics list size 3
+
+    @Sync
+    Scenario: same date is allowed for different gas meters
+      Given the account 1 doesn't have gas metrics
+      And account 1 has gas metrics list size 0
+      When an account 1 submits a PUT request with a new gas reading: 100, 300.300, '2024-02-01'
+      And an account 1 submits a PUT request with a new gas reading: 200, 400.400, '2024-02-01'
+      Then check the latest gas reading for the account = 1 and meterId = 100 is equal = 300.300
+      And check the latest gas reading for the account = 1 and meterId = 200 is equal = 400.400
+      And account 1 has gas metrics list size 2

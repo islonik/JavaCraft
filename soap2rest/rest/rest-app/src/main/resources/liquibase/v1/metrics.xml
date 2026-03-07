@@ -43,9 +43,13 @@
                 <constraints nullable="false"/>
             </column>
             <column name="date" type="date">
-                <constraints nullable="false" unique="true"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
+        <addUniqueConstraint
+                tableName="gas_metric"
+                columnNames="meter_id, date"
+                constraintName="uk_gas_metric_meter_date"/>
 
         <createTable tableName="electric_metric">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -58,9 +62,13 @@
                 <constraints nullable="false"/>
             </column>
             <column name="date" type="date">
-                <constraints nullable="false" unique="true"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
+        <addUniqueConstraint
+                tableName="electric_metric"
+                columnNames="meter_id, date"
+                constraintName="uk_electric_metric_meter_date"/>
 
 <!--        <createTable tableName="metrics">-->
 <!--            <column name="account_id" type="BIGINT">-->

@@ -39,3 +39,13 @@ Feature: ElectricResource
 
       Then check the latest electric reading for the account = 1 and meterId = 100 is equal = 720.333
       And account 1 has electric metrics list size 3
+
+    @Sync
+    Scenario: same date is allowed for different electric meters
+      Given the account 1 doesn't have electric metrics
+      And account 1 has electric metrics list size 0
+      When an account 1 submits a PUT request with a new electric reading: 100, 1000.100, '2024-02-01'
+      And an account 1 submits a PUT request with a new electric reading: 200, 2000.200, '2024-02-01'
+      Then check the latest electric reading for the account = 1 and meterId = 100 is equal = 1000.100
+      And check the latest electric reading for the account = 1 and meterId = 200 is equal = 2000.200
+      And account 1 has electric metrics list size 2
