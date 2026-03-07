@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.ElectricMetricDao;
+import my.javacraft.soap2rest.rest.app.dao.MeterDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.ElectricMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class ElectricService {
     private final MetricService metricService;
     private final MetricValidationService metricValidationService;
     private final ElectricMetricDao electricMetricDao;
+    private final MeterDao meterDao;
 
     public List<Metric> getMetricsByAccountId(Long accountId) {
         return metricService.calculateExtraFields(electricMetricDao.findMetrics(accountId));
@@ -29,11 +31,17 @@ public class ElectricService {
                 .orElse(null);
     }
 
-    public Metric submit(Metric submittedMetric) {
+    public Metric submit(Long accountId, Metric submittedMetric) {
+        if (!meterDao.existsByIdAndAccountId(submittedMetric.getMeterId(), accountId)) {
+            throw new IllegalArgumentException("Meter is not linked to account.");
+        }
+
         Metric latestMetric = Optional.ofNullable(electricMetricDao
                 .findTopByMeterIdInOrderByDateDesc(
                         Collections.singletonList(submittedMetric.getMeterId())
-                )).map(MetricEntity::toApiMetric).orElse(null);
+                ))
+                .map(MetricEntity::toApiMetric)
+                .orElse(null);
 
         metricValidationService.validate(latestMetric, submittedMetric);
 
@@ -45,11 +53,6 @@ public class ElectricService {
         electricMetricDao.save(electricMetric);
 
         return electricMetric.toApiMetric();
-    }
-
-    public boolean deleteAll() {
-        electricMetricDao.deleteAll();
-        return true;
     }
 
     public int deleteAllByAccountId(Long accountId) {

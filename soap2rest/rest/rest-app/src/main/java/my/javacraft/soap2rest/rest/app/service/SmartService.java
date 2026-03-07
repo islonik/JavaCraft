@@ -23,7 +23,7 @@ public class SmartService {
             gasService.submit(gasMetric);
         }
         for (Metric electricMetric : electricMetricList) {
-            electricService.submit(electricMetric);
+            electricService.submit(metrics.getAccountId(), electricMetric);
         }
         return true;
     }

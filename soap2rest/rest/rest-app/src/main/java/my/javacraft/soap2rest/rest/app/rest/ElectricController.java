@@ -55,11 +55,12 @@ public class ElectricController {
     )
     @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metric> putNewElectricMetric(
+            @PathVariable("id") Long id,
             @RequestBody Metric metric) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(electricService.submit(metric));
+                .body(electricService.submit(id, metric));
     }
 
     @ExecutionTime

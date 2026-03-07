@@ -12,4 +12,6 @@ public interface MeterDao extends JpaRepository<Meter, Long> {
     @Query(value =
             "SELECT m FROM Meter m WHERE m.accountId = :id")
     List<Meter> findByAccountId(@Param("id") Long id);
+
+    boolean existsByIdAndAccountId(Long id, Long accountId);
 }

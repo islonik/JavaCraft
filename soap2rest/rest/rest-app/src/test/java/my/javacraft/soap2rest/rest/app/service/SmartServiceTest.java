@@ -1,5 +1,10 @@
 package my.javacraft.soap2rest.rest.app.service;
 
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.List;
+import my.javacraft.soap2rest.rest.api.Metric;
+import my.javacraft.soap2rest.rest.api.Metrics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +21,27 @@ public class SmartServiceTest {
 
     @Mock
     ElectricService electricService;
+
+    @Test
+    public void testSubmitUsesAccountIdForElectricMetrics() {
+        SmartService smartService = new SmartService(gasService, electricService);
+
+        Metric electricMetric = new Metric();
+        electricMetric.setMeterId(200L);
+        electricMetric.setReading(new BigDecimal("10.000"));
+        electricMetric.setDate(Date.valueOf("2024-01-15"));
+
+        Metrics metrics = new Metrics();
+        metrics.setAccountId(1L);
+        metrics.setGasReadings(List.of());
+        metrics.setElecReadings(List.of(electricMetric));
+
+        boolean result = smartService.submit(metrics);
+
+        Assertions.assertTrue(result);
+        verify(electricService).submit(1L, electricMetric);
+        verifyNoInteractions(gasService);
+    }
 
     @Test
     public void testDeleteAllByAccountId() {

@@ -79,7 +79,11 @@
                logicalFilePath="metrics.xml"
                id="metrics_add_values">
         <insert tableName="account">
-            <column name="name">inikilipa</column>
+            <column name="name">Nikita</column>
+        </insert>
+        <insert tableName="account">
+            <column name="id">2</column>
+            <column name="name">Ava</column>
         </insert>
 
         <insert tableName="meter">
@@ -91,6 +95,16 @@
             <column name="id">200</column>
             <column name="account_id">1</column>
             <column name="manufacturer">Siemens</column>
+        </insert>
+        <insert tableName="meter">
+            <column name="id">300</column>
+            <column name="account_id">2</column>
+            <column name="manufacturer">Itron</column>
+        </insert>
+        <insert tableName="meter">
+            <column name="id">400</column>
+            <column name="account_id">2</column>
+            <column name="manufacturer">Osaki Electric (via EDMI)</column>
         </insert>
 
         <insert tableName="gas_metric">

@@ -50,12 +50,12 @@ public class ElectricControllerTest {
         ElectricController electricController = new ElectricController(electricService);
 
         Metric metric = createMetricList().getFirst();
-        when(electricService.submit(any())).thenReturn(metric);
+        when(electricService.submit(anyLong(), any())).thenReturn(metric);
 
-        ResponseEntity<Metric> response = electricController.putNewElectricMetric(metric);
+        ResponseEntity<Metric> response = electricController.putNewElectricMetric(1L, metric);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(electricService, atLeastOnce()).submit(any());
+        verify(electricService, atLeastOnce()).submit(eq(1L), any());
     }
 
     @Test
