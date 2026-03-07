@@ -24,25 +24,28 @@ public class MetricValidationServiceTest {
 
         MetricValidationService metricValidationService = new MetricValidationService();
 
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> {
-            metricValidationService.validate(extracted, submitted);
-        });
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> metricValidationService.validate(extracted, submitted)
+        );
         Assertions.assertEquals("New metrics should be higher than the previous read.", exception.getMessage());
 
         // new reading
         submitted.setReading(new BigDecimal("2800.789"));
 
-        exception = Assertions.assertThrows(RuntimeException.class, () -> {
-            metricValidationService.validate(extracted, submitted);
-        });
+        exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> metricValidationService.validate(extracted, submitted)
+        );
         Assertions.assertEquals("You are trying to submit for a past date.", exception.getMessage());
 
         // new date
         submitted.setDate(Date.valueOf("2023-07-15"));
 
-        exception = Assertions.assertThrows(RuntimeException.class, () -> {
-            metricValidationService.validate(extracted, submitted);
-        });
+        exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> metricValidationService.validate(extracted, submitted)
+        );
         Assertions.assertEquals("You already submitted your metrics for today.", exception.getMessage());
     }
 }
