@@ -68,10 +68,10 @@ public class GasController {
             description = "API to delete all gas metrics"
     )
     @DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> deleteAllGasMetrics() {
+    public ResponseEntity<Integer> deleteAllGasMetrics(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(gasService.deleteAll());
+                .body(gasService.deleteAllByAccountId(id));
     }
 }

@@ -65,12 +65,13 @@ public class GasControllerTest {
     public void testDeleteAllElectricMetrics() {
         GasController gasController = new GasController(gasService);
 
-        when(gasService.deleteAll()).thenReturn(Boolean.TRUE);
+        when(gasService.deleteAllByAccountId(anyLong())).thenReturn(2);
 
-        ResponseEntity<Boolean> response = gasController.deleteAllGasMetrics();
+        ResponseEntity<Integer> response = gasController.deleteAllGasMetrics(1L);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(gasService, atLeastOnce()).deleteAll();
+        Assertions.assertEquals(2, response.getBody());
+        verify(gasService, atLeastOnce()).deleteAllByAccountId(1L);
     }
 
     private List<Metric> createMetricList() {

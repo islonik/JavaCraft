@@ -58,8 +58,8 @@ public class GasDefinition {
 
         Response response = request.delete();
 
-        String result = response.asString();
-        Assertions.assertEquals("true", result);
+        int result = Integer.parseInt(response.asString());
+        Assertions.assertTrue(result >= 0);
     }
 
     @When("the account {long} submits a PUT request with a new gas reading: {long}, {bigdecimal}, {string}")

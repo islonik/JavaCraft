@@ -51,4 +51,8 @@ public class GasService {
         gasMetricDao.deleteAll();
         return true;
     }
+
+    public int deleteAllByAccountId(Long accountId) {
+        return gasMetricDao.deleteByAccountId(accountId);
+    }
 }
