@@ -22,6 +22,8 @@ public class WireMockDefinition {
     private static final String FIRST_METRIC_ADDED = "FIRST_METRIC_ADDED";
     private static final String SECOND_METRIC_ADDED = "SECOND_METRIC_ADDED";
     private static final String THIRD_METRIC_ADDED = "THIRD_METRIC_ADDED";
+    private static final String GAS_METRIC_TEMPLATE = "gas/metric.json.hbs";
+    private static final String GAS_METRICS_TEMPLATE = "gas/metrics.json.hbs";
     private static final String ELECTRIC_METRIC_TEMPLATE = "electric/metric.json.hbs";
     private static final String ELECTRIC_METRICS_TEMPLATE = "electric/metrics.json.hbs";
 
@@ -61,29 +63,108 @@ public class WireMockDefinition {
     }
 
     void addGasStubs(WireMockServer wireMockServer) {
-        wireMockServer.stubFor(put(urlEqualTo("/api/v1/smart/1/gas"))
-                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBodyFile("put_1_gas.json")
+        addGasStubsForAccount(
+                wireMockServer,
+                "1",
+                List.of(
+                        metric(23, 200, "2536.708", "2023-07-28"),
+                        metric(24, 200, "2601.125", "2023-07-29"),
+                        metric(25, 200, "2710.900", "2023-07-30")
                 )
         );
-        wireMockServer.stubFor(delete(urlEqualTo("/api/v1/smart/1/gas"))
-                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBody("true")
+
+        addGasStubsForAccount(
+                wireMockServer,
+                "2",
+                List.of(
+                        metric(31, 300, "100.111", "2024-02-10"),
+                        metric(32, 300, "101.222", "2024-02-11"),
+                        metric(33, 300, "105.555", "2024-02-12")
                 )
         );
-        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas/latest"))
-                .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBodyFile("put_1_gas.json")
-                )
+    }
+
+    void addGasStubsForAccount(
+            WireMockServer wireMockServer,
+            String accountId,
+            List<Map<String, Object>> metrics
+    ) {
+        String scenarioName = "gas-flow-account-" + accountId;
+        String baseUrl = "/api/v1/smart/" + accountId + "/gas";
+
+        addDeleteStubForState(wireMockServer, scenarioName, baseUrl, STARTED);
+        addDeleteStubForState(wireMockServer, scenarioName, baseUrl, FIRST_METRIC_ADDED);
+        addDeleteStubForState(wireMockServer, scenarioName, baseUrl, SECOND_METRIC_ADDED);
+        addDeleteStubForState(wireMockServer, scenarioName, baseUrl, THIRD_METRIC_ADDED);
+
+        wireMockServer.stubFor(put(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(STARTED)
+                .willSetStateTo(FIRST_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.getFirst()))
         );
-        wireMockServer.stubFor(get(urlEqualTo("/api/v1/smart/1/gas"))
+
+        wireMockServer.stubFor(put(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(FIRST_METRIC_ADDED)
+                .willSetStateTo(SECOND_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.get(1)))
+        );
+
+        wireMockServer.stubFor(put(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(SECOND_METRIC_ADDED)
+                .willSetStateTo(THIRD_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.get(2)))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(STARTED)
                 .willReturn(aResponse().withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withStatus(200)
-                        .withBodyFile("get_1_gas.json")
-                )
+                        .withStatus(200))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(FIRST_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.getFirst()))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(SECOND_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.get(1)))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(THIRD_METRIC_ADDED)
+                .willReturn(withTemplateMetric(GAS_METRIC_TEMPLATE, metrics.get(2)))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(STARTED)
+                .willReturn(withTemplateMetrics(GAS_METRICS_TEMPLATE, List.of()))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(FIRST_METRIC_ADDED)
+                .willReturn(withTemplateMetrics(GAS_METRICS_TEMPLATE, metrics.subList(0, 1)))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(SECOND_METRIC_ADDED)
+                .willReturn(withTemplateMetrics(GAS_METRICS_TEMPLATE, metrics.subList(0, 2)))
+        );
+
+        wireMockServer.stubFor(get(urlEqualTo(baseUrl))
+                .inScenario(scenarioName)
+                .whenScenarioStateIs(THIRD_METRIC_ADDED)
+                .willReturn(withTemplateMetrics(GAS_METRICS_TEMPLATE, metrics))
         );
     }
 
@@ -92,9 +173,9 @@ public class WireMockDefinition {
                 wireMockServer,
                 "1",
                 List.of(
-                        electricMetric(13, 100, "678.439", "2023-07-28"),
-                        electricMetric(14, 100, "700.111", "2023-07-29"),
-                        electricMetric(15, 100, "720.333", "2023-07-30")
+                        metric(13, 100, "678.439", "2023-07-28"),
+                        metric(14, 100, "700.111", "2023-07-29"),
+                        metric(15, 100, "720.333", "2023-07-30")
                 )
         );
 
@@ -102,9 +183,9 @@ public class WireMockDefinition {
                 wireMockServer,
                 "2",
                 List.of(
-                        electricMetric(21, 220, "54.321", "2024-01-15"),
-                        electricMetric(22, 220, "60.999", "2024-01-16"),
-                        electricMetric(23, 220, "61.222", "2024-01-17")
+                        metric(21, 220, "54.321", "2024-01-15"),
+                        metric(22, 220, "60.999", "2024-01-16"),
+                        metric(23, 220, "61.222", "2024-01-17")
                 )
         );
     }
@@ -126,21 +207,21 @@ public class WireMockDefinition {
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(STARTED)
                 .willSetStateTo(FIRST_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.getFirst()))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.getFirst()))
         );
 
         wireMockServer.stubFor(put(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(FIRST_METRIC_ADDED)
                 .willSetStateTo(SECOND_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.get(1)))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.get(1)))
         );
 
         wireMockServer.stubFor(put(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(SECOND_METRIC_ADDED)
                 .willSetStateTo(THIRD_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.get(2)))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.get(2)))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
@@ -153,47 +234,47 @@ public class WireMockDefinition {
         wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(FIRST_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.getFirst()))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.getFirst()))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(SECOND_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.get(1)))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.get(1)))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl + "/latest"))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(THIRD_METRIC_ADDED)
-                .willReturn(withTemplateMetric(metrics.get(2)))
+                .willReturn(withTemplateMetric(ELECTRIC_METRIC_TEMPLATE, metrics.get(2)))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(STARTED)
-                .willReturn(withTemplateMetrics(List.of()))
+                .willReturn(withTemplateMetrics(ELECTRIC_METRICS_TEMPLATE, List.of()))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(FIRST_METRIC_ADDED)
-                .willReturn(withTemplateMetrics(metrics.subList(0, 1)))
+                .willReturn(withTemplateMetrics(ELECTRIC_METRICS_TEMPLATE, metrics.subList(0, 1)))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(SECOND_METRIC_ADDED)
-                .willReturn(withTemplateMetrics(metrics.subList(0, 2)))
+                .willReturn(withTemplateMetrics(ELECTRIC_METRICS_TEMPLATE, metrics.subList(0, 2)))
         );
 
         wireMockServer.stubFor(get(urlEqualTo(baseUrl))
                 .inScenario(scenarioName)
                 .whenScenarioStateIs(THIRD_METRIC_ADDED)
-                .willReturn(withTemplateMetrics(metrics))
+                .willReturn(withTemplateMetrics(ELECTRIC_METRICS_TEMPLATE, metrics))
         );
     }
 
-    Map<String, Object> electricMetric(int id, int meterId, String reading, String date) {
+    Map<String, Object> metric(int id, int meterId, String reading, String date) {
         return Map.of(
                 "id", id,
                 "meterId", meterId,
@@ -203,21 +284,21 @@ public class WireMockDefinition {
     }
 
     com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder withTemplateMetric(
-            Map<String, Object> metric) {
+            String templatePath, Map<String, Object> metric) {
         return aResponse()
                 .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .withStatus(200)
-                .withBodyFile(ELECTRIC_METRIC_TEMPLATE)
+                .withBodyFile(templatePath)
                 .withTransformers("response-template")
                 .withTransformerParameter("metric", metric);
     }
 
     com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder withTemplateMetrics(
-            List<Map<String, Object>> metrics) {
+            String templatePath, List<Map<String, Object>> metrics) {
         return aResponse()
                 .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .withStatus(200)
-                .withBodyFile(ELECTRIC_METRICS_TEMPLATE)
+                .withBodyFile(templatePath)
                 .withTransformers("response-template")
                 .withTransformerParameter("metrics", metrics);
     }

@@ -1,9 +1,9 @@
 package my.javacraft.soap2rest.soap.cucumber.step;
 
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 import my.javacraft.soap2rest.soap.generated.ds.ws.*;
 import my.javacraft.soap2rest.soap.generated.ds.ws.DSRequest.Body;
 import my.javacraft.soap2rest.soap.service.order.GasService;
@@ -14,140 +14,129 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
-@Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
 public class GasServiceDefinition extends BaseDefinition {
+
+    private static final String SUCCESS_CODE = "200";
 
     @LocalServerPort
     int port;
 
-    @When("we send a SOAP request to delete all previous gas metrics")
-    public void sendSoapRequestWithDeleteMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithDeleteBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("true",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    @When("user {string} deletes all previous gas metrics")
+    public void syncUserDeletesAllPreviousGasMetrics(String accountId) throws Exception {
+        DSResponse dsResponse = sendServiceOrder(createServiceOrder(RequestMethod.DELETE.toString(), accountId));
+        assertStatusAndResult(dsResponse, SUCCESS_CODE, "true");
     }
 
-    ServiceOrder createServiceOrderWithDeleteBody() {
+    @Then("user {string} has no latest gas metric")
+    public void syncUserHasNoLatestGasMetric(String accountId) throws Exception {
+        ServiceOrder serviceOrder = createServiceOrder(RequestMethod.GET.toString(), accountId);
+        addParam(serviceOrder, "path", "/latest");
+
+        DSResponse dsResponse = sendServiceOrder(serviceOrder);
+        assertStatusCode(dsResponse, SUCCESS_CODE);
+        Assertions.assertNull(getStatusResult(dsResponse));
+    }
+
+    @When("user {string} puts gas metric id {string} meter {string} reading {string} date {string}")
+    public void syncUserPutsGasMetric(
+            String accountId, String metricId, String meterId, String reading, String date) throws Exception {
+        ServiceOrder serviceOrder = createServiceOrder(RequestMethod.PUT.toString(), accountId);
+        addParam(serviceOrder, "meterId", meterId);
+        addParam(serviceOrder, "reading", reading);
+        addParam(serviceOrder, "date", date);
+
+        DSResponse dsResponse = sendServiceOrder(serviceOrder);
+        assertStatusAndResult(dsResponse, SUCCESS_CODE, toMetricResult(metricId, meterId, reading, date));
+    }
+
+    @When("user {string} puts gas metrics")
+    public void userPutsGasMetrics(String accountId, DataTable table) throws Exception {
+        for (Map<String, String> row : table.asMaps(String.class, String.class)) {
+            syncUserPutsGasMetric(
+                    accountId,
+                    row.get("id"),
+                    row.get("meterId"),
+                    row.get("reading"),
+                    row.get("date")
+            );
+        }
+    }
+
+    @Then("user {string} gets latest gas metric id {string} meter {string} reading {string} date {string}")
+    public void syncUserGetsLatestGasMetric(
+            String accountId, String metricId, String meterId, String reading, String date) throws Exception {
+        ServiceOrder serviceOrder = createServiceOrder(RequestMethod.GET.toString(), accountId);
+        addParam(serviceOrder, "path", "/latest");
+
+        DSResponse dsResponse = sendServiceOrder(serviceOrder);
+        assertStatusAndResult(dsResponse, SUCCESS_CODE, toMetricResult(metricId, meterId, reading, date));
+    }
+
+    @Then("user {string} has gas metrics list size {string}")
+    public void userHasGasMetricsListSize(String accountId, String expectedSize) throws Exception {
+        ServiceOrder serviceOrder = createServiceOrder(RequestMethod.GET.toString(), accountId);
+        addParam(serviceOrder, "path", "");
+
+        DSResponse dsResponse = sendServiceOrder(serviceOrder);
+        assertStatusCode(dsResponse, SUCCESS_CODE);
+
+        int actualSize = toMetricListSize(getStatusResult(dsResponse));
+        Assertions.assertEquals(Integer.parseInt(expectedSize), actualSize);
+    }
+
+    ServiceOrder createServiceOrder(String serviceType, String accountId) {
         ServiceOrder serviceOrder = new ServiceOrder();
         serviceOrder.setServiceName(GasService.class.getSimpleName());
-        serviceOrder.setServiceType(RequestMethod.DELETE.toString());
-        serviceOrder.setServiceOrderID("1");
+        serviceOrder.setServiceType(serviceType);
+        serviceOrder.setServiceOrderID(accountId);
         return serviceOrder;
     }
 
-    @When("we send a SOAP request to put a new gas metric")
-    public void sendSoapRequestWithPutMethod() throws Exception {
+    void addParam(ServiceOrder serviceOrder, String key, String value) {
+        KeyValuesType keyValuesType = new KeyValuesType();
+        keyValuesType.setKey(key);
+        keyValuesType.setValue(value);
+        serviceOrder.getParams().add(keyValuesType);
+    }
+
+    DSResponse sendServiceOrder(ServiceOrder serviceOrder) throws Exception {
         Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithPutBody());
+        body.setServiceOrder(serviceOrder);
+        return sendSoapRequest(port, body);
+    }
 
-        DSResponse dsResponse = sendSoapRequest(port, body);
+    void assertStatusAndResult(DSResponse dsResponse, String expectedCode, String expectedResult) {
+        assertStatusCode(dsResponse, expectedCode);
+        Assertions.assertEquals(expectedResult, getStatusResult(dsResponse));
+    }
 
+    void assertStatusCode(DSResponse dsResponse, String expectedCode) {
         Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+        Assertions.assertEquals(expectedCode, dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
     }
 
-    ServiceOrder createServiceOrderWithPutBody() {
-        ServiceOrder serviceOrder = new ServiceOrder();
-        serviceOrder.setServiceName(GasService.class.getSimpleName());
-        serviceOrder.setServiceType(RequestMethod.PUT.toString());
-        serviceOrder.setServiceOrderID("1");
-
-        List<KeyValuesType> paramsList = serviceOrder.getParams();
-
-        KeyValuesType meterIdValue = new KeyValuesType();
-        meterIdValue.setKey("meterId");
-        meterIdValue.setValue("200");
-        paramsList.add(meterIdValue);
-
-        KeyValuesType readingValue = new KeyValuesType();
-        readingValue.setKey("reading");
-        readingValue.setValue("2536.708");
-        paramsList.add(readingValue);
-
-        KeyValuesType dateValue = new KeyValuesType();
-        dateValue.setKey("date");
-        dateValue.setValue("2023-07-28");
-        paramsList.add(dateValue);
-
-        serviceOrder.getParams().addAll(paramsList);
-
-        return serviceOrder;
+    String getStatusResult(DSResponse dsResponse) {
+        return dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult();
     }
 
-    @Then("we send a SOAP request to get the latest gas metric")
-    public void sendSoapRequestWithGetLatestMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithLatestGetBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("Metric(id=23, meterId=200, reading=2536.708, date=2023-07-28, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
+    String toMetricResult(String metricId, String meterId, String reading, String date) {
+        return "Metric(id=%s, meterId=%s, reading=%s, date=%s, usageSinceLastRead=null, periodSinceLastRead=null, avgDailyUsage=null)"
+                .formatted(metricId, meterId, reading, date);
     }
 
-    ServiceOrder createServiceOrderWithLatestGetBody() {
-        ServiceOrder serviceOrder = new ServiceOrder();
-        serviceOrder.setServiceName(GasService.class.getSimpleName());
-        serviceOrder.setServiceType(RequestMethod.GET.toString());
-        serviceOrder.setServiceOrderID("1");
+    int toMetricListSize(String statusResult) {
+        if (statusResult == null || statusResult.isBlank() || statusResult.equals("[]")) {
+            return 0;
+        }
 
-        List<KeyValuesType> paramsList = serviceOrder.getParams();
-
-        KeyValuesType meterIdValue = new KeyValuesType();
-        meterIdValue.setKey("path");
-        meterIdValue.setValue("/latest");
-        paramsList.add(meterIdValue);
-
-        serviceOrder.getParams().addAll(paramsList);
-
-        return serviceOrder;
+        int count = 0;
+        int index = 0;
+        while ((index = statusResult.indexOf("{id=", index)) >= 0) {
+            count++;
+            index += 4;
+        }
+        return count;
     }
-
-    @Then("we send a SOAP request to get all gas metrics")
-    public void sendSoapRequestWithGetMethod() throws Exception {
-        Body body = new Body();
-        body.setServiceOrder(createServiceOrderWithGetBody());
-
-        DSResponse dsResponse = sendSoapRequest(port, body);
-
-        Assertions.assertNotNull(dsResponse);
-        Assertions.assertEquals("200",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getCode());
-        Assertions.assertEquals("[{id=23, meterId=200, reading=2536.708, date=2023-07-28}]",
-                dsResponse.getBody().getServiceOrderStatus().getStatusType().getResult());
-    }
-
-    ServiceOrder createServiceOrderWithGetBody() {
-        ServiceOrder serviceOrder = new ServiceOrder();
-        serviceOrder.setServiceName(GasService.class.getSimpleName());
-        serviceOrder.setServiceType(RequestMethod.GET.toString());
-        serviceOrder.setServiceOrderID("1");
-
-        List<KeyValuesType> paramsList = serviceOrder.getParams();
-
-        KeyValuesType meterIdValue = new KeyValuesType();
-        meterIdValue.setKey("path");
-        meterIdValue.setValue("");
-        paramsList.add(meterIdValue);
-
-        serviceOrder.getParams().addAll(paramsList);
-
-        return serviceOrder;
-    }
-
 
 }
