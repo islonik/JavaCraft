@@ -14,7 +14,7 @@ This module exposes a SOAP endpoint and translates SOAP service orders into REST
 - [How to test](#how-to-test)
 - [Test architecture (Cucumber)](#test-architecture-cucumber)
 - [Expected output](#expected-output)
-- [IDE troubleshooting](#idea-troubleshooting)
+- [IDEA troubleshooting](#idea-troubleshooting)
 - [SoapUI](#soapui)
 
 ## What this module does
