@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Set;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -16,22 +15,38 @@ public class AuthenticationService {
 
     public static final String AUTH_TOKEN_HEADER_NAME = "X-API-KEY";
 
-    private static final Set<String> API_KEYS = new HashSet<>();
+    private static final Object API_KEYS_LOCK = new Object();
+    private static volatile Set<String> apiKeys = Set.of();
 
     public static Authentication getAuthentication(
             HttpServletRequest request) throws IOException {
-        if (API_KEYS.isEmpty()) {
-            File file = ResourceUtils.getFile("classpath:api.keys");
-            API_KEYS.addAll(Files.readAllLines(Paths.get(file.getAbsolutePath())));
-        }
-
         String apiKey = request.getHeader(AUTH_TOKEN_HEADER_NAME);
+        Set<String> allowedApiKeys = getApiKeys();
 
-        if (apiKey == null || !API_KEYS.contains(apiKey)) {
+        if (apiKey == null || !allowedApiKeys.contains(apiKey)) {
             throw new BadCredentialsException("Invalid API Key");
         }
 
         return new ApiKeyAuthentication(apiKey, AuthorityUtils.NO_AUTHORITIES);
+    }
+
+    private static Set<String> getApiKeys() throws IOException {
+        Set<String> loadedApiKeys = apiKeys;
+        if (loadedApiKeys.isEmpty()) {
+            synchronized (API_KEYS_LOCK) {
+                loadedApiKeys = apiKeys;
+                if (loadedApiKeys.isEmpty()) {
+                    loadedApiKeys = loadApiKeys();
+                    apiKeys = loadedApiKeys;
+                }
+            }
+        }
+        return loadedApiKeys;
+    }
+
+    private static Set<String> loadApiKeys() throws IOException {
+        File file = ResourceUtils.getFile("classpath:api.keys");
+        return Set.copyOf(Files.readAllLines(Paths.get(file.getAbsolutePath())));
     }
 
 }
