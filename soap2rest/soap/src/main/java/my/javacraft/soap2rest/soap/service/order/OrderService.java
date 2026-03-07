@@ -7,13 +7,14 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.soap.generated.ds.ws.KeyValuesType;
 import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrder;
 import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrderStatus;
 import my.javacraft.soap2rest.soap.generated.ds.ws.StatusType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -94,6 +95,21 @@ public interface OrderService {
                 .map(String::trim)
                 .findFirst()
                 .orElse("");
+    }
+
+    /**
+     * Normalizes delete responses across rest-app contract versions.
+     * Older stubs may return "true"/"false", while current rest-app returns deleted row counts.
+     */
+    default String toDeleteResult(ResponseEntity<String> responseEntity) {
+        String body = Optional.ofNullable(responseEntity.getBody())
+                .map(String::trim)
+                .orElse("");
+        if (Boolean.TRUE.toString().equalsIgnoreCase(body)
+                || Boolean.FALSE.toString().equalsIgnoreCase(body)) {
+            return Boolean.toString(Boolean.parseBoolean(body));
+        }
+        return Boolean.toString(responseEntity.getStatusCode().is2xxSuccessful());
     }
 
 }

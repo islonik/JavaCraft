@@ -5,6 +5,7 @@ import io.cucumber.java.en.Given;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.soap2rest.soap.service.RestAppEndpoints;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
@@ -58,7 +59,11 @@ public class WireMockDefinition {
 
                 log.info("Setup Stubs is done for MetricService");
             } catch (Exception e) {
-                log.error("WireMock setup failed", e);
+                throw new IllegalStateException(
+                        "WireMock setup failed on rest-app.port=%s.".formatted(restPort) +
+                        " Stop any process that occupies this port or override rest-app.port for tests.",
+                        e
+                );
             }
         }
     }
@@ -91,7 +96,7 @@ public class WireMockDefinition {
             List<Map<String, Object>> metrics
     ) {
         String scenarioName = "gas-flow-account-" + accountId;
-        String baseUrl = "/api/v1/smart/" + accountId + "/gas";
+        String baseUrl = RestAppEndpoints.gas(accountId);
 
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, STARTED);
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, FIRST_METRIC_ADDED);
@@ -197,7 +202,7 @@ public class WireMockDefinition {
             List<Map<String, Object>> metrics
     ) {
         String scenarioName = "electric-flow-account-" + accountId;
-        String baseUrl = "/api/v1/smart/" + accountId + "/electric";
+        String baseUrl = RestAppEndpoints.electric(accountId);
 
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, STARTED);
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, FIRST_METRIC_ADDED);
@@ -355,7 +360,7 @@ public class WireMockDefinition {
             List<Map<String, Object>> electricMetrics
     ) {
         String scenarioName = "smart-flow-account-" + accountId;
-        String baseUrl = "/api/v1/smart/" + accountId;
+        String baseUrl = RestAppEndpoints.smart(accountId);
 
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, STARTED);
         addDeleteStubForState(wireMockServer, scenarioName, baseUrl, FIRST_METRIC_ADDED);

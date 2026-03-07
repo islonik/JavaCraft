@@ -3,20 +3,21 @@ package my.javacraft.soap2rest.soap.service.order;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.soap.generated.ds.ws.ServiceOrder;
 import my.javacraft.soap2rest.soap.generated.ds.ws.StatusType;
 import my.javacraft.soap2rest.soap.service.HttpCallService;
-import org.springframework.beans.factory.annotation.Autowired;
+import my.javacraft.soap2rest.soap.service.RestAppEndpoints;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class GasService implements OrderService  {
 
-    @Autowired
-    private HttpCallService httpCallService;
+    private final HttpCallService httpCallService;
 
     @Override
     public void put(ServiceOrder serviceOrder, StatusType statusType) throws JsonProcessingException {
@@ -24,7 +25,7 @@ public class GasService implements OrderService  {
 
         Metric metric = toMetric(serviceOrder.getParams());
 
-        ResponseEntity<Metric> httpEntity = httpCallService.put("/api/v1/smart/%s/gas".formatted(accountId), Metric.class, metric);
+        ResponseEntity<Metric> httpEntity = httpCallService.put(RestAppEndpoints.gas(accountId), Metric.class, metric);
 
         statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
         statusType.setResult(Optional
@@ -39,18 +40,14 @@ public class GasService implements OrderService  {
     public void delete(ServiceOrder serviceOrder, StatusType statusType) {
         String accountId = serviceOrder.getServiceOrderID();
 
-        ResponseEntity<Boolean> httpEntity =
-                httpCallService.delete("/api/v1/smart/%s/gas".formatted(accountId));
+        ResponseEntity<String> httpEntity =
+                httpCallService.delete(RestAppEndpoints.gas(accountId));
 
         statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
-        statusType.setResult(Optional
-                .of(httpEntity)
-                .map(HttpEntity::getBody)
-                .map(Object::toString)
-                .orElse(null)
-        );
+        statusType.setResult(toDeleteResult(httpEntity));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void get(ServiceOrder serviceOrder, StatusType statusType) {
         String accountId = serviceOrder.getServiceOrderID();
@@ -59,7 +56,7 @@ public class GasService implements OrderService  {
 
         if (path.equalsIgnoreCase("/latest")) {
             ResponseEntity<Metric> httpEntity =
-                    httpCallService.get("/api/v1/smart/%s/gas/latest".formatted(accountId), Metric.class);
+                    httpCallService.get(RestAppEndpoints.gasLatest(accountId), Metric.class);
 
             statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
             statusType.setResult(Optional
@@ -70,7 +67,7 @@ public class GasService implements OrderService  {
             );
         } else {
             ResponseEntity<Object> httpEntity =
-                    httpCallService.get("/api/v1/smart/%s/gas".formatted(accountId), Object.class);
+                    httpCallService.get(RestAppEndpoints.gas(accountId), Object.class);
 
             statusType.setCode(Integer.toString(httpEntity.getStatusCode().value()));
 

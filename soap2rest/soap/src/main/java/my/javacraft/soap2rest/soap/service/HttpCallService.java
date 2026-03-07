@@ -54,7 +54,7 @@ public class HttpCallService {
         );
     }
 
-    public ResponseEntity<Boolean> delete(String methodUrl) {
+    public ResponseEntity<String> delete(String methodUrl) {
         MultiValueMap<String, String> headers = getHeaders();
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
@@ -65,7 +65,7 @@ public class HttpCallService {
                 url,
                 HttpMethod.DELETE,
                 entity,
-                Boolean.class
+                String.class
         );
     }
 
