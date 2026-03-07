@@ -9,6 +9,7 @@ using a BMI calculator domain.
 - [Test architecture](#test-architecture)
 - [How to run tests](#how-to-run-tests)
 - [Expected output](#expected-output)
+- [IDEA troubleshooting](#idea-troubleshooting)
 
 ## What this module covers
 
@@ -68,3 +69,9 @@ For Cucumber runs, feature steps are printed in the console and reports are gene
 Surefire unit-test reports are generated at:
 
 - `bdd/target/surefire-reports/`
+
+## IDEA troubleshooting
+
+If a feature file is not linked to step definitions in IntelliJ:  https://youtrack.jetbrains.com/projects/IDEA/issues/IDEA-362929/Cucumber-feature-file-step-appears-as-undefined-in-IntelliJ-despite-the-test-running-successfully.
+
+To fix it: install 'Cucumber Search Indexer' and 'Cucumber for Java' plugins
