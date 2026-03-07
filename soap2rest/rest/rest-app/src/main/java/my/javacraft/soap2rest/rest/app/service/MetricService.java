@@ -5,7 +5,9 @@ import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import my.javacraft.soap2rest.rest.api.Metric;
 import org.springframework.stereotype.Service;
 
@@ -19,33 +21,60 @@ public class MetricService {
      * @return Metric list with calculated values.
      */
     public List<Metric> calculateExtraFields(List<Metric> metricList) {
-        BigDecimal initialValue = null;
-        Date initialDate = null;
-
-        BigDecimal lastUsage = null;
-        Date lastDate = null;
+        Map<Long, MetricState> stateByMeterId = new HashMap<>();
         for (Metric metric : metricList) {
-            if (lastUsage != null) {
-                metric.setUsageSinceLastRead(metric.getReading().subtract(lastUsage));
-            }
-            if (lastDate != null) {
-                metric.setPeriodSinceLastRead(differenceInDays(lastDate, metric.getDate()));
-            }
-            if (initialValue != null) {
-                metric.setAvgDailyUsage(averageDailyUsage(initialValue, initialDate, metric));
-            }
-
-            // for next entities
-            lastUsage = metric.getReading();
-            lastDate = metric.getDate();
-
-            // only for the first entity
-            if (initialValue == null) {
-                initialValue = metric.getReading();
-                initialDate = metric.getDate();
+            MetricState meterState = stateByMeterId.get(metric.getMeterId());
+            if (meterState != null) {
+                metric.setUsageSinceLastRead(metric.getReading().subtract(meterState.lastReading()));
+                metric.setPeriodSinceLastRead(differenceInDays(meterState.lastDate(), metric.getDate()));
+                metric.setAvgDailyUsage(
+                        averageDailyUsage(meterState.initialReading(), meterState.initialDate(), metric)
+                );
+                meterState.update(metric.getReading(), metric.getDate());
+            } else {
+                stateByMeterId.put(metric.getMeterId(), new MetricState(metric.getReading(), metric.getDate()));
             }
         }
         return metricList;
+    }
+
+    /**
+     * Stores per-meter boundaries required for usage and average calculations.
+     * Each meter must be processed independently to avoid cross-meter deltas.
+     */
+    private static final class MetricState {
+        private final BigDecimal initialReading;
+        private final Date initialDate;
+        private BigDecimal lastReading;
+        private Date lastDate;
+
+        private MetricState(BigDecimal initialReading, Date initialDate) {
+            this.initialReading = initialReading;
+            this.initialDate = initialDate;
+            this.lastReading = initialReading;
+            this.lastDate = initialDate;
+        }
+
+        private BigDecimal initialReading() {
+            return initialReading;
+        }
+
+        private Date initialDate() {
+            return initialDate;
+        }
+
+        private BigDecimal lastReading() {
+            return lastReading;
+        }
+
+        private Date lastDate() {
+            return lastDate;
+        }
+
+        private void update(BigDecimal reading, Date date) {
+            this.lastReading = reading;
+            this.lastDate = date;
+        }
     }
 
     private Long differenceInDays(Date lastDate, Date currDate) {
