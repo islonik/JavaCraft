@@ -1,0 +1,10 @@
+[
+{{#each parameters.metrics}}
+  {
+    "id" : {{id}},
+    "meterId" : {{meterId}},
+    "reading" : {{reading}},
+    "date" : "{{date}}"
+  }{{#unless @last}},{{/unless}}
+{{/each}}
+]
