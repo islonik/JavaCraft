@@ -1,0 +1,23 @@
+{
+  "accountId" : {{parameters.accountId}},
+  "gasReadings" : [
+{{#each parameters.gasMetrics}}
+    {
+      "id" : {{this.id}},
+      "meterId" : {{this.meterId}},
+      "reading" : {{this.reading}},
+      "date" : "{{this.date}}"
+    }{{#unless @last}},{{/unless}}
+{{/each}}
+  ],
+  "elecReadings" : [
+{{#each parameters.electricMetrics}}
+    {
+      "id" : {{this.id}},
+      "meterId" : {{this.meterId}},
+      "reading" : {{this.reading}},
+      "date" : "{{this.date}}"
+    }{{#unless @last}},{{/unless}}
+{{/each}}
+  ]
+}
