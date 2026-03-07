@@ -21,10 +21,10 @@ Feature: ElectricResource
       And account 1 has electric metrics list size 0
       When an account 1 submits electric metrics
         | id | meterId | reading | date       |
-        | 13 | 200     | 678.439 | 2023-07-28 |
-        | 14 | 200     | 700.111 | 2023-07-29 |
-        | 15 | 200     | 720.333 | 2023-07-30 |
-      Then check the latest electric reading for the account = 1 and meterId = 200 is equal = 720.333
+        | 13 | 100     | 678.439 | 2023-07-28 |
+        | 14 | 100     | 700.111 | 2023-07-29 |
+        | 15 | 100     | 720.333 | 2023-07-30 |
+      Then check the latest electric reading for the account = 1 and meterId = 100 is equal = 720.333
 
       Given the account 2 doesn't have electric metrics
       Then account 2 has no latest electric metric
@@ -37,5 +37,5 @@ Feature: ElectricResource
       Then check the latest electric reading for the account = 2 and meterId = 300 is equal = 61.222
       And account 2 has electric metrics list size 3
 
-      Then check the latest electric reading for the account = 1 and meterId = 200 is equal = 720.333
+      Then check the latest electric reading for the account = 1 and meterId = 100 is equal = 720.333
       And account 1 has electric metrics list size 3
