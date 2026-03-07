@@ -82,11 +82,11 @@ public class SmartController {
     )
     @DeleteMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> deleteAllMetrics() {
+    public ResponseEntity<Integer> deleteAllMetrics(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(smartService.deleteAll());
+                .body(smartService.deleteAllByAccountId(id));
     }
 
 }

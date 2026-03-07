@@ -57,8 +57,8 @@ public class SmartDefinition {
 
         Response response = request.delete();
 
-        String result = response.asString();
-        Assertions.assertEquals("true", result);
+        int deleted = Integer.parseInt(response.asString());
+        Assertions.assertTrue(deleted >= 0);
     }
 
     @When("the account {long} submits a PUT request with new metrics")

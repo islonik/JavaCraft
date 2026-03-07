@@ -29,7 +29,8 @@ public class SmartService {
     }
 
     @Transactional
-    public boolean deleteAll() {
-        return gasService.deleteAll() && electricService.deleteAll();
+    public int deleteAllByAccountId(Long accountId) {
+        return gasService.deleteAllByAccountId(accountId)
+                + electricService.deleteAllByAccountId(accountId);
     }
 }

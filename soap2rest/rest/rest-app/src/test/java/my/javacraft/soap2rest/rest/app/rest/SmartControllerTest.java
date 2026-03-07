@@ -79,13 +79,13 @@ public class SmartControllerTest {
 
     @Test
     public void testDeleteAllMetrics() {
-        when(smartService.deleteAll()).thenReturn(Boolean.TRUE);
+        when(smartService.deleteAllByAccountId(111L)).thenReturn(4);
 
-        ResponseEntity<Boolean> response = smartController.deleteAllMetrics();
+        ResponseEntity<Integer> response = smartController.deleteAllMetrics(111L);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        Assertions.assertEquals(Boolean.TRUE, response.getBody());
+        Assertions.assertEquals(4, response.getBody());
     }
 
     private Metrics createMetrics() {
