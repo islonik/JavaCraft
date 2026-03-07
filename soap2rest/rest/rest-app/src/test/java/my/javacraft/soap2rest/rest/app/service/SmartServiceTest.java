@@ -26,6 +26,11 @@ public class SmartServiceTest {
     public void testSubmitUsesAccountIdForElectricMetrics() {
         SmartService smartService = new SmartService(gasService, electricService);
 
+        Metric gasMetric = new Metric();
+        gasMetric.setMeterId(100L);
+        gasMetric.setReading(new BigDecimal("5.000"));
+        gasMetric.setDate(Date.valueOf("2024-01-14"));
+
         Metric electricMetric = new Metric();
         electricMetric.setMeterId(200L);
         electricMetric.setReading(new BigDecimal("10.000"));
@@ -33,14 +38,14 @@ public class SmartServiceTest {
 
         Metrics metrics = new Metrics();
         metrics.setAccountId(1L);
-        metrics.setGasReadings(List.of());
+        metrics.setGasReadings(List.of(gasMetric));
         metrics.setElecReadings(List.of(electricMetric));
 
         boolean result = smartService.submit(metrics);
 
         Assertions.assertTrue(result);
+        verify(gasService).submit(1L, gasMetric);
         verify(electricService).submit(1L, electricMetric);
-        verifyNoInteractions(gasService);
     }
 
     @Test

@@ -20,7 +20,7 @@ public class SmartService {
         List<Metric> electricMetricList = metrics.getElecReadings();
 
         for (Metric gasMetric : gasMetricList) {
-            gasService.submit(gasMetric);
+            gasService.submit(metrics.getAccountId(), gasMetric);
         }
         for (Metric electricMetric : electricMetricList) {
             electricService.submit(metrics.getAccountId(), electricMetric);

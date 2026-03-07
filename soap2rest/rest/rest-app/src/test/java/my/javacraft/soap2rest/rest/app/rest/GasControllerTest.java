@@ -24,7 +24,7 @@ public class GasControllerTest {
     GasService gasService;
 
     @Test
-    public void testGetElectricMetrics() {
+    public void testGetGasMetrics() {
         GasController gasController = new GasController(gasService);
 
         when(gasService.getMetricsByAccountId(anyLong())).thenReturn(createMetricList());
@@ -37,7 +37,7 @@ public class GasControllerTest {
     }
 
     @Test
-    public void testGetLatestElectricMetric() {
+    public void testGetLatestGasMetric() {
         GasController gasController = new GasController(gasService);
 
         when(gasService.findLatestMetric(anyLong())).thenReturn(createMetricList().getFirst());
@@ -49,20 +49,20 @@ public class GasControllerTest {
     }
 
     @Test
-    public void testPutNewElectricMetric() {
+    public void testPutNewGasMetric() {
         GasController gasController = new GasController(gasService);
 
         Metric metric = createMetricList().getFirst();
-        when(gasService.submit(any())).thenReturn(metric);
+        when(gasService.submit(anyLong(), any())).thenReturn(metric);
 
-        ResponseEntity<Metric> response = gasController.putNewGasMetric(metric);
+        ResponseEntity<Metric> response = gasController.putNewGasMetric(1L, metric);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
-        verify(gasService, atLeastOnce()).submit(any());
+        verify(gasService, atLeastOnce()).submit(eq(1L), any());
     }
 
     @Test
-    public void testDeleteAllElectricMetrics() {
+    public void testDeleteAllGasMetrics() {
         GasController gasController = new GasController(gasService);
 
         when(gasService.deleteAllByAccountId(anyLong())).thenReturn(2);

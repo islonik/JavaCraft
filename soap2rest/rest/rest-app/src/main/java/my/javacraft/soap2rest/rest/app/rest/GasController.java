@@ -55,11 +55,12 @@ public class GasController {
     )
     @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Metric> putNewGasMetric(
+            @PathVariable("id") Long id,
             @RequestBody Metric gasMetric) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(gasService.submit(gasMetric));
+                .body(gasService.submit(id, gasMetric));
     }
 
     @ExecutionTime

@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
+import my.javacraft.soap2rest.rest.app.dao.MeterDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class GasService {
     private final MetricService metricService;
     private final MetricValidationService metricValidationService;
     private final GasMetricDao gasMetricDao;
+    private final MeterDao meterDao;
 
     public List<Metric> getMetricsByAccountId(Long accountId) {
         return metricService.calculateExtraFields(gasMetricDao.findMetrics(accountId));
@@ -29,7 +31,11 @@ public class GasService {
                 .orElse(null);
     }
 
-    public Metric submit(Metric submittedMetric) {
+    public Metric submit(Long accountId, Metric submittedMetric) {
+        if (!meterDao.existsByIdAndAccountId(submittedMetric.getMeterId(), accountId)) {
+            throw new IllegalArgumentException("Meter is not linked to account.");
+        }
+
         Metric latestMetric = Optional.ofNullable(gasMetricDao
                 .findTopByMeterIdInOrderByDateDesc(
                         Collections.singletonList(submittedMetric.getMeterId())
@@ -45,11 +51,6 @@ public class GasService {
         gasMetricDao.save(gasMetric);
 
         return gasMetric.toApiMetric();
-    }
-
-    public boolean deleteAll() {
-        gasMetricDao.deleteAll();
-        return true;
     }
 
     public int deleteAllByAccountId(Long accountId) {

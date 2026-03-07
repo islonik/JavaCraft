@@ -1,26 +1,27 @@
 package my.javacraft.soap2rest.rest.app.cucumber.step;
 
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+import java.util.stream.Stream;
 import my.javacraft.soap2rest.rest.api.Metric;
-import my.javacraft.soap2rest.rest.app.dao.GasMetricDao;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
-import my.javacraft.soap2rest.rest.app.dao.entity.MetricEntity;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import io.restassured.RestAssured;
 import org.springframework.util.LinkedMultiValueMap;
@@ -30,13 +31,10 @@ import org.springframework.web.client.RestTemplate;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Scope(SCOPE_CUCUMBER_GLUE)
-@RequiredArgsConstructor
 public class GasDefinition {
 
     @LocalServerPort
     int port;
-
-    private final GasMetricDao gasMetricDao;
 
     private RequestSpecification prepareBaseRequest(Long accountId) {
         RequestSpecification request = RestAssured.given();
@@ -52,6 +50,33 @@ public class GasDefinition {
         return new HttpEntity<>(null, headers);
     }
 
+    private List<Metric> getGasMetrics(Long accountId) {
+        HttpEntity<String> entity = prepareHttpEntity();
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<List<Metric>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/v1/smart/%s/gas".formatted(port, accountId),
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNotNull(httpResponse.getBody());
+        return httpResponse.getBody();
+    }
+
+    /**
+     * Meter-only steps exist in legacy scenarios; this helper keeps them REST-based
+     * by searching metrics from known test accounts instead of querying the DAO.
+     */
+    private List<Metric> getGasMetricsByMeterIdAcrossKnownAccounts(Long meterId) {
+        return Stream.of(1L, 2L)
+                .flatMap(accountId -> getGasMetrics(accountId).stream())
+                .filter(metric -> meterId.equals(metric.getMeterId()))
+                .toList();
+    }
+
     @Given("the account {long} doesn't have gas metrics")
     public void cleanGasMetrics(Long accountId) {
         RequestSpecification request = prepareBaseRequest(accountId);
@@ -62,7 +87,7 @@ public class GasDefinition {
         Assertions.assertTrue(result >= 0);
     }
 
-    @When("the account {long} submits a PUT request with a new gas reading: {long}, {bigdecimal}, {string}")
+    @When("an account {long} submits a PUT request with a new gas reading: {long}, {bigdecimal}, {string}")
     public void applyPutRequestWithGasReading(
             Long accountId, Long meterId, BigDecimal reading, String date) {
         RequestSpecification request = prepareBaseRequest(accountId);
@@ -76,19 +101,69 @@ public class GasDefinition {
         }
         """.formatted(meterId, reading, date);
 
-        GasMetric response = request.body(jsonBody).put().as(GasMetric.class);
+        Response response = request.body(jsonBody).put();
+        Assertions.assertEquals(200, response.statusCode());
 
-        Assertions.assertNotNull(response);
-        Assertions.assertEquals(meterId, response.getMeterId());
-        Assertions.assertEquals(reading, response.getReading());
-        Assertions.assertEquals(date, response.getDate().toString());
+        GasMetric metric = response.as(GasMetric.class);
+
+        Assertions.assertNotNull(metric);
+        Assertions.assertEquals(meterId, metric.getMeterId());
+        Assertions.assertEquals(reading, metric.getReading());
+        Assertions.assertEquals(date, metric.getDate().toString());
+    }
+
+    @When("an account {long} submits gas metrics")
+    public void applyPutRequestWithGasMetrics(Long accountId, DataTable table) {
+        for (Map<String, String> row : table.asMaps(String.class, String.class)) {
+            applyPutRequestWithGasReading(
+                    accountId,
+                    Long.parseLong(row.get("meterId")),
+                    new BigDecimal(row.get("reading")),
+                    row.get("date")
+            );
+        }
+    }
+
+    @Then("check the latest gas reading for the account = {long} and meterId = {long} is equal = {bigdecimal}")
+    public void checkLatestGasReading(Long accountId, Long meterId, BigDecimal reading) {
+        Metric latestMetric = getGasMetrics(accountId)
+                .stream()
+                .filter(metric -> meterId.equals(metric.getMeterId()))
+                .max(Metric::compareTo)
+                .orElseThrow();
+        Assertions.assertEquals(0, latestMetric
+                .getReading()
+                .compareTo(reading)
+        );
+    }
+
+    @Then("account {long} has no latest gas metric")
+    public void checkNoLatestGasMetric(Long accountId) {
+        HttpEntity<String> entity = prepareHttpEntity();
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity<Metric> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/v1/smart/%s/gas/latest".formatted(port, accountId),
+                HttpMethod.GET,
+                entity,
+                Metric.class
+        );
+
+        Assertions.assertNotNull(httpResponse);
+        Assertions.assertNull(httpResponse.getBody());
+    }
+
+    @Then("account {long} has gas metrics list size {int}")
+    public void checkGasMetricListSize(Long accountId, Integer expectedSize) {
+        Assertions.assertEquals(expectedSize, getGasMetrics(accountId).size());
     }
 
     @Then("check the latest gas reading for the meterId = {long} is equal = {bigdecimal}")
-    public void checkLatestGasReading(Long meterId, BigDecimal reading) {
-        Metric latestMetric = gasMetricDao.findTopByMeterIdInOrderByDateDesc(
-                Collections.singletonList(meterId)
-        ).toApiMetric();
+    public void checkLatestGasReadingByMeterId(Long meterId, BigDecimal reading) {
+        Metric latestMetric = getGasMetricsByMeterIdAcrossKnownAccounts(meterId)
+                .stream()
+                .max(Metric::compareTo)
+                .orElseThrow();
         Assertions.assertEquals(0, latestMetric
                 .getReading()
                 .compareTo(reading)
@@ -118,10 +193,7 @@ public class GasDefinition {
     }
 
     @Then("check there is no gas readings for the meterId = {long}")
-    public void checkNoGasMetric(Long meterId) {
-        List<Metric> metrics = gasMetricDao.findByMeterIds(
-                Collections.singletonList(meterId)
-        ).stream().map(MetricEntity::toApiMetric).toList();
-        Assertions.assertEquals(0, metrics.size());
+    public void checkNoGasMetricByMeterId(Long meterId) {
+        Assertions.assertTrue(getGasMetricsByMeterIdAcrossKnownAccounts(meterId).isEmpty());
     }
 }
