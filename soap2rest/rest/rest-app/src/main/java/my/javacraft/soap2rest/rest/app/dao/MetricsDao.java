@@ -1,6 +1,9 @@
 package my.javacraft.soap2rest.rest.app.dao;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import my.javacraft.soap2rest.rest.api.Metric;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.soap2rest.rest.api.Metrics;
 import my.javacraft.soap2rest.rest.app.service.ElectricService;
@@ -26,10 +29,16 @@ public class MetricsDao {
     public Metrics findLatestMetrics(Long accountId) {
         Metrics metrics = new Metrics();
         metrics.setAccountId(accountId);
-        metrics.setElecReadings(Collections.singletonList(electricService.findLatestMetric(accountId)));
-        metrics.setGasReadings(Collections.singletonList(gasService.findLatestMetric(accountId)));
+        metrics.setElecReadings(toLatestReadings(electricService.findLatestMetric(accountId)));
+        metrics.setGasReadings(toLatestReadings(gasService.findLatestMetric(accountId)));
 
         return metrics;
+    }
+
+    private List<Metric> toLatestReadings(Metric latestMetric) {
+        return Optional.ofNullable(latestMetric)
+                .map(List::of)
+                .orElse(Collections.emptyList());
     }
 
 }
