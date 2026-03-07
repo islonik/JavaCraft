@@ -1,5 +1,6 @@
 package my.javacraft.soap2rest.rest.app.dao.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,6 +48,7 @@ public class Meter {
      */
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "account_id",
