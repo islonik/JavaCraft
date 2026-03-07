@@ -68,11 +68,13 @@ public class SmartController {
     )
     @PutMapping(value = "/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> putMetrics(@RequestBody Metrics metrics) {
+    public ResponseEntity<Boolean> putMetrics(
+            @PathVariable("id") Long id,
+            @RequestBody Metrics metrics) {
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(smartService.submit(metrics));
+                .body(smartService.submit(id, metrics));
     }
 
     @ExecutionTime

@@ -37,11 +37,11 @@ public class SmartServiceTest {
         electricMetric.setDate(Date.valueOf("2024-01-15"));
 
         Metrics metrics = new Metrics();
-        metrics.setAccountId(1L);
+        metrics.setAccountId(999L);
         metrics.setGasReadings(List.of(gasMetric));
         metrics.setElecReadings(List.of(electricMetric));
 
-        boolean result = smartService.submit(metrics);
+        boolean result = smartService.submit(1L, metrics);
 
         Assertions.assertTrue(result);
         verify(gasService).submit(1L, gasMetric);

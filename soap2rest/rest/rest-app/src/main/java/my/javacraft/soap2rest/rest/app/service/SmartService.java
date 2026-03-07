@@ -15,15 +15,15 @@ public class SmartService {
     private final ElectricService electricService;
 
     @Transactional
-    public boolean submit(Metrics metrics) {
+    public boolean submit(Long accountId, Metrics metrics) {
         List<Metric> gasMetricList = metrics.getGasReadings();
         List<Metric> electricMetricList = metrics.getElecReadings();
 
         for (Metric gasMetric : gasMetricList) {
-            gasService.submit(metrics.getAccountId(), gasMetric);
+            gasService.submit(accountId, gasMetric);
         }
         for (Metric electricMetric : electricMetricList) {
-            electricService.submit(metrics.getAccountId(), electricMetric);
+            electricService.submit(accountId, electricMetric);
         }
         return true;
     }

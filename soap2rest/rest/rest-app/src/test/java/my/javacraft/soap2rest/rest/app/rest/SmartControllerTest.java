@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,13 +69,27 @@ public class SmartControllerTest {
 
     @Test
     public void testPutMetrics() {
-        when(smartService.submit(any())).thenReturn(Boolean.TRUE);
+        when(smartService.submit(anyLong(), any())).thenReturn(Boolean.TRUE);
 
-        ResponseEntity<Boolean> response = smartController.putMetrics(createMetrics());
+        ResponseEntity<Boolean> response = smartController.putMetrics(111L, createMetrics());
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
         Assertions.assertEquals(Boolean.TRUE, response.getBody());
+        verify(smartService).submit(eq(111L), any(Metrics.class));
+    }
+
+    @Test
+    public void testPutMetricsUsesPathAccountId() {
+        Metrics metrics = createMetrics();
+        metrics.setAccountId(999L);
+        when(smartService.submit(anyLong(), any())).thenReturn(Boolean.TRUE);
+
+        ResponseEntity<Boolean> response = smartController.putMetrics(111L, metrics);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(Boolean.TRUE, response.getBody());
+        verify(smartService).submit(eq(111L), same(metrics));
     }
 
     @Test

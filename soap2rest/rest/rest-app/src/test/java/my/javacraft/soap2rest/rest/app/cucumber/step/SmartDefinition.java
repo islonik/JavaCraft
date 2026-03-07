@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.api.Metrics;
@@ -61,7 +62,7 @@ public class SmartDefinition {
         Assertions.assertTrue(deleted >= 0);
     }
 
-    @When("the account {long} submits a PUT request with new metrics")
+    @When("an account {long} submits a PUT request with new metrics")
     public void applyPutRequestWithGasReading(Long accountId, DataTable table) throws Exception {
         Metrics metrics = data2Metrics(accountId, table);
 
@@ -72,21 +73,18 @@ public class SmartDefinition {
 
         HttpEntity<String> entity = prepareHttpEntity(jsonBody);
 
-        try {
-            RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
 
-            HttpEntity<Boolean> httpResponse = restTemplate.exchange(
-                    "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
-                    HttpMethod.PUT,
-                    entity,
-                    Boolean.class
-            );
-            Boolean response = httpResponse.getBody();
+        HttpEntity<Boolean> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/v1/smart/%s".formatted(port, accountId),
+                HttpMethod.PUT,
+                entity,
+                Boolean.class
+        );
+        Boolean response = httpResponse.getBody();
 
-            Assertions.assertNotNull(response);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
+        Assertions.assertNotNull(response);
+        Assertions.assertTrue(response);
     }
 
     private Metrics data2Metrics(Long accountId, DataTable table) {
@@ -96,14 +94,13 @@ public class SmartDefinition {
         List<Metric> gasMetricList = new ArrayList<>();
         List<Metric> electricMetricsList = new ArrayList<>();
 
-        List<List<String>> rows = table.cells();
-        for (List<String> row : rows) {
-            String type = row.get(0);
+        for (Map<String, String> row : table.asMaps(String.class, String.class)) {
+            String type = row.get("type");
 
             Metric metric = new Metric();
-            metric.setMeterId(Long.parseLong(row.get(1)));
-            metric.setReading(new BigDecimal(row.get(2)));
-            metric.setDate(Date.valueOf(row.get(3)));
+            metric.setMeterId(Long.parseLong(row.get("meterId")));
+            metric.setReading(new BigDecimal(row.get("reading")));
+            metric.setDate(Date.valueOf(row.get("date")));
 
             if (type.equalsIgnoreCase("gas")) {
                 gasMetricList.add(metric);
