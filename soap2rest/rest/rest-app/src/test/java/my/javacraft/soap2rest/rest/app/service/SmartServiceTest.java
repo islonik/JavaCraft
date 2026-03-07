@@ -49,6 +49,55 @@ public class SmartServiceTest {
     }
 
     @Test
+    public void testSubmitHandlesMissingGasReadings() {
+        SmartService smartService = new SmartService(gasService, electricService);
+
+        Metric electricMetric = new Metric();
+        electricMetric.setMeterId(200L);
+        electricMetric.setReading(new BigDecimal("10.000"));
+        electricMetric.setDate(Date.valueOf("2024-01-15"));
+
+        Metrics metrics = new Metrics();
+        metrics.setElecReadings(List.of(electricMetric));
+
+        boolean result = smartService.submit(1L, metrics);
+
+        Assertions.assertTrue(result);
+        verifyNoInteractions(gasService);
+        verify(electricService).submit(1L, electricMetric);
+    }
+
+    @Test
+    public void testSubmitHandlesMissingElectricReadings() {
+        SmartService smartService = new SmartService(gasService, electricService);
+
+        Metric gasMetric = new Metric();
+        gasMetric.setMeterId(100L);
+        gasMetric.setReading(new BigDecimal("5.000"));
+        gasMetric.setDate(Date.valueOf("2024-01-14"));
+
+        Metrics metrics = new Metrics();
+        metrics.setGasReadings(List.of(gasMetric));
+
+        boolean result = smartService.submit(1L, metrics);
+
+        Assertions.assertTrue(result);
+        verify(gasService).submit(1L, gasMetric);
+        verifyNoInteractions(electricService);
+    }
+
+    @Test
+    public void testSubmitHandlesMissingAllReadingLists() {
+        SmartService smartService = new SmartService(gasService, electricService);
+        Metrics metrics = new Metrics();
+
+        boolean result = smartService.submit(1L, metrics);
+
+        Assertions.assertTrue(result);
+        verifyNoInteractions(gasService, electricService);
+    }
+
+    @Test
     public void testDeleteAllByAccountId() {
         SmartService smartService = new SmartService(gasService, electricService);
         when(gasService.deleteAllByAccountId(1L)).thenReturn(2);
