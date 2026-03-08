@@ -3,8 +3,6 @@ package my.javacraft.echo.standard.client.async;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,32 +10,50 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public class StandardAsyncClient {
+public class StandardAsyncClient implements AutoCloseable {
 
-    private final AsyncClientConnection asyncClientConnection;
+    private final AsyncClientConnection connection;
 
-    public StandardAsyncClient(String host, int port) {
-        this.asyncClientConnection = new AsyncClientConnection(host, port);
+    public StandardAsyncClient(String threadName, String host, int port) {
+        this.connection = new AsyncClientConnection(threadName, host, port);
+    }
 
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        // loop
-        executorService.execute(this.asyncClientConnection);
+    public void sendMessage(String message) {
+        connection.sendMessage(message);
+    }
+
+    public String readMessage() {
+        return connection.readMessage();
+    }
+
+    public boolean isConnected() {
+        return connection.isConnected();
+    }
+
+    public boolean isSocketClosed() {
+        return connection.isSocketClosed();
+    }
+
+    @Override
+    public void close() {
+        connection.close();
     }
 
     public void run() {
+        log.info("Starting...");
         try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
-            log.info("Starting...");
             while (true) {
                 String inputText = input.readLine().toLowerCase();
-
-                this.asyncClientConnection.flush(inputText);
-
+                sendMessage(inputText);
+                System.out.println(readMessage());
                 if ("bye".equalsIgnoreCase(inputText)) {
                     break;
                 }
             }
-        } catch(IOException error) {
-            log.error(error.getMessage(), error);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        } finally {
+            close();
         }
     }
 }

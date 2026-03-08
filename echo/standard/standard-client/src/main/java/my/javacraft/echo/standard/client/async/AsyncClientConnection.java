@@ -1,84 +1,91 @@
 package my.javacraft.echo.standard.client.async;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Lipatov Nikita
  */
 @Slf4j
-public class AsyncClientConnection extends Thread {
+public class AsyncClientConnection implements AutoCloseable {
 
-    private Socket socket = null;
-    private BufferedReader inStream = null;
-    private PrintWriter outStream = null;
+    private final String host;
+    private final int port;
+    private Socket socket;
+    private PrintWriter outStream;
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+    @Getter
+    private volatile boolean socketClosed = false;
 
-    public AsyncClientConnection(String host, int port) {
+    public AsyncClientConnection(String threadName, String host, int port) {
+        this.host = host;
+        this.port = port;
         try {
-            socket = new Socket(host, port);
-            outStream = new PrintWriter(socket.getOutputStream(), true);
-            inStream  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.socket = new Socket(host, port);
+            this.outStream = new PrintWriter(socket.getOutputStream(), true);
+
+            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             log.info("Async client {} is connected", socket);
-        } catch (Exception error) {
-            log.error(error.getMessage(), error);
+
+            Thread.ofPlatform()
+                    .name(threadName + port)
+                    .daemon(true)
+                    .start(() -> listen(inStream));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
-    /**
-     * Method sends messages / commands to server.
-     * @param message Message from user / to server.
-     */
-    public void flush(String message) {
+    private void listen(BufferedReader inStream) {
         try {
-            outStream.println(message);
-        } catch (Exception error) {
-            log.error(error.getMessage(), error);
+            String line;
+            while ((line = inStream.readLine()) != null) {
+                responseQueue.add(line);
+            }
+        } catch (SocketException ignored) {
+            // expected when close() is called while blocking on readLine()
+        } catch (IOException e) {
+            log.warn("Couldn't get I/O for the connection to: {}:{}", host, port);
+        } finally {
+            socketClosed = true;
         }
+    }
+
+    public void sendMessage(String message) {
+        outStream.println(message);
+    }
+
+    public String readMessage() {
+        try {
+            return responseQueue.poll(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    public boolean isConnected() {
+        return socket != null && outStream != null;
     }
 
     @Override
-    public void run() {
+    public void close() {
         try {
-            while (true) {
-                String message = inStream.readLine();
-                if (message == null) {
-                    return;
-                }
-                System.out.println(message);
+            if (outStream != null) {
+                outStream.close();
             }
-        } catch (EOFException error) {
-            log.error("Connection to the server was lost");
-        } catch (SocketException error) {
-            log.error("The server was shut down");
-        } catch (Exception error) {
-            log.error("Fatal fail in run method because: " + error.getMessage(), error);
-        } finally {
-            closeClientSocket();
-        }
-    }
-
-    /**
-     * Method kills the object of client connection.
-     */
-    public void closeClientSocket() {
-        try {
             if (socket != null) {
-                if (!socket.isClosed()) {
-                    socket.close();
-                }
-                socket = null;
+                socket.close();
             }
-        } catch (Exception error) {
-            log.error(error.getMessage(), error);
-        } finally {
-            log.info("Closed.");
-            System.exit(1);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 }

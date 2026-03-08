@@ -16,6 +16,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import my.javacraft.echo.standard.client.async.StandardAsyncClient;
 import my.javacraft.echo.standard.client.sync.StandardSyncClient;
 import my.javacraft.echo.standard.server.MultithreadedServer;
 import my.javacraft.echo.standard.server.ServerThread;
@@ -50,13 +54,16 @@ public class StandardStepDefinitions {
     // Scenario state
     // ---------------------------------------------------------------------------
 
-    private final Map<String, StandardSyncClient> connections = new ConcurrentHashMap<>();
+    private final Map<String, StandardSyncClient> syncConnections = new ConcurrentHashMap<>();
+    private final Map<String, StandardAsyncClient> asyncConnections = new ConcurrentHashMap<>();
     private final List<ExecutorService> serverExecutors = new ArrayList<>();
 
     @After
     public void cleanup() {
-        connections.values().forEach(StandardSyncClient::close);
-        connections.clear();
+        syncConnections.values().forEach(StandardSyncClient::close);
+        syncConnections.clear();
+        asyncConnections.values().forEach(StandardAsyncClient::close);
+        asyncConnections.clear();
         serverExecutors.forEach(ExecutorService::shutdownNow);
         serverExecutors.clear();
         awaitSharedThreadCounterReset();
@@ -67,7 +74,7 @@ public class StandardStepDefinitions {
      * after five seconds.
      *
      * <p>The counter is a JVM-wide static field shared by every scenario.
-     * Closing a client socket causes the corresponding virtual {@link ServerThread}
+     * Closing a client socket causes the corresponding {@link ServerThread}
      * to receive {@code null} from {@code readLine()} and then decrement the
      * counter — but this decrement races with the next scenario's
      * {@code incrementAndGet()} in the {@link ServerThread} constructor.  If the
@@ -107,7 +114,22 @@ public class StandardStepDefinitions {
 
     @When("sync client {string} connects on port {int}")
     public void connectSyncClient(String client, int port) {
-        registerClient(client, awaitClientConnected(port));
+        StandardSyncClient c = awaitSyncClientConnected(port);
+        StandardSyncClient previous = syncConnections.putIfAbsent(client, c);
+        if (previous != null) {
+            c.close();
+            Assertions.fail("Client '%s' already exists in this scenario".formatted(client));
+        }
+    }
+
+    @When("async client {string} connects on port {int}")
+    public void connectAsyncClient(String client, int port) {
+        StandardAsyncClient c = awaitAsyncClientConnected(port);
+        StandardAsyncClient previous = asyncConnections.putIfAbsent(client, c);
+        if (previous != null) {
+            c.close();
+            Assertions.fail("Client '%s' already exists in this scenario".formatted(client));
+        }
     }
 
     // ---------------------------------------------------------------------------
@@ -131,7 +153,7 @@ public class StandardStepDefinitions {
 
     @Then("client {string} socket is closed")
     public void clientSocketIsClosed(String client) {
-        assertClientSocketClosed(client);
+        resolveSocketClosed(client);
     }
 
     // ---------------------------------------------------------------------------
@@ -141,7 +163,14 @@ public class StandardStepDefinitions {
     @When("{int} sync clients with prefix {string} connect on port {int}")
     public void connectSyncClientsWithPrefix(int clientCount, String prefix, int port) {
         for (int i = 1; i <= clientCount; i++) {
-            registerClient(clientName(prefix, i), awaitClientConnected(port));
+            connectSyncClient(clientName(prefix, i), port);
+        }
+    }
+
+    @When("{int} async clients with prefix {string} connect on port {int}")
+    public void connectAsyncClientsWithPrefix(int clientCount, String prefix, int port) {
+        for (int i = 1; i <= clientCount; i++) {
+            connectAsyncClient(clientName(prefix, i), port);
         }
     }
 
@@ -182,16 +211,76 @@ public class StandardStepDefinitions {
     }
 
     // ---------------------------------------------------------------------------
-    // Private helpers
+    // Private helpers — client resolution
     // ---------------------------------------------------------------------------
 
     /**
-     * Retries {@link StandardSyncClient} construction until the server is ready
-     * (i.e., the socket and streams are successfully established), or fails after
-     * five seconds.  The server is started asynchronously, so the first connection
-     * attempt may arrive before the {@link java.net.ServerSocket} is bound.
+     * Dispatches send/read/isClosed operations to whichever map (sync or async)
+     * contains the named client, then asserts the response.
      */
-    private StandardSyncClient awaitClientConnected(int port) {
+    @SuppressWarnings("resource") // client is owned by asyncConnections and closed in cleanup()
+    private void assertResponse(String clientName, String message, String expectedResponse) {
+        StandardSyncClient sync = syncConnections.get(clientName);
+        if (sync != null) {
+            doAssertResponse(clientName, message, expectedResponse,
+                    sync::sendMessage, sync::readMessage, sync::isSocketClosed);
+            return;
+        }
+        StandardAsyncClient async = requireAsyncClient(clientName);
+        doAssertResponse(clientName, message, expectedResponse,
+                async::sendMessage, async::readMessage, async::isSocketClosed);
+    }
+
+    private void doAssertResponse(String clientName, String message, String expectedResponse,
+            Consumer<String> send, Supplier<String> read, BooleanSupplier isClosed) {
+        send.accept(message);
+        String actual = read.get();
+        Assertions.assertEquals(expectedResponse, actual,
+                "Client '%s' sent '%s' but got unexpected response".formatted(clientName, message));
+        if ("bye".equalsIgnoreCase(message)) {
+            awaitSocketClosed(clientName, isClosed);
+        }
+    }
+
+    /**
+     * Sends "bye", asserts the farewell, waits for the server to close the
+     * connection (which happens after the counter decrement), then returns.
+     * The client socket itself is left open for {@code @After cleanup()} to close.
+     */
+    @SuppressWarnings("resource") // client is owned by asyncConnections and closed in cleanup()
+    private void performGoodbye(String clientName) {
+        StandardSyncClient sync = syncConnections.get(clientName);
+        if (sync != null) {
+            doGoodbye(clientName, sync::sendMessage, sync::readMessage, sync::isSocketClosed);
+            return;
+        }
+        StandardAsyncClient async = requireAsyncClient(clientName);
+        doGoodbye(clientName, async::sendMessage, async::readMessage, async::isSocketClosed);
+    }
+
+    private void doGoodbye(String clientName, Consumer<String> send, Supplier<String> read,
+            BooleanSupplier isClosed) {
+        send.accept("bye");
+        String actual = read.get();
+        Assertions.assertEquals("Have a good day!", actual,
+                "Client '%s' did not receive expected goodbye response".formatted(clientName));
+        awaitSocketClosed(clientName, isClosed);
+    }
+
+    private void resolveSocketClosed(String clientName) {
+        StandardSyncClient sync = syncConnections.get(clientName);
+        if (sync != null) {
+            awaitSocketClosed(clientName, sync::isSocketClosed);
+            return;
+        }
+        StandardAsyncClient async = requireAsyncClient(clientName);
+        awaitSocketClosed(clientName, async::isSocketClosed);
+    }
+
+    /**
+     * Retries client construction until the server is ready or fails after five seconds.
+     */
+    private StandardSyncClient awaitSyncClientConnected(int port) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
             StandardSyncClient client = new StandardSyncClient("sync-client-", "localhost", port);
@@ -206,82 +295,52 @@ public class StandardStepDefinitions {
         }
     }
 
-    private void registerClient(String clientName, StandardSyncClient client) {
-        StandardSyncClient previous = connections.putIfAbsent(clientName, client);
-        if (previous != null) {
+    private StandardAsyncClient awaitAsyncClientConnected(int port) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (true) {
+            StandardAsyncClient client = new StandardAsyncClient(
+                    "async-client-",
+                    "localhost", port);
+            if (client.isConnected()) {
+                return client;
+            }
             client.close();
-            Assertions.fail("Client '%s' already exists in this scenario".formatted(clientName));
-        }
-    }
-
-    private void assertResponse(String clientName, String message, String expectedResponse) {
-        StandardSyncClient client = getClient(clientName);
-
-        client.sendMessage(message);
-        String actualResponse = client.readMessage();
-
-        Assertions.assertEquals(expectedResponse, actualResponse,
-                "Client '%s' sent '%s' but got unexpected response".formatted(clientName, message));
-
-        // "bye" causes the server to close the connection after responding.
-        // Wait for the server-side close (detected via socket EOF) to ensure the
-        // server's counter decrement is visible before the next step executes.
-        if ("bye".equalsIgnoreCase(message)) {
-            awaitSocketClosed(clientName, client);
+            if (System.nanoTime() >= deadline) {
+                Assertions.fail("Server not ready on port " + port + " within 5 seconds");
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
         }
     }
 
     /**
-     * Sends "bye", asserts the expected farewell, waits for the server to close
-     * the connection (which happens after the counter decrement), then returns.
-     * The client socket itself is left open for {@code @After cleanup()} to close.
+     * Blocks until the client's listener thread detects the server-side EOF, or
+     * fails after two seconds.  After the server processes "bye" it closes its
+     * streams (sending a TCP FIN), and the listener thread detects EOF and sets
+     * the {@code socketClosed} flag.  This flag is set only <em>after</em> the
+     * server's counter decrement, so waiting here guarantees the shared counter
+     * is up to date before the caller proceeds.
      */
-    private void performGoodbye(String clientName) {
-        StandardSyncClient client = getClient(clientName);
-
-        client.sendMessage("bye");
-        String actualResponse = client.readMessage();
-
-        Assertions.assertEquals("Have a good day!", actualResponse,
-                "Client '%s' did not receive expected goodbye response".formatted(clientName));
-
-        awaitSocketClosed(clientName, client);
-    }
-
-    /**
-     * Polls until the client's listener thread detects the server-side EOF, or
-     * fails after two seconds.
-     */
-    private void assertClientSocketClosed(String clientName) {
-        StandardSyncClient client = getClient(clientName);
-        awaitSocketClosed(clientName, client);
-    }
-
-    /**
-     * Blocks until {@code client.isSocketClosed()} returns {@code true} or the
-     * two-second deadline expires.  After the server processes "bye" it closes
-     * its streams (sending a TCP FIN), and the client's listener thread detects
-     * this EOF and sets the {@code socketClosed} flag.  This flag is set only
-     * <em>after</em> the server's counter decrement, so waiting here guarantees
-     * that the shared counter is up to date before the caller proceeds.
-     */
-    private void awaitSocketClosed(String clientName, StandardSyncClient client) {
+    private void awaitSocketClosed(String clientName, BooleanSupplier isClosed) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-
         while (System.nanoTime() < deadline) {
-            if (client.isSocketClosed()) {
+            if (isClosed.getAsBoolean()) {
                 return;
             }
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
         }
-
-        Assertions.assertTrue(client.isSocketClosed(),
+        Assertions.assertTrue(isClosed.getAsBoolean(),
                 "Client '%s' socket should be closed after goodbye".formatted(clientName));
+    }
+
+    private StandardAsyncClient requireAsyncClient(String clientName) {
+        StandardAsyncClient client = asyncConnections.get(clientName);
+        Assertions.assertNotNull(client, "Client '%s' was not created in this scenario".formatted(clientName));
+        return client;
     }
 
     /**
      * Runs the load-work loop for one client so the high-load scenario keeps
-     * every client on its own platform thread, matching the single-module pattern.
+     * every client on its own platform thread.
      */
     private void sendMessagesWithRandomDelay(
             String clientName,
@@ -326,12 +385,6 @@ public class StandardStepDefinitions {
         AssertionError combined = new AssertionError("High-load client threads reported failures");
         failures.forEach(combined::addSuppressed);
         throw combined;
-    }
-
-    private StandardSyncClient getClient(String clientName) {
-        StandardSyncClient client = connections.get(clientName);
-        Assertions.assertNotNull(client, "Client '%s' was not created in this scenario".formatted(clientName));
-        return client;
     }
 
     private String clientName(String prefix, int index) {
