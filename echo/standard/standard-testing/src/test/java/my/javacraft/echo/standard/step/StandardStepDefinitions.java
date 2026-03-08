@@ -11,7 +11,7 @@ import my.javacraft.echo.standard.client.sync.StandardSyncClient;
 import my.javacraft.echo.standard.server.MultithreadedServer;
 import org.junit.jupiter.api.Assertions;
 
-public class StandardStepDefinition {
+public class StandardStepDefinitions {
 
     private final Map<String, StandardSyncClient> connections = new ConcurrentHashMap<>();
 
@@ -19,9 +19,10 @@ public class StandardStepDefinition {
     public void startUpSocketServer(int port) {
         MultithreadedServer server = new MultithreadedServer(port);
 
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        // loop
-        executorService.execute(server);
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            // loop
+            executorService.execute(server);
+        }
     }
 
     @When("create a new client {string} for the server with the port = '{int}'")
