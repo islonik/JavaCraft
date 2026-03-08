@@ -381,7 +381,7 @@ public class Parser {
     private double valueToMeasure(double result) {
         return switch (angleUnit) {
             case DEGREE -> result * Math.PI / 180;
-            case GRADUS -> result * Math.PI / 200;
+            case GRADIAN -> result * Math.PI / 200;
             case RADIAN -> result;
         };
     }
@@ -395,7 +395,7 @@ public class Parser {
     private double valueFromMeasure(double result) {
         return switch (angleUnit) {
             case DEGREE -> result * 180 / Math.PI;
-            case GRADUS -> result * 200 / Math.PI;
+            case GRADIAN -> result * 200 / Math.PI;
             case RADIAN -> result;
         };
     }

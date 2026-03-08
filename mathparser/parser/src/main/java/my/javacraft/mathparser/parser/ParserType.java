@@ -15,7 +15,7 @@ public enum ParserType {
     /**
      * The gradian is a unit of plane angle, equivalent to 1⁄400 of a turn.
      **/
-    GRADUS,
+    GRADIAN,
 
     /**
      * The radian is the standard unit of angular measure, used in many areas of mathematics.

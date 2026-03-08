@@ -214,7 +214,7 @@ public class ParserTest {
     @Test
     public void testParser_testCase32() {
         Parser parser = new Parser();
-        parser.setTangentUnit(ParserType.GRADUS);
+        parser.setTangentUnit(ParserType.GRADIAN);
 
         Assertions.assertEquals("0.0", parser.calculate("round(sin(200))"));
     }
@@ -222,7 +222,7 @@ public class ParserTest {
     @Test
     public void testParser_testCase33() {
         Parser parser = new Parser();
-        parser.setTangentUnit(ParserType.GRADUS);
+        parser.setTangentUnit(ParserType.GRADIAN);
 
         Assertions.assertEquals("1.0", parser.calculate("sin(100)"));
     }
@@ -446,7 +446,7 @@ public class ParserTest {
     @Test
     public void testParserType_values() {
         Assertions.assertArrayEquals(
-                new ParserType[]{ParserType.DEGREE, ParserType.GRADUS, ParserType.RADIAN},
+                new ParserType[]{ParserType.DEGREE, ParserType.GRADIAN, ParserType.RADIAN},
                 ParserType.values()
         );
     }

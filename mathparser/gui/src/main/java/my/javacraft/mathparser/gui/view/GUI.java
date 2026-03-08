@@ -55,6 +55,7 @@ public class GUI extends JFrame implements ActionListener {
     private JButton threeButton;
     private JButton twoButton;
     private JButton zeroButton;
+
     public GUI() {
         initComponents();
         setIconImage(getImageIcon()); // Icon of window
@@ -268,7 +269,7 @@ public class GUI extends JFrame implements ActionListener {
         degreeCheckbox.setSelected(true);
         degreeCheckbox.setText("degree");
 
-        gradusCheckbox.setText("gradus");
+        gradusCheckbox.setText("gradian");
 
         radianCheckbox.setText("radian");
 
@@ -428,6 +429,7 @@ public class GUI extends JFrame implements ActionListener {
     /**
      * Handler of buttons
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == calculateButton) { // calculate button
             calculateButton();
@@ -547,8 +549,8 @@ public class GUI extends JFrame implements ActionListener {
                 mathParser.setTangentUnit(ParserType.DEGREE);
                 degreeCheckbox.setSelected(true);
             }
-            case "gradus" -> {
-                mathParser.setTangentUnit(ParserType.GRADUS);
+            case "gradian" -> {
+                mathParser.setTangentUnit(ParserType.GRADIAN);
                 gradusCheckbox.setSelected(true);
             }
             case "radian" -> {
