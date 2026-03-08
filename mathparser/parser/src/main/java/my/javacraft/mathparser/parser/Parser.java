@@ -1,5 +1,6 @@
 package my.javacraft.mathparser.parser;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -10,6 +11,12 @@ import java.util.concurrent.ConcurrentMap;
  * @version 1.0.0
  **/
 public class Parser {
+    private static final Set<String> ONE_PARAMETER_FUNCTIONS = Set.of(
+            "abs", "acos", "asin", "atan", "cos", "log10", "round", "sin", "sqrt", "tan"
+    );
+    private static final Set<String> TWO_PARAMETER_FUNCTIONS = Set.of("pow", "log");
+    private static final Set<String> MULTI_PARAMETER_FUNCTIONS = Set.of("min", "max", "sum", "avg");
+
     private int typeTangentUnit;    // unit of angle
     private int idString;           // pointer in string
     private String storString;      // full string
@@ -285,13 +292,13 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void functions(Number result) throws ParserException {
-        String str;
-        if (isRegularExpression((str = storToken), "abs;acos;asin;atan;cos;log10;round;sin;sqrt;tan;")) {
-            oneParameterFunctions(result, str);
-        } else if (isRegularExpression((str = storToken), "pow;log;")) {
-            twoParameterFunctions(result, str);
-        } else if (isRegularExpression((str = storToken), "min;max;sum;avg;")) {
-            multiParameterFunctions(result, str);
+        String function = storToken;
+        if (ONE_PARAMETER_FUNCTIONS.contains(function)) {
+            oneParameterFunctions(result, function);
+        } else if (TWO_PARAMETER_FUNCTIONS.contains(function)) {
+            twoParameterFunctions(result, function);
+        } else if (MULTI_PARAMETER_FUNCTIONS.contains(function)) {
+            multiParameterFunctions(result, function);
         } else {
             throw new ParserException(ParserException.Error.SYNTAX);
         }
@@ -403,7 +410,7 @@ public class Parser {
                     result.set(temp.get());
                 } else if (function.equals("max") && result.get() < temp.get()) { // max
                     result.set(temp.get());
-                } else if (isRegularExpression(function, "avg;sum;")) { // sum
+                } else if (function.equals("avg") || function.equals("sum")) { // sum
                     result.set(result.get() + temp.get());
                     i++;
                 }
@@ -472,35 +479,6 @@ public class Parser {
      **/
     private boolean isDelimiter(char ctr) {
         return (" +-/\\*%^=(),".indexOf(ctr) != -1);
-    }
-
-    /**
-     * Compare two strings.
-     * TODO: Should I rewrite it?.
-     **/
-    private boolean isRegularExpression(String str, String expression) {
-        int idString = 0;
-        StringBuilder strbuf = new StringBuilder(expression.length());
-        while (expression.length() > idString) {
-            // If we find the hiatus
-            while (expression.charAt(idString) == ' ') {
-                idString++;
-            }
-            // If the delimiter was found
-            if (expression.charAt(idString) == ';') {
-                // No delimiter
-                if (str.contentEquals(strbuf)) {
-                    return true;
-                } else {
-                    strbuf.delete(0, strbuf.length());
-                }
-            } else {
-                strbuf.append(expression.charAt(idString));
-            }
-            idString++;
-        }
-        // No delimiter
-        return str.contentEquals(strbuf);
     }
 
     /**
