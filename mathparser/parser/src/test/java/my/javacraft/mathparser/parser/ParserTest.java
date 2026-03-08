@@ -254,6 +254,18 @@ public class ParserTest {
     }
 
     @Test
+    public void testParser_errors_testCase10() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.UNKNOWN_EXPRESSION).toString(), parser.calculate("@1 + 2"));
+    }
+
+    @Test
+    public void testParser_errors_testCase11() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.UNKNOWN_EXPRESSION).toString(), parser.calculate("1@2"));
+    }
+
+    @Test
     public void testParser_inverseTrig_testCase01() {
         Parser parser = new Parser(ParserType.DEGREE);
         double asinResult = Double.parseDouble(parser.calculate("asin(1)"));

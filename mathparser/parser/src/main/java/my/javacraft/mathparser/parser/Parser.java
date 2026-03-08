@@ -446,6 +446,9 @@ public class Parser {
         } else if (Character.isLetter(storString.charAt(idString))) { //isLetter??
             int ctrl = 0;
             while (!isDelimiter(storString.charAt(idString))) {
+                if (!Character.isLetterOrDigit(storString.charAt(idString))) {
+                    throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
+                }
                 strBuilder.append(storString.charAt(idString));
                 idString++;
                 if (idString >= storString.length()) {
@@ -463,6 +466,9 @@ public class Parser {
             }
         } else if (Character.isDigit(storString.charAt(idString))) {
             while (!isDelimiter(storString.charAt(idString))) {
+                if (!Character.isDigit(storString.charAt(idString)) && storString.charAt(idString) != '.') {
+                    throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
+                }
                 strBuilder.append(storString.charAt(idString));
                 idString++;
                 if (idString >= storString.length()) {
@@ -470,6 +476,8 @@ public class Parser {
                 }
             }
             typeToken = Types.NUMBER;
+        } else {
+            throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
         }
         storToken = strBuilder.toString();
     }
