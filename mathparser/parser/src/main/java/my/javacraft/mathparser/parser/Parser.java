@@ -58,8 +58,7 @@ public class Parser {
             if (expression == null) {
                 throw new ParserException(ParserException.Error.NO_EXPRESSION);
             }
-            // remove all spaces
-            expression = expression.replaceAll(" ", "");
+            expression = normalizeExpression(expression);
             if (expression.length() > 1024) {
                 throw new ParserException(ParserException.Error.TOO_BIG);
             }
@@ -80,6 +79,17 @@ public class Parser {
         } catch (ParserException exception) {
             return exception.toString();
         }
+    }
+
+    /**
+     * Removes all whitespace-like characters so parser tokenization stays consistent for tabs/new lines/non-breaking spaces.
+     */
+    private String normalizeExpression(String expression) {
+        StringBuilder normalized = new StringBuilder(expression.length());
+        expression.codePoints()
+                .filter(codePoint -> !Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint))
+                .forEach(normalized::appendCodePoint);
+        return normalized.toString();
     }
 
     /**

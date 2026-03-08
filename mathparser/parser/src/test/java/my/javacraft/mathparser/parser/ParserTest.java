@@ -266,6 +266,24 @@ public class ParserTest {
     }
 
     @Test
+    public void testParser_whitespaceNormalization_testCase01() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("3.0", parser.calculate("\t1 +\n2\r"));
+    }
+
+    @Test
+    public void testParser_whitespaceNormalization_testCase02() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("3.0", parser.calculate("\u00A01\u00A0+\u00A02\u00A0"));
+    }
+
+    @Test
+    public void testParser_whitespaceNormalization_testCase03() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.NO_EXPRESSION).toString(), parser.calculate("\t\n\u00A0\r"));
+    }
+
+    @Test
     public void testParser_inverseTrig_testCase01() {
         Parser parser = new Parser(ParserType.DEGREE);
         double asinResult = Double.parseDouble(parser.calculate("asin(1)"));
