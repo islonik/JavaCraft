@@ -57,10 +57,10 @@ public class ServerThread implements Runnable {
                 this.outStream.flush();
             }
             log.info("Client {} left ", socket.getPort());
-            log.info("Simultaneously connected clients : {}", threads.decrementAndGet());
         } catch (IOException ioe) {
             log.error("run method: " + ioe.getLocalizedMessage(), ioe);
         } finally {
+            log.info("Simultaneously connected clients : {}", threads.decrementAndGet());
             try {
                 if (inStream != null) {
                     inStream.close();

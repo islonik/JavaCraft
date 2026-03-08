@@ -13,7 +13,10 @@ public class StandardSyncClientApplication {
     public static void main(String[] args) {
         int port = PortValidator.getPort(args);
 
-        try (StandardSyncClient syncClient = new StandardSyncClient("localhost", port)) {
+        try (StandardSyncClient syncClient = new StandardSyncClient(
+                "sync-client-",
+                "localhost",
+                port)) {
             syncClient.run();
         }
     }

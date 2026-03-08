@@ -2,34 +2,61 @@ package my.javacraft.echo.standard.client.sync;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.SocketException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * SyncThreadsClient.
+ * StandardSyncClient.
+ * <p>
  * @author Lipatov Nikita
- * Socket examples: http://www.cs.uic.edu/~troy/spring05/cs450/sockets/socket.html
  */
 @Slf4j
 public class StandardSyncClient implements Runnable, AutoCloseable {
 
-    private String host;
-    private int port;
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+    private final String host;
+    private final int port;
     private Socket socket;
     private PrintWriter outStream;
-    private BufferedReader inStream;
+    @Getter
+    private volatile boolean socketClosed = false;
 
-    public StandardSyncClient(String host, int port) {
+    public StandardSyncClient(
+            final String threadName,
+            final String host,
+            final int port) {
+
+        this.host = host;
+        this.port = port;
+
         try {
-            this.host = host;
-            this.port = port;
-
             this.socket = new Socket(host, port);
             this.outStream = new PrintWriter(socket.getOutputStream(), true);
 
-            this.inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             log.info("Sync client {} is connected", socket);
+
+            Thread.ofVirtual()
+                    .name(threadName + port)
+                    .start(() -> {
+                        try {
+                            String line;
+                            while ((line = inStream.readLine()) != null) {
+                                responseQueue.add(line);
+                            }
+                        } catch (SocketException ignored) {
+                            // expected when close() is called while blocking on readLine()
+                        } catch (IOException e) {
+                            log.warn("Listener error: {}", e.getMessage());
+                        } finally {
+                            socketClosed = true;
+                        }
+                    });
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -39,16 +66,23 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         outStream.println(message);
     }
 
-    public String readMessage() throws IOException {
-        return inStream.readLine();
+    public String readMessage() {
+        try {
+            return responseQueue.poll(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    public boolean isConnected() {
+        return socket != null && outStream != null;
     }
 
     public void run() {
         log.info("Starting...");
 
-        try ( // console input stream
-             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))
-        ) {
+        try (BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))) {
             String userInput;
             while (true) {
                 System.out.print("type: ");
@@ -61,20 +95,15 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                     break;
                 }
             }
-        } catch (UnknownHostException e) {
-            log.warn("Don't know about host: {}", host);
-            System.exit(1);
         } catch (IOException e) {
-            log.warn("Couldn't get I/O for the connection to: {}", host);
-            System.exit(1);
+            log.warn("Couldn't get I/O for the connection to: {}:{}", host, port);
+        } finally {
+            close();
         }
     }
 
     public void close() {
         try {
-            if (inStream != null) {
-                inStream.close();
-            }
             if (outStream != null) {
                 outStream.close();
             }
