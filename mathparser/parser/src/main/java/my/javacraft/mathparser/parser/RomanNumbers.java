@@ -2,7 +2,7 @@ package my.javacraft.mathparser.parser;
 
 /**
  * The Roman numeral system uses only seven symbols: I, V, X, L, C, D, and M.
- *
+ * <p>
  * I is 1
  * V is 5
  * X is 10
@@ -13,21 +13,30 @@ package my.javacraft.mathparser.parser;
  */
 public class RomanNumbers {
 
+    private static final int MIN_VALUE = 0;
+    private static final int MAX_VALUE = 4999;
     private final static String[] THOUSANDS = {"", "M", "MM", "MMM", "MMMM"};
     private final static String[] HUNDREDS = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
     private final static String[] TENS = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
     private final static String[] UNITS = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
 
     static String toRoman(int number) {
-        StringBuilder roman = new StringBuilder();
-        roman.append(THOUSANDS[number / 1000]);
-        roman.append(HUNDREDS[(number % 1000) / 100]);
-        roman.append(TENS[(number % 100) / 10]);
-        roman.append(UNITS[number % 10]);
-        return roman.toString();
+        if (number < MIN_VALUE || number > MAX_VALUE) {
+            throw new IllegalArgumentException("Number is out of supported range: " + number);
+        }
+        return THOUSANDS[number / 1000] +
+                HUNDREDS[(number % 1000) / 100] +
+                TENS[(number % 100) / 10] +
+                UNITS[number % 10];
     }
 
     static int fromRoman(String romanNumber) {
+        if (romanNumber == null) {
+            throw new IllegalArgumentException("Roman number cannot be null");
+        }
+        if (romanNumber.isEmpty()) {
+            return 0;
+        }
         int number = 0;
 
         for (int i = THOUSANDS.length - 1; i >= 0; i--) {
@@ -57,10 +66,14 @@ public class RomanNumbers {
         for (int i = UNITS.length - 1; i >= 0; i--) {
             if (romanNumber.startsWith(UNITS[i])) {
                 number += i;
+                romanNumber = romanNumber.substring(UNITS[i].length());
                 break;
             }
         }
 
+        if (!romanNumber.isEmpty()) {
+            throw new IllegalArgumentException("Roman number is invalid");
+        }
         return number;
     }
 

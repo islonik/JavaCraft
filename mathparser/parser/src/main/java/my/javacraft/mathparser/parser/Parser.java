@@ -10,11 +10,11 @@ import java.util.concurrent.ConcurrentMap;
  * @version 1.0.0
  **/
 public class Parser {
-    public int typeTangentUnit;    // unit of angle
+    private int typeTangentUnit;    // unit of angle
     private int idString;           // pointer in string
     private String storString;      // full string
     private String storToken;       // current token
-    private Types typeToken;       // type of current token
+    private Types typeToken;        // type of current token
     // Storage of variables
     private final ConcurrentMap<String, Double> storVars = new ConcurrentHashMap<>();
 
@@ -36,10 +36,6 @@ public class Parser {
         typeTangentUnit = unit;
     }
 
-    public int getTangentUnit() {
-        return typeTangentUnit;
-    }
-
     public void setTangentUnit(int unit) {
         typeTangentUnit = unit;
     }
@@ -52,6 +48,9 @@ public class Parser {
      **/
     public String calculate(String expression) {
         try {
+            if (expression == null) {
+                throw new ParserException(ParserException.Error.NO_EXPRESSION);
+            }
             // remove all spaces
             expression = expression.replaceAll(" ", "");
             if (expression.length() > 1024) {
@@ -69,6 +68,8 @@ public class Parser {
                 throw new ParserException(ParserException.Error.SYNTAX);
             }
             return Double.toString(temp.get());
+        } catch (NumberFormatException exception) {
+            return new ParserException(ParserException.Error.SYNTAX).toString();
         } catch (ParserException exception) {
             return exception.toString();
         }
@@ -86,13 +87,15 @@ public class Parser {
         if (typeToken == Types.VARIABLE) {
             token = storToken;
             tempType = Types.VARIABLE;
+            boolean hasTemporaryDefaultValue = false;
             if (!storVars.containsKey(token)) {
                 storVars.put(token, 0.0);
+                hasTemporaryDefaultValue = true;
             }
             getToken();
             if (!storToken.equals("=")) {
                 putBack();
-                if (!storVars.containsKey(token)) {
+                if (hasTemporaryDefaultValue) {
                     storVars.remove(token);
                 }
                 storToken = token;
@@ -131,7 +134,7 @@ public class Parser {
             thirdStepParsing(temp);
             if (token.equals("-")) {
                 result.set(result.get() - temp.get());
-            } else if (token.equals("+")) {
+            } else { // token.equals("+") - this condition is always true
                 result.set(result.get() + temp.get());
             }
         }
@@ -150,18 +153,20 @@ public class Parser {
             getToken();
             Number temp = new Number();
             fourthStepParsing(temp);
-            if (token.equals("/")) {
-                if (temp.get() == 0.0) {
-                    throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
+            switch (token) {
+                case "/" -> {
+                    if (temp.get() == 0.0) {
+                        throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
+                    }
+                    result.set(result.get() / temp.get());
                 }
-                result.set(result.get() / temp.get());
-            } else if (token.equals("%")) {
-                if (temp.get() == 0.0) {
-                    throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
+                case "%" -> {
+                    if (temp.get() == 0.0) {
+                        throw new ParserException(ParserException.Error.DIVISION_BY_ZERO);
+                    }
+                    result.set(result.get() % temp.get());
                 }
-                result.set(result.get() % temp.get());
-            } else if (token.equals("*")) {
-                result.set(result.get() * temp.get());
+                case "*" -> result.set(result.get() * temp.get());
             }
         }
     }
@@ -268,7 +273,7 @@ public class Parser {
      **/
     private double findVar(String vname) throws ParserException {
         if (!storVars.containsKey(vname)) {
-            throw new ParserException(ParserException.Error.SYNTAX);
+            throw new ParserException(ParserException.Error.UNKNOWN_VARIABLE);
         }
         return Double.parseDouble(storVars.get(vname).toString());
     }
@@ -307,9 +312,9 @@ public class Parser {
             case "log10" -> result.set(Math.log10(result.get()));
             case "round" -> result.set(Math.round(result.get()));
             case "sqrt" -> result.set(Math.sqrt(result.get()));
-            case "acos" -> result.set(Math.acos(valueToMeasure(result.get())));
-            case "asin" -> result.set(Math.asin(valueToMeasure(result.get())));
-            case "atan" -> result.set(Math.atan(valueToMeasure(result.get())));
+            case "acos" -> result.set(valueFromMeasure(Math.acos(result.get())));
+            case "asin" -> result.set(valueFromMeasure(Math.asin(result.get())));
+            case "atan" -> result.set(valueFromMeasure(Math.atan(result.get())));
             case "cos" -> result.set(Math.cos(valueToMeasure(result.get())));
             case "sin" -> result.set(Math.sin(valueToMeasure(result.get())));
             case "tan" -> result.set(Math.tan(valueToMeasure(result.get())));
@@ -324,12 +329,25 @@ public class Parser {
      **/
     private double valueToMeasure(double result) {
         return switch (typeTangentUnit) {
-            case ParserType.DEGREE:
-                yield result * Math.PI / 180;
-            case ParserType.GRADUS:
-                yield result * Math.PI / 200;
-            default: // ParserType.RADIAN
-                yield result;
+            case ParserType.DEGREE -> result * Math.PI / 180;
+            case ParserType.GRADUS -> result * Math.PI / 200;
+            default -> // ParserType.RADIAN
+                    result;
+        };
+    }
+
+    /**
+     * Method converts radians to configured output unit.
+     *
+     * @param result Basic value in radians.
+     * @return converted value in active angle unit.
+     **/
+    private double valueFromMeasure(double result) {
+        return switch (typeTangentUnit) {
+            case ParserType.DEGREE -> result * 180 / Math.PI;
+            case ParserType.GRADUS -> result * 200 / Math.PI;
+            default -> // ParserType.RADIAN
+                    result;
         };
     }
 
@@ -490,4 +508,3 @@ public class Parser {
      **/
     private enum Types {NONE, DELIMITER, VARIABLE, NUMBER, FUNCTION}
 }
-

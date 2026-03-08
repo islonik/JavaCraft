@@ -131,7 +131,7 @@ public class ParserTest {
     @Test
     public void testParser_testCase21() {
         Parser parser = new Parser();
-        Assertions.assertEquals(Double.toString(Math.PI), parser.calculate("2*acos(0)"));
+        Assertions.assertEquals("180.0", parser.calculate("2*acos(0)"));
     }
 
     @Test
@@ -233,6 +233,48 @@ public class ParserTest {
     public void testParser_errors_testCase06() {
         Parser parser = new Parser();
         Assertions.assertEquals(new ParserException(ParserException.Error.SYNTAX).toString(), parser.calculate("rtg(2 * 5)"));
+    }
+
+    @Test
+    public void testParser_errors_testCase07() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.NO_EXPRESSION).toString(), parser.calculate(null));
+    }
+
+    @Test
+    public void testParser_errors_testCase08() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.SYNTAX).toString(), parser.calculate("1..2 + 3"));
+    }
+
+    @Test
+    public void testParser_errors_testCase09() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(new ParserException(ParserException.Error.UNKNOWN_VARIABLE).toString(), parser.calculate("x + 1"));
+    }
+
+    @Test
+    public void testParser_inverseTrig_testCase01() {
+        Parser parser = new Parser(ParserType.DEGREE);
+        double asinResult = Double.parseDouble(parser.calculate("asin(1)"));
+        double acosResult = Double.parseDouble(parser.calculate("acos(0)"));
+        double atanResult = Double.parseDouble(parser.calculate("atan(1)"));
+
+        Assertions.assertEquals(90.0, asinResult, 1.0e-9);
+        Assertions.assertEquals(90.0, acosResult, 1.0e-9);
+        Assertions.assertEquals(45.0, atanResult, 1.0e-9);
+    }
+
+    @Test
+    public void testParser_inverseTrig_testCase02() {
+        Parser parser = new Parser(ParserType.RADIAN);
+        double asinResult = Double.parseDouble(parser.calculate("asin(1)"));
+        double acosResult = Double.parseDouble(parser.calculate("acos(0)"));
+        double atanResult = Double.parseDouble(parser.calculate("atan(1)"));
+
+        Assertions.assertEquals(Math.PI / 2, asinResult, 1.0e-9);
+        Assertions.assertEquals(Math.PI / 2, acosResult, 1.0e-9);
+        Assertions.assertEquals(Math.PI / 4, atanResult, 1.0e-9);
     }
 
 

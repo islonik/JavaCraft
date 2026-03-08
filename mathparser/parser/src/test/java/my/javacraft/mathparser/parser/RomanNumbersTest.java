@@ -42,4 +42,18 @@ public class RomanNumbersTest {
         Assertions.assertEquals(3999, RomanNumbers.fromRoman("MMMCMXCIX"));
         Assertions.assertEquals(4999, RomanNumbers.fromRoman("MMMMCMXCIX"));
     }
+
+    @Test
+    public void testToRomanOutOfBounds() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.toRoman(-1));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.toRoman(5000));
+    }
+
+    @Test
+    public void testFromRomanRejectsInvalidNumbers() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.fromRoman(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.fromRoman("IIII"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.fromRoman("IM"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> RomanNumbers.fromRoman("ABC"));
+    }
 }
