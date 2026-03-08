@@ -284,7 +284,7 @@ public class ParserTest {
     public void testParser_errors_testCase06() {
         Parser parser = new Parser();
         Assertions.assertEquals(
-                new ParserException(ParserException.Error.SYNTAX).toString(),
+                new ParserException(ParserException.Error.UNKNOWN_FUNCTION).toString(),
                 parser.calculate("rtg(2 * 5)")
         );
     }
@@ -351,6 +351,15 @@ public class ParserTest {
         Assertions.assertEquals(
                 new ParserException(ParserException.Error.IDENTIFIER_TOO_LONG).toString(),
                 parser.calculate(functionName + "(1)")
+        );
+    }
+
+    @Test
+    public void testParser_errors_testCase14() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(
+                new ParserException(ParserException.Error.UNKNOWN_FUNCTION).toString(),
+                parser.calculate("customFn(1,2)")
         );
     }
 

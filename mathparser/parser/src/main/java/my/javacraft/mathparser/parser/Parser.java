@@ -318,7 +318,7 @@ public class Parser {
         } else if (MULTI_PARAMETER_FUNCTIONS.contains(function)) {
             multiParameterFunctions(result, function);
         } else {
-            throw new ParserException(ParserException.Error.SYNTAX);
+            throw new ParserException(ParserException.Error.UNKNOWN_FUNCTION);
         }
     }
 

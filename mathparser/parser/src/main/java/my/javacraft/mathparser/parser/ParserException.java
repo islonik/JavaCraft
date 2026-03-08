@@ -17,6 +17,7 @@ public class ParserException extends Exception {
             Error.NO_EXPRESSION, "Expression wasn't found",
             Error.DIVISION_BY_ZERO, "Division by zero",
             Error.UNKNOWN_EXPRESSION, "Unknown expression",
+            Error.UNKNOWN_FUNCTION, "Unknown function",
             Error.UNKNOWN_VARIABLE, "Unknown variable",
             Error.TOO_BIG, "Expression is too big (max '%s' characters)".formatted(EXPRESSION_MAX_LENGTH),
             Error.IDENTIFIER_TOO_LONG, "Identifier is too long (max '%s' characters)".formatted(IDENTIFIER_MAX_LENGTH)
@@ -39,6 +40,7 @@ public class ParserException extends Exception {
         NO_EXPRESSION,
         DIVISION_BY_ZERO,
         UNKNOWN_EXPRESSION,
+        UNKNOWN_FUNCTION,
         UNKNOWN_VARIABLE,
         TOO_BIG,
         IDENTIFIER_TOO_LONG
