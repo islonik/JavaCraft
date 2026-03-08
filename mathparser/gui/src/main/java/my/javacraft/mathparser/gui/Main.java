@@ -1,5 +1,6 @@
 package my.javacraft.mathparser.gui;
 
+import javax.swing.SwingUtilities;
 import my.javacraft.mathparser.gui.view.GUI;
 import my.javacraft.mathparser.parser.Parser;
 
@@ -15,8 +16,12 @@ public class Main {
      * @param args It's not used.
      **/
     public static void main(String[] args) {
-        Parser mathParser = new Parser();
-        GUI instance = new GUI();
-        instance.setMathParser(mathParser);
+        // use Swing’s Event Dispatch Thread (EDT)
+        // In Swing, all UI creation and updates should run on EDT.
+        SwingUtilities.invokeLater(() -> {
+            Parser mathParser = new Parser();
+            GUI instance = new GUI();
+            instance.setMathParser(mathParser);
+        });
     }
 }
