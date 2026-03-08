@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Objects;
 import javax.swing.*;
+import my.javacraft.mathparser.gui.resources.HelpMessageLoader;
 import my.javacraft.mathparser.parser.Parser;
 import my.javacraft.mathparser.parser.ParserType;
 
@@ -484,40 +485,7 @@ public class GUI extends JFrame implements ActionListener {
     }
 
     private void helpButton() {
-        String message =
-                """
-                Top-down parser. Version - 1.00
-        
-                You can use next functions :
-        
-                Functions with one variable:
-                        Abs(x)       - module of number;
-                        Acos(x)      - arccosine of number;
-                        Asin(x)      - arcsinus of number;
-                        Atan(x)      - arctangent of number;
-                        Cbrt(x)      - cube root of number;
-                        Ceil(x)      - rounds UP to the nearest integer;
-                        Cos(x)       - cosine of number;
-                        Exp(x)       - e^x, where e≈2.71828;
-                        Factorial(x) - product 1*2*...*x for non-negative integers only;
-                        Floor(x)     - rounds DOWN to the nearest integer;
-                        Ln(x)        - natural logarithm of x, i.e. log base e (e ≈ 2.71828).
-                        Log10(x)     - logarithm to base 10;
-                        Round(x)     - round number to integer;
-                        Sin(x)       - sinus of number;
-                        Sqrt(x)      - extracting the square of the number;
-                        Tan(x)       - tangent of number;
-        
-                Functions with two variables:
-                        Pow(x,y) - involution;
-                        Log(x,y) - logarithm to base x;
-        
-                Functions with many variables:
-                        Avg(n1,n2,...nn) - return average number;
-                        Max(n1,n2,...nn) - return maximum of number;
-                        Min(n1,n2,...nn) - return minimum of number;
-                        Sum(n1,n2....nn) - return summary of numbers;
-                """;
+        String message = HelpMessageLoader.loadHelpMessage();
 
         // we use JTextArea && JScrollPane to preserve text formatting above
         JTextArea area = new JTextArea(message);
