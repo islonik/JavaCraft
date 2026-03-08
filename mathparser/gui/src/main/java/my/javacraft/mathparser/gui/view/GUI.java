@@ -461,6 +461,14 @@ public class GUI extends JFrame implements ActionListener {
         return outputText.getText();
     }
 
+    public void clearButton() {
+        inputText.setText("");
+    }
+
+    public String getInputText() {
+        return inputText.getText();
+    }
+
     private void moreButton() {
         if (trigger) {
             setSize(currentWidth, currentHeight + 35);
@@ -558,10 +566,6 @@ public class GUI extends JFrame implements ActionListener {
                 radianCheckbox.setSelected(true);
             }
         }
-    }
-
-    private void clearButton() {
-        inputText.setText("");
     }
 
     private void addOneCharacter(String str) {
