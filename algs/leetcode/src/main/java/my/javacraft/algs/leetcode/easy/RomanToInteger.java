@@ -30,6 +30,13 @@ public class RomanToInteger {
     private final static String[] UNITS = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
 
     public int romanToInt(String romanNumber) {
+        if (romanNumber == null) {
+            throw new IllegalArgumentException("Roman number cannot be null");
+        }
+        if (romanNumber.isEmpty()) {
+            return 0;
+        }
+
         int number = 0;
 
         for (int i = THOUSANDS.length - 1; i >= 0; i--) {
@@ -59,8 +66,12 @@ public class RomanToInteger {
         for (int i = UNITS.length - 1; i >= 0; i--) {
             if (romanNumber.startsWith(UNITS[i])) {
                 number += i;
+                romanNumber = romanNumber.substring(UNITS[i].length());
                 break;
             }
+        }
+        if (!romanNumber.isEmpty()) {
+            throw new IllegalArgumentException("Roman number is invalid");
         }
 
         return number;

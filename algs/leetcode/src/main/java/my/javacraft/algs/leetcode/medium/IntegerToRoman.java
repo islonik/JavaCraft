@@ -22,13 +22,22 @@ package my.javacraft.algs.leetcode.medium;
  */
 public class IntegerToRoman {
 
+    private static final int MIN_VALUE = 0;
+    private static final int MAX_VALUE = 4999;
+
     private final static String[] THOUSANDS = {"", "M", "MM", "MMM", "MMMM"};
     private final static String[] HUNDREDS = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
     private final static String[] TENS = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
     private final static String[] UNITS = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
 
     public String intToRoman(int number) {
-        return THOUSANDS[number / 1000] + HUNDREDS[(number % 1000) / 100] + TENS[(number % 100) / 10] + UNITS[number % 10];
+        if (number < MIN_VALUE || number > MAX_VALUE) {
+            throw new IllegalArgumentException("Number is out of supported range: " + number);
+        }
+        return THOUSANDS[number / 1000] +
+                HUNDREDS[(number % 1000) / 100] +
+                TENS[(number % 100) / 10] +
+                UNITS[number % 10];
     }
 
 }

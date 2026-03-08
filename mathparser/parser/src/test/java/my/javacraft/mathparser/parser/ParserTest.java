@@ -200,6 +200,30 @@ public class ParserTest {
     }
 
     @Test
+    public void testParser_testCase31() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("14.0", parser.calculate("2(3+4)"));
+    }
+
+    @Test
+    public void testParser_testCase32() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(Double.toString(2 * Math.PI), parser.calculate("2pi"));
+    }
+
+    @Test
+    public void testParser_testCase33() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("45.0", parser.calculate("(2+3)(4+5)"));
+    }
+
+    @Test
+    public void testParser_testCase34() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("3.0", parser.calculate("3sin(90)"));
+    }
+
+    @Test
     public void testParser_errors_testCase01() {
         Parser parser = new Parser();
         Assertions.assertEquals(new ParserException(ParserException.Error.DIVISION_BY_ZERO).toString(), parser.calculate("10 / 0"));

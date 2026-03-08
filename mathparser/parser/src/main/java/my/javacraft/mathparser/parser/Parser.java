@@ -1,9 +1,9 @@
 package my.javacraft.mathparser.parser;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Top-down parser.
@@ -24,7 +24,7 @@ public class Parser {
     private String storToken;       // current token
     private Types typeToken;        // type of current token
     // Storage of variables
-    private final ConcurrentMap<String, Double> storVars = new ConcurrentHashMap<>();
+    private final Map<String, Double> storVars = new HashMap<>();
 
     {
         typeToken = Types.NONE;
@@ -54,7 +54,7 @@ public class Parser {
      * @param expression expression for parsing
      * @return String result of top-down parser or error message
      **/
-    public String calculate(String expression) {
+    public synchronized String calculate(String expression) {
         try {
             if (expression == null) {
                 throw new ParserException(ParserException.Error.NO_EXPRESSION);
@@ -167,8 +167,14 @@ public class Parser {
     private void thirdStepParsing(Number result) throws ParserException {
         fourthStepParsing(result);
         String token;
-        while ((token = storToken).equals("*") || token.equals("/") || token.equals("%")) {
-            getToken();
+        while ((token = storToken).equals("*")
+                || token.equals("/")
+                || token.equals("%")
+                || isImplicitMultiplicationToken()) {
+            boolean implicitMultiplication = isImplicitMultiplicationToken();
+            if (!implicitMultiplication) {
+                getToken();
+            }
             Number temp = new Number();
             fourthStepParsing(temp);
             switch (token) {
@@ -185,6 +191,7 @@ public class Parser {
                     result.set(result.get() % temp.get());
                 }
                 case "*" -> result.set(result.get() * temp.get());
+                default -> result.set(result.get() * temp.get());
             }
         }
     }
@@ -213,7 +220,7 @@ public class Parser {
      **/
     private void fifthStepParsing(Number result) throws ParserException {
         String str = "";
-        if ((typeToken == Types.DELIMITER) && storToken.equals("+") || storToken.equals("-")) {
+        if ((typeToken == Types.DELIMITER) && (storToken.equals("+") || storToken.equals("-"))) {
             str = storToken;
             getToken();
         }
@@ -293,11 +300,11 @@ public class Parser {
         if (!storVars.containsKey(vname)) {
             throw new ParserException(ParserException.Error.UNKNOWN_VARIABLE);
         }
-        return Double.parseDouble(storVars.get(vname).toString());
+        return storVars.get(vname);
     }
 
     /**
-     * Метод определяет к скольки принимаемым параметрам относится функция.
+     * This method finds which function should be used.
      *
      * @param result result of top-down parser.
      * @throws ParserException error type of top-down parser.
@@ -475,6 +482,10 @@ public class Parser {
             }
         } else if (Character.isDigit(storString.charAt(idString))) {
             while (!isDelimiter(storString.charAt(idString))) {
+                if (Character.isLetter(storString.charAt(idString))) {
+                    // Stop numeric token before letters so expressions like 2pi parse as 2 * pi.
+                    break;
+                }
                 if (!Character.isDigit(storString.charAt(idString)) && storString.charAt(idString) != '.') {
                     throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
                 }
@@ -496,6 +507,16 @@ public class Parser {
      **/
     private boolean isDelimiter(char ctr) {
         return (" +-/\\*%^=(),".indexOf(ctr) != -1);
+    }
+
+    /**
+     * Detects token adjacency that should be interpreted as multiplication.
+     */
+    private boolean isImplicitMultiplicationToken() {
+        return storToken.equals("(")
+                || typeToken == Types.FUNCTION
+                || typeToken == Types.NUMBER
+                || typeToken == Types.VARIABLE;
     }
 
     /**
