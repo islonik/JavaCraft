@@ -11,13 +11,13 @@ import my.javacraft.bdd.service.BMIService;
 import org.junit.jupiter.api.Assertions;
 
 @Slf4j
-public class BMIStepDefinition {
+public class BMIStepDefinitions {
 
     private final BMIService bmiService;
 
     private BigDecimal actualBmi;
 
-    public BMIStepDefinition(BMIService bmiService) {
+    public BMIStepDefinitions(BMIService bmiService) {
         this.bmiService = bmiService;
     }
 
