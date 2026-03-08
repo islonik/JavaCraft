@@ -18,7 +18,7 @@ import my.javacraft.echo.netty.client.NettyClient;
 import my.javacraft.echo.netty.server.NettyServer;
 import org.junit.jupiter.api.Assertions;
 
-public class NettyStepDefinition {
+public class NettyStepDefinitions {
 
     private final Map<String, NettyClient> connections = new ConcurrentHashMap<>();
     private NettyServer server;
