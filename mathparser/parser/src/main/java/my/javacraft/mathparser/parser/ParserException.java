@@ -20,7 +20,8 @@ public class ParserException extends Exception {
             Error.UNKNOWN_FUNCTION, "Unknown function",
             Error.UNKNOWN_VARIABLE, "Unknown variable",
             Error.TOO_BIG, "Expression is too big (max '%s' characters)".formatted(EXPRESSION_MAX_LENGTH),
-            Error.IDENTIFIER_TOO_LONG, "Identifier is too long (max '%s' characters)".formatted(IDENTIFIER_MAX_LENGTH)
+            Error.IDENTIFIER_TOO_LONG, "Identifier is too long (max '%s' characters)".formatted(IDENTIFIER_MAX_LENGTH),
+            Error.NON_NEGATIVE_INTEGERS, "Factorial requires non-negative integers."
     );
 
     private final Error typeError;
@@ -43,7 +44,8 @@ public class ParserException extends Exception {
         UNKNOWN_FUNCTION,
         UNKNOWN_VARIABLE,
         TOO_BIG,
-        IDENTIFIER_TOO_LONG
+        IDENTIFIER_TOO_LONG,
+        NON_NEGATIVE_INTEGERS
     }
 
 }

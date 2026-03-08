@@ -13,7 +13,7 @@ import java.util.Set;
  **/
 public class Parser {
     private static final Set<String> ONE_PARAMETER_FUNCTIONS = Set.of(
-            "abs", "acos", "asin", "atan", "cos", "ln", "log10", "round", "sin", "sqrt", "tan"
+            "abs", "acos", "asin", "atan", "cbrt", "ceil", "cos", "exp", "factorial", "floor", "ln", "log10", "round", "sin", "sqrt", "tan"
     );
     private static final Set<String> TWO_PARAMETER_FUNCTIONS = Set.of("pow", "log");
     private static final Set<String> MULTI_PARAMETER_FUNCTIONS = Set.of("min", "max", "sum", "avg");
@@ -334,17 +334,37 @@ public class Parser {
         sixthStepParsing(result);
         switch (function) {
             case "abs" -> result.set(Math.abs(result.get()));
-            case "ln" -> result.set(Math.log(result.get()));
-            case "log10" -> result.set(Math.log10(result.get()));
-            case "round" -> result.set(Math.round(result.get()));
-            case "sqrt" -> result.set(Math.sqrt(result.get()));
             case "acos" -> result.set(valueFromMeasure(Math.acos(result.get())));
             case "asin" -> result.set(valueFromMeasure(Math.asin(result.get())));
             case "atan" -> result.set(valueFromMeasure(Math.atan(result.get())));
+            case "cbrt" -> result.set(Math.cbrt(result.get()));
+            case "ceil" -> result.set(Math.ceil(result.get()));
             case "cos" -> result.set(Math.cos(valueToMeasure(result.get())));
+            case "exp" -> result.set(Math.exp(result.get()));
+            case "factorial" -> result.set(factorial(result.get()));
+            case "floor" -> result.set(Math.floor(result.get()));
+            case "ln" -> result.set(Math.log(result.get()));
+            case "log10" -> result.set(Math.log10(result.get()));
+            case "round" -> result.set(Math.round(result.get()));
             case "sin" -> result.set(Math.sin(valueToMeasure(result.get())));
+            case "sqrt" -> result.set(Math.sqrt(result.get()));
             case "tan" -> result.set(Math.tan(valueToMeasure(result.get())));
         }
+    }
+
+    /**
+     * Factorial is defined only for non-negative integers in this parser.
+     */
+    private double factorial(double value) throws ParserException {
+        if (value < 0 || value != Math.floor(value)) {
+            throw new ParserException(ParserException.Error.NON_NEGATIVE_INTEGERS);
+        }
+        int intValue = (int) value;
+        double result = 1.0;
+        for (int i = 2; i <= intValue; i++) {
+            result *= i;
+        }
+        return result;
     }
 
     /**

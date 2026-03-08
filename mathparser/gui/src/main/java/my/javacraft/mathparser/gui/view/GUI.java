@@ -481,17 +481,22 @@ public class GUI extends JFrame implements ActionListener {
                         You can use next functions :
                 
                         Functions with one variable:
-                        	    Abs(x)  - module of number;
-                        	    Acos(x) - arccosine of number;
-                        	    Asin(x) - arcsinus of number;
-                        	    Atan(x) - arctangent of number;
-                        	    Cos(x)  - cosine of number;
-                        	    Ln(x) - natural logarithm of x, i.e. log base e (e ≈ 2.71828).
-                        	    Log10(x)- logarithm to base 10;
-                        	    Round(x)- round number to integer;
-                        	    Sin(x)  - sinus of number;
-                        	    Sqrt(x) - extracting the square of the number;
-                        	    Tan(x)  - tangent of number;
+                        	    Abs(x)       - module of number;
+                        	    Acos(x)      - arccosine of number;
+                        	    Asin(x)      - arcsinus of number;
+                        	    Atan(x)      - arctangent of number;
+                        	    Cbrt(x)      - cube root of number;
+                        	    Ceil(x)      - rounds UP to the nearest integer;
+                        	    Cos(x)       - cosine of number;
+                        	    Exp(x)       - e^x, where e≈2.71828;
+                        	    Factorial(x) - product 1*2*...*x for non-negative integers only;
+                        	    Floor(x)     - rounds DOWN to the nearest integer;
+                        	    Ln(x)        - natural logarithm of x, i.e. log base e (e ≈ 2.71828).
+                        	    Log10(x)     - logarithm to base 10;
+                        	    Round(x)     - round number to integer;
+                        	    Sin(x)       - sinus of number;
+                        	    Sqrt(x)      - extracting the square of the number;
+                        	    Tan(x)       - tangent of number;
                 
                         Functions with two variables:
                         	    Pow(x,y) - involution;

@@ -1,5 +1,6 @@
 package my.javacraft.mathparser.parser;
 
+import my.javacraft.mathparser.parser.ParserException.Error;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -143,36 +144,66 @@ public class ParserTest {
     @Test
     public void testParser_testCase21() {
         Parser parser = new Parser();
-        Assertions.assertEquals("180.0", parser.calculate("2*acos(0)"));
+        Assertions.assertEquals("2.0", parser.calculate("ceil(1.2)"));
     }
 
     @Test
     public void testParser_testCase22() {
         Parser parser = new Parser();
-        Assertions.assertEquals("0.0", parser.calculate("2*asin(0)"));
+        Assertions.assertEquals("1.0", parser.calculate("floor(1.8)"));
     }
 
     @Test
     public void testParser_testCase23() {
         Parser parser = new Parser();
-        Assertions.assertEquals("0.0", parser.calculate("atan(0)"));
+        Assertions.assertEquals(Math.exp(1), Double.parseDouble(parser.calculate("exp(1)")), 1.0e-12);
     }
 
     @Test
     public void testParser_testCase24() {
         Parser parser = new Parser();
-        Assertions.assertEquals("1.0", parser.calculate("round(tan(45))"));
+        Assertions.assertEquals("3.0", parser.calculate("cbrt(27)"));
     }
 
     @Test
     public void testParser_testCase25() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("120.0", parser.calculate("factorial(5)"));
+    }
+
+    @Test
+    public void testParser_testCase26() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("180.0", parser.calculate("2*acos(0)"));
+    }
+
+    @Test
+    public void testParser_testCase27() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("0.0", parser.calculate("2*asin(0)"));
+    }
+
+    @Test
+    public void testParser_testCase28() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("0.0", parser.calculate("atan(0)"));
+    }
+
+    @Test
+    public void testParser_testCase29() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("1.0", parser.calculate("round(tan(45))"));
+    }
+
+    @Test
+    public void testParser_testCase30() {
         Parser parser = new Parser();
         parser.calculate("var = 45");
         Assertions.assertEquals("180.0", parser.calculate("var * 4"));
     }
 
     @Test
-    public void testParser_testCase26() {
+    public void testParser_testCase31() {
         Parser parser = new Parser();
         parser.calculate("var = 45");
         parser.calculate("var = 10");
@@ -180,7 +211,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_testCase27() {
+    public void testParser_testCase32() {
         Parser parser = new Parser();
         parser.setTangentUnit(ParserType.GRADUS);
 
@@ -188,7 +219,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_testCase28() {
+    public void testParser_testCase33() {
         Parser parser = new Parser();
         parser.setTangentUnit(ParserType.GRADUS);
 
@@ -196,7 +227,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_testCase29() {
+    public void testParser_testCase34() {
         Parser parser = new Parser();
         parser.setTangentUnit(ParserType.RADIAN);
 
@@ -204,7 +235,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_testCase30() {
+    public void testParser_testCase35() {
         Parser parser = new Parser();
         parser.setTangentUnit(ParserType.RADIAN);
 
@@ -212,25 +243,25 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_testCase31() {
+    public void testParser_testCase36() {
         Parser parser = new Parser();
         Assertions.assertEquals("14.0", parser.calculate("2(3+4)"));
     }
 
     @Test
-    public void testParser_testCase32() {
+    public void testParser_testCase37() {
         Parser parser = new Parser();
         Assertions.assertEquals(Double.toString(2 * Math.PI), parser.calculate("2pi"));
     }
 
     @Test
-    public void testParser_testCase33() {
+    public void testParser_testCase38() {
         Parser parser = new Parser();
         Assertions.assertEquals("45.0", parser.calculate("(2+3)(4+5)"));
     }
 
     @Test
-    public void testParser_testCase34() {
+    public void testParser_testCase39() {
         Parser parser = new Parser();
         Assertions.assertEquals("3.0", parser.calculate("3sin(90)"));
     }
@@ -360,6 +391,24 @@ public class ParserTest {
         Assertions.assertEquals(
                 new ParserException(ParserException.Error.UNKNOWN_FUNCTION).toString(),
                 parser.calculate("customFn(1,2)")
+        );
+    }
+
+    @Test
+    public void testParser_errors_testCase15a() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(
+                new ParserException(Error.NON_NEGATIVE_INTEGERS).toString(),
+                parser.calculate("factorial(-1)")
+        );
+    }
+
+    @Test
+    public void testParser_errors_testCase15b() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(
+                new ParserException(Error.NON_NEGATIVE_INTEGERS).toString(),
+                parser.calculate("factorial(ln(8))")
         );
     }
 
