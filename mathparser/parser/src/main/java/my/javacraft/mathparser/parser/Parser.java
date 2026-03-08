@@ -361,6 +361,9 @@ public class Parser {
         if (value < 0 || value != Math.floor(value)) {
             throw new ParserException(ParserException.Error.NON_NEGATIVE_INTEGERS);
         }
+        if (value > ParserException.FACTORIAL_MAX_NUMBER) {
+            throw new ParserException(ParserException.Error.NUMERIC_OVERFLOW);
+        }
         int intValue = (int) value;
         double result = 1.0;
         for (int i = 2; i <= intValue; i++) {

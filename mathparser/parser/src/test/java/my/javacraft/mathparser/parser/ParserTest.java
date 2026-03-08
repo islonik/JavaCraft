@@ -414,6 +414,15 @@ public class ParserTest {
     }
 
     @Test
+    public void testParser_errors_testCase15c() {
+        Parser parser = new Parser();
+        Assertions.assertEquals(
+                new ParserException(Error.NUMERIC_OVERFLOW).toString(),
+                parser.calculate("factorial(13)")
+        );
+    }
+
+    @Test
     public void testParser_whitespaceNormalization_testCase01() {
         Parser parser = new Parser();
         Assertions.assertEquals("3.0", parser.calculate("\t1 +\n2\r"));
