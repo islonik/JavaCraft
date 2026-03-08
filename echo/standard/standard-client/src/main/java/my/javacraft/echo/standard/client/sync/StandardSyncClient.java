@@ -79,6 +79,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         return socket != null && outStream != null;
     }
 
+    @Override
     public void run() {
         log.info("Starting...");
 
@@ -86,7 +87,14 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
             String userInput;
             while (true) {
                 System.out.print("type: ");
-                userInput = stdIn.readLine().trim();
+                String line = stdIn.readLine();
+                if (line == null) {
+                    // readLine() returns null when the input stream reaches end-of-file (EOF)
+                    // for example, Ctrl+D (Unix/Mac) or Ctrl+Z (Windows) — the user signals EOF on the terminal
+                    log.info("Detected end-of-file (EOF). Thread terminating...");
+                    break;
+                }
+                userInput = line.trim();
 
                 sendMessage(userInput);
 
@@ -102,6 +110,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         }
     }
 
+    @Override
     public void close() {
         try {
             if (outStream != null) {
