@@ -500,7 +500,7 @@ public class GUI extends JFrame implements ActionListener {
         
                 Functions with two variables:
                         Pow(x,y) - involution;
-                        Log(x,y) - logarithm to base х;
+                        Log(x,y) - logarithm to base x;
         
                 Functions with many variables:
                         Avg(n1,n2,...nn) - return average number;

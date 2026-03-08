@@ -19,34 +19,34 @@ public class Parser {
     private static final Set<String> TWO_PARAMETER_FUNCTIONS = Set.of("pow", "log");
     private static final Set<String> MULTI_PARAMETER_FUNCTIONS = Set.of("min", "max", "sum", "avg");
 
-    private ParserType typeTangentUnit;    // unit of angle
-    private int idString;           // pointer in string
-    private String storString;      // full string
-    private String storToken;       // current token
-    private Types typeToken;        // type of current token
+    private volatile ParserType angleUnit; // unit of angle
+    private String inputString;            // full string
+    private int currentIndex;              // pointer in string
+    private Types tokenType;               // type of current token
+    private String token;                  // current token
     // Storage of variables
     private final Map<String, Double> storVars = new HashMap<>();
 
     {
-        typeToken = Types.NONE;
-        idString = 0;
-        storToken = "";
-        storString = "";
+        inputString = "";
+        currentIndex = 0;
+        tokenType = Types.NONE;
+        token = "";
     }
 
     public Parser() {
-        typeTangentUnit = ParserType.DEGREE;
+        angleUnit = ParserType.DEGREE;
     }
 
     /**
      * @param unit unit of angle
      **/
     public Parser(ParserType unit) {
-        typeTangentUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
+        angleUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
     }
 
-    public void setTangentUnit(ParserType unit) {
-        typeTangentUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
+    public synchronized void setTangentUnit(ParserType unit) {
+        angleUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
     }
 
     /**
@@ -65,15 +65,15 @@ public class Parser {
                 throw new ParserException(ParserException.Error.TOO_BIG);
             }
             // Locale.ROOT should prevent misparse in some locales (e.g., Turkish)
-            storString = expression.toLowerCase(Locale.ROOT);
-            idString = 0;
+            inputString = expression.toLowerCase(Locale.ROOT);
+            currentIndex = 0;
             getToken();
-            if (storToken.isEmpty()) {
+            if (token.isEmpty()) {
                 throw new ParserException(ParserException.Error.NO_EXPRESSION);
             }
             Number temp = new Number();
             firstStepParsing(temp);
-            if (!storToken.isEmpty()) {
+            if (!token.isEmpty()) {
                 throw new ParserException(ParserException.Error.SYNTAX);
             }
             return Double.toString(temp.get());
@@ -104,8 +104,8 @@ public class Parser {
     private void firstStepParsing(Number result) throws ParserException {
         String token;
         Types tempType;
-        if (typeToken == Types.VARIABLE) {
-            token = storToken;
+        if (tokenType == Types.VARIABLE) {
+            token = this.token;
             tempType = Types.VARIABLE;
             boolean hasTemporaryDefaultValue = false;
             if (!storVars.containsKey(token)) {
@@ -113,13 +113,13 @@ public class Parser {
                 hasTemporaryDefaultValue = true;
             }
             getToken();
-            if (!storToken.equals("=")) {
+            if (!this.token.equals("=")) {
                 putBack();
                 if (hasTemporaryDefaultValue) {
                     storVars.remove(token);
                 }
-                storToken = token;
-                typeToken = tempType;
+                this.token = token;
+                tokenType = tempType;
             } else {
                 getToken();
                 secondStepParsing(result);
@@ -134,8 +134,8 @@ public class Parser {
      * Method returns pointer to the start position
      **/
     private void putBack() {
-        for (int i = 0; i < storToken.length(); i++) {
-            idString--;
+        for (int i = 0; i < token.length(); i++) {
+            currentIndex--;
         }
     }
 
@@ -148,7 +148,7 @@ public class Parser {
     private void secondStepParsing(Number result) throws ParserException {
         thirdStepParsing(result);
         String token;
-        while ((token = storToken).equals("+") || token.equals("-")) {
+        while ((token = this.token).equals("+") || token.equals("-")) {
             getToken();
             Number temp = new Number();
             thirdStepParsing(temp);
@@ -169,7 +169,7 @@ public class Parser {
     private void thirdStepParsing(Number result) throws ParserException {
         fourthStepParsing(result);
         String token;
-        while ((token = storToken).equals("*")
+        while ((token = this.token).equals("*")
                 || token.equals("/")
                 || token.equals("%")
                 || isImplicitMultiplicationToken()) {
@@ -206,7 +206,7 @@ public class Parser {
      **/
     private void fourthStepParsing(Number result) throws ParserException {
         fifthStepParsing(result);
-        if (storToken.equals("^")) {
+        if (token.equals("^")) {
             getToken();
             Number temp = new Number(0.0);
             fourthStepParsing(temp);
@@ -222,8 +222,8 @@ public class Parser {
      **/
     private void fifthStepParsing(Number result) throws ParserException {
         String str = "";
-        if ((typeToken == Types.DELIMITER) && (storToken.equals("+") || storToken.equals("-"))) {
-            str = storToken;
+        if ((tokenType == Types.DELIMITER) && (token.equals("+") || token.equals("-"))) {
+            str = token;
             getToken();
         }
         sixthStepParsing(result);
@@ -239,10 +239,10 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void sixthStepParsing(Number result) throws ParserException {
-        if (storToken.equals("(")) {
+        if (token.equals("(")) {
             getToken();
             firstStepParsing(result);
-            if (!storToken.equals(")")) {
+            if (!token.equals(")")) {
                 throw new ParserException(ParserException.Error.UNBAL_PARENTS);
             }
             getToken();
@@ -258,10 +258,10 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void seventhStepParsing(Number result) throws ParserException {
-        if (storToken.equals("e")) {
+        if (token.equals("e")) {
             result.set(Math.E);
             getToken();
-        } else if (storToken.equals("pi")) {
+        } else if (token.equals("pi")) {
             result.set(Math.PI);
             getToken();
         } else {
@@ -276,16 +276,16 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void atom(Number result) throws ParserException {
-        switch (typeToken) {
+        switch (tokenType) {
             case NUMBER:
-                result.set(Double.parseDouble(storToken));
+                result.set(Double.parseDouble(token));
                 getToken();
                 return;
             case FUNCTION:
                 functions(result);
                 return;
             case VARIABLE:
-                result.set(findVar(storToken));
+                result.set(findVar(token));
                 getToken();
                 return;
             default:
@@ -312,7 +312,7 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void functions(Number result) throws ParserException {
-        String function = storToken;
+        String function = token;
         if (ONE_PARAMETER_FUNCTIONS.contains(function)) {
             oneParameterFunctions(result, function);
         } else if (TWO_PARAMETER_FUNCTIONS.contains(function)) {
@@ -379,7 +379,7 @@ public class Parser {
      * @return converted value.
      **/
     private double valueToMeasure(double result) {
-        return switch (typeTangentUnit) {
+        return switch (angleUnit) {
             case DEGREE -> result * Math.PI / 180;
             case GRADUS -> result * Math.PI / 200;
             case RADIAN -> result;
@@ -393,7 +393,7 @@ public class Parser {
      * @return converted value in active angle unit.
      **/
     private double valueFromMeasure(double result) {
-        return switch (typeTangentUnit) {
+        return switch (angleUnit) {
             case DEGREE -> result * 180 / Math.PI;
             case GRADUS -> result * 200 / Math.PI;
             case RADIAN -> result;
@@ -411,7 +411,7 @@ public class Parser {
         getToken(); // bracket
         getToken(); // number or smth like it
         firstStepParsing(result);
-        if (storToken.equals(",")) {
+        if (token.equals(",")) {
             getToken();
             Number temp = new Number();
             firstStepParsing(temp);
@@ -420,9 +420,9 @@ public class Parser {
             } else if (function.equals("log")) {
                 result.set(Math.log(temp.get()) / Math.log(result.get()));
             }
-            if (storToken.equals(",")) {
+            if (token.equals(",")) {
                 throw new ParserException(ParserException.Error.SYNTAX);
-            } else if (!storToken.equals(")")) {
+            } else if (!token.equals(")")) {
                 throw new ParserException(ParserException.Error.UNBAL_PARENTS);
             }
             getToken();
@@ -444,7 +444,7 @@ public class Parser {
         firstStepParsing(result);
         int i = 1;
         for (; ; ) {
-            if (storToken.equals(",")) {
+            if (token.equals(",")) {
                 getToken();
                 Number temp = new Number();
                 firstStepParsing(temp);
@@ -456,7 +456,7 @@ public class Parser {
                     result.set(result.get() + temp.get());
                     i++;
                 }
-            } else if (storToken.equals(")")) {
+            } else if (token.equals(")")) {
                 if (function.equals("avg")) {
                     result.set(result.get() / i);
                 }
@@ -474,26 +474,26 @@ public class Parser {
      * @throws ParserException error type of top-down parser.
      **/
     private void getToken() throws ParserException {
-        typeToken = Types.NONE;
-        storToken = "";
-        StringBuilder strBuilder = new StringBuilder(storString.length());
-        if (idString == storString.length()) {
+        tokenType = Types.NONE;
+        token = "";
+        StringBuilder strBuilder = new StringBuilder(inputString.length());
+        if (currentIndex == inputString.length()) {
             return;
         }
 
-        if (isDelimiter(storString.charAt(idString))) {
-            strBuilder.append(storString.charAt(idString));
-            idString++;
-            typeToken = Types.DELIMITER;
-        } else if (Character.isLetter(storString.charAt(idString))) { //isLetter??
+        if (isDelimiter(inputString.charAt(currentIndex))) {
+            strBuilder.append(inputString.charAt(currentIndex));
+            currentIndex++;
+            tokenType = Types.DELIMITER;
+        } else if (Character.isLetter(inputString.charAt(currentIndex))) {
             int ctrl = 0;
-            while (!isDelimiter(storString.charAt(idString))) {
-                if (!Character.isLetterOrDigit(storString.charAt(idString))) {
+            while (!isDelimiter(inputString.charAt(currentIndex))) {
+                if (!Character.isLetterOrDigit(inputString.charAt(currentIndex))) {
                     throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
                 }
-                strBuilder.append(storString.charAt(idString));
-                idString++;
-                if (idString >= storString.length()) {
+                strBuilder.append(inputString.charAt(currentIndex));
+                currentIndex++;
+                if (currentIndex >= inputString.length()) {
                     break;
                 }
                 ctrl++;
@@ -501,31 +501,31 @@ public class Parser {
                     throw new ParserException(ParserException.Error.IDENTIFIER_TOO_LONG);
                 }
             }
-            if (idString < storString.length() && storString.charAt(idString) == '(') {
-                typeToken = Types.FUNCTION;
+            if (currentIndex < inputString.length() && inputString.charAt(currentIndex) == '(') {
+                tokenType = Types.FUNCTION;
             } else {
-                typeToken = Types.VARIABLE;
+                tokenType = Types.VARIABLE;
             }
-        } else if (Character.isDigit(storString.charAt(idString))) {
-            while (!isDelimiter(storString.charAt(idString))) {
-                if (Character.isLetter(storString.charAt(idString))) {
+        } else if (Character.isDigit(inputString.charAt(currentIndex))) {
+            while (!isDelimiter(inputString.charAt(currentIndex))) {
+                if (Character.isLetter(inputString.charAt(currentIndex))) {
                     // Stop numeric token before letters so expressions like 2pi parse as 2 * pi.
                     break;
                 }
-                if (!Character.isDigit(storString.charAt(idString)) && storString.charAt(idString) != '.') {
+                if (!Character.isDigit(inputString.charAt(currentIndex)) && inputString.charAt(currentIndex) != '.') {
                     throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
                 }
-                strBuilder.append(storString.charAt(idString));
-                idString++;
-                if (idString >= storString.length()) {
+                strBuilder.append(inputString.charAt(currentIndex));
+                currentIndex++;
+                if (currentIndex >= inputString.length()) {
                     break;
                 }
             }
-            typeToken = Types.NUMBER;
+            tokenType = Types.NUMBER;
         } else {
             throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
         }
-        storToken = strBuilder.toString();
+        token = strBuilder.toString();
     }
 
     /**
@@ -539,10 +539,10 @@ public class Parser {
      * Detects token adjacency that should be interpreted as multiplication.
      */
     private boolean isImplicitMultiplicationToken() {
-        return storToken.equals("(")
-                || typeToken == Types.FUNCTION
-                || typeToken == Types.NUMBER
-                || typeToken == Types.VARIABLE;
+        return token.equals("(")
+                || tokenType == Types.FUNCTION
+                || tokenType == Types.NUMBER
+                || tokenType == Types.VARIABLE;
     }
 
     /**
