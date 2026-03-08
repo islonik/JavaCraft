@@ -76,6 +76,9 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
     }
 
     public void sendMessage(String message) {
+        if (closedByClient.get() || outStream == null) {
+            throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
+        }
         outStream.println(message);
     }
 
