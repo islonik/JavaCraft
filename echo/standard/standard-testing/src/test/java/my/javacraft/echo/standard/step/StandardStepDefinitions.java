@@ -223,7 +223,7 @@ public class StandardStepDefinitions {
         StandardSyncClient sync = syncConnections.get(clientName);
         if (sync != null) {
             doAssertResponse(clientName, message, expectedResponse,
-                    sync::sendMessage, sync::readMessage, sync::isSocketClosed);
+                    sync::sendMessage, sync::readMessage, sync::isClosedByServer);
             return;
         }
         StandardAsyncClient async = requireAsyncClient(clientName);
@@ -251,7 +251,7 @@ public class StandardStepDefinitions {
     private void performGoodbye(String clientName) {
         StandardSyncClient sync = syncConnections.get(clientName);
         if (sync != null) {
-            doGoodbye(clientName, sync::sendMessage, sync::readMessage, sync::isSocketClosed);
+            doGoodbye(clientName, sync::sendMessage, sync::readMessage, sync::isClosedByServer);
             return;
         }
         StandardAsyncClient async = requireAsyncClient(clientName);
@@ -270,7 +270,7 @@ public class StandardStepDefinitions {
     private void resolveSocketClosed(String clientName) {
         StandardSyncClient sync = syncConnections.get(clientName);
         if (sync != null) {
-            awaitSocketClosed(clientName, sync::isSocketClosed);
+            awaitSocketClosed(clientName, sync::isClosedByServer);
             return;
         }
         StandardAsyncClient async = requireAsyncClient(clientName);

@@ -6,6 +6,7 @@ import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,12 +19,24 @@ import lombok.extern.slf4j.Slf4j;
 public class StandardSyncClient implements Runnable, AutoCloseable {
 
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+
     private final String host;
     private final int port;
     private Socket socket;
     private PrintWriter outStream;
+
+    // closedByClient tracks whether close() has been called (by us, intentionally).
+    // It guards the close logic so it runs exactly once and makes isConnected() return false after close.
+    private final AtomicBoolean closedByClient = new AtomicBoolean(false);
+
+    // closedByServer tracks whether the server closed the connection
+    // (detected by the listener thread hitting EOF on readLine()).
+    // Tests poll this to know the server has finished processing "bye" and decremented its counter
+    // before the next step runs.
+    // Sequence:
+    // Client sends "bye" → server responds → server closes its side → listener detects EOF → socketClosed = true (server is done)
     @Getter
-    private volatile boolean socketClosed = false;
+    private volatile boolean closedByServer = false;
 
     public StandardSyncClient(
             final String threadName,
@@ -54,7 +67,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                         } catch (IOException e) {
                             log.warn("Listener error: {}", e.getMessage());
                         } finally {
-                            socketClosed = true;
+                            closedByServer = true;
                         }
                     });
         } catch (Exception e) {
@@ -76,7 +89,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
     }
 
     public boolean isConnected() {
-        return socket != null && outStream != null;
+        return !closedByClient.get() && socket != null && outStream != null;
     }
 
     @Override
@@ -112,6 +125,9 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
 
     @Override
     public void close() {
+        if (!closedByClient.compareAndSet(false, true)) {
+            return;
+        }
         try {
             if (outStream != null) {
                 outStream.close();
