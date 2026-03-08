@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StandardSyncClient implements Runnable, AutoCloseable {
 
+    private static final int READ_MESSAGE_TIMEOUT = 5; // seconds
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
 
     private final String host;
@@ -84,7 +85,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
 
     public String readMessage() {
         try {
-            return responseQueue.poll(5, TimeUnit.SECONDS);
+            return responseQueue.poll(READ_MESSAGE_TIMEOUT, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
