@@ -117,6 +117,18 @@ public class ParserTest {
     }
 
     @Test
+    public void testParser_testCase18a() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("3.0", parser.calculate("round(ln(e^3))"));
+    }
+
+    @Test
+    public void testParser_testCase18b() {
+        Parser parser = new Parser();
+        Assertions.assertEquals("0.0", parser.calculate("ln(1)"));
+    }
+
+    @Test
     public void testParser_testCase19() {
         Parser parser = new Parser();
         Assertions.assertEquals("100.0", parser.calculate("abs(-100)"));

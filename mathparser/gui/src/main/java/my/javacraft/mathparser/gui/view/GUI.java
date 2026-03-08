@@ -486,6 +486,7 @@ public class GUI extends JFrame implements ActionListener {
                         	    Asin(x) - arcsinus of number;
                         	    Atan(x) - arctangent of number;
                         	    Cos(x)  - cosine of number;
+                        	    Ln(x) - natural logarithm of x, i.e. log base e (e ≈ 2.71828).
                         	    Log10(x)- logarithm to base 10;
                         	    Round(x)- round number to integer;
                         	    Sin(x)  - sinus of number;

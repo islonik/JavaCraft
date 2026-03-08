@@ -13,7 +13,7 @@ import java.util.Set;
  **/
 public class Parser {
     private static final Set<String> ONE_PARAMETER_FUNCTIONS = Set.of(
-            "abs", "acos", "asin", "atan", "cos", "log10", "round", "sin", "sqrt", "tan"
+            "abs", "acos", "asin", "atan", "cos", "ln", "log10", "round", "sin", "sqrt", "tan"
     );
     private static final Set<String> TWO_PARAMETER_FUNCTIONS = Set.of("pow", "log");
     private static final Set<String> MULTI_PARAMETER_FUNCTIONS = Set.of("min", "max", "sum", "avg");
@@ -334,6 +334,7 @@ public class Parser {
         sixthStepParsing(result);
         switch (function) {
             case "abs" -> result.set(Math.abs(result.get()));
+            case "ln" -> result.set(Math.log(result.get()));
             case "log10" -> result.set(Math.log10(result.get()));
             case "round" -> result.set(Math.round(result.get()));
             case "sqrt" -> result.set(Math.sqrt(result.get()));
