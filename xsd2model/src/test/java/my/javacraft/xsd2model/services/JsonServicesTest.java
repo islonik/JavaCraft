@@ -53,4 +53,11 @@ public class JsonServicesTest {
         );
     }
 
+    @Test
+    void testIsJsonHandlesValidInvalidAndNonObjectInput() {
+        Assertions.assertTrue(JsonServices.isJson("{\"id\": 1}"));
+        Assertions.assertFalse(JsonServices.isJson("plain-text"));
+        Assertions.assertFalse(JsonServices.isJson("{not-valid-json}"));
+    }
+
 }
