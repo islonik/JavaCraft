@@ -140,6 +140,8 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+        } finally {
+            closedByServer = true;
         }
     }
 }
