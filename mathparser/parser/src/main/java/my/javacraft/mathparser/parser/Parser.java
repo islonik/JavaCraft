@@ -41,11 +41,11 @@ public class Parser {
      * @param unit unit of angle
      **/
     public Parser(ParserType unit) {
-        typeTangentUnit = Objects.requireNonNull(unit, " ParserTypeunit cannot be null");
+        typeTangentUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
     }
 
     public void setTangentUnit(ParserType unit) {
-        typeTangentUnit = Objects.requireNonNull(unit, " ParserTypeunit cannot be null");
+        typeTangentUnit = Objects.requireNonNull(unit, "ParserType unit cannot be null");
     }
 
     /**
@@ -60,7 +60,7 @@ public class Parser {
                 throw new ParserException(ParserException.Error.NO_EXPRESSION);
             }
             expression = normalizeExpression(expression);
-            if (expression.length() > 1024) {
+            if (expression.length() > ParserException.EXPRESSION_MAX_LENGTH) {
                 throw new ParserException(ParserException.Error.TOO_BIG);
             }
             storString = expression.toLowerCase();
@@ -471,8 +471,8 @@ public class Parser {
                     break;
                 }
                 ctrl++;
-                if (ctrl >= 32) {
-                    throw new ParserException(ParserException.Error.UNKNOWN_EXPRESSION);
+                if (ctrl > ParserException.IDENTIFIER_MAX_LENGTH) {
+                    throw new ParserException(ParserException.Error.IDENTIFIER_TOO_LONG);
                 }
             }
             if (idString < storString.length() && storString.charAt(idString) == '(') {

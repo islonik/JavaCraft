@@ -8,6 +8,9 @@ import java.util.Map;
  **/
 public class ParserException extends Exception {
 
+    public static final int EXPRESSION_MAX_LENGTH = 1024;
+    public static final int IDENTIFIER_MAX_LENGTH = 32;
+
     private static final Map<Error, String> errorMessages = Map.of(
             Error.SYNTAX, "Syntax error",
             Error.UNBAL_PARENTS, "Unbalanced brackets",
@@ -15,7 +18,8 @@ public class ParserException extends Exception {
             Error.DIVISION_BY_ZERO, "Division by zero",
             Error.UNKNOWN_EXPRESSION, "Unknown expression",
             Error.UNKNOWN_VARIABLE, "Unknown variable",
-            Error.TOO_BIG, "Expression is too big"
+            Error.TOO_BIG, "Expression is too big (max '%s' characters)".formatted(EXPRESSION_MAX_LENGTH),
+            Error.IDENTIFIER_TOO_LONG, "Identifier is too long (max '%s' characters)".formatted(IDENTIFIER_MAX_LENGTH)
     );
 
     private final Error typeError;
@@ -36,7 +40,8 @@ public class ParserException extends Exception {
         DIVISION_BY_ZERO,
         UNKNOWN_EXPRESSION,
         UNKNOWN_VARIABLE,
-        TOO_BIG
+        TOO_BIG,
+        IDENTIFIER_TOO_LONG
     }
 
 }
