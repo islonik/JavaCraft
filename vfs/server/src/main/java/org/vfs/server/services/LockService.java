@@ -25,18 +25,6 @@ public class LockService {
         return true;
     }
 
-    public boolean removeLock(Node source, Node child) {
-        if (source.contains(child)) {
-            Collection<Node> nodes = child.getChildren();
-            for (Node node : nodes) {
-                removeLock(child, node);
-            }
-            removeNode(child);
-            return true;
-        }
-        return false;
-    }
-
     public boolean removeNode(Node node) {
         if (!lockMap.containsKey(node)) {
             return false;
@@ -74,11 +62,11 @@ public class LockService {
     }
 
     public Collection<Node> getAllLockedNodes(Node node) {
-        Collection<Node> lockedNodes = Collections.EMPTY_LIST;
+        Collection<Node> lockedNodes = new ArrayList<>();
         if(lockMap.containsKey(node)) {
             Collection<Node> children = node.getChildren();
             for(Node child : children) {
-                if(isLocked(child)) {
+                if (isLocked(child)) {
                     lockedNodes.add(child);
                 }
                 lockedNodes.addAll(getAllLockedNodes(child));
@@ -152,10 +140,11 @@ public class LockService {
     }
 
     public User getUser(Node node) {
-        if (lockMap.containsKey(node)) {
-            return lockMap.get(node).getUser();
-        }
-        return null;
+        return Optional.ofNullable(node)
+                .filter(lockMap::containsKey)
+                .map(lockMap::get)
+                .map(NodeLock::getUser)
+                .orElse(null);
     }
 
 

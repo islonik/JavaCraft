@@ -31,10 +31,7 @@ public class Lock extends AbstractCommand implements Command {
 
         Node node = nodeService.getNode(directory, lockDirectory);
         if (node != null) {
-            boolean recursive = false;
-            if (key != null && key.equals("r")) {
-                recursive = true;
-            }
+            boolean recursive = key != null && key.equalsIgnoreCase("r");
             if (lockService.isLocked(node, recursive)) {
                 sendOK("Node or children nodes is/are locked!");
                 return;

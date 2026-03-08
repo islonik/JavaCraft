@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -18,6 +19,7 @@ import org.vfs.server.utils.NodePrinter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collection;
 
 /**
  * @author Lipatov Nikita
@@ -253,6 +255,80 @@ public class LockServiceTest {
                 """,
                 nodePrinter.print(nodeService.getRoot())
         );
+    }
+
+    @Test
+    public void testRecursiveLockUnlockAndUnlockAll() {
+        Node home = nodeService.getHome();
+        Node services = nodeService.getNodeManager().newNode("services", NodeTypes.DIR);
+        nodeService.getNodeManager().setParent(services, home);
+        Node auth = nodeService.getNodeManager().newNode("auth", NodeTypes.DIR);
+        nodeService.getNodeManager().setParent(auth, services);
+
+        User owner = User.newBuilder()
+                .setId("501")
+                .setLogin("owner")
+                .build();
+        User stranger = User.newBuilder()
+                .setId("502")
+                .setLogin("stranger")
+                .build();
+
+        Assertions.assertTrue(lockService.lock(owner, services, true));
+        Assertions.assertTrue(lockService.isLocked(services));
+        Assertions.assertTrue(lockService.isLocked(auth));
+        Assertions.assertTrue(lockService.isLocked(home, true));
+
+        Collection<Node> lockedNodes = lockService.getAllLockedNodes(home);
+        Assertions.assertTrue(lockedNodes.contains(services));
+        Assertions.assertTrue(lockedNodes.contains(auth));
+
+        Assertions.assertFalse(lockService.unlock(stranger, services, true));
+        Assertions.assertTrue(lockService.isLocked(services));
+        Assertions.assertTrue(lockService.isLocked(auth));
+
+        lockService.unlockAll(owner);
+        Assertions.assertFalse(lockService.isLocked(services));
+        Assertions.assertFalse(lockService.isLocked(auth));
+    }
+
+    @Test
+    public void testUnknownNodeDefaultsWithMockito() {
+        Node unknownNode = Mockito.mock(Node.class);
+        User user = User.newBuilder()
+                .setId("601")
+                .setLogin("tester")
+                .build();
+
+        Assertions.assertFalse(lockService.lock(user, unknownNode));
+        Assertions.assertFalse(lockService.lock(user, unknownNode, true));
+        Assertions.assertFalse(lockService.unlock(user, unknownNode));
+        Assertions.assertFalse(lockService.isLocked(unknownNode));
+        Assertions.assertFalse(lockService.isLocked(unknownNode, true));
+        Assertions.assertNull(lockService.getUser(unknownNode));
+        Assertions.assertTrue(lockService.getAllLockedNodes(unknownNode).isEmpty());
+    }
+
+    @Test
+    public void testRecursiveUnlockByOwnerReturnsTrue() {
+        Node home = nodeService.getHome();
+        Node services = nodeService.getNodeManager().newNode("services-unlock", NodeTypes.DIR);
+        nodeService.getNodeManager().setParent(services, home);
+        Node auth = nodeService.getNodeManager().newNode("auth-unlock", NodeTypes.DIR);
+        nodeService.getNodeManager().setParent(auth, services);
+
+        User owner = User.newBuilder()
+                .setId("701")
+                .setLogin("recursive-owner")
+                .build();
+
+        Assertions.assertTrue(lockService.lock(owner, services, true));
+        Assertions.assertTrue(lockService.isLocked(services));
+        Assertions.assertTrue(lockService.isLocked(auth));
+
+        Assertions.assertTrue(lockService.unlock(owner, services, true));
+        Assertions.assertFalse(lockService.isLocked(services));
+        Assertions.assertFalse(lockService.isLocked(auth));
     }
 
 
