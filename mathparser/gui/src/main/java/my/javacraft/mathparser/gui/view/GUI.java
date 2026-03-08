@@ -14,7 +14,7 @@ import my.javacraft.mathparser.parser.ParserType;
  */
 public class GUI extends JFrame implements ActionListener {
     private boolean trigger = false;
-    private Parser mathParser;
+    private Parser mathParser = new Parser();
     private final int currentWidth;
     private final int currentHeight;
     private final int secretHeight;
@@ -110,7 +110,7 @@ public class GUI extends JFrame implements ActionListener {
     }
 
     public void setMathParser(Parser mathParser) {
-        this.mathParser = mathParser;
+        this.mathParser = Objects.requireNonNull(mathParser, "mathParser cannot be null");
     }
 
     private Image getImageIcon() {
