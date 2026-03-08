@@ -22,7 +22,7 @@ import my.javacraft.echo.single.client.SingleNetworkManager;
 import my.javacraft.echo.single.server.SingleServer;
 import org.junit.jupiter.api.Assertions;
 
-public class SingleStepDefinition {
+public class SingleStepDefinitions {
 
     private final Map<String, SingleClient> connections = new ConcurrentHashMap<>();
     private final List<ExecutorService> serverExecutors = new ArrayList<>();
