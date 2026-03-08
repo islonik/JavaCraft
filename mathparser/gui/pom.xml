@@ -26,12 +26,6 @@
             <version>${junit5.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -50,6 +44,15 @@
                             <Main-Class>my.javacraft.mathparser.gui.Main</Main-Class>
                         </manifestEntries>
                     </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- GUI tests do not use Mockito and crash with the global Mockito javaagent on this module -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>${test.jvm.args}</argLine>
                 </configuration>
             </plugin>
         </plugins>
