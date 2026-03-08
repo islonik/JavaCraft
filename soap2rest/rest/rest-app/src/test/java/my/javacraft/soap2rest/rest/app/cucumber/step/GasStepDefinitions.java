@@ -9,7 +9,6 @@ import io.restassured.specification.RequestSpecification;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import my.javacraft.soap2rest.rest.api.Metric;
 import my.javacraft.soap2rest.rest.app.dao.entity.GasMetric;
 import my.javacraft.soap2rest.rest.app.security.AuthenticationService;
@@ -31,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class GasDefinition {
+public class GasStepDefinitions {
 
     @LocalServerPort
     int port;
@@ -64,17 +63,6 @@ public class GasDefinition {
         Assertions.assertNotNull(httpResponse);
         Assertions.assertNotNull(httpResponse.getBody());
         return httpResponse.getBody();
-    }
-
-    /**
-     * Meter-only steps exist in legacy scenarios; this helper keeps them REST-based
-     * by searching metrics from known test accounts instead of querying the DAO.
-     */
-    private List<Metric> getGasMetricsByMeterIdAcrossKnownAccounts(Long meterId) {
-        return Stream.of(1L, 2L)
-                .flatMap(accountId -> getGasMetrics(accountId).stream())
-                .filter(metric -> meterId.equals(metric.getMeterId()))
-                .toList();
     }
 
     @Given("the account {long} doesn't have gas metrics")
@@ -158,42 +146,4 @@ public class GasDefinition {
         Assertions.assertEquals(expectedSize, getGasMetrics(accountId).size());
     }
 
-    @Then("check the latest gas reading for the meterId = {long} is equal = {bigdecimal}")
-    public void checkLatestGasReadingByMeterId(Long meterId, BigDecimal reading) {
-        Metric latestMetric = getGasMetricsByMeterIdAcrossKnownAccounts(meterId)
-                .stream()
-                .max(Metric::compareTo)
-                .orElseThrow();
-        Assertions.assertEquals(0, latestMetric
-                .getReading()
-                .compareTo(reading)
-        );
-    }
-
-    @Then("check the latest gas reading for the account = {long} extra values: {bigdecimal}, {long}, {bigdecimal}")
-    public void checkLatestGasReadingForExtraValues(
-            Long accountId, BigDecimal usageSince, Long periodSince, BigDecimal avgUsage) {
-        HttpEntity<String> entity = prepareHttpEntity();
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        HttpEntity<Metric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/gas/latest".formatted(port, accountId),
-                HttpMethod.GET,
-                entity,
-                Metric.class
-        );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-
-        Metric response = httpResponse.getBody();
-        Assertions.assertEquals(usageSince, response.getUsageSinceLastRead());
-        Assertions.assertEquals(periodSince, response.getPeriodSinceLastRead());
-        Assertions.assertEquals(avgUsage, response.getAvgDailyUsage());
-    }
-
-    @Then("check there is no gas readings for the meterId = {long}")
-    public void checkNoGasMetricByMeterId(Long meterId) {
-        Assertions.assertTrue(getGasMetricsByMeterIdAcrossKnownAccounts(meterId).isEmpty());
-    }
 }

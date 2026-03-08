@@ -31,7 +31,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
  */
 @Scope(SCOPE_CUCUMBER_GLUE)
 @RequiredArgsConstructor
-public class ElectricDefinition {
+public class ElectricStepDefinitions {
 
     @LocalServerPort
     int port;
@@ -138,29 +138,6 @@ public class ElectricDefinition {
         Assertions.assertEquals(0, latestMetric.getReading().compareTo(reading));
     }
 
-    @Then("check the latest electric reading for the account = {long} extra values: {bigdecimal}, {long}, {bigdecimal}")
-    public void checkLatestGasReadingForExtraValues(
-            Long accountId, BigDecimal usageSince, Long periodSince, BigDecimal avgUsage) {
-        HttpEntity<String> entity = prepareHttpEntity();
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        HttpEntity<Metric> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/v1/smart/%s/electric/latest".formatted(port, accountId),
-                HttpMethod.GET,
-                entity,
-                Metric.class
-        );
-
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-
-        Metric response = httpResponse.getBody();
-        Assertions.assertEquals(usageSince, response.getUsageSinceLastRead());
-        Assertions.assertEquals(periodSince, response.getPeriodSinceLastRead());
-        Assertions.assertEquals(avgUsage, response.getAvgDailyUsage());
-    }
-
     @Then("account {long} has no latest electric metric")
     public void checkNoLatestElectricMetric(Long accountId) {
         HttpEntity<String> entity = prepareHttpEntity();
@@ -180,15 +157,6 @@ public class ElectricDefinition {
     @Then("account {long} has electric metrics list size {int}")
     public void checkElectricMetricListSize(Long accountId, Integer expectedSize) {
         Assertions.assertEquals(expectedSize, getElectricMetrics(accountId).size());
-    }
-
-    @Then("check there is no electric readings for the account = {long} and meterId = {long}")
-    public void checkNoElectricMetric(Long accountId, Long meterId) {
-        long matchingMetrics = getElectricMetrics(accountId)
-                .stream()
-                .filter(metric -> meterId.equals(metric.getMeterId()))
-                .count();
-        Assertions.assertEquals(0L, matchingMetrics);
     }
 
 }

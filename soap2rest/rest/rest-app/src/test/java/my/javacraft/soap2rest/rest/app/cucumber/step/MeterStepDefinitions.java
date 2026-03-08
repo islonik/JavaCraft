@@ -26,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class MeterDefinition {
+public class MeterStepDefinitions {
 
     private static final String METERS_PATH = "http://localhost:%s/api/v1/smart/%s/meters";
 
