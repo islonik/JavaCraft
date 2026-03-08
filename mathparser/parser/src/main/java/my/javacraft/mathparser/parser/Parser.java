@@ -1,5 +1,6 @@
 package my.javacraft.mathparser.parser;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,7 +18,7 @@ public class Parser {
     private static final Set<String> TWO_PARAMETER_FUNCTIONS = Set.of("pow", "log");
     private static final Set<String> MULTI_PARAMETER_FUNCTIONS = Set.of("min", "max", "sum", "avg");
 
-    private int typeTangentUnit;    // unit of angle
+    private ParserType typeTangentUnit;    // unit of angle
     private int idString;           // pointer in string
     private String storString;      // full string
     private String storToken;       // current token
@@ -39,12 +40,12 @@ public class Parser {
     /**
      * @param unit unit of angle
      **/
-    public Parser(int unit) {
-        typeTangentUnit = unit;
+    public Parser(ParserType unit) {
+        typeTangentUnit = Objects.requireNonNull(unit, " ParserTypeunit cannot be null");
     }
 
-    public void setTangentUnit(int unit) {
-        typeTangentUnit = unit;
+    public void setTangentUnit(ParserType unit) {
+        typeTangentUnit = Objects.requireNonNull(unit, " ParserTypeunit cannot be null");
     }
 
     /**
@@ -346,10 +347,9 @@ public class Parser {
      **/
     private double valueToMeasure(double result) {
         return switch (typeTangentUnit) {
-            case ParserType.DEGREE -> result * Math.PI / 180;
-            case ParserType.GRADUS -> result * Math.PI / 200;
-            default -> // ParserType.RADIAN
-                    result;
+            case DEGREE -> result * Math.PI / 180;
+            case GRADUS -> result * Math.PI / 200;
+            case RADIAN -> result;
         };
     }
 
@@ -361,10 +361,9 @@ public class Parser {
      **/
     private double valueFromMeasure(double result) {
         return switch (typeTangentUnit) {
-            case ParserType.DEGREE -> result * 180 / Math.PI;
-            case ParserType.GRADUS -> result * 200 / Math.PI;
-            default -> // ParserType.RADIAN
-                    result;
+            case DEGREE -> result * 180 / Math.PI;
+            case GRADUS -> result * 200 / Math.PI;
+            case RADIAN -> result;
         };
     }
 

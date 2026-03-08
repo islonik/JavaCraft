@@ -2,6 +2,7 @@ package my.javacraft.mathparser.gui.view;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import my.javacraft.mathparser.parser.Parser;
 import my.javacraft.mathparser.parser.ParserType;
@@ -98,9 +99,7 @@ public class GUI extends JFrame implements ActionListener {
         gradusCheckbox.addActionListener(this);
         clearButton.addActionListener(this);
 
-        /**
-         * Handling actions for Enter button
-         **/
+        // Handling actions for Enter button
         inputText.addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -110,20 +109,17 @@ public class GUI extends JFrame implements ActionListener {
         });
     }
 
-    public Parser getMathParser() {
-        return mathParser;
-    }
-
     public void setMathParser(Parser mathParser) {
         this.mathParser = mathParser;
     }
 
     private Image getImageIcon() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("/img/calculator.png"));
+        ImageIcon icon = new ImageIcon(Objects.requireNonNull(
+                getClass().getResource("/img/calculator.png")
+        ));
         return icon.getImage();
     }
 
-    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -433,36 +429,23 @@ public class GUI extends JFrame implements ActionListener {
      * Handler of buttons
      */
     public void actionPerformed(ActionEvent e) {
-        /** calculate-button **/
-        if (e.getSource() == calculateButton) {
+        if (e.getSource() == calculateButton) { // calculate button
             calculateButton();
-        }
-        /** more-button **/
-        else if (e.getSource() == moreButton) {
+        } else if (e.getSource() == moreButton) { // more-button
             moreButton();
-        }
-        /** save-button **/
-        else if (e.getSource() == saveButton) {
+        } else if (e.getSource() == saveButton) { // save-button
             saveButton();
-        }
-        /** help-button **/
-        else if (e.getSource() == helpButton) {
+        } else if (e.getSource() == helpButton) { // help-button
             helpButton();
-        }
-        /** backspace-button **/
-        else if (e.getSource() == backspaceButton) {
+        } else if (e.getSource() == backspaceButton) { // backspace-button
             backspaceButton();
         } else if (e.getSource() == clearButton) {
             clearButton();
-        }
-        /** checkbox case **/
-        else if (e.getSource() == degreeCheckbox ||
+        } else if (e.getSource() == degreeCheckbox ||
                 e.getSource() == radianCheckbox ||
-                e.getSource() == gradusCheckbox) {
+                e.getSource() == gradusCheckbox) { // checkbox case
             checkBox(e.getActionCommand());
-        }
-        /** other buttons **/
-        else {
+        } else { // other buttons
             addOneCharacter(e.getActionCommand());
         }
     }
@@ -494,9 +477,9 @@ public class GUI extends JFrame implements ActionListener {
         String message =
                 """
                         Top-down parser. Version - 1.00
-                        
+                
                         You can use next functions :
-                        
+                
                         Functions with one variable:
                         	    Abs(x)  - module of number;
                         	    Acos(x) - arccosine of number;
@@ -508,11 +491,11 @@ public class GUI extends JFrame implements ActionListener {
                         	    Sin(x)  - sinus of number;
                         	    Sqrt(x) - extracting the square of the number;
                         	    Tan(x)  - tangent of number;
-                        	    
+                
                         Functions with two variables:
                         	    Pow(x,y) - involution;
                         	    Log(x,y) - logarithm to base х;
-                        	    
+                
                         Functions with many variables:
                         	    Avg(n1,n2,...nn) - return average number;
                         	    Max(n1,n2,...nn) - return maximum of number;
@@ -530,7 +513,7 @@ public class GUI extends JFrame implements ActionListener {
 
     private void backspaceButton() {
         String str = inputText.getText();
-        if (str.length() > 0) {
+        if (!str.isEmpty()) {
             inputText.setText(str.substring(0, str.length() - 1));
         }
     }
@@ -540,15 +523,19 @@ public class GUI extends JFrame implements ActionListener {
         degreeCheckbox.setSelected(false);
         radianCheckbox.setSelected(false);
         gradusCheckbox.setSelected(false);
-        if (str.equals("degree")) {
-            mathParser.setTangentUnit(ParserType.DEGREE);
-            degreeCheckbox.setSelected(true);
-        } else if (str.equals("gradus")) {
-            mathParser.setTangentUnit(ParserType.GRADUS);
-            gradusCheckbox.setSelected(true);
-        } else if (str.equals("radian")) {
-            mathParser.setTangentUnit(ParserType.RADIAN);
-            radianCheckbox.setSelected(true);
+        switch (str) {
+            case "degree" -> {
+                mathParser.setTangentUnit(ParserType.DEGREE);
+                degreeCheckbox.setSelected(true);
+            }
+            case "gradus" -> {
+                mathParser.setTangentUnit(ParserType.GRADUS);
+                gradusCheckbox.setSelected(true);
+            }
+            case "radian" -> {
+                mathParser.setTangentUnit(ParserType.RADIAN);
+                radianCheckbox.setSelected(true);
+            }
         }
     }
 

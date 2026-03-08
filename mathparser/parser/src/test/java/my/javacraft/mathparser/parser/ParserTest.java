@@ -284,6 +284,20 @@ public class ParserTest {
     }
 
     @Test
+    public void testParserType_values() {
+        Assertions.assertArrayEquals(
+                new ParserType[]{ParserType.DEGREE, ParserType.GRADUS, ParserType.RADIAN},
+                ParserType.values()
+        );
+    }
+
+    @Test
+    public void testParser_setTangentUnitRejectsNull() {
+        Parser parser = new Parser();
+        Assertions.assertThrows(NullPointerException.class, () -> parser.setTangentUnit(null));
+    }
+
+    @Test
     public void testParser_inverseTrig_testCase01() {
         Parser parser = new Parser(ParserType.DEGREE);
         double asinResult = Double.parseDouble(parser.calculate("asin(1)"));
