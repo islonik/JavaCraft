@@ -1,6 +1,7 @@
 package my.javacraft.mathparser.parser;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -63,7 +64,8 @@ public class Parser {
             if (expression.length() > ParserException.EXPRESSION_MAX_LENGTH) {
                 throw new ParserException(ParserException.Error.TOO_BIG);
             }
-            storString = expression.toLowerCase();
+            // Locale.ROOT should prevent misparse in some locales (e.g., Turkish)
+            storString = expression.toLowerCase(Locale.ROOT);
             idString = 0;
             getToken();
             if (storToken.isEmpty()) {

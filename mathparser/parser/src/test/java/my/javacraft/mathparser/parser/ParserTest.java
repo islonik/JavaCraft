@@ -1,5 +1,6 @@
 package my.javacraft.mathparser.parser;
 
+import java.util.Locale;
 import my.javacraft.mathparser.parser.ParserException.Error;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -469,6 +470,18 @@ public class ParserTest {
         Assertions.assertEquals(Math.PI / 2, asinResult, 1.0e-9);
         Assertions.assertEquals(Math.PI / 2, acosResult, 1.0e-9);
         Assertions.assertEquals(Math.PI / 4, atanResult, 1.0e-9);
+    }
+
+    @Test
+    public void testParser_localeSafeLowerCaseWithTurkishLocale() {
+        Locale originalLocale = Locale.getDefault();
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        try {
+            Parser parser = new Parser();
+            Assertions.assertEquals("1.0", parser.calculate("SIN(90)"));
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
 
