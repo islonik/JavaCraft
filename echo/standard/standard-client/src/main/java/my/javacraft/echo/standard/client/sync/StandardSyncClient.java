@@ -121,8 +121,16 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                     break;
                 }
             }
+        } catch (IllegalStateException e) {
+            log.warn(
+                    "Client loop stopped because connection to: '{}:{}' is not available: {}",
+                    host, port, e.getMessage()
+            );
         } catch (IOException e) {
-            log.warn("Couldn't get I/O for the connection to: {}:{}", host, port);
+            log.warn(
+                    "Couldn't get I/O for the connection to: '{}:{}' because: {}",
+                    host, port, e.getMessage()
+            );
         } finally {
             close();
         }
