@@ -51,30 +51,41 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
             this.socket = new Socket(host, port);
             this.outStream = new PrintWriter(socket.getOutputStream(), true);
 
-            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
             log.info("Sync client {} is connected", socket);
 
-            Thread.ofVirtual()
-                    .name(threadName + port)
-                    .start(() -> {
-                        try {
-                            String line;
-                            while ((line = inStream.readLine()) != null) {
-                                responseQueue.add(line);
-                            }
-                        } catch (SocketException ignored) {
-                            // expected when close() is called while blocking on readLine()
-                        } catch (IOException e) {
-                            log.warn("Listener error: {}", e.getMessage());
-                        } finally {
-                            closedByServer = true;
-                        }
-                    });
+            awaitResponseFromServer(threadName);
         } catch (Exception e) {
             close();
             throw new IllegalStateException("Failed to connect to %s:%d".formatted(host, port), e);
         }
+    }
+
+    /**
+     * Virtual thread here is the background socket listener.
+     * <p>
+     * It continuously reads lines from the server input stream and enqueues them into responseQueue.
+     * <p>
+     * Why virtual: It provides the same blocking-style code as a normal thread, but much cheaper to create/schedule
+     * than a platform thread.
+     */
+    private void awaitResponseFromServer(String threadName) throws IOException {
+        BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        Thread.ofVirtual()
+                .name(threadName + port)
+                .start(() -> {
+                    try {
+                        String line;
+                        while ((line = inStream.readLine()) != null) {
+                            responseQueue.add(line);
+                        }
+                    } catch (SocketException ignored) {
+                        // expected when close() is called while blocking on readLine()
+                    } catch (IOException e) {
+                        log.warn("Listener error: {}", e.getMessage());
+                    } finally {
+                        closedByServer = true;
+                    }
+                });
     }
 
     public void sendMessage(String message) {
@@ -94,7 +105,12 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
     }
 
     public boolean isConnected() {
-        return !closedByClient.get() && socket != null && outStream != null;
+        return !closedByClient.get()
+                && !closedByServer
+                && socket != null
+                && socket.isConnected()
+                && !socket.isClosed()
+                && outStream != null;
     }
 
     @Override
