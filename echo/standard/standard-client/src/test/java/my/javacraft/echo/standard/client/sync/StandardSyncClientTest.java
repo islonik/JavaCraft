@@ -508,7 +508,14 @@ class StandardSyncClientTest {
                     "sync-client-",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
-                setSocket(client, new IOExceptionOnReadSocket());
+                InputStream failingInputStream = Mockito.mock(InputStream.class);
+                Mockito.when(failingInputStream.read()).thenThrow(new IOException("forced read failure"));
+                Mockito.when(failingInputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt()))
+                        .thenThrow(new IOException("forced read failure"));
+
+                Socket socketReadFailure = Mockito.mock(Socket.class);
+                Mockito.when(socketReadFailure.getInputStream()).thenReturn(failingInputStream);
+                setSocket(client, socketReadFailure);
 
                 invokeAwaitResponseFromServer(client);
 
@@ -644,15 +651,4 @@ class StandardSyncClientTest {
         }
     }
 
-    private static final class IOExceptionOnReadSocket extends Socket {
-        @Override
-        public InputStream getInputStream() {
-            return new InputStream() {
-                @Override
-                public int read() throws IOException {
-                    throw new IOException("forced read failure");
-                }
-            };
-        }
-    }
 }
