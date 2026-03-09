@@ -24,6 +24,8 @@ public abstract class UserClient implements AutoCloseable {
 
     public abstract String readMessage();
 
+    public abstract boolean isConnected();
+
     public abstract void close();
 
     /**

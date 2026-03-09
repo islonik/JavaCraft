@@ -228,7 +228,7 @@ public class StandardStepDefinitions {
         }
         StandardAsyncClient async = requireAsyncClient(clientName);
         doAssertResponse(clientName, message, expectedResponse,
-                async::sendMessage, async::readMessage, async::isSocketClosed);
+                async::sendMessage, async::readMessage, () -> !async.isConnected());
     }
 
     private void doAssertResponse(String clientName, String message, String expectedResponse,
@@ -255,7 +255,7 @@ public class StandardStepDefinitions {
             return;
         }
         StandardAsyncClient async = requireAsyncClient(clientName);
-        doGoodbye(clientName, async::sendMessage, async::readMessage, async::isSocketClosed);
+        doGoodbye(clientName, async::sendMessage, async::readMessage, () -> !async.isConnected());
     }
 
     private void doGoodbye(String clientName, Consumer<String> send, Supplier<String> read,
@@ -274,7 +274,7 @@ public class StandardStepDefinitions {
             return;
         }
         StandardAsyncClient async = requireAsyncClient(clientName);
-        awaitSocketClosed(clientName, async::isSocketClosed);
+        awaitSocketClosed(clientName, () -> !async.isConnected());
     }
 
     /**

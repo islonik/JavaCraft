@@ -29,14 +29,9 @@ public class StandardAsyncClient extends UserClient implements Runnable, AutoClo
         return connection.readMessage();
     }
 
-    // isConnected is used in StandardSyncClient
+    @Override
     public boolean isConnected() {
         return connection.isConnected();
-    }
-
-    // TODO: make either a single isConnected or add isSocketClosed in StandardSyncClient
-    public boolean isSocketClosed() {
-        return connection.isSocketClosed();
     }
 
     @Override

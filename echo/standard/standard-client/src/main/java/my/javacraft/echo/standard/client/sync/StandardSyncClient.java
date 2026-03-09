@@ -153,6 +153,7 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         }
     }
 
+    @Override
     public boolean isConnected() {
         return !closedByClient.get()
                 && !closedByServer
