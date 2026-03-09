@@ -1,13 +1,16 @@
 package my.javacraft.echo.standard.client.async;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.echo.standard.client.tools.UserClient;
 
 /**
  * @author Lipatov Nikita
@@ -15,11 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AsyncClientConnection implements AutoCloseable {
 
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>(UserClient.MAX_QUEUED_RESPONSES);
+
     private final String host;
     private final int port;
     private Socket socket;
-    private PrintWriter outStream;
-    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+    private PrintWriter clientWritingStreamToServerSocket;
     @Getter
     private volatile boolean socketClosed = false;
 
@@ -28,11 +32,15 @@ public class AsyncClientConnection implements AutoCloseable {
         this.port = port;
         try {
             this.socket = new Socket(host, port);
-            this.outStream = new PrintWriter(socket.getOutputStream(), true);
+            this.socket.connect(new InetSocketAddress(host, port), UserClient.CONNECT_TIMEOUT_MILLIS);
+
+            Writer outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
+            // Send text commands/messages from client to server.
+            this.clientWritingStreamToServerSocket = new PrintWriter(outputStreamWriter, true);
 
             BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            log.info("Async client {} is connected", socket);
+            log.info("Async client '{}' is connected", socket);
 
             Thread.ofPlatform()
                     .name(threadName + "-" + port)
@@ -47,7 +55,9 @@ public class AsyncClientConnection implements AutoCloseable {
         try {
             String line;
             while ((line = inStream.readLine()) != null) {
-                responseQueue.add(line);
+                if (!enqueueResponse(line)) {
+                    break;
+                }
             }
         } catch (SocketException ignored) {
             // expected when close() is called while blocking on readLine()
@@ -58,13 +68,37 @@ public class AsyncClientConnection implements AutoCloseable {
         }
     }
 
+    /**
+     * Bounds in-memory buffering of server responses so a noisy peer cannot grow memory unboundedly.
+     */
+    private boolean enqueueResponse(String line) {
+        if (responseQueue.offer(line)) {
+            return true;
+        }
+        log.warn(
+                "Response queue overflow (max {}). Closing connection to protect memory.",
+                UserClient.MAX_QUEUED_RESPONSES
+        );
+        close();
+        return false;
+    }
+
     public void sendMessage(String message) {
-        outStream.println(message);
+        if (!isConnected()) {
+            throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
+        }
+
+        clientWritingStreamToServerSocket.println(message);
+
+        if (clientWritingStreamToServerSocket.checkError()) {
+            close();
+            throw new IllegalStateException("Failed to send message to %s:%d".formatted(host, port));
+        }
     }
 
     public String readMessage() {
         try {
-            return responseQueue.poll(5, TimeUnit.SECONDS);
+            return responseQueue.poll(UserClient.CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
@@ -72,14 +106,14 @@ public class AsyncClientConnection implements AutoCloseable {
     }
 
     public boolean isConnected() {
-        return socket != null && outStream != null;
+        return socket != null && clientWritingStreamToServerSocket != null;
     }
 
     @Override
     public void close() {
         try {
-            if (outStream != null) {
-                outStream.close();
+            if (clientWritingStreamToServerSocket != null) {
+                clientWritingStreamToServerSocket.close();
             }
             if (socket != null) {
                 socket.close();

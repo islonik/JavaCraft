@@ -21,8 +21,6 @@ import my.javacraft.echo.standard.client.tools.UserClient;
 @Slf4j
 public class StandardSyncClient extends UserClient implements Runnable, AutoCloseable {
 
-    private static final int CONNECT_TIMEOUT_MILLIS = 1_000;
-    private static final int MAX_QUEUED_RESPONSES = 128;
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>(MAX_QUEUED_RESPONSES);
 
     private final String host;

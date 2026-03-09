@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 
 public abstract class UserClient implements AutoCloseable {
 
+    public static final int CONNECT_TIMEOUT_MILLIS = 1_000;
+    public static final int MAX_QUEUED_RESPONSES = 128;
+
     private final String host;
     private final int port;
 

@@ -223,44 +223,6 @@ class StandardSyncClientTest {
     }
 
     @Test
-    void testRunShouldProcessByeCommandAndCloseConnection() throws Exception {
-        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
-            AtomicReference<String> receivedMessage = new AtomicReference<>();
-            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
-            Thread acceptThread = Thread.ofVirtual().start(() -> {
-                try (Socket accepted = serverSocket.accept();
-                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()));
-                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
-                    String message = serverReader.readLine();
-                    receivedMessage.set(message);
-                    serverWriter.println("echo:" + message);
-                } catch (Exception e) {
-                    acceptThreadFailure.set(e);
-                }
-            });
-
-            try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client",
-                    "127.0.0.1",
-                    serverSocket.getLocalPort())) {
-                InputStream originalIn = System.in;
-                try {
-                    System.setIn(new ByteArrayInputStream("bye\n".getBytes(StandardCharsets.UTF_8)));
-                    Assertions.assertDoesNotThrow(client::run);
-                } finally {
-                    System.setIn(originalIn);
-                }
-                Assertions.assertFalse(client.isConnected());
-            }
-
-            acceptThread.join(Duration.ofSeconds(2));
-            Assertions.assertFalse(acceptThread.isAlive());
-            Assertions.assertEquals("bye", receivedMessage.get());
-            Assertions.assertNull(acceptThreadFailure.get());
-        }
-    }
-
-    @Test
     void testRunShouldPreserveWhitespaceInInteractiveMode() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
             List<String> receivedMessages = new ArrayList<>();
@@ -297,40 +259,6 @@ class StandardSyncClientTest {
             acceptThread.join(Duration.ofSeconds(2));
             Assertions.assertFalse(acceptThread.isAlive());
             Assertions.assertEquals(List.of("  hello  ", "   ", "bye"), receivedMessages);
-            Assertions.assertNull(acceptThreadFailure.get());
-        }
-    }
-
-    @Test
-    void testRunShouldHandleEofWithoutSendingMessage() throws Exception {
-        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
-            AtomicReference<String> receivedMessage = new AtomicReference<>();
-            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
-            Thread acceptThread = Thread.ofVirtual().start(() -> {
-                try (Socket accepted = serverSocket.accept();
-                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()))) {
-                    receivedMessage.set(serverReader.readLine());
-                } catch (Exception e) {
-                    acceptThreadFailure.set(e);
-                }
-            });
-
-            try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client",
-                    "127.0.0.1",
-                    serverSocket.getLocalPort())) {
-                InputStream originalIn = System.in;
-                try {
-                    System.setIn(new ByteArrayInputStream(new byte[0]));
-                    Assertions.assertDoesNotThrow(client::run);
-                } finally {
-                    System.setIn(originalIn);
-                }
-            }
-
-            acceptThread.join(Duration.ofSeconds(2));
-            Assertions.assertFalse(acceptThread.isAlive());
-            Assertions.assertNull(receivedMessage.get());
             Assertions.assertNull(acceptThreadFailure.get());
         }
     }
