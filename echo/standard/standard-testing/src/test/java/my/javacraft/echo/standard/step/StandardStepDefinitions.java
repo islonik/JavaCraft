@@ -283,11 +283,15 @@ public class StandardStepDefinitions {
     private StandardSyncClient awaitSyncClientConnected(int port) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
-            StandardSyncClient client = new StandardSyncClient("sync-client-", "localhost", port);
-            if (client.isConnected()) {
-                return client;
+            try {
+                StandardSyncClient client = new StandardSyncClient("sync-client-", "localhost", port);
+                if (client.isConnected()) {
+                    return client;
+                }
+                client.close();
+            } catch (IllegalStateException ignored) {
+                // fail-fast constructor can throw while server is still starting; keep retrying until deadline.
             }
-            client.close();
             if (System.nanoTime() >= deadline) {
                 Assertions.fail("Server not ready on port " + port + " within 5 seconds");
             }

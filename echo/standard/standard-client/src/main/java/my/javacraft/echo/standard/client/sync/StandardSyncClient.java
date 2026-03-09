@@ -72,12 +72,13 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                         }
                     });
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            close();
+            throw new IllegalStateException("Failed to connect to %s:%d".formatted(host, port), e);
         }
     }
 
     public void sendMessage(String message) {
-        if (closedByClient.get() || outStream == null) {
+        if (!isConnected()) {
             throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
         }
         outStream.println(message);
@@ -132,17 +133,24 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         if (!closedByClient.compareAndSet(false, true)) {
             return;
         }
-        try {
-            if (outStream != null) {
+        if (outStream != null) {
+            try {
                 outStream.close();
+            } catch (Exception e) {
+                log.error("Couldn't close output stream", e);
+            } finally {
+                outStream = null;
             }
-            if (socket != null) {
-                socket.close();
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        } finally {
-            closedByServer = true;
         }
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                log.error("Couldn't close socket", e);
+            } finally {
+                socket = null;
+            }
+        }
+        closedByServer = true;
     }
 }
