@@ -70,7 +70,8 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
      * than a platform thread.
      */
     private void awaitResponseFromServer(String threadName) throws IOException {
-        BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        Reader inputStreamReader = new InputStreamReader(socket.getInputStream());
+        BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
         Thread.ofVirtual()
                 .name(threadName + port)
                 .start(() -> {
@@ -93,7 +94,13 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         if (!isConnected()) {
             throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
         }
+
         clientWritingStreamToServerSocket.println(message);
+
+        if (clientWritingStreamToServerSocket.checkError()) {
+            close();
+            throw new IllegalStateException("Failed to send message to %s:%d".formatted(host, port));
+        }
     }
 
     public String readMessage() {
