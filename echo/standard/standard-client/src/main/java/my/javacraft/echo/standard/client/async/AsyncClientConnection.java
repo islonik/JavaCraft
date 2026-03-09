@@ -35,7 +35,7 @@ public class AsyncClientConnection implements AutoCloseable {
             log.info("Async client {} is connected", socket);
 
             Thread.ofPlatform()
-                    .name(threadName + port)
+                    .name(threadName + "-" + port)
                     .daemon(true)
                     .start(() -> listen(inStream));
         } catch (Exception e) {

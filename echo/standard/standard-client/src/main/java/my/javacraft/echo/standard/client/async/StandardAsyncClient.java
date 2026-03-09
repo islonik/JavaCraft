@@ -1,35 +1,40 @@
 package my.javacraft.echo.standard.client.async;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.echo.standard.client.tools.UserClient;
 
 /**
- * AsyncThreadsClient
+ * StandardAsyncClient
+ * <p>
  * @author Lipatov Nikita
  */
 @Slf4j
-public class StandardAsyncClient implements AutoCloseable {
+public class StandardAsyncClient extends UserClient implements Runnable, AutoCloseable {
 
     private final AsyncClientConnection connection;
 
     public StandardAsyncClient(String threadName, String host, int port) {
+        super(host, port);
+
         this.connection = new AsyncClientConnection(threadName, host, port);
     }
 
+    @Override
     public void sendMessage(String message) {
         connection.sendMessage(message);
     }
 
+    @Override
     public String readMessage() {
         return connection.readMessage();
     }
 
+    // isConnected is used in StandardSyncClient
     public boolean isConnected() {
         return connection.isConnected();
     }
 
+    // TODO: make either a single isConnected or add isSocketClosed in StandardSyncClient
     public boolean isSocketClosed() {
         return connection.isSocketClosed();
     }
@@ -39,21 +44,8 @@ public class StandardAsyncClient implements AutoCloseable {
         connection.close();
     }
 
+    @Override
     public void run() {
-        log.info("Starting...");
-        try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
-            while (true) {
-                String inputText = input.readLine().toLowerCase();
-                sendMessage(inputText);
-                System.out.println(readMessage());
-                if ("bye".equalsIgnoreCase(inputText)) {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        } finally {
-            close();
-        }
+        readUserMessages(log);
     }
 }

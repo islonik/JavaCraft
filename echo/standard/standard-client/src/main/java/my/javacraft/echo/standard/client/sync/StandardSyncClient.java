@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.echo.standard.client.tools.UserClient;
 
 /**
  * StandardSyncClient.
@@ -18,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public class StandardSyncClient implements Runnable, AutoCloseable {
+public class StandardSyncClient extends UserClient implements Runnable, AutoCloseable {
 
     private static final int CONNECT_TIMEOUT_MILLIS = 1_000;
     private static final int MAX_QUEUED_RESPONSES = 128;
@@ -46,6 +47,8 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
             final String threadName,
             final String host,
             final int port) {
+
+        super(host, port);
 
         this.host = host;
         this.port = port;
@@ -128,6 +131,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         return false;
     }
 
+    @Override
     public void sendMessage(String message) {
         if (!isConnected()) {
             throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
@@ -141,6 +145,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         }
     }
 
+    @Override
     public String readMessage() {
         try {
             return responseQueue.poll(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -161,42 +166,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
-        log.info("Starting...");
-
-        try (Reader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-             BufferedReader stdIn = new BufferedReader(inputStreamReader)) {
-            String userInput;
-            while (true) {
-                System.out.print("type: ");
-                String line = stdIn.readLine();
-                if (line == null) {
-                    // readLine() returns null when the input stream reaches end-of-file (EOF)
-                    // for example, Ctrl+D (Unix/Mac) or Ctrl+Z (Windows) — the user signals EOF on the terminal
-                    log.info("Detected end-of-file (EOF). Thread terminating...");
-                    break;
-                }
-                userInput = line;
-
-                sendMessage(userInput);
-
-                System.out.println(readMessage());
-                if ("bye".equalsIgnoreCase(userInput)) {
-                    break;
-                }
-            }
-        } catch (IllegalStateException e) {
-            log.warn(
-                    "Client loop stopped because connection to: '{}:{}' is not available: {}",
-                    host, port, e.getMessage()
-            );
-        } catch (IOException e) {
-            log.warn(
-                    "Couldn't get I/O for the connection to: '{}:{}' because: {}",
-                    host, port, e.getMessage()
-            );
-        } finally {
-            close();
-        }
+        readUserMessages(log);
     }
 
     @Override

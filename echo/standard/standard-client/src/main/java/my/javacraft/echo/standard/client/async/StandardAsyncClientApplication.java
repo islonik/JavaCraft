@@ -14,7 +14,9 @@ public class StandardAsyncClientApplication {
         int port = PortValidator.getPort(args);
 
         try (StandardAsyncClient asyncClient = new StandardAsyncClient(
-                "async-client-", "localhost", port)) {
+                "Async-client-application",
+                "localhost",
+                port)) {
             asyncClient.run();
         }
     }
