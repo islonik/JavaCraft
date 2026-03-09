@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +53,10 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         try {
             this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT_MILLIS);
+
+            Writer outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
             // Send text commands/messages from client to server.
-            this.clientWritingStreamToServerSocket = new PrintWriter(socket.getOutputStream(), true);
+            this.clientWritingStreamToServerSocket = new PrintWriter(outputStreamWriter, true);
 
             log.info("Sync client '{}' is connected", socket);
 
@@ -73,7 +76,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
      * than a platform thread.
      */
     private void awaitResponseFromServer(String threadName) throws IOException {
-        Reader inputStreamReader = new InputStreamReader(socket.getInputStream());
+        Reader inputStreamReader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
         BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
         Thread.ofVirtual()
                 .name(threadName + "-" + port)
@@ -160,7 +163,8 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
     public void run() {
         log.info("Starting...");
 
-        try (BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in))) {
+        try (Reader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+             BufferedReader stdIn = new BufferedReader(inputStreamReader)) {
             String userInput;
             while (true) {
                 System.out.print("type: ");

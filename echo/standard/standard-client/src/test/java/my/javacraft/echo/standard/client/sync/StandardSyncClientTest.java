@@ -164,6 +164,47 @@ class StandardSyncClientTest {
     }
 
     @Test
+    void testConstructorShouldUseUtf8ForSocketStreams() {
+        AtomicReference<List<?>> inputReaderConstructorArguments = new AtomicReference<>();
+        AtomicReference<List<?>> printWriterConstructorArguments = new AtomicReference<>();
+        try (MockedConstruction<Socket> ignoredSocketConstruction = Mockito.mockConstruction(
+                Socket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+                    Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+                });
+             MockedConstruction<InputStreamReader> ignoredInputStreamReaderConstruction = Mockito.mockConstruction(
+                     InputStreamReader.class,
+                     (mock, context) -> {
+                         inputReaderConstructorArguments.set(new ArrayList<>(context.arguments()));
+                         Mockito.when(mock.read(Mockito.any(char[].class), Mockito.anyInt(), Mockito.anyInt()))
+                                 .thenReturn(-1);
+                     });
+             MockedConstruction<PrintWriter> ignoredPrintWriterConstruction = Mockito.mockConstruction(
+                     PrintWriter.class,
+                     (mock, context) -> printWriterConstructorArguments.set(new ArrayList<>(context.arguments())))) {
+            try (StandardSyncClient ignored = new StandardSyncClient(
+                    "sync-client",
+                    "127.0.0.1",
+                    8080)) {
+                Assertions.assertNotNull(ignored);
+            }
+        }
+
+        Assertions.assertNotNull(inputReaderConstructorArguments.get());
+        Assertions.assertEquals(2, inputReaderConstructorArguments.get().size());
+        Assertions.assertEquals(StandardCharsets.UTF_8, inputReaderConstructorArguments.get().get(1));
+
+        Assertions.assertNotNull(printWriterConstructorArguments.get());
+        Assertions.assertEquals(2, printWriterConstructorArguments.get().size());
+        Assertions.assertEquals(Boolean.TRUE, printWriterConstructorArguments.get().get(1));
+        Assertions.assertEquals(
+                "java.io.OutputStreamWriter",
+                printWriterConstructorArguments.get().get(0).getClass().getName()
+        );
+    }
+
+    @Test
     void testRunShouldHandleIllegalStateExceptionFromSendMessage() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0);
              StandardSyncClient client = new StandardSyncClient(
