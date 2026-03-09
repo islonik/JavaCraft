@@ -2,28 +2,25 @@ package my.javacraft.echo.standard.client.sync;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Writer;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
-import lombok.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
 class StandardSyncClientTest {
@@ -44,7 +41,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 client.sendMessage("hello");
@@ -71,7 +68,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 Assertions.assertEquals("pong", client.readMessage());
@@ -98,7 +95,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 Thread.currentThread().interrupt();
@@ -122,7 +119,7 @@ class StandardSyncClientTest {
                 IllegalStateException.class,
                 () -> {
                     try (StandardSyncClient ignored = new StandardSyncClient(
-                            "sync-client-", "127.0.0.1", 1)) {
+                            "sync-client", "127.0.0.1", 1)) {
                         Assertions.fail("Constructor should fail before entering try block");
                     }
                 }
@@ -136,7 +133,7 @@ class StandardSyncClientTest {
     void testRunShouldHandleIllegalStateExceptionFromSendMessage() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0);
              StandardSyncClient client = new StandardSyncClient(
-                     "sync-client-",
+                     "sync-client",
                      "127.0.0.1",
                      serverSocket.getLocalPort())) {
             client.close();
@@ -168,7 +165,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 InputStream originalIn = System.in;
@@ -203,7 +200,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 InputStream originalIn = System.in;
@@ -236,7 +233,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 InputStream originalIn = System.in;
@@ -277,7 +274,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
 
@@ -294,7 +291,10 @@ class StandardSyncClientTest {
 
     @Test
     void testSendMessageShouldThrowWhenWriterSignalsError() throws Exception {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
+        try (ServerSocket serverSocket = new ServerSocket(0);
+             MockedConstruction<PrintWriter> ignoredWriterConstruction = Mockito.mockConstruction(
+                     PrintWriter.class,
+                     (mock, context) -> Mockito.when(mock.checkError()).thenReturn(true))) {
             CountDownLatch releaseServerSocket = new CountDownLatch(1);
             AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
 
@@ -307,12 +307,9 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
-
-                replaceWriterWithFailingWriter(client);
-
                 IllegalStateException exception = Assertions.assertThrows(
                         IllegalStateException.class,
                         () -> client.sendMessage("hello")
@@ -343,7 +340,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 Assertions.assertFalse(client.isClosedByServer());
@@ -366,7 +363,11 @@ class StandardSyncClientTest {
             AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
 
             Thread acceptThread = Thread.ofVirtual().start(() -> {
-                try (Socket ignored = serverSocket.accept()) {
+                try (Socket accepted = serverSocket.accept();
+                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
+                    for (int i = 0; i < 5000; i++) {
+                        serverWriter.println("response-" + i);
+                    }
                     Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
                 } catch (Exception e) {
                     acceptThreadFailure.set(e);
@@ -374,11 +375,13 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
-                BlockingQueue<?> responseQueue = getResponseQueue(client);
-                Assertions.assertNotEquals(Integer.MAX_VALUE, responseQueue.remainingCapacity());
+                awaitCondition(Duration.ofSeconds(2), () -> !client.isConnected());
+                Assertions.assertFalse(client.isConnected());
+                Assertions.assertFalse(client.isClosedByServer());
+                Assertions.assertTrue(acceptThread.isAlive());
             } finally {
                 releaseServerSocket.countDown();
             }
@@ -392,32 +395,34 @@ class StandardSyncClientTest {
     @Test
     void testResponseQueueOverflowShouldCloseClient() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
             AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
+                    for (int i = 0; i < 5000; i++) {
+                        serverWriter.println("response-" + i);
+                    }
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
-
-                int queueLimit = getResponseQueue(client).remainingCapacity();
-                Thread acceptThread = Thread.ofVirtual().start(() -> {
-                    try (Socket accepted = serverSocket.accept();
-                         PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
-                        for (int i = 0; i <= queueLimit; i++) {
-                            serverWriter.println("response-" + i);
-                        }
-                    } catch (Exception e) {
-                        acceptThreadFailure.set(e);
-                    }
-                });
-
                 awaitCondition(Duration.ofSeconds(2), () -> !client.isConnected());
                 Assertions.assertFalse(client.isConnected());
-
-                acceptThread.join(Duration.ofSeconds(2));
-                Assertions.assertFalse(acceptThread.isAlive());
-                Assertions.assertNull(acceptThreadFailure.get());
+                Assertions.assertFalse(client.isClosedByServer());
+            } finally {
+                releaseServerSocket.countDown();
             }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
         }
     }
 
@@ -436,7 +441,7 @@ class StandardSyncClientTest {
             });
 
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 client.close();
@@ -453,81 +458,77 @@ class StandardSyncClientTest {
 
     @Test
     void testCloseShouldHandleWriterAndSocketCloseFailures() throws Exception {
-        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
-            CountDownLatch releaseServerSocket = new CountDownLatch(1);
-            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
-            Thread acceptThread = Thread.ofVirtual().start(() -> {
-                try (Socket ignored = serverSocket.accept()) {
-                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
-                } catch (Exception e) {
-                    acceptThreadFailure.set(e);
-                }
-            });
-
+        AtomicReference<Socket> socketUsedByClient = new AtomicReference<>();
+        AtomicReference<PrintWriter> writerUsedByClient = new AtomicReference<>();
+        try (MockedConstruction<Socket> ignoredSocketConstruction = Mockito.mockConstruction(
+                Socket.class,
+                (mock, context) -> {
+                    socketUsedByClient.set(mock);
+                    Mockito.when(mock.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+                    Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+                    Mockito.doThrow(new IOException("forced close failure")).when(mock).close();
+                });
+             MockedConstruction<PrintWriter> ignoredPrintWriterConstruction = Mockito.mockConstruction(
+                     PrintWriter.class,
+                     (mock, context) -> {
+                         writerUsedByClient.set(mock);
+                         Mockito.doThrow(new RuntimeException("forced writer close failure")).when(mock).close();
+                     })) {
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-client",
                     "127.0.0.1",
-                    serverSocket.getLocalPort())) {
-                closeLiveSocketSilently(getSocket(client));
-
-                Socket socketCloseFailure = Mockito.mock(Socket.class);
-                Mockito.doThrow(new IOException("forced close failure")).when(socketCloseFailure).close();
-                setSocket(client, socketCloseFailure);
-
-                PrintWriter writerCloseFailure = Mockito.mock(PrintWriter.class);
-                Mockito.doThrow(new RuntimeException("forced writer close failure")).when(writerCloseFailure).close();
-                setWriter(client, writerCloseFailure);
-
+                    1)) {
                 Assertions.assertDoesNotThrow(client::close);
-                Assertions.assertNull(getSocket(client));
-                Assertions.assertNull(getWriter(client));
-            } finally {
-                releaseServerSocket.countDown();
             }
+        }
 
-            acceptThread.join(Duration.ofSeconds(2));
-            Assertions.assertFalse(acceptThread.isAlive());
-            Assertions.assertNull(acceptThreadFailure.get());
+        Assertions.assertNotNull(socketUsedByClient.get());
+        Assertions.assertNotNull(writerUsedByClient.get());
+        Mockito.verify(socketUsedByClient.get(), Mockito.times(1)).close();
+        Mockito.verify(writerUsedByClient.get(), Mockito.times(1)).close();
+    }
+
+    @Test
+    void testListenerShouldMarkClosedByServerOnReadIOException() {
+        try (MockedConstruction<Socket> ignoredSocketConstruction = Mockito.mockConstruction(
+                Socket.class,
+                (mock, context) -> {
+                    InputStream failingInputStream = Mockito.mock(InputStream.class);
+                    Mockito.when(failingInputStream.read()).thenThrow(new IOException("forced read failure"));
+                    Mockito.when(failingInputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt()))
+                            .thenThrow(new IOException("forced read failure"));
+                    Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
+                    Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+                })) {
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-clientio-failure-",
+                    "127.0.0.1",
+                    1)) {
+                awaitCondition(Duration.ofSeconds(2), client::isClosedByServer);
+                Assertions.assertTrue(client.isClosedByServer());
+            }
         }
     }
 
     @Test
-    void testListenerShouldMarkClosedByServerOnReadIOException() throws Exception {
-        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
-            CountDownLatch releaseServerSocket = new CountDownLatch(1);
-            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
-            Thread acceptThread = Thread.ofVirtual().start(() -> {
-                try (Socket ignored = serverSocket.accept()) {
-                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
-                } catch (Exception e) {
-                    acceptThreadFailure.set(e);
-                }
-            });
-
+    void testListenerShouldMarkClosedByServerOnReadSocketException() {
+        try (MockedConstruction<Socket> ignoredSocketConstruction = Mockito.mockConstruction(
+                Socket.class,
+                (mock, context) -> {
+                    InputStream failingInputStream = Mockito.mock(InputStream.class);
+                    Mockito.when(failingInputStream.read()).thenThrow(new SocketException("forced socket failure"));
+                    Mockito.when(failingInputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt()))
+                            .thenThrow(new SocketException("forced socket failure"));
+                    Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
+                    Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+                })) {
             try (StandardSyncClient client = new StandardSyncClient(
-                    "sync-client-",
+                    "sync-clientsocket-failure-",
                     "127.0.0.1",
-                    serverSocket.getLocalPort())) {
-                InputStream failingInputStream = Mockito.mock(InputStream.class);
-                Mockito.when(failingInputStream.read()).thenThrow(new IOException("forced read failure"));
-                Mockito.when(failingInputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt()))
-                        .thenThrow(new IOException("forced read failure"));
-
-                Socket socketReadFailure = Mockito.mock(Socket.class);
-                Mockito.when(socketReadFailure.getInputStream()).thenReturn(failingInputStream);
-                setSocket(client, socketReadFailure);
-
-                invokeAwaitResponseFromServer(client);
-
+                    1)) {
                 awaitCondition(Duration.ofSeconds(2), client::isClosedByServer);
                 Assertions.assertTrue(client.isClosedByServer());
-            } finally {
-                releaseServerSocket.countDown();
             }
-
-            acceptThread.join(Duration.ofSeconds(2));
-            Assertions.assertFalse(acceptThread.isAlive());
-            Assertions.assertNull(acceptThreadFailure.get());
         }
     }
 
@@ -540,69 +541,6 @@ class StandardSyncClientTest {
         });
     }
 
-    // Reflectively reads internal queue to assert capacity and overflow behavior without exposing test-only API.
-    private static BlockingQueue<?> getResponseQueue(StandardSyncClient client) {
-        try {
-            Field queueField = StandardSyncClient.class.getDeclaredField("responseQueue");
-            queueField.setAccessible(true);
-            return (BlockingQueue<?>) queueField.get(client);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to inspect response queue", e);
-        }
-    }
-
-    private static Socket getSocket(StandardSyncClient client) {
-        try {
-            Field socketField = StandardSyncClient.class.getDeclaredField("socket");
-            socketField.setAccessible(true);
-            return (Socket) socketField.get(client);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to inspect socket", e);
-        }
-    }
-
-    private static void setSocket(StandardSyncClient client, Socket socket) {
-        try {
-            Field socketField = StandardSyncClient.class.getDeclaredField("socket");
-            socketField.setAccessible(true);
-            socketField.set(client, socket);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to replace socket", e);
-        }
-    }
-
-    private static PrintWriter getWriter(StandardSyncClient client) {
-        try {
-            Field writerField = StandardSyncClient.class.getDeclaredField("clientWritingStreamToServerSocket");
-            writerField.setAccessible(true);
-            return (PrintWriter) writerField.get(client);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to inspect writer", e);
-        }
-    }
-
-    private static void setWriter(StandardSyncClient client, PrintWriter writer) {
-        try {
-            Field writerField = StandardSyncClient.class.getDeclaredField("clientWritingStreamToServerSocket");
-            writerField.setAccessible(true);
-            writerField.set(client, writer);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to replace writer", e);
-        }
-    }
-
-    private static void invokeAwaitResponseFromServer(StandardSyncClient client) {
-        try {
-            Method method = StandardSyncClient.class.getDeclaredMethod("awaitResponseFromServer", String.class);
-            method.setAccessible(true);
-            method.invoke(client, "sync-client-io-failure-");
-        } catch (InvocationTargetException e) {
-            throw new AssertionError("Listener startup failed", e.getCause());
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to invoke listener startup", e);
-        }
-    }
-
     // Polls until condition becomes true, so socket-thread transitions can settle without Thread.sleep().
     private static void awaitCondition(Duration timeout, BooleanSupplier condition) {
         Assertions.assertTimeoutPreemptively(timeout, () -> {
@@ -610,45 +548,6 @@ class StandardSyncClientTest {
                 Thread.onSpinWait();
             }
         });
-    }
-
-    // Injects a writer that always fails so the test can assert sendMessage handles PrintWriter error state.
-    private static void replaceWriterWithFailingWriter(StandardSyncClient client) {
-        PrintWriter alwaysFailingWriter = new PrintWriter(new Writer() {
-            @Override
-            public void write(char @NonNull [] cbuf, int off, int len) throws IOException {
-                throw new IOException("forced write failure");
-            }
-
-            @Override
-            public void flush() throws IOException {
-                throw new IOException("forced flush failure");
-            }
-
-            @Override
-            public void close() {
-                // no-op for test stub
-            }
-        }, true);
-
-        try {
-            Field writerField = StandardSyncClient.class.getDeclaredField("clientWritingStreamToServerSocket");
-            writerField.setAccessible(true);
-            writerField.set(client, alwaysFailingWriter);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to inject test writer", e);
-        }
-    }
-
-    private static void closeLiveSocketSilently(Socket socket) {
-        if (socket == null) {
-            return;
-        }
-        try {
-            socket.close();
-        } catch (IOException ignored) {
-            // no-op in test helper
-        }
     }
 
 }
