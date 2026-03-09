@@ -1,6 +1,7 @@
 package my.javacraft.echo.standard.client.sync;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
@@ -18,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StandardSyncClient implements Runnable, AutoCloseable {
 
-    private static final int READ_MESSAGE_TIMEOUT = 5; // seconds
-    private static final int MAX_QUEUED_RESPONSES = 1024;
+    private static final int CONNECT_TIMEOUT_MILLIS = 1_000;
+    private static final int MAX_QUEUED_RESPONSES = 128;
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>(MAX_QUEUED_RESPONSES);
 
     private final String host;
@@ -49,7 +50,8 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         this.port = port;
 
         try {
-            this.socket = new Socket(host, port);
+            this.socket = new Socket();
+            this.socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT_MILLIS);
             // Send text commands/messages from client to server.
             this.clientWritingStreamToServerSocket = new PrintWriter(socket.getOutputStream(), true);
 
@@ -138,7 +140,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
 
     public String readMessage() {
         try {
-            return responseQueue.poll(READ_MESSAGE_TIMEOUT, TimeUnit.SECONDS);
+            return responseQueue.poll(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;

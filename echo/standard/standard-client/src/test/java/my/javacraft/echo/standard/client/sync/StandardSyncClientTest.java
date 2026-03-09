@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -129,6 +130,37 @@ class StandardSyncClientTest {
 
         Assertions.assertTrue(exception.getMessage().contains("127.0.0.1:1"));
         Assertions.assertNotNull(exception.getCause());
+    }
+
+    @Test
+    void testConstructorShouldUseExplicitConnectTimeout() throws Exception {
+        AtomicReference<Socket> socketUsedByClient = new AtomicReference<>();
+        try (MockedConstruction<Socket> ignoredSocketConstruction = Mockito.mockConstruction(
+                Socket.class,
+                (mock, context) -> {
+                    socketUsedByClient.set(mock);
+                    Mockito.when(mock.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+                    Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+                })) {
+            try (StandardSyncClient ignored = new StandardSyncClient(
+                    "sync-client",
+                    "127.0.0.1",
+                    8080)) {
+                Assertions.assertNotNull(ignored);
+            }
+        }
+
+        Assertions.assertNotNull(socketUsedByClient.get());
+        Mockito.verify(socketUsedByClient.get(), Mockito.times(1)).connect(
+                Mockito.argThat(address -> {
+                    if (!(address instanceof InetSocketAddress socketAddress)) {
+                        return false;
+                    }
+                    return "127.0.0.1".equals(socketAddress.getHostString())
+                            && socketAddress.getPort() == 8080;
+                }),
+                Mockito.eq(1_000)
+        );
     }
 
     @Test
