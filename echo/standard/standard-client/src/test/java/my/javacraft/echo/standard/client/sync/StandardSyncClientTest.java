@@ -24,6 +24,7 @@ import java.util.function.BooleanSupplier;
 import lombok.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class StandardSyncClientTest {
 
@@ -468,8 +469,14 @@ class StandardSyncClientTest {
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
                 closeLiveSocketSilently(getSocket(client));
-                setSocket(client, new ThrowingCloseSocket());
-                setWriter(client, new ThrowingClosePrintWriter());
+
+                Socket socketCloseFailure = Mockito.mock(Socket.class);
+                Mockito.doThrow(new IOException("forced close failure")).when(socketCloseFailure).close();
+                setSocket(client, socketCloseFailure);
+
+                PrintWriter writerCloseFailure = Mockito.mock(PrintWriter.class);
+                Mockito.doThrow(new RuntimeException("forced writer close failure")).when(writerCloseFailure).close();
+                setWriter(client, writerCloseFailure);
 
                 Assertions.assertDoesNotThrow(client::close);
                 Assertions.assertNull(getSocket(client));
@@ -634,24 +641,6 @@ class StandardSyncClientTest {
             socket.close();
         } catch (IOException ignored) {
             // no-op in test helper
-        }
-    }
-
-    private static final class ThrowingCloseSocket extends Socket {
-        @Override
-        public synchronized void close() throws IOException {
-            throw new IOException("forced close failure");
-        }
-    }
-
-    private static final class ThrowingClosePrintWriter extends PrintWriter {
-        private ThrowingClosePrintWriter() {
-            super(Writer.nullWriter());
-        }
-
-        @Override
-        public void close() {
-            throw new RuntimeException("forced writer close failure");
         }
     }
 
