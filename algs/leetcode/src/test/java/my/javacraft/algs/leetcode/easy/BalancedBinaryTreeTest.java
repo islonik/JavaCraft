@@ -1,6 +1,5 @@
 package my.javacraft.algs.leetcode.easy;
 
-import my.javacraft.algs.leetcode.BalancedBinaryTree;
 import my.javacraft.algs.leetcode.model.TreeNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

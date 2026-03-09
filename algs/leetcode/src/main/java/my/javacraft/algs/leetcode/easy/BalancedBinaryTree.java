@@ -1,4 +1,4 @@
-package my.javacraft.algs.leetcode;
+package my.javacraft.algs.leetcode.easy;
 
 import my.javacraft.algs.leetcode.model.TreeNode;
 
