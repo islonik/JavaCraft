@@ -75,17 +75,30 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         Thread.ofVirtual()
                 .name(threadName + port)
                 .start(() -> {
+                    boolean serverClosedConnection = false;
                     try {
                         String line;
                         while ((line = clientReadingStreamFromServerSocket.readLine()) != null) {
                             responseQueue.add(line);
                         }
-                    } catch (SocketException ignored) {
-                        // expected when close() is called while blocking on readLine()
+                        // EOF means server closed its output stream.
+                        serverClosedConnection = true;
+                    } catch (SocketException e) {
+                        // A local close can interrupt readLine(); don't mark it as server-initiated closure.
+                        if (!closedByClient.get()) {
+                            serverClosedConnection = true;
+                            log.warn("Listener socket error: {}", e.getMessage());
+                        }
                     } catch (IOException e) {
-                        log.warn("Listener error: {}", e.getMessage());
+                        // Read I/O failure while client is still open indicates the remote side is no longer readable.
+                        if (!closedByClient.get()) {
+                            serverClosedConnection = true;
+                            log.warn("Listener error: {}", e.getMessage());
+                        }
                     } finally {
-                        closedByServer = true;
+                        if (serverClosedConnection) {
+                            closedByServer = true;
+                        }
                     }
                 });
     }
@@ -183,6 +196,5 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                 socket = null;
             }
         }
-        closedByServer = true;
     }
 }

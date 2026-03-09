@@ -122,6 +122,37 @@ class StandardSyncClientTest {
         }
     }
 
+    @Test
+    void testCloseShouldNotMarkClosedByServerWhenClientInitiatesShutdown() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                Assertions.assertFalse(client.isClosedByServer());
+                client.close();
+                Assertions.assertFalse(client.isClosedByServer());
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
     // Waits until listener marks remote EOF, so the assertion checks the steady state after server close.
     private static void awaitServerCloseObserved(StandardSyncClient client) {
         Assertions.assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
