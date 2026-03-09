@@ -302,13 +302,15 @@ public class StandardStepDefinitions {
     private StandardAsyncClient awaitAsyncClientConnected(int port) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
-            StandardAsyncClient client = new StandardAsyncClient(
-                    "async-client-",
-                    "localhost", port);
-            if (client.isConnected()) {
-                return client;
+            try {
+                StandardAsyncClient client = new StandardAsyncClient("async-client", "localhost", port);
+                if (client.isConnected()) {
+                    return client;
+                }
+                client.close();
+            } catch (IllegalStateException ignored) {
+                // fail-fast constructor can throw while server is still starting; keep retrying until deadline.
             }
-            client.close();
             if (System.nanoTime() >= deadline) {
                 Assertions.fail("Server not ready on port " + port + " within 5 seconds");
             }

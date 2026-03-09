@@ -1,6 +1,11 @@
 package my.javacraft.echo.standard.client.async;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -31,14 +36,15 @@ public class AsyncClientConnection implements AutoCloseable {
         this.host = host;
         this.port = port;
         try {
-            this.socket = new Socket(host, port);
+            this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(host, port), UserClient.CONNECT_TIMEOUT_MILLIS);
 
             Writer outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
             // Send text commands/messages from client to server.
             this.clientWritingStreamToServerSocket = new PrintWriter(outputStreamWriter, true);
 
-            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedReader inStream = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
             log.info("Async client '{}' is connected", socket);
 
@@ -46,8 +52,9 @@ public class AsyncClientConnection implements AutoCloseable {
                     .name(threadName + "-" + port)
                     .daemon(true)
                     .start(() -> listen(inStream));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        } catch (IOException e) {
+            close();
+            throw new IllegalStateException("Failed to connect to %s:%d".formatted(host, port), e);
         }
     }
 
@@ -62,7 +69,7 @@ public class AsyncClientConnection implements AutoCloseable {
         } catch (SocketException ignored) {
             // expected when close() is called while blocking on readLine()
         } catch (IOException e) {
-            log.warn("Couldn't get I/O for the connection to: {}:{}", host, port);
+            log.warn("Couldn't get I/O for the connection to: {}:{}", host, port, e);
         } finally {
             socketClosed = true;
         }
@@ -106,20 +113,28 @@ public class AsyncClientConnection implements AutoCloseable {
     }
 
     public boolean isConnected() {
-        return socket != null && clientWritingStreamToServerSocket != null;
+        return !socketClosed
+                && socket != null
+                && socket.isConnected()
+                && !socket.isClosed()
+                && clientWritingStreamToServerSocket != null;
     }
 
     @Override
     public void close() {
-        try {
-            if (clientWritingStreamToServerSocket != null) {
-                clientWritingStreamToServerSocket.close();
-            }
-            if (socket != null) {
-                socket.close();
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        if (clientWritingStreamToServerSocket != null) {
+            clientWritingStreamToServerSocket.close();
+            clientWritingStreamToServerSocket = null;
         }
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                log.error("Couldn't close socket", e);
+            } finally {
+                socket = null;
+            }
+        }
+        socketClosed = true;
     }
 }
