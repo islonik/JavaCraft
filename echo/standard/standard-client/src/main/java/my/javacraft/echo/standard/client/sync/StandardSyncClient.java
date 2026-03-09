@@ -24,7 +24,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
     private final String host;
     private final int port;
     private Socket socket;
-    private PrintWriter outStream;
+    private PrintWriter clientWritingStreamToServerSocket;
 
     // closedByClient tracks whether close() has been called (by us, intentionally).
     // It guards the close logic so it runs exactly once and makes isConnected() return false after close.
@@ -49,9 +49,10 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
 
         try {
             this.socket = new Socket(host, port);
-            this.outStream = new PrintWriter(socket.getOutputStream(), true);
+            // Send text commands/messages from client to server.
+            this.clientWritingStreamToServerSocket = new PrintWriter(socket.getOutputStream(), true);
 
-            log.info("Sync client {} is connected", socket);
+            log.info("Sync client '{}' is connected", socket);
 
             awaitResponseFromServer(threadName);
         } catch (Exception e) {
@@ -69,13 +70,13 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
      * than a platform thread.
      */
     private void awaitResponseFromServer(String threadName) throws IOException {
-        BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         Thread.ofVirtual()
                 .name(threadName + port)
                 .start(() -> {
                     try {
                         String line;
-                        while ((line = inStream.readLine()) != null) {
+                        while ((line = clientReadingStreamFromServerSocket.readLine()) != null) {
                             responseQueue.add(line);
                         }
                     } catch (SocketException ignored) {
@@ -92,7 +93,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         if (!isConnected()) {
             throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
         }
-        outStream.println(message);
+        clientWritingStreamToServerSocket.println(message);
     }
 
     public String readMessage() {
@@ -110,7 +111,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                 && socket != null
                 && socket.isConnected()
                 && !socket.isClosed()
-                && outStream != null;
+                && clientWritingStreamToServerSocket != null;
     }
 
     @Override
@@ -157,13 +158,13 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         if (!closedByClient.compareAndSet(false, true)) {
             return;
         }
-        if (outStream != null) {
+        if (clientWritingStreamToServerSocket != null) {
             try {
-                outStream.close();
+                clientWritingStreamToServerSocket.close();
             } catch (Exception e) {
                 log.error("Couldn't close output stream", e);
             } finally {
-                outStream = null;
+                clientWritingStreamToServerSocket = null;
             }
         }
         if (socket != null) {
