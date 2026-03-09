@@ -74,7 +74,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
         Reader inputStreamReader = new InputStreamReader(socket.getInputStream());
         BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
         Thread.ofVirtual()
-                .name(threadName + port)
+                .name(threadName + "-" + port)
                 .start(() -> {
                     boolean serverClosedConnection = false;
                     try {

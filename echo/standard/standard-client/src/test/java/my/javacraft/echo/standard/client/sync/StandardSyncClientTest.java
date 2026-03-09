@@ -1,11 +1,15 @@
 package my.javacraft.echo.standard.client.sync;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -22,6 +26,93 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class StandardSyncClientTest {
+
+    @Test
+    void testSendMessageShouldWriteToServer() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            AtomicReference<String> receivedMessage = new AtomicReference<>();
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()))) {
+                    receivedMessage.set(serverReader.readLine());
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                client.sendMessage("hello");
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertEquals("hello", receivedMessage.get());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testReadMessageShouldReturnServerResponse() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
+                    serverWriter.println("pong");
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                Assertions.assertEquals("pong", client.readMessage());
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testReadMessageShouldReturnNullAndKeepInterruptStatus() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                Thread.currentThread().interrupt();
+                Assertions.assertNull(client.readMessage());
+                Assertions.assertTrue(Thread.currentThread().isInterrupted());
+                Assertions.assertTrue(Thread.interrupted());
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
 
     @Test
     void testConstructorShouldThrowWhenConnectionCannotBeEstablished() {
@@ -55,6 +146,117 @@ class StandardSyncClientTest {
             } finally {
                 System.setIn(originalIn);
             }
+        }
+    }
+
+    @Test
+    void testRunShouldProcessByeCommandAndCloseConnection() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            AtomicReference<String> receivedMessage = new AtomicReference<>();
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()));
+                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
+                    String message = serverReader.readLine();
+                    receivedMessage.set(message);
+                    serverWriter.println("echo:" + message);
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                InputStream originalIn = System.in;
+                try {
+                    System.setIn(new ByteArrayInputStream("bye\n".getBytes(StandardCharsets.UTF_8)));
+                    Assertions.assertDoesNotThrow(client::run);
+                } finally {
+                    System.setIn(originalIn);
+                }
+                Assertions.assertFalse(client.isConnected());
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertEquals("bye", receivedMessage.get());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testRunShouldHandleEofWithoutSendingMessage() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            AtomicReference<String> receivedMessage = new AtomicReference<>();
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()))) {
+                    receivedMessage.set(serverReader.readLine());
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                InputStream originalIn = System.in;
+                try {
+                    System.setIn(new ByteArrayInputStream(new byte[0]));
+                    Assertions.assertDoesNotThrow(client::run);
+                } finally {
+                    System.setIn(originalIn);
+                }
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(receivedMessage.get());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testRunShouldHandleIOExceptionFromConsoleInput() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                InputStream originalIn = System.in;
+                try {
+                    System.setIn(new InputStream() {
+                        @Override
+                        public int read() throws IOException {
+                            throw new IOException("forced read failure");
+                        }
+                    });
+                    Assertions.assertDoesNotThrow(client::run);
+                } finally {
+                    System.setIn(originalIn);
+                }
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
         }
     }
 
@@ -218,6 +420,103 @@ class StandardSyncClientTest {
         }
     }
 
+    @Test
+    void testCloseShouldBeIdempotent() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                client.close();
+                Assertions.assertDoesNotThrow(client::close);
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testCloseShouldHandleWriterAndSocketCloseFailures() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                closeLiveSocketSilently(getSocket(client));
+                setSocket(client, new ThrowingCloseSocket());
+                setWriter(client, new ThrowingClosePrintWriter());
+
+                Assertions.assertDoesNotThrow(client::close);
+                Assertions.assertNull(getSocket(client));
+                Assertions.assertNull(getWriter(client));
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testListenerShouldMarkClosedByServerOnReadIOException() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            CountDownLatch releaseServerSocket = new CountDownLatch(1);
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket ignored = serverSocket.accept()) {
+                    Assertions.assertTrue(releaseServerSocket.await(2, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client-",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                setSocket(client, new IOExceptionOnReadSocket());
+
+                invokeAwaitResponseFromServer(client);
+
+                awaitCondition(Duration.ofSeconds(2), client::isClosedByServer);
+                Assertions.assertTrue(client.isClosedByServer());
+            } finally {
+                releaseServerSocket.countDown();
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
     // Waits until listener marks remote EOF, so the assertion checks the steady state after server close.
     private static void awaitServerCloseObserved(StandardSyncClient client) {
         Assertions.assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
@@ -235,6 +534,58 @@ class StandardSyncClientTest {
             return (BlockingQueue<?>) queueField.get(client);
         } catch (ReflectiveOperationException e) {
             throw new AssertionError("Failed to inspect response queue", e);
+        }
+    }
+
+    private static Socket getSocket(StandardSyncClient client) {
+        try {
+            Field socketField = StandardSyncClient.class.getDeclaredField("socket");
+            socketField.setAccessible(true);
+            return (Socket) socketField.get(client);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Failed to inspect socket", e);
+        }
+    }
+
+    private static void setSocket(StandardSyncClient client, Socket socket) {
+        try {
+            Field socketField = StandardSyncClient.class.getDeclaredField("socket");
+            socketField.setAccessible(true);
+            socketField.set(client, socket);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Failed to replace socket", e);
+        }
+    }
+
+    private static PrintWriter getWriter(StandardSyncClient client) {
+        try {
+            Field writerField = StandardSyncClient.class.getDeclaredField("clientWritingStreamToServerSocket");
+            writerField.setAccessible(true);
+            return (PrintWriter) writerField.get(client);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Failed to inspect writer", e);
+        }
+    }
+
+    private static void setWriter(StandardSyncClient client, PrintWriter writer) {
+        try {
+            Field writerField = StandardSyncClient.class.getDeclaredField("clientWritingStreamToServerSocket");
+            writerField.setAccessible(true);
+            writerField.set(client, writer);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Failed to replace writer", e);
+        }
+    }
+
+    private static void invokeAwaitResponseFromServer(StandardSyncClient client) {
+        try {
+            Method method = StandardSyncClient.class.getDeclaredMethod("awaitResponseFromServer", String.class);
+            method.setAccessible(true);
+            method.invoke(client, "sync-client-io-failure-");
+        } catch (InvocationTargetException e) {
+            throw new AssertionError("Listener startup failed", e.getCause());
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Failed to invoke listener startup", e);
         }
     }
 
@@ -272,6 +623,47 @@ class StandardSyncClientTest {
             writerField.set(client, alwaysFailingWriter);
         } catch (ReflectiveOperationException e) {
             throw new AssertionError("Failed to inject test writer", e);
+        }
+    }
+
+    private static void closeLiveSocketSilently(Socket socket) {
+        if (socket == null) {
+            return;
+        }
+        try {
+            socket.close();
+        } catch (IOException ignored) {
+            // no-op in test helper
+        }
+    }
+
+    private static final class ThrowingCloseSocket extends Socket {
+        @Override
+        public synchronized void close() throws IOException {
+            throw new IOException("forced close failure");
+        }
+    }
+
+    private static final class ThrowingClosePrintWriter extends PrintWriter {
+        private ThrowingClosePrintWriter() {
+            super(Writer.nullWriter());
+        }
+
+        @Override
+        public void close() {
+            throw new RuntimeException("forced writer close failure");
+        }
+    }
+
+    private static final class IOExceptionOnReadSocket extends Socket {
+        @Override
+        public InputStream getInputStream() {
+            return new InputStream() {
+                @Override
+                public int read() throws IOException {
+                    throw new IOException("forced read failure");
+                }
+            };
         }
     }
 }

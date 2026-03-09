@@ -284,7 +284,7 @@ public class StandardStepDefinitions {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
             try {
-                StandardSyncClient client = new StandardSyncClient("sync-client-", "localhost", port);
+                StandardSyncClient client = new StandardSyncClient("sync-client", "localhost", port);
                 if (client.isConnected()) {
                     return client;
                 }

@@ -14,7 +14,7 @@ public class StandardSyncClientApplication {
         int port = PortValidator.getPort(args);
 
         try (StandardSyncClient syncClient = new StandardSyncClient(
-                "sync-client-",
+                "Sync-client-application",
                 "localhost",
                 port)) {
             syncClient.run();
