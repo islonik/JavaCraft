@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 public class StandardSyncClient implements Runnable, AutoCloseable {
 
     private static final int READ_MESSAGE_TIMEOUT = 5; // seconds
-    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+    private static final int MAX_QUEUED_RESPONSES = 1024;
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>(MAX_QUEUED_RESPONSES);
 
     private final String host;
     private final int port;
@@ -79,10 +80,14 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                     try {
                         String line;
                         while ((line = clientReadingStreamFromServerSocket.readLine()) != null) {
-                            responseQueue.add(line);
+                            if (!enqueueResponse(line)) {
+                                break;
+                            }
                         }
                         // EOF means server closed its output stream.
-                        serverClosedConnection = true;
+                        if (!closedByClient.get()) {
+                            serverClosedConnection = true;
+                        }
                     } catch (SocketException e) {
                         // A local close can interrupt readLine(); don't mark it as server-initiated closure.
                         if (!closedByClient.get()) {
@@ -101,6 +106,21 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                         }
                     }
                 });
+    }
+
+    /**
+     * Bounds in-memory buffering of server responses so a noisy peer cannot grow memory unboundedly.
+     */
+    private boolean enqueueResponse(String line) {
+        if (responseQueue.offer(line)) {
+            return true;
+        }
+        log.warn(
+                "Response queue overflow (max {}). Closing connection to protect memory.",
+                MAX_QUEUED_RESPONSES
+        );
+        close();
+        return false;
     }
 
     public void sendMessage(String message) {
