@@ -14,6 +14,8 @@ import java.net.SocketException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -181,6 +183,47 @@ class StandardSyncClientTest {
             acceptThread.join(Duration.ofSeconds(2));
             Assertions.assertFalse(acceptThread.isAlive());
             Assertions.assertEquals("bye", receivedMessage.get());
+            Assertions.assertNull(acceptThreadFailure.get());
+        }
+    }
+
+    @Test
+    void testRunShouldPreserveWhitespaceInInteractiveMode() throws Exception {
+        try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            List<String> receivedMessages = new ArrayList<>();
+            AtomicReference<Throwable> acceptThreadFailure = new AtomicReference<>();
+            Thread acceptThread = Thread.ofVirtual().start(() -> {
+                try (Socket accepted = serverSocket.accept();
+                     BufferedReader serverReader = new BufferedReader(new InputStreamReader(accepted.getInputStream()));
+                     PrintWriter serverWriter = new PrintWriter(accepted.getOutputStream(), true)) {
+                    for (int i = 0; i < 3; i++) {
+                        String message = serverReader.readLine();
+                        receivedMessages.add(message);
+                        serverWriter.println("echo:" + message);
+                    }
+                } catch (Exception e) {
+                    acceptThreadFailure.set(e);
+                }
+            });
+
+            try (StandardSyncClient client = new StandardSyncClient(
+                    "sync-client",
+                    "127.0.0.1",
+                    serverSocket.getLocalPort())) {
+                InputStream originalIn = System.in;
+                try {
+                    System.setIn(new ByteArrayInputStream(
+                            "  hello  \n   \nbye\n".getBytes(StandardCharsets.UTF_8)
+                    ));
+                    Assertions.assertDoesNotThrow(client::run);
+                } finally {
+                    System.setIn(originalIn);
+                }
+            }
+
+            acceptThread.join(Duration.ofSeconds(2));
+            Assertions.assertFalse(acceptThread.isAlive());
+            Assertions.assertEquals(List.of("  hello  ", "   ", "bye"), receivedMessages);
             Assertions.assertNull(acceptThreadFailure.get());
         }
     }

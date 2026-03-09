@@ -169,7 +169,7 @@ public class StandardSyncClient implements Runnable, AutoCloseable {
                     log.info("Detected end-of-file (EOF). Thread terminating...");
                     break;
                 }
-                userInput = line.trim();
+                userInput = line;
 
                 sendMessage(userInput);
 
