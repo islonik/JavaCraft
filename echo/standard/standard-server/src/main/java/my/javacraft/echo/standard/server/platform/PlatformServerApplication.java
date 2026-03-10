@@ -10,6 +10,8 @@ public class PlatformServerApplication {
     public static void main(String[] args) {
         int port = PortValidator.getPort(args);
 
-        new PlatformServer(port).run();
+        try (PlatformServer server = new PlatformServer(port)) {
+            server.run();
+        }
     }
 }

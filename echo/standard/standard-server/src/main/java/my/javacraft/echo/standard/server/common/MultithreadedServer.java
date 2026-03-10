@@ -12,12 +12,13 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public abstract class MultithreadedServer implements Runnable {
+public abstract class MultithreadedServer implements Runnable, AutoCloseable {
 
     protected final AtomicInteger connectedClients = new AtomicInteger(0);
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     private final int port;
+    private volatile ServerSocket serverSocket;
 
     public MultithreadedServer(int port) {
         this.port = port;
@@ -33,6 +34,7 @@ public abstract class MultithreadedServer implements Runnable {
         }
 
         try (ServerSocket server = new ServerSocket(port)) {
+            this.serverSocket = server;
 
             String serverHello = """ 
                     \\{^_^}/ Hi!
@@ -71,6 +73,30 @@ public abstract class MultithreadedServer implements Runnable {
             }
         } finally {
             running.set(false);
+            serverSocket = null;
+        }
+    }
+
+    // supports graceful shutdown
+    @Override
+    public void close() {
+        if (!running.compareAndSet(true, false)) {
+            return;
+        }
+
+        closeServerSocket();
+    }
+
+    private void closeServerSocket() {
+        ServerSocket socket = serverSocket;
+        if (socket == null || socket.isClosed()) {
+            return;
+        }
+
+        try {
+            socket.close();
+        } catch (IOException closeError) {
+            log.error("Failed to close server socket on port {}", port, closeError);
         }
     }
 

@@ -69,6 +69,47 @@ class MultithreadedServerTest {
     }
 
     @Test
+    void testRunShouldStopGracefullyWhenShutdownIsCalled() throws Exception {
+        MultithreadedServer server = new MultithreadedServer(9191) {
+            @Override
+            public void startUpClient(Socket client) {
+                // not needed in this test
+            }
+        };
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        try (MockedConstruction<ServerSocket> construction = Mockito.mockConstruction(
+                ServerSocket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInetAddress()).thenReturn(loopback);
+                    Mockito.when(mock.getLocalPort()).thenReturn(9191);
+                    Mockito.when(mock.accept()).thenAnswer(invocation -> {
+                        server.close();
+                        throw new SocketException("socket closed");
+                    });
+                }
+        )) {
+
+            Assertions.assertDoesNotThrow(server::run);
+            ServerSocket serverSocket = construction.constructed().getFirst();
+            Mockito.verify(serverSocket).accept();
+            Mockito.verify(serverSocket, Mockito.atLeastOnce()).close();
+        }
+    }
+
+    @Test
+    void testShutdownShouldBeNoOpWhenServerIsNotRunning() {
+        try (MultithreadedServer server = new MultithreadedServer(9494) {
+            @Override
+            public void startUpClient(Socket client) {
+                // not needed
+                Assertions.assertTrue(true);
+            }
+        }) {
+            Assertions.assertDoesNotThrow(server::close);
+        }
+    }
+
+    @Test
     void testRunShouldReturnWhenAlreadyRunning() throws Exception {
         AtomicBoolean nestedRunAttempted = new AtomicBoolean(false);
         AtomicReference<MultithreadedServer> serverRef = new AtomicReference<>();

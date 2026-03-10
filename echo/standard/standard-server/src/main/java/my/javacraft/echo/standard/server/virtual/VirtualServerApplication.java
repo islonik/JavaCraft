@@ -13,7 +13,9 @@ public class VirtualServerApplication {
     public static void main(String[] args) {
         int port = PortValidator.getPort(args);
 
-        new VirtualServer(port).run();
+        try (VirtualServer server = new VirtualServer(port)) {
+            server.run();
+        }
     }
 
 }
