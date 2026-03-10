@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import my.javacraft.echo.standard.client.platform.PlatformThreadClient;
 import my.javacraft.echo.standard.client.virtual.VirtualThreadClient;
+import my.javacraft.echo.standard.server.platform.PlatformServer;
 import my.javacraft.echo.standard.server.virtual.VirtualServer;
 import org.junit.jupiter.api.Assertions;
 
@@ -60,7 +61,16 @@ public class StandardStepDefinitions {
     @Given("the virtual server is running on port {int}")
     public void startVirtualServer(int port) {
         VirtualServer server = new VirtualServer(port);
+        startServer(server);
+    }
 
+    @Given("the platform server is running on port {int}")
+    public void startPlatformServer(int port) {
+        PlatformServer server = new PlatformServer(port);
+        startServer(server);
+    }
+
+    private void startServer(Runnable server) {
         // Daemon threads allow the JVM to exit cleanly after tests complete,
         // preventing server sockets from lingering and blocking ports in subsequent runs.
         ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
@@ -167,9 +177,10 @@ public class StandardStepDefinitions {
         failIfAnyClientThreadFailed(failures);
     }
 
-    @When("{word} thread performance benchmark runs {int} warmups and {int} measured runs with {int} clients and {int} messages on port {int}")
+    @When("performance benchmark for {word} server and {word} client runs {int} warmups and {int} measured runs with {int} clients and {int} messages on port {int}")
     public void runThreadPerformanceBenchmark(
-            String threadType,
+            String serverType,
+            String clientType,
             int warmups,
             int measuredRuns,
             int clientCount,
@@ -181,11 +192,10 @@ public class StandardStepDefinitions {
         Assertions.assertTrue(clientCount > 0, "Client count must be greater than zero");
         Assertions.assertTrue(messagesPerClient > 0, "Messages per client must be greater than zero");
 
-        String normalizedThreadType = threadType.toLowerCase();
-        Assertions.assertTrue(
-                "virtual".equals(normalizedThreadType) || "platform".equals(normalizedThreadType),
-                "Unsupported thread type: " + threadType
-        );
+        String normalizedServerType = normalizeThreadType(serverType, "server");
+        String normalizedClientType = normalizeThreadType(clientType, "client");
+        String summaryKey = benchmarkKey(normalizedServerType, normalizedClientType);
+        String benchmarkLabel = benchmarkLabel(normalizedServerType, normalizedClientType);
 
         PrintStream benchmarkOut = System.out;
         long benchmarkStartedAt = System.nanoTime();
@@ -193,29 +203,39 @@ public class StandardStepDefinitions {
         List<Long> measuredRunNanos = new ArrayList<>(measuredRuns);
 
         for (int warmup = 1; warmup <= warmups; warmup++) {
-            String prefix = "%sPerfWarmup%02d".formatted(capitalize(normalizedThreadType), warmup);
+            String prefix = "%s%sPerfWarmup%02d".formatted(
+                    capitalize(normalizedServerType),
+                    capitalize(normalizedClientType),
+                    warmup
+            );
             long elapsedNanos = runSingleBenchmarkIteration(
-                    normalizedThreadType,
+                    normalizedServerType,
+                    normalizedClientType,
                     clientCount,
                     messagesPerClient,
                     port,
                     prefix
             );
-            printRunMetrics(benchmarkOut, normalizedThreadType, "WARMUP", warmup, warmups,
+            printRunMetrics(benchmarkOut, benchmarkLabel, "WARMUP", warmup, warmups,
                     clientCount, messagesPerClient, totalMessages, elapsedNanos);
         }
 
         for (int run = 1; run <= measuredRuns; run++) {
-            String prefix = "%sPerfRun%02d".formatted(capitalize(normalizedThreadType), run);
+            String prefix = "%s%sPerfRun%02d".formatted(
+                    capitalize(normalizedServerType),
+                    capitalize(normalizedClientType),
+                    run
+            );
             long elapsedNanos = runSingleBenchmarkIteration(
-                    normalizedThreadType,
+                    normalizedServerType,
+                    normalizedClientType,
                     clientCount,
                     messagesPerClient,
                     port,
                     prefix
             );
             measuredRunNanos.add(elapsedNanos);
-            printRunMetrics(benchmarkOut, normalizedThreadType, null, run, measuredRuns,
+            printRunMetrics(benchmarkOut, benchmarkLabel, null, run, measuredRuns,
                     clientCount, messagesPerClient, totalMessages, elapsedNanos);
         }
 
@@ -224,11 +244,13 @@ public class StandardStepDefinitions {
         double avgNanos = measuredTotalNanos / (double) measuredRuns;
         long medianNanos = medianNanos(measuredRunNanos);
 
-        printAggregateMetrics(benchmarkOut, normalizedThreadType, measuredRuns,
+        printAggregateMetrics(benchmarkOut, benchmarkLabel, measuredRuns,
                 clientCount, messagesPerClient, totalMessages, avgNanos, medianNanos);
 
         writePerformanceSummary(
-                normalizedThreadType,
+                summaryKey,
+                normalizedServerType,
+                normalizedClientType,
                 warmups,
                 measuredRuns,
                 clientCount,
@@ -241,50 +263,64 @@ public class StandardStepDefinitions {
         );
     }
 
-    @Then("performance medians from separate JVM runs are compared and total execution time is printed")
-    public void comparePerformanceMediansFromSeparateRuns() {
-        PerformanceSummary virtual = readPerformanceSummary("virtual");
-        PerformanceSummary platform = readPerformanceSummary("platform");
+    @Then("performance averages for all server - client combinations are compared and total execution time is printed")
+    public void comparePerformanceAveragesFromSeparateRuns() {
+        List<PerformanceSummary> summaries = List.of(
+                readPerformanceSummary(benchmarkKey("platform", "platform")),
+                readPerformanceSummary(benchmarkKey("platform", "virtual")),
+                readPerformanceSummary(benchmarkKey("virtual", "platform")),
+                readPerformanceSummary(benchmarkKey("virtual", "virtual"))
+        );
 
-        Assertions.assertEquals(virtual.clientCount(), platform.clientCount(),
-                "Virtual and platform client counts differ");
-        Assertions.assertEquals(virtual.messagesPerClient(), platform.messagesPerClient(),
-                "Virtual and platform messages-per-client differ");
+        PerformanceSummary first = summaries.getFirst();
+        for (PerformanceSummary summary : summaries) {
+            Assertions.assertEquals(first.clientCount(), summary.clientCount(),
+                    "Client counts differ between performance scenarios");
+            Assertions.assertEquals(first.messagesPerClient(), summary.messagesPerClient(),
+                    "Messages-per-client differ between performance scenarios");
+        }
+
+        List<PerformanceSummary> sortedByAverage = summaries.stream()
+                .sorted(Comparator.comparingDouble(PerformanceSummary::averageNanos))
+                .toList();
+
+        PerformanceSummary fastest = sortedByAverage.getFirst();
 
         PrintStream out = System.out;
+        out.println("[PERF][FINAL] average execution time sorted (fastest -> slowest):");
+        for (int i = 0; i < sortedByAverage.size(); i++) {
+            PerformanceSummary summary = sortedByAverage.get(i);
+            double deltaNanos = summary.averageNanos() - fastest.averageNanos();
+            double deltaPercent = fastest.averageNanos() == 0.0
+                    ? 0.0
+                    : (deltaNanos * 100.0) / fastest.averageNanos();
+
+            out.printf(
+                    "[PERF][FINAL] %d) %s average: %.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg, delta=%.3f s (%+.2f%% vs fastest)%n",
+                    i + 1,
+                    summary.benchmarkLabel(),
+                    nanosToSeconds(summary.averageNanos()),
+                    throughput(summary.totalMessages(), summary.averageNanos()),
+                    avgLatencyMillis(summary.totalMessages(), summary.averageNanos()),
+                    nanosToSeconds(deltaNanos),
+                    deltaPercent
+            );
+        }
+
+        long combinedMeasuredNanos = summaries.stream().mapToLong(PerformanceSummary::measuredTotalNanos).sum();
+        long combinedScenarioNanos = summaries.stream().mapToLong(PerformanceSummary::scenarioElapsedNanos).sum();
+
         out.printf(
-                "[PERF][FINAL] virtual median: %.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg%n",
-                nanosToSeconds(virtual.medianNanos()),
-                throughput(virtual.totalMessages(), virtual.medianNanos()),
-                avgLatencyMillis(virtual.totalMessages(), virtual.medianNanos())
+                "[PERF][FINAL] fastest average scenario: %s (%.3f s)%n",
+                fastest.benchmarkLabel(),
+                nanosToSeconds(fastest.averageNanos())
         );
         out.printf(
-                "[PERF][FINAL] platform median: %.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg%n",
-                nanosToSeconds(platform.medianNanos()),
-                throughput(platform.totalMessages(), platform.medianNanos()),
-                avgLatencyMillis(platform.totalMessages(), platform.medianNanos())
-        );
-
-        String fasterType = virtual.medianNanos() <= platform.medianNanos() ? "VIRTUAL" : "PLATFORM";
-        long fasterNanos = Math.min(virtual.medianNanos(), platform.medianNanos());
-        long slowerNanos = Math.max(virtual.medianNanos(), platform.medianNanos());
-        double improvementPercent = ((slowerNanos - fasterNanos) * 100.0) / slowerNanos;
-
-        long combinedMeasuredNanos = virtual.measuredTotalNanos() + platform.measuredTotalNanos();
-        long combinedScenarioNanos = virtual.scenarioElapsedNanos() + platform.scenarioElapsedNanos();
-
-        out.printf(
-                "[PERF][FINAL] faster median: %s by %.2f%% (delta=%.3f s)%n",
-                fasterType,
-                improvementPercent,
-                nanosToSeconds(slowerNanos - fasterNanos)
-        );
-        out.printf(
-                "[PERF][FINAL] total measured execution time: %.3f s (both tests)%n",
+                "[PERF][FINAL] total measured execution time: %.3f s (all 4 tests)%n",
                 nanosToSeconds(combinedMeasuredNanos)
         );
         out.printf(
-                "[PERF][FINAL] total benchmark scenario time (warmups + measured): %.3f s (both tests)%n",
+                "[PERF][FINAL] total benchmark scenario time (warmups + measured): %.3f s (all 4 tests)%n",
                 nanosToSeconds(combinedScenarioNanos)
         );
     }
@@ -431,38 +467,109 @@ public class StandardStepDefinitions {
     }
 
     private long runSingleBenchmarkIteration(
-            String normalizedThreadType,
+            String normalizedServerType,
+            String normalizedClientType,
             int clientCount,
             int messagesPerClient,
             int port,
             String prefix) {
         return withSuppressedSystemOut(() -> {
-            connectBenchmarkClients(normalizedThreadType, clientCount, prefix, port);
-
-            assertResponse(
-                    clientName(prefix, 1),
-                    "stats",
-                    "Simultaneously connected clients: %d".formatted(clientCount)
+            if ("platform".equals(normalizedServerType)) {
+                return runSequentialBenchmarkIteration(
+                        normalizedClientType,
+                        clientCount,
+                        messagesPerClient,
+                        port,
+                        prefix
+                );
+            }
+            return runConcurrentBenchmarkIteration(
+                    normalizedClientType,
+                    clientCount,
+                    messagesPerClient,
+                    port,
+                    prefix
             );
-
-            long startedAt = System.nanoTime();
-            clientsEachSendEchoMessagesWithRandomDelay(clientCount, prefix, messagesPerClient, 0, 0);
-            long elapsedNanos = System.nanoTime() - startedAt;
-
-            clientsWithPrefixDisconnectWithGoodbye(clientCount, prefix);
-            return elapsedNanos;
         });
     }
 
-    private void connectBenchmarkClients(String normalizedThreadType, int clientCount, String prefix, int port) {
+    private long runConcurrentBenchmarkIteration(
+            String normalizedClientType,
+            int clientCount,
+            int messagesPerClient,
+            int port,
+            String prefix) {
+        connectBenchmarkClients(normalizedClientType, clientCount, prefix, port);
+
+        assertResponse(
+                clientName(prefix, 1),
+                "stats",
+                "Simultaneously connected clients: %d".formatted(clientCount)
+        );
+
+        long startedAt = System.nanoTime();
+        clientsEachSendEchoMessagesWithRandomDelay(clientCount, prefix, messagesPerClient, 0, 0);
+        long elapsedNanos = System.nanoTime() - startedAt;
+
+        clientsWithPrefixDisconnectWithGoodbye(clientCount, prefix);
+        return elapsedNanos;
+    }
+
+    private long runSequentialBenchmarkIteration(
+            String normalizedClientType,
+            int clientCount,
+            int messagesPerClient,
+            int port,
+            String prefix) {
+        long startedAt = System.nanoTime();
         for (int i = 1; i <= clientCount; i++) {
             String currentClientName = clientName(prefix, i);
-            if ("virtual".equals(normalizedThreadType)) {
-                connectVirtualClient(currentClientName, port);
-            } else {
-                connectPlatformClient(currentClientName, port);
+            connectBenchmarkClient(normalizedClientType, currentClientName, port);
+
+            assertResponse(
+                    currentClientName,
+                    "stats",
+                    "Simultaneously connected clients: 1"
+            );
+            for (int messageIndex = 1; messageIndex <= messagesPerClient; messageIndex++) {
+                String message = "%s message %03d".formatted(currentClientName, messageIndex);
+                assertResponse(currentClientName, message, "Did you say '%s'?".formatted(message));
             }
+            performGoodbye(currentClientName);
         }
+        return System.nanoTime() - startedAt;
+    }
+
+    private void connectBenchmarkClients(String normalizedClientType, int clientCount, String prefix, int port) {
+        for (int i = 1; i <= clientCount; i++) {
+            String currentClientName = clientName(prefix, i);
+            connectBenchmarkClient(normalizedClientType, currentClientName, port);
+        }
+    }
+
+    private void connectBenchmarkClient(String normalizedClientType, String clientName, int port) {
+        if ("virtual".equals(normalizedClientType)) {
+            connectVirtualClient(clientName, port);
+        } else {
+            connectPlatformClient(clientName, port);
+        }
+    }
+
+    private String normalizeThreadType(String value, String role) {
+        String normalized = value.toLowerCase();
+        Assertions.assertTrue(
+                "virtual".equals(normalized) || "platform".equals(normalized),
+                "Unsupported %s type: %s".formatted(role, value)
+        );
+        return normalized;
+    }
+
+    private String benchmarkKey(String serverType, String clientType) {
+        return "%s-%s".formatted(serverType, clientType);
+    }
+
+    private String benchmarkLabel(String serverType, String clientType) {
+        return "%s_SERVER+%s_CLIENT".formatted(serverType.toUpperCase(), clientType.toUpperCase());
     }
 
     private String capitalize(String value) {
@@ -482,7 +589,7 @@ public class StandardStepDefinitions {
 
     private void printRunMetrics(
             PrintStream out,
-            String threadType,
+            String benchmarkLabel,
             String runType,
             int run,
             int totalRuns,
@@ -493,7 +600,7 @@ public class StandardStepDefinitions {
         String runTypeSuffix = runType == null ? "" : "[" + runType + "]";
         out.printf(
                 "[PERF][%s]%s run %d/%d: clients=%d, messages/client=%d, total=%d, elapsed=%.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg%n",
-                threadType.toUpperCase(),
+                benchmarkLabel,
                 runTypeSuffix,
                 run,
                 totalRuns,
@@ -508,7 +615,7 @@ public class StandardStepDefinitions {
 
     private void printAggregateMetrics(
             PrintStream out,
-            String threadType,
+            String benchmarkLabel,
             int measuredRuns,
             int clientCount,
             int messagesPerClient,
@@ -517,7 +624,7 @@ public class StandardStepDefinitions {
             long medianNanos) {
         out.printf(
                 "[PERF][%s] average over %d measured runs: clients=%d, messages/client=%d, total=%d, elapsed=%.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg%n",
-                threadType.toUpperCase(),
+                benchmarkLabel,
                 measuredRuns,
                 clientCount,
                 messagesPerClient,
@@ -528,7 +635,7 @@ public class StandardStepDefinitions {
         );
         out.printf(
                 "[PERF][%s] median over %d measured runs: clients=%d, messages/client=%d, total=%d, elapsed=%.3f s, throughput=%.2f msg/s, avg=%.4f ms/msg%n",
-                threadType.toUpperCase(),
+                benchmarkLabel,
                 measuredRuns,
                 clientCount,
                 messagesPerClient,
@@ -540,7 +647,9 @@ public class StandardStepDefinitions {
     }
 
     private void writePerformanceSummary(
-            String threadType,
+            String summaryKey,
+            String serverType,
+            String clientType,
             int warmups,
             int measuredRuns,
             int clientCount,
@@ -551,7 +660,10 @@ public class StandardStepDefinitions {
             double averageNanos,
             long scenarioElapsedNanos) {
         Properties properties = new Properties();
-        properties.setProperty("threadType", threadType);
+        properties.setProperty("summaryKey", summaryKey);
+        properties.setProperty("serverType", serverType);
+        properties.setProperty("clientType", clientType);
+        properties.setProperty("benchmarkLabel", benchmarkLabel(serverType, clientType));
         properties.setProperty("warmups", Integer.toString(warmups));
         properties.setProperty("measuredRuns", Integer.toString(measuredRuns));
         properties.setProperty("clientCount", Integer.toString(clientCount));
@@ -564,40 +676,49 @@ public class StandardStepDefinitions {
 
         try {
             Files.createDirectories(PERFORMANCE_RESULTS_DIR);
-            Path summaryFile = performanceSummaryFile(threadType);
+            Path summaryFile = performanceSummaryFile(summaryKey);
             try (var writer = Files.newBufferedWriter(summaryFile, StandardCharsets.UTF_8)) {
-                properties.store(writer, "Performance benchmark summary for " + threadType);
+                properties.store(writer, "Performance benchmark summary for " + summaryKey);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to persist benchmark results for " + threadType, e);
+            throw new IllegalStateException("Failed to persist benchmark results for " + summaryKey, e);
         }
     }
 
-    private PerformanceSummary readPerformanceSummary(String threadType) {
-        Path summaryFile = performanceSummaryFile(threadType);
+    private PerformanceSummary readPerformanceSummary(String summaryKey) {
+        Path summaryFile = performanceSummaryFile(summaryKey);
         Assertions.assertTrue(Files.exists(summaryFile),
-                "No persisted benchmark summary for '%s'. Run '@Performance and @%s' first."
-                        .formatted(threadType, capitalize(threadType)));
+                "No persisted benchmark summary for '%s'. Run the matching '@Performance' scenario first."
+                        .formatted(summaryKey));
 
         Properties properties = new Properties();
         try (var reader = Files.newBufferedReader(summaryFile, StandardCharsets.UTF_8)) {
             properties.load(reader);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to read benchmark summary for " + threadType, e);
+            throw new IllegalStateException("Failed to read benchmark summary for " + summaryKey, e);
         }
 
+        String storedServerType = properties.getProperty("serverType");
+        String storedClientType = properties.getProperty("clientType");
+        String fallbackLabel = storedServerType != null && storedClientType != null
+                ? benchmarkLabel(storedServerType, storedClientType)
+                : summaryKey.toUpperCase();
+
         return new PerformanceSummary(
+                properties.getProperty("summaryKey", summaryKey),
+                properties.getProperty("benchmarkLabel", fallbackLabel),
                 Integer.parseInt(properties.getProperty("clientCount")),
                 Integer.parseInt(properties.getProperty("messagesPerClient")),
                 Integer.parseInt(properties.getProperty("totalMessages")),
                 Long.parseLong(properties.getProperty("measuredTotalNanos")),
                 Long.parseLong(properties.getProperty("medianNanos")),
+                Double.parseDouble(properties.getProperty("averageNanos")),
                 Long.parseLong(properties.getProperty("scenarioElapsedNanos"))
         );
     }
 
-    private Path performanceSummaryFile(String threadType) {
-        return PERFORMANCE_RESULTS_DIR.resolve(threadType + ".properties");
+    private Path performanceSummaryFile(String summaryKey) {
+        return PERFORMANCE_RESULTS_DIR.resolve(summaryKey + ".properties");
     }
 
     private double nanosToSeconds(long nanos) {
@@ -638,11 +759,14 @@ public class StandardStepDefinitions {
     }
 
     private record PerformanceSummary(
+            String summaryKey,
+            String benchmarkLabel,
             int clientCount,
             int messagesPerClient,
             int totalMessages,
             long measuredTotalNanos,
             long medianNanos,
+            double averageNanos,
             long scenarioElapsedNanos) {
     }
 
