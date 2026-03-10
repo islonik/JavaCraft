@@ -121,7 +121,7 @@ class ServerThreadTest {
 
             new ServerThread(socket, counter);
 
-            Mockito.verify(socket).setSoTimeout(30_000);
+            Mockito.verify(socket).setSoTimeout(2_000);
         }
     }
 
@@ -143,7 +143,7 @@ class ServerThreadTest {
     }
 
     @Test
-    void testRunShouldCatchRuntimeExceptionAndStillDecrementCounter() throws Exception {
+    void testRunShouldRethrowRuntimeExceptionAndStillDecrementCounter() throws Exception {
         AtomicInteger counter = new AtomicInteger(0);
         Socket socket = Mockito.mock(Socket.class);
 
@@ -152,7 +152,7 @@ class ServerThreadTest {
         Mockito.when(socket.getOutputStream()).thenReturn(new RuntimeFailingOutputStream());
         Mockito.when(socket.getPort()).thenReturn(40404);
 
-        new ServerThread(socket, counter).run();
+        Assertions.assertThrows(RuntimeException.class, () -> new ServerThread(socket, counter).run());
 
         Assertions.assertEquals(0, counter.get(), "Counter must be decremented on runtime failures too");
         Mockito.verify(socket).close();

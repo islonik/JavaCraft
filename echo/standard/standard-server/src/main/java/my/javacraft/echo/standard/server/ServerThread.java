@@ -52,10 +52,7 @@ public class ServerThread implements Runnable {
                 }
 
                 String response = findServerResponse(request);
-                log.info("resp {} = {}", socket.getPort(), response.stripTrailing());
-
-                outStream.write(response);
-                outStream.flush();
+                writeResponse(response);
 
                 if ("bye".equalsIgnoreCase(request)) {
                     break;
@@ -65,6 +62,7 @@ public class ServerThread implements Runnable {
             log.error("I/O error for client {}: {}", socket.getPort(), ioe.getLocalizedMessage(), ioe);
         } catch (RuntimeException rte) {
             log.error("Unexpected server thread error for client {}", socket.getPort(), rte);
+            throw rte;
         } finally {
             closeConnection();
         }
@@ -97,6 +95,12 @@ public class ServerThread implements Runnable {
         if (counted.compareAndSet(false, true)) {
             log.info("Simultaneously connected clients : {}", connectedClients.incrementAndGet());
         }
+    }
+
+    private void writeResponse(String response) throws IOException {
+        log.debug("resp {} = {}", socket.getPort(), response.stripTrailing());
+        outStream.write(response);
+        outStream.flush();
     }
 
     private void closeQuietly(AutoCloseable closeable, String target) {
