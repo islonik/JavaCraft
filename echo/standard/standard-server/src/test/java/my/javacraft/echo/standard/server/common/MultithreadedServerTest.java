@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -43,12 +44,11 @@ class MultithreadedServerTest {
     }
 
     @Test
-    void testRunShouldIgnoreNullAcceptedClient() throws Exception {
-        AtomicInteger startCalls = new AtomicInteger(0);
-        MultithreadedServer server = new MultithreadedServer(9090) {
+    void testRunShouldHandleSocketExceptionWhileStillRunning() throws Exception {
+        MultithreadedServer server = new MultithreadedServer(9292) {
             @Override
             public void startUpClient(Socket client) {
-                startCalls.incrementAndGet();
+                // not needed in this test
             }
         };
         InetAddress loopback = InetAddress.getLoopbackAddress();
@@ -56,13 +56,43 @@ class MultithreadedServerTest {
                 ServerSocket.class,
                 (mock, context) -> {
                     Mockito.when(mock.getInetAddress()).thenReturn(loopback);
-                    Mockito.when(mock.getLocalPort()).thenReturn(9090);
-                    Mockito.when(mock.accept()).thenReturn(null).thenThrow(new IOException("stop"));
+                    Mockito.when(mock.getLocalPort()).thenReturn(9292);
+                    Mockito.when(mock.accept()).thenThrow(new SocketException("accept failed"));
                 }
         )) {
 
             Assertions.assertDoesNotThrow(server::run);
-            Assertions.assertEquals(0, startCalls.get(), "Null accepted sockets should be ignored");
+            ServerSocket serverSocket = construction.constructed().getFirst();
+            Mockito.verify(serverSocket).accept();
+            Mockito.verify(serverSocket).close();
+        }
+    }
+
+    @Test
+    void testRunShouldReturnWhenAlreadyRunning() throws Exception {
+        AtomicBoolean nestedRunAttempted = new AtomicBoolean(false);
+        AtomicReference<MultithreadedServer> serverRef = new AtomicReference<>();
+        MultithreadedServer server = new MultithreadedServer(9393) {
+            @Override
+            public void startUpClient(Socket client) {
+                nestedRunAttempted.set(true);
+                serverRef.get().run();
+            }
+        };
+        serverRef.set(server);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        Socket acceptedClient = Mockito.mock(Socket.class);
+        try (MockedConstruction<ServerSocket> construction = Mockito.mockConstruction(
+                ServerSocket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInetAddress()).thenReturn(loopback);
+                    Mockito.when(mock.getLocalPort()).thenReturn(9393);
+                    Mockito.when(mock.accept()).thenReturn(acceptedClient).thenThrow(new IOException("stop"));
+                }
+        )) {
+            Assertions.assertDoesNotThrow(server::run);
+            Assertions.assertTrue(nestedRunAttempted.get(), "run() should be called recursively by startUpClient");
+            Assertions.assertEquals(1, construction.constructed().size(), "Second run() should not open another socket");
 
             ServerSocket serverSocket = construction.constructed().getFirst();
             Mockito.verify(serverSocket, Mockito.times(2)).accept();

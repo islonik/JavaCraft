@@ -3,7 +3,9 @@ package my.javacraft.echo.standard.server.common;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,17 +14,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class MultithreadedServer implements Runnable {
 
-    private final int port;
     protected final AtomicInteger connectedClients = new AtomicInteger(0);
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
+    private final int port;
 
     public MultithreadedServer(int port) {
         this.port = port;
 
-        log.info("Use next command: telnet localhost " + port);
+        log.info("Use next command: telnet localhost {}", port);
     }
 
     @Override
     public void run() {
+        if (!running.compareAndSet(false, true)) {
+            log.warn("Server on port {} is already running", port);
+            return;
+        }
+
         try (ServerSocket server = new ServerSocket(port)) {
 
             String serverHello = """ 
@@ -43,18 +52,25 @@ public abstract class MultithreadedServer implements Runnable {
 
             log.info(serverHello);
 
-            while (true) {
+            while (running.get()) {
                 Socket client = server.accept();
-                if (client != null) {
-                    String info = String.format("New client from %s is connected", client);
 
-                    log.info(info);
+                String info = String.format("New client from '%s' is connected", client);
+                log.info(info);
 
-                    startUpClient(client);
-                }
+                // we handle all exceptions internally
+                startUpClient(client);
+            }
+        } catch (SocketException se) {
+            if (running.get()) {
+                log.error("Server socket failure on port {}", port, se);
             }
         } catch (IOException ioe) {
-            log.error(ioe.getLocalizedMessage(), ioe);
+            if (running.get()) {
+                log.error(ioe.getLocalizedMessage(), ioe);
+            }
+        } finally {
+            running.set(false);
         }
     }
 
