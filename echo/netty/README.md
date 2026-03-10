@@ -1,33 +1,75 @@
-# Implementing Non-blocking I/O with Netty
+# Netty Echo (Non-blocking I/O)
 
-Netty is a non-blocking framework and this project demonstrates how to write a simple NIO client/server application using Netty.
+Demonstrates a client/server echo application built on Netty.
+
+Netty uses an event-driven non-blocking model where channels are handled by event loops instead of one dedicated blocking thread per connection.
 
 ## Core concepts
 
 ### Channel
-<b>Channel</b> is the base of Java NIO. It represents an open connection which is capable of IO operations such as reading and writing.
 
-Every IO operation on a Channel in Netty is non-blocking.
+A `Channel` represents an open connection that can perform asynchronous read/write operations.
 
 ### Future
 
-There is a Future interface in the standard Java library, but it’s not convenient for Netty purposes — we can only ask the Future about the completion of the operation or to block the current thread until the operation is done.
+Netty extends Java future-style control flow with `ChannelFuture`, so operations can be observed or chained without blocking the current thread by default.
 
-That’s why Netty has its own ChannelFuture interface. We can pass a callback to ChannelFuture which will be called upon operation completion.
+### Events and handlers
 
-### Events and Handlers
+Netty pipelines process inbound/outbound events through handlers.
+Typical inbound events include:
 
-Netty uses an event-driven application paradigm, so the pipeline of the data processing is a chain of events going through handlers. Events and handlers can be related to the inbound and outbound data flow. Inbound events can be the following:
+- channel active/inactive
+- read events
+- exceptions
+- user events
 
-* Channel activation and deactivation
-* Read operation events
-* Exception events
-* User events
+See implementation details in `netty-server/src/main/java/my/javacraft/echo/netty/server/NettyServerHandler.java`.
 
-See more in [NettyServerHandler](netty-server/src/main/java/my/javacraft/echo/netty/server/NettyServerHandler.java)
+### Encoders and decoders
 
-### Encoders and Decoders
+Protocol payloads are transformed by pipeline codec handlers.
+This project uses line-delimited frames with string decoder/encoder handlers on both client and server sides.
 
-As we work with the network protocol, we need to perform data serialization and deserialization. For this purpose, Netty introduces special extensions of the ChannelInboundHandler for decoders which are capable of decoding incoming data. The base class of most decoders is ByteToMessageDecoder.
+## Modules
 
-For encoding outgoing data, Netty has extensions of the ChannelOutboundHandler called encoders. MessageToByteEncoder is the base for most encoder implementations. We can convert the message from byte sequence to Java object and vice versa with encoders and decoders.
+- [netty-client](netty-client/README.md): Netty client implementation and client-side tests.
+- [netty-server](netty-server/README.md): Netty server lifecycle and protocol handling.
+- [netty-testing](netty-testing/README.md): Cucumber functional/load/benchmark scenarios.
+
+## Cucumber Performance Benchmark
+
+Performance scenarios are implemented in `netty-testing/src/test/resources/features/netty-benchmark.feature`.
+
+1. NettyServer + NettyClient benchmark:
+```bash
+mvn -pl echo/netty/netty-testing -am test -Dcucumber.filter.tags='@Performance'
+```
+
+2. Final summary (reads persisted benchmark summary from `target/performance-results`):
+```bash
+mvn -pl echo/netty/netty-testing -am test -Dcucumber.filter.tags='@PerformanceSummary'
+```
+
+The benchmark flow includes warmups (not measured), 3 measured runs, and prints average/median metrics.
+
+### Example Final Result
+
+```text
+[PERF][FINAL] average execution time for netty benchmark case:
+[PERF][FINAL] 1) NETTY_SERVER+NETTY_CLIENT average: 0.206 s, throughput=48483.37 msg/s, avg=0.0206 ms/msg, delta=0.000 s (+0.00% vs fastest)
+[PERF][FINAL] total measured execution time: 0.619 s (single test)
+[PERF][FINAL] total benchmark scenario time (warmups + measured): 1.478 s (single test)
+```
+
+### Why This Is Expected
+
+- Netty handles many sockets through event-loop scheduling instead of one blocking thread per client.
+- Line-based codec and pipeline handlers keep request/response processing lightweight for this protocol.
+- Warmups reduce first-run noise (JIT/classloading), so measured runs are more stable.
+
+### Important Notes
+
+- Results are environment-specific (CPU, OS scheduler, JVM version, background load).
+- Compare benchmark numbers only on the same machine and runtime configuration.
+
