@@ -15,7 +15,7 @@ import java.util.Properties;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Assertions;
 
-public class BenchmarkStepDefinitions {
+public class StandardBenchmarkStepDefinitions {
 
     private static final Object SYSTEM_OUT_LOCK = new Object();
     private static final Path PERFORMANCE_RESULTS_DIR = Path.of("target", "performance-results");
