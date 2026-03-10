@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.tools;
+package my.javacraft.echo.standard.client.common;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

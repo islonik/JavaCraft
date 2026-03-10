@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.tools;
+package my.javacraft.echo.standard.client.common;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -20,6 +20,7 @@ class UserClientTest {
                         .useConstructor("127.0.0.1", 8075)
                         .defaultAnswer(Mockito.CALLS_REAL_METHODS)
         );
+        Mockito.doNothing().when(client).sendMessage(Mockito.anyString());
         Mockito.when(client.readMessage()).thenReturn("echo:hello", "Have a good day!");
         Logger logger = LoggerFactory.getLogger(UserClientTest.class);
 

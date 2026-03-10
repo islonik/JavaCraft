@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.async;
+package my.javacraft.echo.standard.client.platform;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
-class StandardAsyncClientTest {
+class PlatformThreadClientTest {
 
     @Test
     void testSendMessageShouldWriteToServer() throws Exception {
@@ -42,7 +42,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -69,7 +69,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -96,7 +96,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -119,7 +119,7 @@ class StandardAsyncClientTest {
         IllegalStateException exception = Assertions.assertThrows(
                 IllegalStateException.class,
                 () -> {
-                    try (StandardAsyncClient ignored = new StandardAsyncClient(
+                    try (PlatformThreadClient ignored = new PlatformThreadClient(
                             "async-client", "127.0.0.1", 1)) {
                         Assertions.fail("Constructor should fail before entering try block");
                     }
@@ -140,7 +140,7 @@ class StandardAsyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardAsyncClient ignored = new StandardAsyncClient(
+            try (PlatformThreadClient ignored = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     8080)) {
@@ -181,7 +181,7 @@ class StandardAsyncClientTest {
              MockedConstruction<PrintWriter> ignoredPrintWriterConstruction = Mockito.mockConstruction(
                      PrintWriter.class,
                      (mock, context) -> printWriterConstructorArguments.set(new ArrayList<>(context.arguments())))) {
-            try (StandardAsyncClient ignored = new StandardAsyncClient(
+            try (PlatformThreadClient ignored = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     8080)) {
@@ -205,7 +205,7 @@ class StandardAsyncClientTest {
     @Test
     void testRunShouldDelegateToReadUserMessages() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
-             StandardAsyncClient client = Mockito.spy(new StandardAsyncClient(
+             PlatformThreadClient client = Mockito.spy(new PlatformThreadClient(
                      "async-client",
                      "127.0.0.1",
                      serverSocket.getLocalPort()))) {
@@ -243,7 +243,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -276,7 +276,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -309,7 +309,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -343,7 +343,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -374,7 +374,7 @@ class StandardAsyncClientTest {
                 }
             });
 
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -408,7 +408,7 @@ class StandardAsyncClientTest {
                          writerUsedByClient.set(mock);
                          Mockito.doThrow(new RuntimeException("forced writer close failure")).when(mock).close();
                      })) {
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-client",
                     "127.0.0.1",
                     1)) {
@@ -434,7 +434,7 @@ class StandardAsyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-clientio-failure-",
                     "127.0.0.1",
                     1)) {
@@ -456,7 +456,7 @@ class StandardAsyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardAsyncClient client = new StandardAsyncClient(
+            try (PlatformThreadClient client = new PlatformThreadClient(
                     "async-clientsocket-failure-",
                     "127.0.0.1",
                     1)) {
@@ -466,7 +466,7 @@ class StandardAsyncClientTest {
         }
     }
 
-    private static void awaitServerCloseObserved(StandardAsyncClient client) {
+    private static void awaitServerCloseObserved(PlatformThreadClient client) {
         Assertions.assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
             while (!client.isClosedByServer()) {
                 Thread.onSpinWait();

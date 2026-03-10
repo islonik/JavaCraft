@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.sync;
+package my.javacraft.echo.standard.client.virtual;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
-class StandardSyncClientTest {
+class VirtualThreadClientTest {
 
     @Test
     void testSendMessageShouldWriteToServer() throws Exception {
@@ -43,7 +43,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -70,7 +70,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -97,7 +97,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -121,7 +121,7 @@ class StandardSyncClientTest {
         IllegalStateException exception = Assertions.assertThrows(
                 IllegalStateException.class,
                 () -> {
-                    try (StandardSyncClient ignored = new StandardSyncClient(
+                    try (VirtualThreadClient ignored = new VirtualThreadClient(
                             "sync-client", "127.0.0.1", 1)) {
                         Assertions.fail("Constructor should fail before entering try block");
                     }
@@ -142,7 +142,7 @@ class StandardSyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardSyncClient ignored = new StandardSyncClient(
+            try (VirtualThreadClient ignored = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     8080)) {
@@ -183,7 +183,7 @@ class StandardSyncClientTest {
              MockedConstruction<PrintWriter> ignoredPrintWriterConstruction = Mockito.mockConstruction(
                      PrintWriter.class,
                      (mock, context) -> printWriterConstructorArguments.set(new ArrayList<>(context.arguments())))) {
-            try (StandardSyncClient ignored = new StandardSyncClient(
+            try (VirtualThreadClient ignored = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     8080)) {
@@ -207,7 +207,7 @@ class StandardSyncClientTest {
     @Test
     void testRunShouldHandleIllegalStateExceptionFromSendMessage() throws Exception {
         try (ServerSocket serverSocket = new ServerSocket(0);
-             StandardSyncClient client = new StandardSyncClient(
+             VirtualThreadClient client = new VirtualThreadClient(
                      "sync-client",
                      "127.0.0.1",
                      serverSocket.getLocalPort())) {
@@ -241,7 +241,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -276,7 +276,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -317,7 +317,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -350,7 +350,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -383,7 +383,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -418,7 +418,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -453,7 +453,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -484,7 +484,7 @@ class StandardSyncClientTest {
                 }
             });
 
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     serverSocket.getLocalPort())) {
@@ -518,7 +518,7 @@ class StandardSyncClientTest {
                          writerUsedByClient.set(mock);
                          Mockito.doThrow(new RuntimeException("forced writer close failure")).when(mock).close();
                      })) {
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-client",
                     "127.0.0.1",
                     1)) {
@@ -544,7 +544,7 @@ class StandardSyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-clientio-failure-",
                     "127.0.0.1",
                     1)) {
@@ -566,7 +566,7 @@ class StandardSyncClientTest {
                     Mockito.when(mock.getInputStream()).thenReturn(failingInputStream);
                     Mockito.when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
                 })) {
-            try (StandardSyncClient client = new StandardSyncClient(
+            try (VirtualThreadClient client = new VirtualThreadClient(
                     "sync-clientsocket-failure-",
                     "127.0.0.1",
                     1)) {
@@ -577,7 +577,7 @@ class StandardSyncClientTest {
     }
 
     // Waits until listener marks remote EOF, so the assertion checks the steady state after server close.
-    private static void awaitServerCloseObserved(StandardSyncClient client) {
+    private static void awaitServerCloseObserved(VirtualThreadClient client) {
         Assertions.assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
             while (!client.isClosedByServer()) {
                 Thread.onSpinWait();

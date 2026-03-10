@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.tools;
+package my.javacraft.echo.standard.client.common;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,19 +1,19 @@
-package my.javacraft.echo.standard.client.async;
+package my.javacraft.echo.standard.client.platform;
 
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.echo.standard.client.tools.PortValidator;
+import my.javacraft.echo.standard.client.common.PortValidator;
 
 /**
  * @author Lipatov Nikita
  */
 @Slf4j
-public class StandardAsyncClientApplication {
+public class PlatformClientApplication {
 
     // telnet localhost 8075
     public static void main(String[] args) {
         int port = PortValidator.getPort(args);
 
-        try (StandardAsyncClient asyncClient = new StandardAsyncClient(
+        try (PlatformThreadClient asyncClient = new PlatformThreadClient(
                 "Async-client-application",
                 "localhost",
                 port)) {

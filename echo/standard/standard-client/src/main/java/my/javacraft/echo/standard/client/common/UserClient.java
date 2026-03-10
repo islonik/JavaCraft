@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.client.sync;
+package my.javacraft.echo.standard.client.common;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,16 +16,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import my.javacraft.echo.standard.client.tools.UserClient;
+import org.slf4j.Logger;
 
-/**
- * StandardSyncClient.
- * <p>
- * @author Lipatov Nikita
- */
-@Slf4j
-public class StandardSyncClient extends UserClient implements Runnable, AutoCloseable {
+public abstract class UserClient implements AutoCloseable {
+
+    public static final int CONNECT_TIMEOUT_MILLIS = 1_000;
+    public static final int MAX_QUEUED_RESPONSES = 128;
 
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>(MAX_QUEUED_RESPONSES);
 
@@ -33,6 +29,7 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
     private final int port;
     private Socket socket;
     private PrintWriter clientWritingStreamToServerSocket;
+    private Logger connectionLogger;
 
     // closedByClient tracks whether close() has been called (by us, intentionally).
     // It guards the close logic so it runs exactly once and makes isConnected() return false after close.
@@ -43,19 +40,17 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
     // Tests poll this to know the server has finished processing "bye" and decremented its counter
     // before the next step runs.
     // Sequence:
-    // Client sends "bye" → server responds → server closes its side → listener detects EOF → socketClosed = true (server is done)
+    // Client sends "bye" -> server responds -> server closes its side -> listener detects EOF -> closedByServer = true
     @Getter
     private volatile boolean closedByServer = false;
 
-    public StandardSyncClient(
-            final String threadName,
-            final String host,
-            final int port) {
-
-        super(host, port);
-
+    public UserClient(String host, int port) {
         this.host = host;
         this.port = port;
+    }
+
+    protected final void initializeConnection(String threadName, String clientType, Logger log) {
+        this.connectionLogger = log;
 
         try {
             this.socket = new Socket();
@@ -65,30 +60,20 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
             // Send text commands/messages from client to server.
             this.clientWritingStreamToServerSocket = new PrintWriter(outputStreamWriter, true);
 
-            log.info("Sync client '{}' is connected", socket);
+            if (log != null) {
+                log.info("{} client '{}' is connected", clientType, socket);
+            }
 
-            awaitResponseFromServer(threadName);
+            Reader inputStreamReader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+            BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
+            startResponseListenerThread(threadName + "-" + port, () -> listen(clientReadingStreamFromServerSocket));
         } catch (Exception e) {
             close();
             throw new IllegalStateException("Failed to connect to %s:%d".formatted(host, port), e);
         }
     }
 
-    /**
-     * Virtual thread here is the background socket listener.
-     * <p>
-     * It continuously reads lines from the server input stream and enqueues them into responseQueue.
-     * <p>
-     * Why virtual: It provides the same blocking-style code as a normal thread, but much cheaper to create/schedule
-     * than a platform thread.
-     */
-    private void awaitResponseFromServer(String threadName) throws IOException {
-        Reader inputStreamReader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
-        BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
-        Thread.ofVirtual()
-                .name(threadName + "-" + port)
-                .start(() -> listen(clientReadingStreamFromServerSocket));
-    }
+    protected abstract void startResponseListenerThread(String listenerThreadName, Runnable listenerTask);
 
     private void listen(BufferedReader clientReadingStreamFromServerSocket) {
         boolean serverClosedConnection = false;
@@ -107,13 +92,13 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
             // A local close can interrupt readLine(); don't mark it as server-initiated closure.
             if (!closedByClient.get()) {
                 serverClosedConnection = true;
-                log.warn("Listener socket error: {}", e.getMessage());
+                logWarn("Listener socket error: {}", e.getMessage());
             }
         } catch (IOException e) {
             // Read I/O failure while client is still open indicates the remote side is no longer readable.
             if (!closedByClient.get()) {
                 serverClosedConnection = true;
-                log.warn("Listener error: {}", e.getMessage());
+                logWarn("Listener error: {}", e.getMessage());
             }
         } finally {
             if (serverClosedConnection) {
@@ -129,7 +114,7 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         if (responseQueue.offer(line)) {
             return true;
         }
-        log.warn(
+        logWarn(
                 "Response queue overflow (max {}). Closing connection to protect memory.",
                 MAX_QUEUED_RESPONSES
         );
@@ -137,13 +122,12 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         return false;
     }
 
-    @Override
-    public void sendMessage(String message) {
+    public void sendMessage(String userInput) {
         if (!isConnected()) {
             throw new IllegalStateException("Client is not connected to %s:%d".formatted(host, port));
         }
 
-        clientWritingStreamToServerSocket.println(message);
+        clientWritingStreamToServerSocket.println(userInput);
 
         if (clientWritingStreamToServerSocket.checkError()) {
             close();
@@ -151,7 +135,6 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         }
     }
 
-    @Override
     public String readMessage() {
         try {
             return responseQueue.poll(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -161,7 +144,6 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         }
     }
 
-    @Override
     public boolean isConnected() {
         return !closedByClient.get()
                 && !closedByServer
@@ -172,20 +154,16 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
     }
 
     @Override
-    public void run() {
-        readUserMessages(log);
-    }
-
-    @Override
     public void close() {
         if (!closedByClient.compareAndSet(false, true)) {
             return;
         }
+
         if (clientWritingStreamToServerSocket != null) {
             try {
                 clientWritingStreamToServerSocket.close();
             } catch (Exception e) {
-                log.error("Couldn't close output stream", e);
+                logError("Couldn't close output stream", e);
             } finally {
                 clientWritingStreamToServerSocket = null;
             }
@@ -194,10 +172,76 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
             try {
                 socket.close();
             } catch (IOException e) {
-                log.error("Couldn't close socket", e);
+                logError("Couldn't close socket", e);
             } finally {
                 socket = null;
             }
         }
     }
+
+    private void logWarn(String message, Object... args) {
+        if (connectionLogger != null) {
+            connectionLogger.warn(message, args);
+        }
+    }
+
+    private void logError(String message, Throwable error) {
+        if (connectionLogger != null) {
+            connectionLogger.error(message, error);
+        }
+    }
+
+    /**
+     * Runs the interactive user loop for console clients.
+     * <p>
+     * It repeatedly prompts for input, sends the message to the server, and prints one response.
+     * The loop exits on EOF (for example Ctrl+D/Ctrl+Z) or when the user enters "bye".
+     * Client resources are always closed in the {@code finally} block.
+     */
+    public void readUserMessages(Logger log) {
+        log.info("Starting...");
+
+        try (Reader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+             BufferedReader stdIn = new BufferedReader(inputStreamReader)) {
+
+            while (true) {
+                System.out.print("type: ");
+                String userInput = stdIn.readLine();
+                if (userInput == null) {
+                    // readLine() returns null when the input stream reaches end-of-file (EOF)
+                    // for example, Ctrl+D (Unix/Mac) or Ctrl+Z (Windows) — the user signals EOF on the terminal
+                    log.info("Detected end-of-file (EOF). Thread terminating...");
+                    break;
+                }
+                // Send exactly what the user entered in the console.
+                sendMessage(userInput);
+
+                // Print one response line received from the server.
+                System.out.println(readMessage());
+
+                // Explicit user command to terminate the session.
+                if ("bye".equalsIgnoreCase(userInput)) {
+                    break;
+                }
+            }
+        } catch (IllegalStateException e) {
+            log.warn(
+                    "Client loop stopped because connection to: '{}:{}' is not available: {}",
+                    host, port, e.getMessage()
+            );
+        } catch (IOException e) {
+            log.warn(
+                    "Couldn't get I/O for the connection to: '{}:{}' because: {}",
+                    host, port, e.getMessage()
+            );
+        } catch (Exception e) {
+            log.error(
+                    "Exception the connection to: '{}:{}' because: {}",
+                    host, port, e.getMessage()
+            );
+        } finally {
+            close();
+        }
+    }
+
 }

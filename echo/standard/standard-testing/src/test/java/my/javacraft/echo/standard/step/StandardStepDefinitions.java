@@ -19,8 +19,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import my.javacraft.echo.standard.client.async.StandardAsyncClient;
-import my.javacraft.echo.standard.client.sync.StandardSyncClient;
+import my.javacraft.echo.standard.client.platform.PlatformThreadClient;
+import my.javacraft.echo.standard.client.virtual.VirtualThreadClient;
 import my.javacraft.echo.standard.server.MultithreadedServer;
 import my.javacraft.echo.standard.server.ServerThread;
 import org.junit.jupiter.api.Assertions;
@@ -54,16 +54,16 @@ public class StandardStepDefinitions {
     // Scenario state
     // ---------------------------------------------------------------------------
 
-    private final Map<String, StandardSyncClient> syncConnections = new ConcurrentHashMap<>();
-    private final Map<String, StandardAsyncClient> asyncConnections = new ConcurrentHashMap<>();
+    private final Map<String, VirtualThreadClient> virtualConnections = new ConcurrentHashMap<>();
+    private final Map<String, PlatformThreadClient> platformConnections = new ConcurrentHashMap<>();
     private final List<ExecutorService> serverExecutors = new ArrayList<>();
 
     @After
     public void cleanup() {
-        syncConnections.values().forEach(StandardSyncClient::close);
-        syncConnections.clear();
-        asyncConnections.values().forEach(StandardAsyncClient::close);
-        asyncConnections.clear();
+        virtualConnections.values().forEach(VirtualThreadClient::close);
+        virtualConnections.clear();
+        platformConnections.values().forEach(PlatformThreadClient::close);
+        platformConnections.clear();
         serverExecutors.forEach(ExecutorService::shutdownNow);
         serverExecutors.clear();
         awaitSharedThreadCounterReset();
@@ -112,20 +112,20 @@ public class StandardStepDefinitions {
     // Client connect steps
     // ---------------------------------------------------------------------------
 
-    @When("sync client {string} connects on port {int}")
-    public void connectSyncClient(String client, int port) {
-        StandardSyncClient c = awaitSyncClientConnected(port);
-        StandardSyncClient previous = syncConnections.putIfAbsent(client, c);
+    @When("virtual client {string} connects on port {int}")
+    public void connectVirtualClient(String client, int port) {
+        VirtualThreadClient c = awaitVirtualClientConnected(port);
+        VirtualThreadClient previous = virtualConnections.putIfAbsent(client, c);
         if (previous != null) {
             c.close();
             Assertions.fail("Client '%s' already exists in this scenario".formatted(client));
         }
     }
 
-    @When("async client {string} connects on port {int}")
-    public void connectAsyncClient(String client, int port) {
-        StandardAsyncClient c = awaitAsyncClientConnected(port);
-        StandardAsyncClient previous = asyncConnections.putIfAbsent(client, c);
+    @When("platform client {string} connects on port {int}")
+    public void connectPlatformClient(String client, int port) {
+        PlatformThreadClient c = awaitPlatformClientConnected(port);
+        PlatformThreadClient previous = platformConnections.putIfAbsent(client, c);
         if (previous != null) {
             c.close();
             Assertions.fail("Client '%s' already exists in this scenario".formatted(client));
@@ -160,17 +160,17 @@ public class StandardStepDefinitions {
     // Bulk connect / disconnect steps for high-load scenarios
     // ---------------------------------------------------------------------------
 
-    @When("{int} sync clients with prefix {string} connect on port {int}")
-    public void connectSyncClientsWithPrefix(int clientCount, String prefix, int port) {
+    @When("{int} virtual clients with prefix {string} connect on port {int}")
+    public void connectVirtualClientsWithPrefix(int clientCount, String prefix, int port) {
         for (int i = 1; i <= clientCount; i++) {
-            connectSyncClient(clientName(prefix, i), port);
+            connectVirtualClient(clientName(prefix, i), port);
         }
     }
 
-    @When("{int} async clients with prefix {string} connect on port {int}")
-    public void connectAsyncClientsWithPrefix(int clientCount, String prefix, int port) {
+    @When("{int} platform clients with prefix {string} connect on port {int}")
+    public void connectPlatformClientsWithPrefix(int clientCount, String prefix, int port) {
         for (int i = 1; i <= clientCount; i++) {
-            connectAsyncClient(clientName(prefix, i), port);
+            connectPlatformClient(clientName(prefix, i), port);
         }
     }
 
@@ -215,20 +215,20 @@ public class StandardStepDefinitions {
     // ---------------------------------------------------------------------------
 
     /**
-     * Dispatches send/read/isClosed operations to whichever map (sync or async)
+     * Dispatches send/read/isClosed operations to whichever map (virtual or platform)
      * contains the named client, then asserts the response.
      */
-    @SuppressWarnings("resource") // client is owned by asyncConnections and closed in cleanup()
+    @SuppressWarnings("resource") // client is owned by platformConnections and closed in cleanup()
     private void assertResponse(String clientName, String message, String expectedResponse) {
-        StandardSyncClient sync = syncConnections.get(clientName);
-        if (sync != null) {
+        VirtualThreadClient virtualClient = virtualConnections.get(clientName);
+        if (virtualClient != null) {
             doAssertResponse(clientName, message, expectedResponse,
-                    sync::sendMessage, sync::readMessage, sync::isClosedByServer);
+                    virtualClient::sendMessage, virtualClient::readMessage, virtualClient::isClosedByServer);
             return;
         }
-        StandardAsyncClient async = requireAsyncClient(clientName);
+        PlatformThreadClient platformClient = requirePlatformClient(clientName);
         doAssertResponse(clientName, message, expectedResponse,
-                async::sendMessage, async::readMessage, () -> !async.isConnected());
+                platformClient::sendMessage, platformClient::readMessage, () -> !platformClient.isConnected());
     }
 
     private void doAssertResponse(String clientName, String message, String expectedResponse,
@@ -247,15 +247,15 @@ public class StandardStepDefinitions {
      * connection (which happens after the counter decrement), then returns.
      * The client socket itself is left open for {@code @After cleanup()} to close.
      */
-    @SuppressWarnings("resource") // client is owned by asyncConnections and closed in cleanup()
+    @SuppressWarnings("resource") // client is owned by platformConnections and closed in cleanup()
     private void performGoodbye(String clientName) {
-        StandardSyncClient sync = syncConnections.get(clientName);
-        if (sync != null) {
-            doGoodbye(clientName, sync::sendMessage, sync::readMessage, sync::isClosedByServer);
+        VirtualThreadClient virtualClient = virtualConnections.get(clientName);
+        if (virtualClient != null) {
+            doGoodbye(clientName, virtualClient::sendMessage, virtualClient::readMessage, virtualClient::isClosedByServer);
             return;
         }
-        StandardAsyncClient async = requireAsyncClient(clientName);
-        doGoodbye(clientName, async::sendMessage, async::readMessage, () -> !async.isConnected());
+        PlatformThreadClient platformClient = requirePlatformClient(clientName);
+        doGoodbye(clientName, platformClient::sendMessage, platformClient::readMessage, () -> !platformClient.isConnected());
     }
 
     private void doGoodbye(String clientName, Consumer<String> send, Supplier<String> read,
@@ -268,23 +268,23 @@ public class StandardStepDefinitions {
     }
 
     private void resolveSocketClosed(String clientName) {
-        StandardSyncClient sync = syncConnections.get(clientName);
-        if (sync != null) {
-            awaitSocketClosed(clientName, sync::isClosedByServer);
+        VirtualThreadClient virtualClient = virtualConnections.get(clientName);
+        if (virtualClient != null) {
+            awaitSocketClosed(clientName, virtualClient::isClosedByServer);
             return;
         }
-        StandardAsyncClient async = requireAsyncClient(clientName);
-        awaitSocketClosed(clientName, () -> !async.isConnected());
+        PlatformThreadClient platformClient = requirePlatformClient(clientName);
+        awaitSocketClosed(clientName, () -> !platformClient.isConnected());
     }
 
     /**
      * Retries client construction until the server is ready or fails after five seconds.
      */
-    private StandardSyncClient awaitSyncClientConnected(int port) {
+    private VirtualThreadClient awaitVirtualClientConnected(int port) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
             try {
-                StandardSyncClient client = new StandardSyncClient("sync-client", "localhost", port);
+                VirtualThreadClient client = new VirtualThreadClient("virtual-client", "localhost", port);
                 if (client.isConnected()) {
                     return client;
                 }
@@ -299,11 +299,11 @@ public class StandardStepDefinitions {
         }
     }
 
-    private StandardAsyncClient awaitAsyncClientConnected(int port) {
+    private PlatformThreadClient awaitPlatformClientConnected(int port) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (true) {
             try {
-                StandardAsyncClient client = new StandardAsyncClient("async-client", "localhost", port);
+                PlatformThreadClient client = new PlatformThreadClient("platform-client", "localhost", port);
                 if (client.isConnected()) {
                     return client;
                 }
@@ -338,8 +338,8 @@ public class StandardStepDefinitions {
                 "Client '%s' socket should be closed after goodbye".formatted(clientName));
     }
 
-    private StandardAsyncClient requireAsyncClient(String clientName) {
-        StandardAsyncClient client = asyncConnections.get(clientName);
+    private PlatformThreadClient requirePlatformClient(String clientName) {
+        PlatformThreadClient client = platformConnections.get(clientName);
         Assertions.assertNotNull(client, "Client '%s' was not created in this scenario".formatted(clientName));
         return client;
     }
