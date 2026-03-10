@@ -12,48 +12,63 @@ With blocking I/O, when a client makes a request to connect with the server, the
 
 ## Modules
 
-- `standard-client`: platform/virtual clients and client-side behavior tests.
-- `standard-server`: multithreaded blocking socket server.
-- `standard-testing`: Cucumber scenarios (functional + load + performance).
+- [`standard-client`](standard-client/README.md): platform/virtual clients and client-side behavior tests.
+- [`standard-server`](standard-server/README.md): multithreaded blocking socket server.
+- [`standard-testing`](standard-testing/README.md): Cucumber scenarios split into:
+  - `standard.feature` (functional, edge-case, high-load)
+  - `benchmark.feature` (performance benchmarks + summary)
 
 ## Cucumber Performance Benchmark
 
-Performance scenarios are implemented in `standard-testing` and are designed to run in separate fresh JVM processes:
+Performance scenarios are implemented in `standard-testing/src/test/resources/features/benchmark.feature`
+and are designed to run in separate fresh JVM processes:
 
-1. Virtual only:
+1. PlatformServer + PlatformThreadClient:
 ```bash
-mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @Virtual'
+mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @ServerPlatform and @ClientPlatform'
 ```
 
-2. Platform only:
+2. PlatformServer + VirtualThreadClient:
 ```bash
-mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @Platform'
+mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @ServerPlatform and @ClientVirtual'
 ```
 
-3. Final comparison (reads persisted medians from `target/performance-results`):
+3. VirtualServer + PlatformThreadClient:
+```bash
+mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @ServerVirtual and @ClientPlatform'
+```
+
+4. VirtualServer + VirtualThreadClient:
+```bash
+mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@Performance and @ServerVirtual and @ClientVirtual'
+```
+
+5. Final comparison (reads persisted benchmark summaries from `target/performance-results`):
 ```bash
 mvn -pl echo/standard/standard-testing -am test -Dcucumber.filter.tags='@PerformanceSummary'
 ```
 
-The benchmark flow includes warmups (not measured), 3 measured runs, and prints median-based comparison.
+The benchmark flow includes warmups (not measured), 3 measured runs, and prints average/median comparison.
 
 ### Example Final Result
 
 ```text
-[PERF][FINAL] virtual median: 2.054 s, throughput=48693.44 msg/s, avg=0.0205 ms/msg
-[PERF][FINAL] platform median: 2.427 s, throughput=41205.25 msg/s, avg=0.0243 ms/msg
-[PERF][FINAL] faster median: VIRTUAL by 15.38% (delta=0.373 s)
+[PERF][FINAL] 1) VIRTUAL_SERVER+VIRTUAL_CLIENT average: 0.116 s, throughput=86128.36 msg/s, avg=0.0116 ms/msg, delta=0.000 s (+0.00% vs fastest)
+[PERF][FINAL] 2) VIRTUAL_SERVER+PLATFORM_CLIENT average: 0.132 s, throughput=75544.52 msg/s, avg=0.0132 ms/msg, delta=0.016 s (+14.01% vs fastest)
+[PERF][FINAL] 3) PLATFORM_SERVER+VIRTUAL_CLIENT average: 0.980 s, throughput=10203.37 msg/s, avg=0.0980 ms/msg, delta=0.864 s (+744.12% vs fastest)
+[PERF][FINAL] 4) PLATFORM_SERVER+PLATFORM_CLIENT average: 1.790 s, throughput=5586.09 msg/s, avg=0.1790 ms/msg, delta=1.674 s (+1441.84% vs fastest)
 ```
 
-### Why Virtual Can Be Faster Here
+### Why This Ranking Is Expected
 
-- Virtual threads are much cheaper to park/unpark when many clients block on socket reads/writes.
-- The JVM scheduler can multiplex many virtual threads over fewer carrier threads, reducing OS thread scheduling overhead.
-- Platform threads incur higher per-thread OS cost (stack memory + kernel context switching), which becomes more visible under high concurrency.
-- This benchmark is I/O-heavy with many blocking points, which is a workload where virtual threads often have an advantage.
+- This benchmark is blocking-I/O heavy with many concurrent clients, which favors virtual threads because parking/unparking is cheaper than OS thread context switching.
+- The server-side thread model dominates total time; that is why both `VIRTUAL_SERVER+*` combinations are much faster than both `PLATFORM_SERVER+*` combinations.
+- Client-side model still matters, but less than server-side in this setup, so `VIRTUAL_SERVER+PLATFORM_CLIENT` stays close to `VIRTUAL_SERVER+VIRTUAL_CLIENT`.
+- Two platform-thread sides (`PLATFORM_SERVER+PLATFORM_CLIENT`) compound scheduling and memory overhead, so it is expected to be the slowest combination.
+- In the current benchmark implementation, platform-server runs use a more conservative execution path than virtual-server runs, which further widens the observed gap.
 
 ### Important Notes
 
 - Results are environment-specific (CPU, OS scheduler, JVM version, background load).
-- Always compare medians from the same machine and same configuration.
+- Always compare results (average and/or median) from the same machine and same configuration.
 - Use warmup iterations to reduce JIT/cold-start noise before measured runs.

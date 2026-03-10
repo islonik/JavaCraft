@@ -1,7 +1,5 @@
 package my.javacraft.echo.standard.step;
 
-import io.cucumber.java.After;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
@@ -40,11 +38,10 @@ public class StandardStepDefinitions {
     // Scenario state
     // ---------------------------------------------------------------------------
 
-    private final Map<String, VirtualThreadClient> virtualConnections = new ConcurrentHashMap<>();
-    private final Map<String, PlatformThreadClient> platformConnections = new ConcurrentHashMap<>();
-    private final List<ExecutorService> serverExecutors = new ArrayList<>();
+    private static final Map<String, VirtualThreadClient> virtualConnections = new ConcurrentHashMap<>();
+    private static final Map<String, PlatformThreadClient> platformConnections = new ConcurrentHashMap<>();
+    private static final List<ExecutorService> serverExecutors = new ArrayList<>();
 
-    @After
     public void cleanup() {
         virtualConnections.values().forEach(VirtualThreadClient::close);
         virtualConnections.clear();
@@ -58,13 +55,11 @@ public class StandardStepDefinitions {
     // Server step
     // ---------------------------------------------------------------------------
 
-    @Given("the virtual server is running on port {int}")
     public void startVirtualServer(int port) {
         VirtualServer server = new VirtualServer(port);
         startServer(server);
     }
 
-    @Given("the platform server is running on port {int}")
     public void startPlatformServer(int port) {
         PlatformServer server = new PlatformServer(port);
         startServer(server);
@@ -177,7 +172,6 @@ public class StandardStepDefinitions {
         failIfAnyClientThreadFailed(failures);
     }
 
-    @When("performance benchmark for {word} server and {word} client runs {int} warmups and {int} measured runs with {int} clients and {int} messages on port {int}")
     public void runThreadPerformanceBenchmark(
             String serverType,
             String clientType,
@@ -263,7 +257,6 @@ public class StandardStepDefinitions {
         );
     }
 
-    @Then("performance averages for all server - client combinations are compared and total execution time is printed")
     public void comparePerformanceAveragesFromSeparateRuns() {
         List<PerformanceSummary> summaries = List.of(
                 readPerformanceSummary(benchmarkKey("platform", "platform")),
