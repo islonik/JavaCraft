@@ -209,15 +209,15 @@ Feature: Multithreaded server behavior
     @Virtual
     Scenario: [Virtual] The server handles 100 clients sending 10,000 messages from separate threads
       Given the multithreaded server is running on port 8150
-      When 100 virtual clients with prefix "SyncLoad" connect on port 8150
-      Then client "SyncLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
-      When 100 clients with prefix "SyncLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
-      Then 100 clients with prefix "SyncLoad" disconnect with goodbye
+      When 100 virtual clients with prefix "VirtualLoad" connect on port 8150
+      Then client "VirtualLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
+      When 100 clients with prefix "VirtualLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
+      Then 100 clients with prefix "VirtualLoad" disconnect with goodbye
 
     @Platform
     Scenario: [Platform] The server handles 100 clients sending 10,000 messages from separate threads
       Given the multithreaded server is running on port 8250
-      When 100 platform clients with prefix "AsyncLoad" connect on port 8250
-      Then client "AsyncLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
-      When 100 clients with prefix "AsyncLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
-      Then 100 clients with prefix "AsyncLoad" disconnect with goodbye
+      When 100 platform clients with prefix "PlatformLoad" connect on port 8250
+      Then client "PlatformLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
+      When 100 clients with prefix "PlatformLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
+      Then 100 clients with prefix "PlatformLoad" disconnect with goodbye
