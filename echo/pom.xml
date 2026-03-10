@@ -15,7 +15,7 @@
     <modules>
         <module>blocking</module>
         <module>netty</module>
-        <module>single</module>
+        <module>selector</module>
     </modules>
 
 </project>
