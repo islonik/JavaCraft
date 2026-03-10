@@ -13,9 +13,9 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>blocking</module>
         <module>netty</module>
         <module>single</module>
-        <module>standard</module>
     </modules>
 
 </project>
