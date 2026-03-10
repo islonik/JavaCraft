@@ -17,8 +17,9 @@ public class PlatformServer extends MultithreadedServer {
     public void startUpClient(Socket client) {
         try {
             // platform thread
-            ServerThread serverThread = new ServerThread(client, connectedClients);
-            serverThread.run();
+            Thread.ofPlatform()
+                    .daemon(true)
+                    .start(new ServerThread(client, connectedClients));
         } catch (RuntimeException ex) {
             log.error("Failed to start PlatformServer thread for {}", client, ex);
             try {
