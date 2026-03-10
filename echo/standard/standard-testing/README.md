@@ -47,7 +47,7 @@ Performance scenarios:
 
 ## Benchmark design
 
-Implemented via `BenchmarkStepDefinitions` and delegated benchmark logic in `StandardStepDefinitions`:
+Implemented in `BenchmarkStepDefinitions` (with shared client operations from `StandardStepDefinitions`):
 
 - warmup iterations (not included in measured average/median)
 - measured runs
