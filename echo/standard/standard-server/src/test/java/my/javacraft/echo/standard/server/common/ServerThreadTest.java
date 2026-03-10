@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.server;
+package my.javacraft.echo.standard.server.common;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

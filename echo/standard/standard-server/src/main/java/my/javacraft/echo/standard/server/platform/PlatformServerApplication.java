@@ -1,19 +1,15 @@
-package my.javacraft.echo.standard.server;
+package my.javacraft.echo.standard.server.platform;
 
-import lombok.extern.slf4j.Slf4j;
 import my.javacraft.echo.standard.server.common.PortValidator;
 
 /**
  * @author Lipatov Nikita
  */
-@Slf4j
-public class StandardServerApplication {
-
+public class PlatformServerApplication {
     // telnet localhost 8075
     public static void main(String[] args) {
         int port = PortValidator.getPort(args);
 
-        new MultithreadedServer(port).run();
+        new PlatformServer(port).run();
     }
-
 }

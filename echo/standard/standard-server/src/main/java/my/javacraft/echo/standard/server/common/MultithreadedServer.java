@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.server;
+package my.javacraft.echo.standard.server.common;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,10 +10,10 @@ import lombok.extern.slf4j.Slf4j;
  * @author Lipatov Nikita
  */
 @Slf4j
-public class MultithreadedServer implements Runnable {
+public abstract class MultithreadedServer implements Runnable {
 
     private final int port;
-    private final AtomicInteger connectedClients = new AtomicInteger(0);
+    protected final AtomicInteger connectedClients = new AtomicInteger(0);
 
     public MultithreadedServer(int port) {
         this.port = port;
@@ -58,17 +58,5 @@ public class MultithreadedServer implements Runnable {
         }
     }
 
-    private void startUpClient(Socket client) {
-        try {
-            // we use virtual threads added in Java 21
-            Thread.startVirtualThread(new ServerThread(client, connectedClients));
-        } catch (RuntimeException ex) {
-            log.error("Failed to start server thread for {}", client, ex);
-            try {
-                client.close();
-            } catch (IOException closeEx) {
-                log.error("Could not close client socket after startup failure", closeEx);
-            }
-        }
-    }
+    public abstract void startUpClient(Socket client);
 }

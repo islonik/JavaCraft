@@ -1,0 +1,30 @@
+package my.javacraft.echo.standard.server.platform;
+
+import java.io.IOException;
+import java.net.Socket;
+import lombok.extern.slf4j.Slf4j;
+import my.javacraft.echo.standard.server.common.MultithreadedServer;
+import my.javacraft.echo.standard.server.common.ServerThread;
+
+@Slf4j
+public class PlatformServer extends MultithreadedServer {
+    public PlatformServer(int port) {
+        super(port);
+    }
+
+    @Override
+    public void startUpClient(Socket client) {
+        try {
+            // we use virtual threads added in Java 21
+            ServerThread serverThread = new ServerThread(client, connectedClients);
+            serverThread.run();
+        } catch (RuntimeException ex) {
+            log.error("Failed to start PlatformServer thread for {}", client, ex);
+            try {
+                client.close();
+            } catch (IOException closeEx) {
+                log.error("Could not close client socket after startup failure", closeEx);
+            }
+        }
+    }
+}

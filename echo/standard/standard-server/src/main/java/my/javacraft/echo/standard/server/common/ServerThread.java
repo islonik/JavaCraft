@@ -1,4 +1,4 @@
-package my.javacraft.echo.standard.server;
+package my.javacraft.echo.standard.server.common;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

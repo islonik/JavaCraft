@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import my.javacraft.echo.standard.client.platform.PlatformThreadClient;
 import my.javacraft.echo.standard.client.virtual.VirtualThreadClient;
-import my.javacraft.echo.standard.server.MultithreadedServer;
+import my.javacraft.echo.standard.server.virtual.VirtualServer;
 import org.junit.jupiter.api.Assertions;
 
 public class StandardStepDefinitions {
@@ -57,9 +57,9 @@ public class StandardStepDefinitions {
     // Server step
     // ---------------------------------------------------------------------------
 
-    @Given("the multithreaded server is running on port {int}")
-    public void startMultithreadedServer(int port) {
-        MultithreadedServer server = new MultithreadedServer(port);
+    @Given("the virtual server is running on port {int}")
+    public void startVirtualServer(int port) {
+        VirtualServer server = new VirtualServer(port);
 
         // Daemon threads allow the JVM to exit cleanly after tests complete,
         // preventing server sockets from lingering and blocking ports in subsequent runs.

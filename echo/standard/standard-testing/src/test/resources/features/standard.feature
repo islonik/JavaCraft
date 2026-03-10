@@ -4,21 +4,21 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] One client can connect, check the current client count, and disconnect
-      Given the multithreaded server is running on port 8100
+      Given the virtual server is running on port 8100
       When virtual client "Nikita" connects on port 8100
       Then client "Nikita" sends "stats" and receives "Simultaneously connected clients: 1"
       And client "Nikita" disconnects with goodbye
 
     @Platform
     Scenario: [Platform] One client can connect, check the current client count, and disconnect
-      Given the multithreaded server is running on port 8200
+      Given the virtual server is running on port 8200
       When platform client "Nikita" connects on port 8200
       Then client "Nikita" sends "stats" and receives "Simultaneously connected clients: 1"
       And client "Nikita" disconnects with goodbye
 
     @Virtual
     Scenario: [Virtual] Several clients see the correct number of connected users
-      Given the multithreaded server is running on port 8105
+      Given the virtual server is running on port 8105
       When virtual client "Nikita" connects on port 8105
       And virtual client "Ava" connects on port 8105
       And virtual client "Alyssa" connects on port 8105
@@ -34,7 +34,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] Several clients see the correct number of connected users
-      Given the multithreaded server is running on port 8205
+      Given the virtual server is running on port 8205
       When platform client "Nikita" connects on port 8205
       And platform client "Ava" connects on port 8205
       And platform client "Alyssa" connects on port 8205
@@ -50,21 +50,21 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] A client gets an echo response for regular text
-      Given the multithreaded server is running on port 8110
+      Given the virtual server is running on port 8110
       When virtual client "Echo" connects on port 8110
       Then client "Echo" sends "hello world" and receives "Did you say 'hello world'?"
       And client "Echo" disconnects with goodbye
 
     @Platform
     Scenario: [Platform] A client gets an echo response for regular text
-      Given the multithreaded server is running on port 8210
+      Given the virtual server is running on port 8210
       When platform client "Echo" connects on port 8210
       Then client "Echo" sends "hello world" and receives "Did you say 'hello world'?"
       And client "Echo" disconnects with goodbye
 
     @Virtual
     Scenario: [Virtual] One client can send several messages on the same connection
-      Given the multithreaded server is running on port 8115
+      Given the virtual server is running on port 8115
       When virtual client "Repeat" connects on port 8115
       Then client "Repeat" sends "first" and receives "Did you say 'first'?"
       And client "Repeat" sends "StAtS" and receives "Simultaneously connected clients: 1"
@@ -73,7 +73,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] One client can send several messages on the same connection
-      Given the multithreaded server is running on port 8215
+      Given the virtual server is running on port 8215
       When platform client "Repeat" connects on port 8215
       Then client "Repeat" sends "first" and receives "Did you say 'first'?"
       And client "Repeat" sends "StAtS" and receives "Simultaneously connected clients: 1"
@@ -82,7 +82,7 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] The connected client count drops after one client leaves
-      Given the multithreaded server is running on port 8120
+      Given the virtual server is running on port 8120
       When virtual client "Primary" connects on port 8120
       And virtual client "Secondary" connects on port 8120
       Then client "Primary" sends "stats" and receives "Simultaneously connected clients: 2"
@@ -93,7 +93,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] The connected client count drops after one client leaves
-      Given the multithreaded server is running on port 8220
+      Given the virtual server is running on port 8220
       When platform client "Primary" connects on port 8220
       And platform client "Secondary" connects on port 8220
       Then client "Primary" sends "stats" and receives "Simultaneously connected clients: 2"
@@ -104,21 +104,21 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] A client socket closes after goodbye
-      Given the multithreaded server is running on port 8122
+      Given the virtual server is running on port 8122
       When virtual client "Closer" connects on port 8122
       Then client "Closer" sends "bye" and receives "Have a good day!"
       And client "Closer" socket is closed
 
     @Platform
     Scenario: [Platform] A client socket closes after goodbye
-      Given the multithreaded server is running on port 8222
+      Given the virtual server is running on port 8222
       When platform client "Closer" connects on port 8222
       Then client "Closer" sends "bye" and receives "Have a good day!"
       And client "Closer" socket is closed
 
     @Virtual
     Scenario: [Virtual] The connected client count recovers after a client says bye
-      Given the multithreaded server is running on port 8125
+      Given the virtual server is running on port 8125
       When virtual client "First" connects on port 8125
       And virtual client "Second" connects on port 8125
       Then client "First" sends "stats" and receives "Simultaneously connected clients: 2"
@@ -131,7 +131,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] The connected client count recovers after a client says bye
-      Given the multithreaded server is running on port 8225
+      Given the virtual server is running on port 8225
       When platform client "First" connects on port 8225
       And platform client "Second" connects on port 8225
       Then client "First" sends "stats" and receives "Simultaneously connected clients: 2"
@@ -146,21 +146,21 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] An empty message gets guidance
-      Given the multithreaded server is running on port 8130
+      Given the virtual server is running on port 8130
       When virtual client "Empty" connects on port 8130
       Then client "Empty" sends "" and receives "Please type something."
       And client "Empty" disconnects with goodbye
 
     @Platform
     Scenario: [Platform] An empty message gets guidance
-      Given the multithreaded server is running on port 8230
+      Given the virtual server is running on port 8230
       When platform client "Empty" connects on port 8230
       Then client "Empty" sends "" and receives "Please type something."
       And client "Empty" disconnects with goodbye
 
     @Virtual
     Scenario: [Virtual] A client can continue after sending an empty message
-      Given the multithreaded server is running on port 8135
+      Given the virtual server is running on port 8135
       When virtual client "Recover" connects on port 8135
       Then client "Recover" sends "" and receives "Please type something."
       And client "Recover" sends "stats" and receives "Simultaneously connected clients: 1"
@@ -169,7 +169,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] A client can continue after sending an empty message
-      Given the multithreaded server is running on port 8235
+      Given the virtual server is running on port 8235
       When platform client "Recover" connects on port 8235
       Then client "Recover" sends "" and receives "Please type something."
       And client "Recover" sends "stats" and receives "Simultaneously connected clients: 1"
@@ -178,28 +178,28 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] Surrounding spaces are preserved while line endings are trimmed
-      Given the multithreaded server is running on port 8140
+      Given the virtual server is running on port 8140
       When virtual client "Spaces" connects on port 8140
       Then client "Spaces" sends "  keep surrounding spaces  " and receives "Did you say '  keep surrounding spaces  '?"
       And client "Spaces" disconnects with goodbye
 
     @Platform
     Scenario: [Platform] Surrounding spaces are preserved while line endings are trimmed
-      Given the multithreaded server is running on port 8240
+      Given the virtual server is running on port 8240
       When platform client "Spaces" connects on port 8240
       Then client "Spaces" sends "  keep surrounding spaces  " and receives "Did you say '  keep surrounding spaces  '?"
       And client "Spaces" disconnects with goodbye
 
     @Virtual
     Scenario: [Virtual] Tabs and backslashes are preserved in the echo response
-      Given the multithreaded server is running on port 8145
+      Given the virtual server is running on port 8145
       When virtual client "Escapes" connects on port 8145
       Then client "Escapes" sends escaped message "left\tright\\tail" and receives escaped response "Did you say 'left\tright\\tail'?"
       And client "Escapes" disconnects with goodbye
 
     @Platform
     Scenario: [Platform] Tabs and backslashes are preserved in the echo response
-      Given the multithreaded server is running on port 8245
+      Given the virtual server is running on port 8245
       When platform client "Escapes" connects on port 8245
       Then client "Escapes" sends escaped message "left\tright\\tail" and receives escaped response "Did you say 'left\tright\\tail'?"
       And client "Escapes" disconnects with goodbye
@@ -208,7 +208,7 @@ Feature: Multithreaded server behavior
 
     @Virtual
     Scenario: [Virtual] The server handles 100 clients sending 10,000 messages from separate threads
-      Given the multithreaded server is running on port 8150
+      Given the virtual server is running on port 8150
       When 100 virtual clients with prefix "VirtualLoad" connect on port 8150
       Then client "VirtualLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
       When 100 clients with prefix "VirtualLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
@@ -216,7 +216,7 @@ Feature: Multithreaded server behavior
 
     @Platform
     Scenario: [Platform] The server handles 100 clients sending 10,000 messages from separate threads
-      Given the multithreaded server is running on port 8250
+      Given the virtual server is running on port 8250
       When 100 platform clients with prefix "PlatformLoad" connect on port 8250
       Then client "PlatformLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
       When 100 clients with prefix "PlatformLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
@@ -227,13 +227,13 @@ Feature: Multithreaded server behavior
     @Virtual
     @Performance
     Scenario: [Virtual] Performance benchmark includes warmups and reports median over 3 measured runs
-      Given the multithreaded server is running on port 8160
+      Given the virtual server is running on port 8160
       When virtual thread performance benchmark runs 2 warmups and 3 measured runs with 100 clients and 100 messages on port 8160
 
     @Platform
     @Performance
     Scenario: [Platform] Performance benchmark includes warmups and reports median over 3 measured runs
-      Given the multithreaded server is running on port 8260
+      Given the virtual server is running on port 8260
       When platform thread performance benchmark runs 2 warmups and 3 measured runs with 100 clients and 100 messages on port 8260
 
     @PerformanceSummary
