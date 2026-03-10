@@ -221,3 +221,21 @@ Feature: Multithreaded server behavior
       Then client "PlatformLoad-001" sends "stats" and receives "Simultaneously connected clients: 100"
       When 100 clients with prefix "PlatformLoad" each send 100 echo messages from their own thread with a random delay between 10 and 50 milliseconds
       Then 100 clients with prefix "PlatformLoad" disconnect with goodbye
+
+  Rule: Performance benchmark
+
+    @Virtual
+    @Performance
+    Scenario: [Virtual] Performance benchmark includes warmups and reports median over 3 measured runs
+      Given the multithreaded server is running on port 8160
+      When virtual thread performance benchmark runs 2 warmups and 3 measured runs with 100 clients and 100 messages on port 8160
+
+    @Platform
+    @Performance
+    Scenario: [Platform] Performance benchmark includes warmups and reports median over 3 measured runs
+      Given the multithreaded server is running on port 8260
+      When platform thread performance benchmark runs 2 warmups and 3 measured runs with 100 clients and 100 messages on port 8260
+
+    @PerformanceSummary
+    Scenario: [Performance] Compare persisted virtual/platform medians from separate JVM runs
+      Then performance medians from separate JVM runs are compared and total execution time is printed
