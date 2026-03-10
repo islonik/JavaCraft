@@ -44,6 +44,63 @@ class MultithreadedServerTest {
     }
 
     @Test
+    void testRunShouldCloseClientWhenStartUpClientFails() throws Exception {
+        MultithreadedServer server = new MultithreadedServer(9090) {
+            @Override
+            public void startUpClient(Socket client) {
+                throw new IllegalStateException("startup failure");
+            }
+        };
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        Socket acceptedClient = Mockito.mock(Socket.class);
+        try (MockedConstruction<ServerSocket> construction = Mockito.mockConstruction(
+                ServerSocket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInetAddress()).thenReturn(loopback);
+                    Mockito.when(mock.getLocalPort()).thenReturn(9090);
+                    Mockito.when(mock.accept()).thenReturn(acceptedClient).thenThrow(new IOException("stop"));
+                }
+        )) {
+
+            Assertions.assertDoesNotThrow(server::run);
+            Mockito.verify(acceptedClient).close();
+
+            ServerSocket serverSocket = construction.constructed().getFirst();
+            Mockito.verify(serverSocket, Mockito.times(2)).accept();
+            Mockito.verify(serverSocket).close();
+        }
+    }
+
+    @Test
+    void testRunShouldHandleClientCloseFailureWhenStartUpClientFails() throws Exception {
+        MultithreadedServer server = new MultithreadedServer(9091) {
+            @Override
+            public void startUpClient(Socket client) {
+                throw new IllegalStateException("startup failure");
+            }
+        };
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        Socket acceptedClient = Mockito.mock(Socket.class);
+        try (MockedConstruction<ServerSocket> construction = Mockito.mockConstruction(
+                ServerSocket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInetAddress()).thenReturn(loopback);
+                    Mockito.when(mock.getLocalPort()).thenReturn(9091);
+                    Mockito.when(mock.accept()).thenReturn(acceptedClient).thenThrow(new IOException("stop"));
+                }
+        )) {
+            Mockito.doThrow(new IOException("forced close failure")).when(acceptedClient).close();
+
+            Assertions.assertDoesNotThrow(server::run);
+            Mockito.verify(acceptedClient).close();
+
+            ServerSocket serverSocket = construction.constructed().getFirst();
+            Mockito.verify(serverSocket, Mockito.times(2)).accept();
+            Mockito.verify(serverSocket).close();
+        }
+    }
+
+    @Test
     void testRunShouldHandleSocketExceptionWhileStillRunning() throws Exception {
         MultithreadedServer server = new MultithreadedServer(9292) {
             @Override
@@ -97,12 +154,40 @@ class MultithreadedServerTest {
     }
 
     @Test
+    void testRunShouldHandleServerSocketCloseFailureDuringShutdown() throws Exception {
+        MultithreadedServer server = new MultithreadedServer(9293) {
+            @Override
+            public void startUpClient(Socket client) {
+                // not needed in this test
+            }
+        };
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        try (MockedConstruction<ServerSocket> construction = Mockito.mockConstruction(
+                ServerSocket.class,
+                (mock, context) -> {
+                    Mockito.when(mock.getInetAddress()).thenReturn(loopback);
+                    Mockito.when(mock.getLocalPort()).thenReturn(9293);
+                    Mockito.doThrow(new IOException("forced close failure")).when(mock).close();
+                    Mockito.when(mock.accept()).thenAnswer(invocation -> {
+                        server.close();
+                        throw new SocketException("socket closed");
+                    });
+                }
+        )) {
+
+            Assertions.assertDoesNotThrow(server::run);
+            ServerSocket serverSocket = construction.constructed().getFirst();
+            Mockito.verify(serverSocket).accept();
+            Mockito.verify(serverSocket, Mockito.atLeastOnce()).close();
+        }
+    }
+
+    @Test
     void testShutdownShouldBeNoOpWhenServerIsNotRunning() {
         try (MultithreadedServer server = new MultithreadedServer(9494) {
             @Override
             public void startUpClient(Socket client) {
                 // not needed
-                Assertions.assertTrue(true);
             }
         }) {
             Assertions.assertDoesNotThrow(server::close);

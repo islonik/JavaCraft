@@ -60,8 +60,7 @@ public abstract class MultithreadedServer implements Runnable, AutoCloseable {
                 String info = String.format("New client from '%s' is connected", client);
                 log.info(info);
 
-                // we handle all exceptions internally
-                startUpClient(client);
+                processClientSocket(client);
             }
         } catch (SocketException se) {
             if (running.get()) {
@@ -97,6 +96,23 @@ public abstract class MultithreadedServer implements Runnable, AutoCloseable {
             socket.close();
         } catch (IOException closeError) {
             log.error("Failed to close server socket on port {}", port, closeError);
+        }
+    }
+
+    private void closeClientQuietly(Socket client) {
+        try {
+            client.close();
+        } catch (IOException closeError) {
+            log.error("Failed to close client socket after startup failure", closeError);
+        }
+    }
+
+    public void processClientSocket(Socket client) {
+        try {
+            startUpClient(client);
+        } catch (RuntimeException startupError) {
+            log.error("Failed to start client {}", client, startupError);
+            closeClientQuietly(client);
         }
     }
 

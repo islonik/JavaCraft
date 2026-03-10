@@ -33,28 +33,13 @@ class VirtualServerTest {
     }
 
     @Test
-    void testStartUpClientShouldCloseSocketWhenInitializationFails() throws Exception {
+    void testStartUpClientShouldPropagateInitializationFailure() throws Exception {
         VirtualServer server = new VirtualServer(0);
         try (Socket client = Mockito.mock(Socket.class)) {
             Mockito.when(client.getInputStream()).thenThrow(new IOException("forced input failure"));
 
-            Assertions.assertDoesNotThrow(() -> server.startUpClient(client));
-            Mockito.verify(client).close();
-        }
-    }
-
-    @Test
-    void testStartUpClientShouldHandleSocketCloseFailureAfterInitializationError() throws Exception {
-        VirtualServer server = new VirtualServer(0);
-        try (Socket client = Mockito.mock(Socket.class)) {
-            Mockito.when(client.getInputStream()).thenThrow(new IOException("forced input failure"));
-            Mockito.doThrow(new IOException("forced close failure"))
-                    .doNothing()
-                    .when(client)
-                    .close();
-
-            Assertions.assertDoesNotThrow(() -> server.startUpClient(client));
-            Mockito.verify(client).close();
+            Assertions.assertThrows(IllegalStateException.class, () -> server.startUpClient(client));
+            Mockito.verify(client, Mockito.never()).close();
         }
     }
 }
