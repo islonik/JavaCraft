@@ -12,9 +12,9 @@ With blocking I/O, when a client makes a request to connect with the server, the
 
 ## Modules
 
-- [`standard-client`](standard-client/README.md): platform/virtual clients and client-side behavior tests.
-- [`standard-server`](standard-server/README.md): multithreaded blocking socket server.
-- [`standard-testing`](standard-testing/README.md): Cucumber scenarios split into:
+- [standard-client](standard-client/README.md): platform/virtual clients and client-side behavior tests.
+- [standard-server](standard-server/README.md): multithreaded blocking socket server.
+- [standard-testing](standard-testing/README.md): Cucumber scenarios split into:
   - `standard.feature` (functional, edge-case, high-load)
   - `benchmark.feature` (performance benchmarks + summary)
 

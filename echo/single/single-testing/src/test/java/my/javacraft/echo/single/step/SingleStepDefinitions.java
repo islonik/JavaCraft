@@ -1,7 +1,5 @@
 package my.javacraft.echo.single.step;
 
-import io.cucumber.java.After;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
@@ -10,40 +8,15 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import my.javacraft.echo.single.client.SingleClient;
 import my.javacraft.echo.single.client.SingleNetworkManager;
-import my.javacraft.echo.single.server.SingleServer;
 import org.junit.jupiter.api.Assertions;
 
 public class SingleStepDefinitions {
-
-    private final Map<String, SingleClient> connections = new ConcurrentHashMap<>();
-    private final List<ExecutorService> serverExecutors = new ArrayList<>();
-
-    @After
-    public void cleanup() {
-        connections.values().forEach(SingleClient::close);
-        connections.clear();
-        serverExecutors.forEach(ExecutorService::shutdownNow);
-        serverExecutors.clear();
-    }
-
-    @Given("socket server started up on port = '{int}'")
-    @Given("the single-thread server is running on port {int}")
-    public void startUpSocketServer(int port) {
-        SingleServer server = new SingleServer(port);
-
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(server);
-        serverExecutors.add(executorService);
-    }
 
     @When("create a new client {string} for the server with the port = '{int}'")
     @When("client {string} connects on port {int}")
@@ -200,7 +173,7 @@ public class SingleStepDefinitions {
         SingleClient singleClient = new SingleClient("localhost", port);
         singleClient.connectToServer();
 
-        SingleClient previousClient = connections.putIfAbsent(clientName, singleClient);
+        SingleClient previousClient = connections().putIfAbsent(clientName, singleClient);
         if (previousClient != null) {
             singleClient.close();
             Assertions.fail("Client '%s' already exists in this scenario".formatted(clientName));
@@ -232,9 +205,13 @@ public class SingleStepDefinitions {
      * Fails fast when a scenario refers to a client name that was never created.
      */
     private SingleClient getClient(String clientName) {
-        SingleClient singleClient = connections.get(clientName);
+        SingleClient singleClient = connections().get(clientName);
         Assertions.assertNotNull(singleClient, "Client '%s' was not created in this scenario".formatted(clientName));
         return singleClient;
+    }
+
+    private Map<String, SingleClient> connections() {
+        return CommonStepDefinitions.connections();
     }
 
     /**
