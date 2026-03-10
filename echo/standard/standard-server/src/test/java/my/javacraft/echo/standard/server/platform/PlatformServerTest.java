@@ -42,4 +42,17 @@ class PlatformServerTest {
             Mockito.verify(client).close();
         }
     }
+
+    @Test
+    void testStartUpClientShouldHandleSocketCloseFailureAfterInitializationError() throws Exception {
+        PlatformServer server = new PlatformServer(0);
+        try (Socket client = Mockito.mock(Socket.class)) {
+            Mockito.when(client.getInputStream()).thenThrow(new IOException("forced input failure"));
+            Mockito.doThrow(new IOException("forced close failure")).when(client).close();
+
+            Assertions.assertDoesNotThrow(() -> server.startUpClient(client));
+            Mockito.verify(client).close();
+            Mockito.doNothing().when(client).close();
+        }
+    }
 }
