@@ -1,44 +1,23 @@
 package my.javacraft.echo.netty.step;
 
-import io.netty.channel.Channel;
-import io.cucumber.java.After;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.netty.channel.Channel;
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import my.javacraft.echo.netty.client.NettyClient;
-import my.javacraft.echo.netty.server.NettyServer;
 import org.junit.jupiter.api.Assertions;
 
 public class NettyStepDefinitions {
 
-    private final Map<String, NettyClient> connections = new ConcurrentHashMap<>();
-    private NettyServer server;
-
-    @After
-    public void cleanup() {
-        connections.values().forEach(NettyClient::close);
-        connections.clear();
-        if (server != null) {
-            server.stop();
-            server = null;
-        }
-    }
-
-    @Given("socket server started up on port = '{int}'")
-    @Given("the Netty server is running on port {int}")
-    public void startUpSocketServer(int port) throws InterruptedException {
-        server = new NettyServer(port);
-        server.start();
-    }
+    private static final long READ_TIMEOUT_NANOS = TimeUnit.SECONDS.toNanos(5);
 
     @When("create a new client {string} for the server with the port = '{int}'")
     @When("client {string} connects to the Netty server on port {int}")
@@ -119,7 +98,7 @@ public class NettyStepDefinitions {
         nettyClient.openConnection();
         drainGreetingMessages(clientName, nettyClient);
 
-        NettyClient previousClient = connections.putIfAbsent(clientName, nettyClient);
+        NettyClient previousClient = connections().putIfAbsent(clientName, nettyClient);
         if (previousClient != null) {
             nettyClient.close();
             Assertions.fail("Client '%s' already exists in this scenario".formatted(clientName));
@@ -134,9 +113,16 @@ public class NettyStepDefinitions {
         String welcomeMessage = awaitMessage(clientName, nettyClient, "welcome message");
         String dateMessage = awaitMessage(clientName, nettyClient, "server time message");
 
-        Assertions.assertTrue(welcomeMessage.startsWith("Welcome to "),
+        Assertions.assertNotNull(welcomeMessage,
                 "Client '%s' did not receive the expected welcome message".formatted(clientName));
-        Assertions.assertTrue(dateMessage.startsWith("It is "),
+        Assertions.assertNotNull(dateMessage,
+                "Client '%s' did not receive the expected server time message".formatted(clientName));
+        String safeWelcomeMessage = Objects.requireNonNull(welcomeMessage);
+        String safeDateMessage = Objects.requireNonNull(dateMessage);
+
+        Assertions.assertTrue(safeWelcomeMessage.startsWith("Welcome to "),
+                "Client '%s' did not receive the expected welcome message".formatted(clientName));
+        Assertions.assertTrue(safeDateMessage.startsWith("It is "),
                 "Client '%s' did not receive the expected server time message".formatted(clientName));
     }
 
@@ -171,10 +157,16 @@ public class NettyStepDefinitions {
      * client does not receive anything within its polling window.
      */
     private String awaitMessage(String clientName, NettyClient nettyClient, String expectedEvent) {
-        String actualMessage = nettyClient.readMessage();
-        Assertions.assertNotNull(actualMessage,
-                "Client '%s' did not receive the expected %s".formatted(clientName, expectedEvent));
-        return actualMessage;
+        long deadline = System.nanoTime() + READ_TIMEOUT_NANOS;
+        while (System.nanoTime() < deadline) {
+            String actualMessage = nettyClient.readMessage();
+            if (actualMessage != null) {
+                return actualMessage;
+            }
+        }
+
+        Assertions.fail("Client '%s' did not receive the expected %s".formatted(clientName, expectedEvent));
+        throw new IllegalStateException("Unreachable: awaitMessage failed for " + clientName);
     }
 
     /**
@@ -189,9 +181,13 @@ public class NettyStepDefinitions {
      * Fails fast when a scenario refers to a Netty client that was never created.
      */
     private NettyClient getClient(String clientName) {
-        NettyClient nettyClient = connections.get(clientName);
+        NettyClient nettyClient = connections().get(clientName);
         Assertions.assertNotNull(nettyClient, "Client '%s' was not created in this scenario".formatted(clientName));
         return nettyClient;
+    }
+
+    private Map<String, NettyClient> connections() {
+        return CommonStepDefinitions.connections();
     }
 
     /**
@@ -319,5 +315,4 @@ public class NettyStepDefinitions {
         }
         return result.toString();
     }
-
 }

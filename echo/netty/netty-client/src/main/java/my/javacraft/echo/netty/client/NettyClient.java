@@ -10,6 +10,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -17,17 +18,57 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class NettyClient {
+    private static final int CLIENT_EVENT_LOOP_THREADS = 1;
+    private static final Object GROUP_LOCK = new Object();
+    private static EventLoopGroup sharedGroup;
+    private static int sharedGroupUsers;
 
     private final String host;
     private final int port;
     private final EventLoopGroup group;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private volatile Channel ch;
     private volatile NettyClientInitializer nettyClientInitializer;
 
     public NettyClient(String host, int port) {
         this.host = host;
         this.port = port;
-        this.group = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
+        this.group = acquireSharedGroup();
+    }
+
+    // prevent NettyClient to create a new Netty event-loop group per client, which would exhaust thread creation
+    // under 100-client benchmark load.
+    private static EventLoopGroup acquireSharedGroup() {
+        synchronized (GROUP_LOCK) {
+            if (sharedGroup == null
+                    || sharedGroup.isShuttingDown()
+                    || sharedGroup.isShutdown()
+                    || sharedGroup.isTerminated()) {
+                sharedGroup = new MultiThreadIoEventLoopGroup(CLIENT_EVENT_LOOP_THREADS, NioIoHandler.newFactory());
+                sharedGroupUsers = 0;
+            }
+
+            sharedGroupUsers++;
+            return sharedGroup;
+        }
+    }
+
+    private static void releaseSharedGroup() {
+        EventLoopGroup groupToShutdown = null;
+        synchronized (GROUP_LOCK) {
+            if (sharedGroupUsers > 0) {
+                sharedGroupUsers--;
+            }
+
+            if (sharedGroupUsers == 0 && sharedGroup != null) {
+                groupToShutdown = sharedGroup;
+                sharedGroup = null;
+            }
+        }
+
+        if (groupToShutdown != null) {
+            groupToShutdown.shutdownGracefully().syncUninterruptibly();
+        }
     }
 
     public void openConnection() throws InterruptedException {
@@ -53,10 +94,15 @@ public class NettyClient {
      * Closes the connection and releases all resources.
      */
     public void close() {
-        if (ch != null) {
-            ch.close();
+        if (!closed.compareAndSet(false, true)) {
+            return;
         }
-        group.shutdownGracefully();
+
+        if (ch != null) {
+            ch.close().syncUninterruptibly();
+        }
+
+        releaseSharedGroup();
     }
 
     public void run() {
