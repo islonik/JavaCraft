@@ -24,11 +24,11 @@ class PlatformServerTest {
 
             server.startUpClient(client);
 
+            Mockito.verify(client, Mockito.timeout(2_000)).close();
             Assertions.assertEquals(
                     "Simultaneously connected clients: 1\r\nHave a good day!\r\n",
                     output.toString(StandardCharsets.UTF_8)
             );
-            Mockito.verify(client).close();
         }
     }
 
