@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,16 +18,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServerThread implements Runnable {
 
+    private static final int DEFAULT_READ_TIMEOUT_MILLIS = 2_000;
+
     private final Socket socket;
     private final AtomicInteger connectedClients;
     private final BufferedReader inStream;
     private final BufferedWriter outStream;
-    private volatile boolean counted;
+    private final AtomicBoolean counted = new AtomicBoolean(false);
 
     public ServerThread(Socket socket, AtomicInteger connectedClients) {
         this.socket = Objects.requireNonNull(socket, "Socket must not be null");
         this.connectedClients = Objects.requireNonNull(connectedClients, "Connected clients counter must not be null");
+
         try {
+            socket.setSoTimeout(DEFAULT_READ_TIMEOUT_MILLIS);
             this.inStream = new BufferedReader(new InputStreamReader(
                     socket.getInputStream(), StandardCharsets.UTF_8));
             this.outStream = new BufferedWriter(new OutputStreamWriter(
@@ -34,12 +39,11 @@ public class ServerThread implements Runnable {
         } catch (IOException ioe) {
             throw new IllegalStateException("Could not initialize server thread streams", ioe);
         }
-        this.counted = true;
-        log.info("Simultaneously connected clients : {}", connectedClients.incrementAndGet());
     }
 
     @Override
     public void run() {
+        markConnected();
         try {
             while (true) {
                 String request = inStream.readLine();
@@ -49,8 +53,10 @@ public class ServerThread implements Runnable {
 
                 String response = findServerResponse(request);
                 log.info("resp {} = {}", socket.getPort(), response.stripTrailing());
+
                 outStream.write(response);
                 outStream.flush();
+
                 if ("bye".equalsIgnoreCase(request)) {
                     break;
                 }
@@ -81,11 +87,16 @@ public class ServerThread implements Runnable {
         closeQuietly(outStream, "output stream");
         closeQuietly(inStream, "input stream");
         closeQuietly(socket, "socket");
-        if (counted) {
-            counted = false;
+        if (counted.compareAndSet(true, false)) {
             log.info("Simultaneously connected clients : {}", connectedClients.decrementAndGet());
         }
         log.info("Client {} left", socket.getPort());
+    }
+
+    private void markConnected() {
+        if (counted.compareAndSet(false, true)) {
+            log.info("Simultaneously connected clients : {}", connectedClients.incrementAndGet());
+        }
     }
 
     private void closeQuietly(AutoCloseable closeable, String target) {

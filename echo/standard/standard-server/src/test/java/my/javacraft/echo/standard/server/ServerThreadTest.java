@@ -98,6 +98,34 @@ class ServerThreadTest {
     }
 
     @Test
+    void testConstructorShouldNotIncrementCounterBeforeRun() throws Exception {
+        AtomicInteger counter = new AtomicInteger(0);
+        try (Socket socket = Mockito.mock(Socket.class)) {
+            Mockito.when(socket.getInputStream())
+                    .thenReturn(new ByteArrayInputStream("bye\r\n".getBytes(StandardCharsets.UTF_8)));
+            Mockito.when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+
+            new ServerThread(socket, counter);
+
+            Assertions.assertEquals(0, counter.get(), "Counter should be incremented in run(), not constructor");
+        }
+    }
+
+    @Test
+    void testConstructorShouldConfigureDefaultReadTimeout() throws Exception {
+        AtomicInteger counter = new AtomicInteger(0);
+        try (Socket socket = Mockito.mock(Socket.class)) {
+            Mockito.when(socket.getInputStream())
+                    .thenReturn(new ByteArrayInputStream("bye\r\n".getBytes(StandardCharsets.UTF_8)));
+            Mockito.when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+
+            new ServerThread(socket, counter);
+
+            Mockito.verify(socket).setSoTimeout(30_000);
+        }
+    }
+
+    @Test
     void testRunShouldCatchIOExceptionAndStillDecrementCounter() throws Exception {
         AtomicInteger counter = new AtomicInteger(0);
         Socket socket = Mockito.mock(Socket.class);
