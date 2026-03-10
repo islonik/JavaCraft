@@ -7,7 +7,6 @@ import io.cucumber.java.en.When;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -30,36 +28,12 @@ import java.util.function.Supplier;
 import my.javacraft.echo.standard.client.platform.PlatformThreadClient;
 import my.javacraft.echo.standard.client.virtual.VirtualThreadClient;
 import my.javacraft.echo.standard.server.MultithreadedServer;
-import my.javacraft.echo.standard.server.ServerThread;
 import org.junit.jupiter.api.Assertions;
 
 public class StandardStepDefinitions {
 
     private static final Object SYSTEM_OUT_LOCK = new Object();
     private static final Path PERFORMANCE_RESULTS_DIR = Path.of("target", "performance-results");
-
-    // ---------------------------------------------------------------------------
-    // Access to ServerThread's shared static connection counter
-    // ---------------------------------------------------------------------------
-
-    /**
-     * Direct reference to {@link ServerThread threads}.  Because that field is
-     * {@code static final}, all ServerThread instances in this JVM (across every
-     * test scenario) share the same counter.  We keep a reference here so that
-     * {@link #awaitSharedThreadCounterReset()} can poll it efficiently without
-     * repeated reflection in the hot loop.
-     */
-    private static final AtomicInteger SERVER_THREAD_COUNTER = resolveServerThreadCounter();
-
-    private static AtomicInteger resolveServerThreadCounter() {
-        try {
-            Field field = ServerThread.class.getDeclaredField("threads");
-            field.setAccessible(true);
-            return (AtomicInteger) field.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
 
     // ---------------------------------------------------------------------------
     // Scenario state
@@ -77,27 +51,6 @@ public class StandardStepDefinitions {
         platformConnections.clear();
         serverExecutors.forEach(ExecutorService::shutdownNow);
         serverExecutors.clear();
-        awaitSharedThreadCounterReset();
-    }
-
-    /**
-     * Polls {@link ServerThread threads} until it reaches zero, or times out
-     * after five seconds.
-     *
-     * <p>The counter is a JVM-wide static field shared by every scenario.
-     * Closing a client socket causes the corresponding {@link ServerThread}
-     * to receive {@code null} from {@code readLine()} and then decrement the
-     * counter — but this decrement races with the next scenario's
-     * {@code incrementAndGet()} in the {@link ServerThread} constructor.  If the
-     * decrement loses that race, the "stats" command returns an inflated count
-     * and the assertion fails.  Waiting here ensures all previous-scenario
-     * threads have finished before the next scenario's server and clients start.
-     */
-    private void awaitSharedThreadCounterReset() {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        while (SERVER_THREAD_COUNTER.get() > 0 && System.nanoTime() < deadline) {
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
-        }
     }
 
     // ---------------------------------------------------------------------------
@@ -497,7 +450,6 @@ public class StandardStepDefinitions {
             long elapsedNanos = System.nanoTime() - startedAt;
 
             clientsWithPrefixDisconnectWithGoodbye(clientCount, prefix);
-            awaitSharedThreadCounterReset();
             return elapsedNanos;
         });
     }

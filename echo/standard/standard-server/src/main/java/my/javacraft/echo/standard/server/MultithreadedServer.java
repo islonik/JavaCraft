@@ -3,6 +3,7 @@ package my.javacraft.echo.standard.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MultithreadedServer implements Runnable {
 
     private final int port;
+    private final AtomicInteger connectedClients = new AtomicInteger(0);
 
     public MultithreadedServer(int port) {
         this.port = port;
@@ -19,6 +21,7 @@ public class MultithreadedServer implements Runnable {
         log.info("Use next command: telnet localhost " + port);
     }
 
+    @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {
 
@@ -47,12 +50,25 @@ public class MultithreadedServer implements Runnable {
 
                     log.info(info);
 
-                    // we use virtual threads added in Java 21
-                    Thread.startVirtualThread(new ServerThread(client));
+                    startUpClient(client);
                 }
             }
         } catch (IOException ioe) {
             log.error(ioe.getLocalizedMessage(), ioe);
+        }
+    }
+
+    private void startUpClient(Socket client) {
+        try {
+            // we use virtual threads added in Java 21
+            Thread.startVirtualThread(new ServerThread(client, connectedClients));
+        } catch (RuntimeException ex) {
+            log.error("Failed to start server thread for {}", client, ex);
+            try {
+                client.close();
+            } catch (IOException closeEx) {
+                log.error("Could not close client socket after startup failure", closeEx);
+            }
         }
     }
 }

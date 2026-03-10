@@ -1,7 +1,13 @@
 package my.javacraft.echo.standard.server;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,66 +17,82 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServerThread implements Runnable {
 
-    private static final AtomicInteger threads = new AtomicInteger(0);
-    private Socket socket;
-    private BufferedReader inStream = null;
-    private BufferedWriter outStream = null;
+    private final Socket socket;
+    private final AtomicInteger connectedClients;
+    private final BufferedReader inStream;
+    private final BufferedWriter outStream;
+    private volatile boolean counted;
 
-    public ServerThread(Socket socket) {
+    public ServerThread(Socket socket, AtomicInteger connectedClients) {
+        this.socket = Objects.requireNonNull(socket, "Socket must not be null");
+        this.connectedClients = Objects.requireNonNull(connectedClients, "Connected clients counter must not be null");
         try {
-            this.socket = socket;
-            this.inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.outStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-            log.info("Simultaneously connected clients : {}", threads.incrementAndGet());
+            this.inStream = new BufferedReader(new InputStreamReader(
+                    socket.getInputStream(), StandardCharsets.UTF_8));
+            this.outStream = new BufferedWriter(new OutputStreamWriter(
+                    socket.getOutputStream(), StandardCharsets.UTF_8));
         } catch (IOException ioe) {
-            log.error(ioe.getLocalizedMessage(), ioe);
+            throw new IllegalStateException("Could not initialize server thread streams", ioe);
         }
+        this.counted = true;
+        log.info("Simultaneously connected clients : {}", connectedClients.incrementAndGet());
     }
 
     @Override
     public void run() {
         try {
-            // all incoming requests
-            boolean isConnected = true;
-            while (isConnected) {
+            while (true) {
                 String request = inStream.readLine();
-
-                // we should add a line terminator at the end of the response here to close the line
-                String response = "";
                 if (request == null) {
-                    isConnected = false;
-                } else if (request.isEmpty()) {
-                    response = "Please type something.\r\n";
-                } else if ("stats".equalsIgnoreCase(request)) {
-                    response = "Simultaneously connected clients: %s\r\n".formatted(threads.get());
-                } else if ("bye".equalsIgnoreCase(request)) {
-                    response = "Have a good day!\r\n";
-                    isConnected = false;
-                } else {
-                    response = "Did you say '" + request + "'?\r\n";
+                    break;
                 }
 
-                System.out.printf("resp %s = %s", socket.getPort(), response);
-
-                this.outStream.write(response);
-                this.outStream.flush();
+                String response = findServerResponse(request);
+                log.info("resp {} = {}", socket.getPort(), response.stripTrailing());
+                outStream.write(response);
+                outStream.flush();
+                if ("bye".equalsIgnoreCase(request)) {
+                    break;
+                }
             }
-            log.info("Client {} left ", socket.getPort());
         } catch (IOException ioe) {
-            log.error("run method: " + ioe.getLocalizedMessage(), ioe);
+            log.error("I/O error for client {}: {}", socket.getPort(), ioe.getLocalizedMessage(), ioe);
+        } catch (RuntimeException rte) {
+            log.error("Unexpected server thread error for client {}", socket.getPort(), rte);
         } finally {
-            log.info("Simultaneously connected clients : {}", threads.decrementAndGet());
-            try {
-                if (inStream != null) {
-                    inStream.close();
-                }
-                if (outStream != null) {
-                    outStream.close();
-                }
-            } catch (IOException ioe) {
-                log.error(ioe.getMessage(), ioe);
-            }
+            closeConnection();
+        }
+    }
+
+    private String findServerResponse(String request) {
+        if (request.isEmpty()) {
+            return "Please type something.\r\n";
+        }
+        if ("stats".equalsIgnoreCase(request)) {
+            return "Simultaneously connected clients: %s\r\n".formatted(connectedClients.get());
+        }
+        if ("bye".equalsIgnoreCase(request)) {
+            return "Have a good day!\r\n";
+        }
+        return "Did you say '" + request + "'?\r\n";
+    }
+
+    private void closeConnection() {
+        closeQuietly(outStream, "output stream");
+        closeQuietly(inStream, "input stream");
+        closeQuietly(socket, "socket");
+        if (counted) {
+            counted = false;
+            log.info("Simultaneously connected clients : {}", connectedClients.decrementAndGet());
+        }
+        log.info("Client {} left", socket.getPort());
+    }
+
+    private void closeQuietly(AutoCloseable closeable, String target) {
+        try {
+            closeable.close();
+        } catch (Exception ex) {
+            log.error("Couldn't close {} for client {}", target, socket.getPort(), ex);
         }
     }
 
