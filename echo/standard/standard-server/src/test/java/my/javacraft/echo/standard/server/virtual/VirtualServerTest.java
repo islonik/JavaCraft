@@ -48,11 +48,13 @@ class VirtualServerTest {
         VirtualServer server = new VirtualServer(0);
         try (Socket client = Mockito.mock(Socket.class)) {
             Mockito.when(client.getInputStream()).thenThrow(new IOException("forced input failure"));
-            Mockito.doThrow(new IOException("forced close failure")).when(client).close();
+            Mockito.doThrow(new IOException("forced close failure"))
+                    .doNothing()
+                    .when(client)
+                    .close();
 
             Assertions.assertDoesNotThrow(() -> server.startUpClient(client));
             Mockito.verify(client).close();
-            Mockito.doNothing().when(client).close();
         }
     }
 }
