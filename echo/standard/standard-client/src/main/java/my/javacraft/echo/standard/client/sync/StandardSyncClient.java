@@ -1,6 +1,12 @@
 package my.javacraft.echo.standard.client.sync;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -81,37 +87,39 @@ public class StandardSyncClient extends UserClient implements Runnable, AutoClos
         BufferedReader clientReadingStreamFromServerSocket = new BufferedReader(inputStreamReader);
         Thread.ofVirtual()
                 .name(threadName + "-" + port)
-                .start(() -> {
-                    boolean serverClosedConnection = false;
-                    try {
-                        String line;
-                        while ((line = clientReadingStreamFromServerSocket.readLine()) != null) {
-                            if (!enqueueResponse(line)) {
-                                break;
-                            }
-                        }
-                        // EOF means server closed its output stream.
-                        if (!closedByClient.get()) {
-                            serverClosedConnection = true;
-                        }
-                    } catch (SocketException e) {
-                        // A local close can interrupt readLine(); don't mark it as server-initiated closure.
-                        if (!closedByClient.get()) {
-                            serverClosedConnection = true;
-                            log.warn("Listener socket error: {}", e.getMessage());
-                        }
-                    } catch (IOException e) {
-                        // Read I/O failure while client is still open indicates the remote side is no longer readable.
-                        if (!closedByClient.get()) {
-                            serverClosedConnection = true;
-                            log.warn("Listener error: {}", e.getMessage());
-                        }
-                    } finally {
-                        if (serverClosedConnection) {
-                            closedByServer = true;
-                        }
-                    }
-                });
+                .start(() -> listen(clientReadingStreamFromServerSocket));
+    }
+
+    private void listen(BufferedReader clientReadingStreamFromServerSocket) {
+        boolean serverClosedConnection = false;
+        try {
+            String line;
+            while ((line = clientReadingStreamFromServerSocket.readLine()) != null) {
+                if (!enqueueResponse(line)) {
+                    break;
+                }
+            }
+            // EOF means server closed its output stream.
+            if (!closedByClient.get()) {
+                serverClosedConnection = true;
+            }
+        } catch (SocketException e) {
+            // A local close can interrupt readLine(); don't mark it as server-initiated closure.
+            if (!closedByClient.get()) {
+                serverClosedConnection = true;
+                log.warn("Listener socket error: {}", e.getMessage());
+            }
+        } catch (IOException e) {
+            // Read I/O failure while client is still open indicates the remote side is no longer readable.
+            if (!closedByClient.get()) {
+                serverClosedConnection = true;
+                log.warn("Listener error: {}", e.getMessage());
+            }
+        } finally {
+            if (serverClosedConnection) {
+                closedByServer = true;
+            }
+        }
     }
 
     /**
