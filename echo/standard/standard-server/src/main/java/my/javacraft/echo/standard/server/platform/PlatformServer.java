@@ -8,6 +8,7 @@ import my.javacraft.echo.standard.server.common.ServerThread;
 
 @Slf4j
 public class PlatformServer extends MultithreadedServer {
+
     public PlatformServer(int port) {
         super(port);
     }
@@ -15,7 +16,7 @@ public class PlatformServer extends MultithreadedServer {
     @Override
     public void startUpClient(Socket client) {
         try {
-            // we use virtual threads added in Java 21
+            // platform thread
             ServerThread serverThread = new ServerThread(client, connectedClients);
             serverThread.run();
         } catch (RuntimeException ex) {
