@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.echo.standard.client.common.UserClient;
 
 /**
- * StandardSyncClient.
+ * VirtualThreadClient.
  * <p>
  * @author Lipatov Nikita
  */
@@ -17,7 +17,7 @@ public class VirtualThreadClient extends UserClient implements Runnable, AutoClo
             final int port) {
 
         super(host, port);
-        initializeConnection(threadName, "Sync", log);
+        initializeConnection(threadName, "Virtual", log);
     }
 
     @Override

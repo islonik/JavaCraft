@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.echo.standard.client.common.UserClient;
 
 /**
- * StandardAsyncClient.
+ * PlatformThreadClient.
  * <p>
  * @author Lipatov Nikita
  */
@@ -17,7 +17,7 @@ public class PlatformThreadClient extends UserClient implements Runnable, AutoCl
             final int port) {
 
         super(host, port);
-        initializeConnection(threadName, "Async", log);
+        initializeConnection(threadName, "Platform", log);
     }
 
     @Override
