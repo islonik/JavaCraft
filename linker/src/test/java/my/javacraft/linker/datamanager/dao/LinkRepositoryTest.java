@@ -88,4 +88,19 @@ class LinkRepositoryTest {
         Assertions.assertEquals(7L, foundLink.get().getRedirectCount());
         Assertions.assertEquals(lastAccessDate, foundLink.get().getLastAccessDate());
     }
+
+    @Test
+    void testShouldFindExistingByUrl() {
+        linkRepository.deleteAll();
+
+        Link link = new Link();
+        link.setUrl("https://repeat.example.org/path");
+        link.setShortUrl("same11");
+        link.setCreationDate(new Date());
+        linkRepository.save(link);
+
+        Optional<Link> foundLink = linkRepository.findFirstByUrlOrderByCreationDateAsc("https://repeat.example.org/path");
+        Assertions.assertTrue(foundLink.isPresent());
+        Assertions.assertEquals("same11", foundLink.get().getShortUrl());
+    }
 }

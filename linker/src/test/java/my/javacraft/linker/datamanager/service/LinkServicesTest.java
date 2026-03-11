@@ -32,6 +32,8 @@ class LinkServicesTest {
 
     @Test
     void testCreateLinkShouldRetryOnCollisionAndReturnShortUrl() {
+        Mockito.when(linkRepository.findFirstByUrlOrderByCreationDateAsc("https://example.org/path"))
+                .thenReturn(Optional.empty());
         Mockito.doReturn("ABC123", "XYZ789").when(linkServices).generateCandidateShortUrl();
         Mockito.when(linkRepository.existsByShortUrl("ABC123")).thenReturn(true);
         Mockito.when(linkRepository.existsByShortUrl("XYZ789")).thenReturn(false);
@@ -46,6 +48,23 @@ class LinkServicesTest {
 
         assertEquals("http://localhost:8080/api/v1/links/XYZ789", shortUrl);
         Mockito.verify(linkRepository, Mockito.times(1)).save(Mockito.any(Link.class));
+    }
+
+    @Test
+    void testCreateLinkShouldReturnExistingWhenUrlAlreadyExists() {
+        Link existingLink = new Link();
+        existingLink.setShortUrl("ready11");
+        existingLink.setUrl("https://existing.example/path");
+        existingLink.setCreationDate(new Date());
+
+        Mockito.when(linkRepository.findFirstByUrlOrderByCreationDateAsc("https://existing.example/path"))
+                .thenReturn(Optional.of(existingLink));
+
+        String shortUrl = linkServices.createLink("https://existing.example/path");
+
+        assertEquals("http://localhost:8080/api/v1/links/ready11", shortUrl);
+        Mockito.verify(linkRepository, Mockito.never()).save(Mockito.any(Link.class));
+        Mockito.verify(linkRepository, Mockito.never()).existsByShortUrl(Mockito.anyString());
     }
 
     @Test

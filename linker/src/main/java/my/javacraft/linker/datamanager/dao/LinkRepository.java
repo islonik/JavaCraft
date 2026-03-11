@@ -10,4 +10,6 @@ public interface LinkRepository extends MongoRepository<Link, String> {
 
     boolean existsByShortUrl(String shortUrl);
 
+    Optional<Link> findFirstByUrlOrderByCreationDateAsc(String url);
+
 }

@@ -6,6 +6,7 @@ Tags: Spring Boot, MongoDb
 ## What it now demonstrates
 
 - Collision-safe short ID creation with retry strategy.
+- Idempotent link creation by URL (same URL returns the same existing short link).
 - Expirable links (`expirationDate`) with `410 Gone` behavior after expiration.
 - Redirect analytics (`redirectCount`, `lastAccessDate`).
 - MongoDB persistence with repository-level and controller-level integration tests.
@@ -27,11 +28,15 @@ It exposes all `LinkController` endpoints with request/response schemas.
 
 `PUT /api/v1/links`
 
-Body: raw URL string.
+Body: raw URL string (or JSON string in Swagger UI).
 
 Response: full short URL, for example:
 
 `http://localhost:8080/api/v1/links/Ab12Cd`
+
+Behavior:
+- If URL is new, a new short URL is created and returned.
+- If the same URL already exists, the existing short URL is returned and no duplicate entity is created.
 
 2. Redirect by short id
 
@@ -117,5 +122,5 @@ mvn -pl linker test
 Coverage includes:
 
 - Unit tests for controller/service/symbol generation.
-- Persistence test with in-memory Mongo (`LinkRepositoryPersistenceTest`).
+- Persistence test with in-memory Mongo (`LinkRepositoryTest`).
 - Spring MVC integration test with in-memory Mongo (`LinkControllerIntegrationTest`).

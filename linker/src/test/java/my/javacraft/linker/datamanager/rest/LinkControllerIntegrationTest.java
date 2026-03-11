@@ -123,4 +123,31 @@ class LinkControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/links/{shortUrl}/analytics", "missing"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void testSameUrlShouldReturnExistingShortUrlInsteadOfCreatingDuplicate() throws Exception {
+        String targetUrl = "https://repeat.example.org/item";
+
+        MvcResult firstCreateResult = mockMvc.perform(put("/api/v1/links")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(targetUrl))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MvcResult secondCreateResult = mockMvc.perform(put("/api/v1/links")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(targetUrl))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String firstShortUrl = firstCreateResult.getResponse().getContentAsString();
+        String secondShortUrl = secondCreateResult.getResponse().getContentAsString();
+
+        Assertions.assertEquals(firstShortUrl, secondShortUrl);
+        long sameUrlCount = linkRepository.findAll()
+                .stream()
+                .filter(link -> targetUrl.equals(link.getUrl()))
+                .count();
+        Assertions.assertEquals(1L, sameUrlCount);
+    }
 }

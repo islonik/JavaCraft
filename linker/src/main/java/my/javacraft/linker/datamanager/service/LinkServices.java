@@ -34,6 +34,11 @@ public class LinkServices {
     final LinkRepository linkRepository;
 
     public String createLink(String url) {
+        Optional<Link> existingLink = findExistingLinkByUrl(url);
+        if (existingLink.isPresent()) {
+            return fullShortUrl(existingLink.get().getShortUrl());
+        }
+
         Date creationDate = new Date();
         Date expirationDate = Date.from(creationDate.toInstant().plus(expirationDays, ChronoUnit.DAYS));
 
@@ -52,11 +57,17 @@ public class LinkServices {
 
             try {
                 Link saved = linkRepository.save(link);
-                String fullShortUrl = hostPrefix() + saved.getShortUrl();
+                String fullShortUrl = fullShortUrl(saved.getShortUrl());
                 log.info("Added a new Link with short url = '{}' and full short url = '{}'", saved.getShortUrl(), fullShortUrl);
                 return fullShortUrl;
             } catch (DuplicateKeyException exception) {
-                // Guard against races when two requests generate the same short id concurrently.
+                // Guard against races:
+                // 1) same URL inserted concurrently in another request
+                // 2) short-url collision in another request
+                Optional<Link> concurrentExistingLink = findExistingLinkByUrl(url);
+                if (concurrentExistingLink.isPresent()) {
+                    return fullShortUrl(concurrentExistingLink.get().getShortUrl());
+                }
                 log.debug("Detected short-url collision for '{}', retrying...", candidateShortUrl);
             }
         }
@@ -96,6 +107,14 @@ public class LinkServices {
 
     String generateCandidateShortUrl() {
         return SymbolGeneratorServices.generateShortText(shortUrlLength);
+    }
+
+    private Optional<Link> findExistingLinkByUrl(String url) {
+        return linkRepository.findFirstByUrlOrderByCreationDateAsc(url);
+    }
+
+    private String fullShortUrl(String shortUrl) {
+        return hostPrefix() + shortUrl;
     }
 
     private String hostPrefix() {
