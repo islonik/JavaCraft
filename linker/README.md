@@ -1,8 +1,71 @@
 # Linker
-A simple keeper for short links and translation them into full links.
+A short-link service that stores long URLs, generates collision-safe short IDs, redirects users, and tracks basic analytics.
 
 Tags: Spring Boot, MongoDb
 
+## What it now demonstrates
+
+- Collision-safe short ID creation with retry strategy.
+- Expirable links (`expirationDate`) with `410 Gone` behavior after expiration.
+- Redirect analytics (`redirectCount`, `lastAccessDate`).
+- MongoDB persistence with repository-level and controller-level integration tests.
+
+## API
+
+Base path: `/api/v1/links`
+
+1. Create short link
+
+`PUT /api/v1/links`
+
+Body: raw URL string.
+
+Response: full short URL, for example:
+
+`http://localhost:8080/api/v1/links/Ab12Cd`
+
+2. Redirect by short id
+
+`GET /api/v1/links/{shortUrl}`
+
+- `302 Found` + `Location` header when active.
+- `404 Not Found` when unknown.
+- `410 Gone` when expired.
+
+3. Analytics by short id
+
+`GET /api/v1/links/{shortUrl}/analytics`
+
+Response example:
+
+```json
+{
+  "shortUrl": "Ab12Cd",
+  "url": "https://example.org/page",
+  "creationDate": "2026-03-11T11:12:00.000+00:00",
+  "expirationDate": "2026-04-10T11:12:00.000+00:00",
+  "redirectCount": 3,
+  "lastAccessDate": "2026-03-11T11:14:21.000+00:00",
+  "expired": false
+}
+```
+
+## Collision-safe ID strategy
+
+- IDs are generated with configurable length.
+- Service checks `existsByShortUrl(...)` before insert.
+- DB-level unique index on `shortUrl` protects against concurrent races.
+- On duplicate-key race, service retries with a new generated id.
+
+Config in `application.yaml`:
+
+```yaml
+linker:
+  short-url:
+    length: 6
+    max-attempts: 64
+  expiration-days: 30
+```
 
 ### How to forward URL request to another request
 
@@ -10,16 +73,22 @@ Tags: Spring Boot, MongoDb
 @RestController
 @RequestMapping(path = "/api/v1/links")
 @RequiredArgsConstructor
-public class LinkResource {
+public class LinkController {
 
-    private final LinkRepository linkRepository;
+    private final LinkServices linkServices;
     
     // redirection
     @GetMapping(value = "/{shortUrl}")
-    public ResponseEntity<byte[]> shortUrl2FullUrl(@PathVariable String shortUrl) {
-        String url = linkRepository.findLinkByShortUrl(shortUrl).getUrl();
+    public ResponseEntity<byte[]> shortUrl2FullUrl(@PathVariable("shortUrl") String shortUrl) {
+        LinkServices.ResolveLinkResult resolveLinkResult = linkServices.resolveLink(shortUrl);
+        if (resolveLinkResult.status() == LinkServices.ResolveStatus.NOT_FOUND) {
+            return ResponseEntity.notFound().build();
+        }
+        if (resolveLinkResult.status() == LinkServices.ResolveStatus.EXPIRED) {
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        }
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.LOCATION, url);
+        headers.add(HttpHeaders.LOCATION, resolveLinkResult.url());
 
         return new ResponseEntity<>(null, headers, HttpStatus.FOUND);
     }
@@ -27,3 +96,17 @@ public class LinkResource {
 }
     
 ```
+
+## Tests
+
+Run all linker tests:
+
+```bash
+mvn -pl linker test
+```
+
+Coverage includes:
+
+- Unit tests for controller/service/symbol generation.
+- Persistence test with in-memory Mongo (`LinkRepositoryPersistenceTest`).
+- Spring MVC integration test with in-memory Mongo (`LinkControllerIntegrationTest`).

@@ -13,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <java.release>21</java.release>
+
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
@@ -34,7 +35,10 @@
         <jakarta.xml.bind-api.version>4.0.5</jakarta.xml.bind-api.version>
         <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
         <jaxb-runtime.version>4.0.6</jaxb-runtime.version>
+
         <h2.version>2.4.240</h2.version>
+        <mongo-java-server.version>1.47.0</mongo-java-server.version>
+
         <netty.version>4.2.10.Final</netty.version>
         <liquibase.version>5.0.2</liquibase.version>
         <lombok.version>1.18.42</lombok.version>

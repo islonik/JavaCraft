@@ -1,12 +1,13 @@
 package my.javacraft.linker.datamanager.dao;
 
+import java.util.Optional;
 import my.javacraft.linker.datamanager.dao.entity.Link;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
 
 public interface LinkRepository extends MongoRepository<Link, String> {
 
-    @Query("{shortUrl:'?0'}")
-    Link findLinkByShortUrl(String shortUrl);
+    Optional<Link> findByShortUrl(String shortUrl);
+
+    boolean existsByShortUrl(String shortUrl);
 
 }

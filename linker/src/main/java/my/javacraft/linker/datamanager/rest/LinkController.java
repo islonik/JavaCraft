@@ -29,13 +29,29 @@ public class LinkController {
 
     // redirection
     @GetMapping(value = "/{shortUrl}")
-    public ResponseEntity<byte []> shortUrl2FullUrl(@PathVariable String shortUrl) {
-        String url = linkRepository.findLinkByShortUrl(shortUrl).getUrl();
+    public ResponseEntity<byte []> shortUrl2FullUrl(@PathVariable("shortUrl") String shortUrl) {
+        LinkServices.ResolveLinkResult resolveLinkResult = linkServices.resolveLink(shortUrl);
+        switch (resolveLinkResult.status()) {
+            case NOT_FOUND -> {
+                return ResponseEntity.notFound().build();
+            }
+            case EXPIRED -> {
+                return ResponseEntity.status(HttpStatus.GONE).build();
+            }
+            case null, default -> {}
+        }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.LOCATION, url);
+        headers.add(HttpHeaders.LOCATION, resolveLinkResult.url());
 
         return new ResponseEntity<>(null, headers, HttpStatus.FOUND);
+    }
+
+    @GetMapping(value = "/{shortUrl}/analytics", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LinkServices.LinkAnalytics> findAnalytics(@PathVariable("shortUrl") String shortUrl) {
+        return linkServices.getAnalytics(shortUrl)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // curl -i -X PUT -H "Content-Type: application/json" -d "https://mail.google.com/mail/u/0/inbox" http://localhost:8080/api/v1/links
