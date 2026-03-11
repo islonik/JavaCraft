@@ -12,7 +12,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
+import my.javacraft.echo.blocking.client.platform.PlatformThreadClient;
+import my.javacraft.echo.blocking.client.virtual.VirtualThreadClient;
 import org.junit.jupiter.api.Assertions;
 
 public class BlockingBenchmarkStepDefinitions {
@@ -205,11 +209,7 @@ public class BlockingBenchmarkStepDefinitions {
             String prefix) {
         connectBenchmarkClients(normalizedClientType, clientCount, prefix, port);
 
-        blockingSteps.sendMessage(
-                clientName(prefix, 1),
-                "stats",
-                "Simultaneously connected clients: %d".formatted(clientCount)
-        );
+        awaitExpectedConnectedClients(normalizedClientType, clientName(prefix, 1), clientCount);
 
         long startedAt = System.nanoTime();
         blockingSteps.clientsEachSendEchoMessagesWithRandomDelay(clientCount, prefix, messagesPerClient, 0, 0);
@@ -217,6 +217,47 @@ public class BlockingBenchmarkStepDefinitions {
 
         blockingSteps.clientsWithPrefixDisconnectWithGoodbye(clientCount, prefix);
         return elapsedNanos;
+    }
+
+    /**
+     * ServerThread increments the connected-clients counter in each client thread run() method.
+     * Right after TCP connect, one or more threads may not have executed increment yet.
+     * For benchmark determinism we poll "stats" until the expected count is observed.
+     */
+    private void awaitExpectedConnectedClients(String normalizedClientType, String clientName, int expectedClients) {
+        String expectedResponse = "Simultaneously connected clients: %d".formatted(expectedClients);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        String lastActual = null;
+
+        while (System.nanoTime() < deadline) {
+            lastActual = requestStats(normalizedClientType, clientName);
+            if (expectedResponse.equals(lastActual)) {
+                return;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        }
+
+        Assertions.fail(
+                "Expected stats '%s' but got '%s' for client '%s'".formatted(
+                        expectedResponse,
+                        String.valueOf(lastActual),
+                        clientName
+                )
+        );
+    }
+
+    private String requestStats(String normalizedClientType, String clientName) {
+        if ("virtual".equals(normalizedClientType)) {
+            VirtualThreadClient client = CommonStepDefinitions.virtualConnections().get(clientName);
+            Assertions.assertNotNull(client, "Client '%s' not found".formatted(clientName));
+            client.sendMessage("stats");
+            return client.readMessage();
+        }
+
+        PlatformThreadClient client = CommonStepDefinitions.platformConnections().get(clientName);
+        Assertions.assertNotNull(client, "Client '%s' not found".formatted(clientName));
+        client.sendMessage("stats");
+        return client.readMessage();
     }
 
     private long runSequentialBenchmarkIteration(
