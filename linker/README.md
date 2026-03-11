@@ -14,6 +14,15 @@ Tags: Spring Boot, MongoDb
 
 Base path: `/api/v1/links`
 
+## Swagger UI
+
+After application startup, open:
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+It exposes all `LinkController` endpoints with request/response schemas.
+
 1. Create short link
 
 `PUT /api/v1/links`

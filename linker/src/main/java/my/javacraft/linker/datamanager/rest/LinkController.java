@@ -1,6 +1,9 @@
 package my.javacraft.linker.datamanager.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import my.javacraft.linker.datamanager.dao.LinkRepository;
 import my.javacraft.linker.datamanager.dao.entity.Link;
@@ -14,11 +17,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/v1/links")
 @RequiredArgsConstructor
+@Tag(name = "Linker", description = "Short-link management, redirect, and analytics API")
 public class LinkController {
 
     private final LinkRepository linkRepository;
     private final LinkServices linkServices;
 
+    @Operation(summary = "Find all stored links")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Link>> findAll() {
         return ResponseEntity
@@ -27,7 +32,7 @@ public class LinkController {
                 .body(linkRepository.findAll());
     }
 
-    // redirection
+    @Operation(summary = "Redirect by short URL")
     @GetMapping(value = "/{shortUrl}")
     public ResponseEntity<byte []> shortUrl2FullUrl(@PathVariable("shortUrl") String shortUrl) {
         LinkServices.ResolveLinkResult resolveLinkResult = linkServices.resolveLink(shortUrl);
@@ -47,6 +52,7 @@ public class LinkController {
         return new ResponseEntity<>(null, headers, HttpStatus.FOUND);
     }
 
+    @Operation(summary = "Get analytics for a short URL")
     @GetMapping(value = "/{shortUrl}/analytics", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LinkServices.LinkAnalytics> findAnalytics(@PathVariable("shortUrl") String shortUrl) {
         return linkServices.getAnalytics(shortUrl)
@@ -54,13 +60,30 @@ public class LinkController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // curl -i -X PUT -H "Content-Type: application/json" -d "https://mail.google.com/mail/u/0/inbox" http://localhost:8080/api/v1/links
-    @PutMapping
+    @Operation(summary = "Create a short URL")
+    @PutMapping(
+            consumes = {
+                    MediaType.TEXT_PLAIN_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE
+            },
+            produces = MediaType.TEXT_PLAIN_VALUE
+    )
     public ResponseEntity<String> addLink(@RequestBody String url) {
+        String normalizedUrl = normalizeUrlBody(url);
         return ResponseEntity
                 .ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(linkServices.createLink(url));
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(linkServices.createLink(normalizedUrl));
+    }
+
+    private String normalizeUrlBody(String url) {
+        if (Objects.isNull(url) || url.length() < 2) {
+            return url;
+        }
+        if (url.startsWith("\"") && url.endsWith("\"")) {
+            return url.substring(1, url.length() - 1);
+        }
+        return url;
     }
 
 }
