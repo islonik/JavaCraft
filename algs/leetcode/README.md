@@ -3,6 +3,7 @@
 This module should contain leetcode problems, solutions, and tests.
 
 ## Solutions
+1. [Two pointers](#1-two-pointers)
 
 ### 1. Two pointers
 
@@ -30,13 +31,6 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 * If the <b>sum</b> is less than the <b>target</b>, move the <b>left</b> pointer to the right to increase the <b>sum</b>.
 * If the <b>sum</b> is greater than the <b>target</b>, move the <b>right</b> pointer to the left to decrease the <b>sum</b>.
 
-#### Diagram (Two Pointers)
+#### Illustration
 
-```mermaid
-flowchart LR
-    A["arr = [1, 2, 4, 7, 11, 15], target = 15"] --> B["left = 0 (1), right = 5 (15), sum = 16 > 15"]
-    B --> C["move right -> 4 (11), sum = 12 < 15"]
-    C --> D["move left -> 1 (2), sum = 13 < 15"]
-    D --> E["move left -> 2 (4), sum = 15"]
-    E --> F["pair found: (4, 11)"]
-```
+![Two pointers diagram](./images/two_pointers.webp)
