@@ -20,7 +20,7 @@ public class MetadataService {
         File metadata = new ClassPathResource("metadata.json").getFile();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        seekTypeMetadata = objectMapper.readValue(metadata, new TypeReference<Set<SeekTypeMetadata>>(){});
+        seekTypeMetadata = objectMapper.readValue(metadata, new TypeReference<>() {});
     }
 
 }

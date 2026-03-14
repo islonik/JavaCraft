@@ -29,17 +29,22 @@ import org.springframework.core.io.ClassPathResource;
 @Configuration
 public class ElasticsearchConfiguration {
 
-    @Value("${spring.elastic.cluster.host:http://localhost}")
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
+
+    @Value("${spring.elastic.cluster.host:localhost}")
     private String host;
     @Value("${spring.elastic.cluster.port:9200}")
     private String port;
     @Value("${spring.elastic.cluster.user:elastic}")
     private String user;
-    @Value("${spring.elastic.cluster.pass}")
+    @Value("${spring.elastic.cluster.pass:elastic}")
     private String pass;
-    @Value("${spring.elastic.cluster.schema}")
+    @Value("${spring.elastic.cluster.schema:https}")
     private String schema;
-    @Value("${spring.elastic.cluster.ssl.path}")
+    @Value("${spring.elastic.cluster.ssl.enabled:true}")
+    private String sslEnabled;
+    @Value("${spring.elastic.cluster.ssl.path:cert/http_ca.crt}")
     private String sslPath;
 
     /**
@@ -63,22 +68,24 @@ public class ElasticsearchConfiguration {
 
     @Bean
     public ElasticsearchClient getElasticsearchClient() throws Exception {
+        boolean useSsl = isSslEnabled(sslEnabled);
+        String resolvedSchema = resolveSchema(useSsl);
         String serverUrl = host + ":" + port;
-        log.info("Creating rest client for elasticsearch cluster (with url = '{}' and schema = '{}')...",
-                serverUrl, schema);
+        log.info("Creating rest client for elasticsearch cluster (url = '{}' and schema = '{}' and ssl.enabled = '{}')...",
+                serverUrl, resolvedSchema, useSsl);
 
         BasicCredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
 
-        SSLContext sslContext = getSslContext();
-
+        SSLContext sslContext = useSsl ? getSslContext() : null;
         RestClient restClient = RestClient
-                .builder(new HttpHost(host, Integer.parseInt(port), schema))
+                .builder(new HttpHost(host, Integer.parseInt(port), resolvedSchema))
                 .setHttpClientConfigCallback(hccc -> {
-                    hccc
-                            .disableAuthCaching()
-                            .setSSLContext(sslContext)
+                    hccc.disableAuthCaching()
                             .setDefaultCredentialsProvider(provider);
+                    if (sslContext != null) {
+                        hccc.setSSLContext(sslContext);
+                    }
                     return hccc;
                 })
                 .build();
@@ -89,6 +96,14 @@ public class ElasticsearchConfiguration {
 
         // And create the API client
         return new ElasticsearchClient(transport);
+    }
+
+    static boolean isSslEnabled(String sslEnabledValue) {
+        return Boolean.parseBoolean(sslEnabledValue == null ? "" : sslEnabledValue.trim());
+    }
+
+    static String resolveSchema(boolean useSsl) {
+        return useSsl ? HTTPS : HTTP;
     }
 
     @Bean

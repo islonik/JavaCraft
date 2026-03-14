@@ -8,10 +8,11 @@ spring:
       host: "localhost"
       port: "9200"
       user: "elastic"
-      pass: "elastic"
+      pass: "FverGoe0"
       schema: "https"
       ssl:
-        path: "cert/ca_1703000535393.crt" # the same certificate which Kibana uses to connect to elastic search instance
+        enabled: false
+        path: "cert/http_ca.crt" # the same certificate which Kibana uses to connect to elastic search instance
 springdoc:
   swagger-ui:
     # turn on alphabetical ordering in Swagger

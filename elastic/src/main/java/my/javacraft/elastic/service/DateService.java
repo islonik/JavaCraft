@@ -5,7 +5,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,7 +13,6 @@ public class DateService {
 
     private final DateTimeFormatter isoInstant;
 
-    @Autowired
     public DateService() {
         this.isoInstant = new DateTimeFormatterBuilder()
                 .parseCaseInsensitive()
