@@ -1,5 +1,54 @@
 # Elasticsearch
 
+An Elasticsearch-backed search and user-history service that exposes query endpoints, ingests user clicks, and returns popular/trending history views.
+
+Tags: Spring Boot, Elasticsearch, Swagger/OpenAPI
+
+### Start-up URL
+http://localhost:8001/swagger-ui/index.html
+
+## What it now demonstrates
+
+- Multiple Elasticsearch query strategies exposed via REST: default, wildcard, fuzzy, interval, and span.
+- User click ingestion into history index with upsert-like behavior through service layer.
+- User-history retrieval by document, by user (popular), and global trending retrieval.
+- Index and document deletion endpoints for operational cleanup.
+- OpenAPI/Swagger UI documentation for all controllers.
+- Request validation (`@Valid`, custom enum validator) and centralized error handling.
+
+## API
+
+Base paths:
+
+- `/api/services/search`
+- `/api/services/user-history`
+
+Main endpoints:
+
+1. Search APIs (`POST`)
+
+- `/api/services/search`
+- `/api/services/search/wildcard`
+- `/api/services/search/fuzzy`
+- `/api/services/search/interval`
+- `/api/services/search/span`
+
+2. User history APIs
+
+- `POST /api/services/user-history` (capture user click)
+- `GET /api/services/user-history/documents/{documentId}`
+- `GET /api/services/user-history/users/{userId}?size=10`
+- `GET /api/services/user-history/users?size=10`
+- `DELETE /api/services/user-history/indexes/{index}`
+- `DELETE /api/services/user-history/indexes/{index}/documents/{documentId}`
+
+## Swagger UI
+
+After application startup, open:
+
+- Swagger UI: http://localhost:8001/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8001/v3/api-docs
+
 ## CORS 
 If you see that Swagger returns CORS error like below
 ```bash

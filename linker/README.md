@@ -1,7 +1,10 @@
 # Linker
 A short-link service that stores long URLs, generates collision-safe short IDs, redirects users, and tracks basic analytics.
 
-Tags: Spring Boot, MongoDb
+Tags: Spring Boot, MongoDb, Swagger/OpenAPI
+
+### Start-up URL
+http://localhost:8080/swagger-ui/index.html
 
 ## What it now demonstrates
 
