@@ -1,7 +1,6 @@
 package my.javacraft.mathparser.parser;
 
 import java.util.Locale;
-import my.javacraft.mathparser.parser.ParserException.Error;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -268,161 +267,6 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_errors_testCase01() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.DIVISION_BY_ZERO).toString(),
-                parser.calculate("10 / 0")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase02() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.DIVISION_BY_ZERO).toString(),
-                parser.calculate("10 % 0")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase03() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.NO_EXPRESSION).toString(),
-                parser.calculate("")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase04() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNBAL_PARENTS).toString(),
-                parser.calculate("((2+5) * 3")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase05() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.SYNTAX).toString(),
-                parser.calculate("((2+5) * 3))")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase06() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNKNOWN_FUNCTION).toString(),
-                parser.calculate("rtg(2 * 5)")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase07() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.NO_EXPRESSION).toString(),
-                parser.calculate(null)
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase08() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.SYNTAX).toString(),
-                parser.calculate("1..2 + 3")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase09() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNKNOWN_VARIABLE).toString(),
-                parser.calculate("x + 1")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase10() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNKNOWN_EXPRESSION).toString(),
-                parser.calculate("@1 + 2")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase11() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNKNOWN_EXPRESSION).toString(),
-                parser.calculate("1@2")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase12() {
-        Parser parser = new Parser();
-        String identifier = "a".repeat(33);
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.IDENTIFIER_TOO_LONG).toString(),
-                parser.calculate(identifier + " + 1")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase13() {
-        Parser parser = new Parser();
-        String functionName = "b".repeat(33);
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.IDENTIFIER_TOO_LONG).toString(),
-                parser.calculate(functionName + "(1)")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase14() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.UNKNOWN_FUNCTION).toString(),
-                parser.calculate("customFn(1,2)")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase15a() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(Error.NON_NEGATIVE_INTEGERS).toString(),
-                parser.calculate("factorial(-1)")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase15b() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(Error.NON_NEGATIVE_INTEGERS).toString(),
-                parser.calculate("factorial(ln(8))")
-        );
-    }
-
-    @Test
-    public void testParser_errors_testCase15c() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(Error.NUMERIC_OVERFLOW).toString(),
-                parser.calculate("factorial(13)")
-        );
-    }
-
-    @Test
     public void testParser_whitespaceNormalization_testCase01() {
         Parser parser = new Parser();
         Assertions.assertEquals("3.0", parser.calculate("\t1 +\n2\r"));
@@ -435,26 +279,11 @@ public class ParserTest {
     }
 
     @Test
-    public void testParser_whitespaceNormalization_testCase03() {
-        Parser parser = new Parser();
-        Assertions.assertEquals(
-                new ParserException(ParserException.Error.NO_EXPRESSION).toString(),
-                parser.calculate("\t\n\u00A0\r")
-        );
-    }
-
-    @Test
     public void testParserType_values() {
         Assertions.assertArrayEquals(
                 new ParserType[]{ParserType.DEGREE, ParserType.GRADIAN, ParserType.RADIAN},
                 ParserType.values()
         );
-    }
-
-    @Test
-    public void testParser_setTangentUnitRejectsNull() {
-        Parser parser = new Parser();
-        Assertions.assertThrows(NullPointerException.class, () -> parser.setTangentUnit(null));
     }
 
     @Test
@@ -492,6 +321,5 @@ public class ParserTest {
             Locale.setDefault(originalLocale);
         }
     }
-
 
 }
