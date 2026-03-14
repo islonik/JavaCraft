@@ -1,500 +1,535 @@
 # Elasticsearch
 
-An Elasticsearch-backed search and user-history service that exposes query endpoints, ingests user clicks, and returns popular/trending history views.
+An Elasticsearch-backed search and user-history service. Exposes multiple query strategies
+via REST, ingests user click events into a history index, and returns popular/trending search history.
 
-Tags: Spring Boot, Elasticsearch, Swagger/OpenAPI
+> **First time setup:** call the `AdminController` endpoints once to create all required
+> indexes and their field mappings before using `SearchController` or `UserHistoryController`.
 
-### Start-up URL
-http://localhost:8001/swagger-ui/index.html
+**Stack:** Spring Boot, Spring Data Elasticsearch, Swagger/OpenAPI, Cucumber (BDD)
 
-## What it now demonstrates
+---
 
-- Multiple Elasticsearch query strategies exposed via REST: default, wildcard, fuzzy, interval, and span.
-- User click ingestion into history index with upsert-like behavior through service layer.
-- User-history retrieval by document, by user (popular), and global trending retrieval.
-- Index and document deletion endpoints for operational cleanup.
-- OpenAPI/Swagger UI documentation for all controllers.
-- Request validation (`@Valid`, custom enum validator) and centralized error handling.
+## Quick Start
 
-## API
+**Prerequisites:**
+- Elasticsearch running on `localhost:9200` (HTTPS, Basic auth) [Docker installation](https://www.elastic.co/docs/deploy-manage/deploy/self-managed/local-development-installation-quickstart) 
+- *(If SSL enabled) CA certificate placed at `src/main/resources/cert/http_ca.crt`
 
-Base paths:
-
-- `/api/services/search`
-- `/api/services/user-history`
-
-Main endpoints:
-
-1. Search APIs (`POST`)
-
-- `/api/services/search`
-- `/api/services/search/wildcard`
-- `/api/services/search/fuzzy`
-- `/api/services/search/interval`
-- `/api/services/search/span`
-
-2. User history APIs
-
-- `POST /api/services/user-history` (capture user click)
-- `GET /api/services/user-history/documents/{documentId}`
-- `GET /api/services/user-history/users/{userId}?size=10`
-- `GET /api/services/user-history/users?size=10`
-- `DELETE /api/services/user-history/indexes/{index}`
-- `DELETE /api/services/user-history/indexes/{index}/documents/{documentId}`
-
-## Swagger UI
-
-After application startup, open:
-
-- Swagger UI: http://localhost:8001/swagger-ui/index.html
-- OpenAPI JSON: http://localhost:8001/v3/api-docs
-
-## CORS 
-If you see that Swagger returns CORS error like below
 ```bash
-Failed to fetch. 
-Possible Reasons: 
-    CORS 
-    Network Failure 
-    URL scheme must be "http" or "https" for CORS request.
-```
-It could happen because your browser has an extension to block ads.
-
-<b>To fix it:</b>
-1. You should either:
-   * switch it off / disable
-   * remove block extension from your browser
-2. Restart your app and/or refresh your browser and/or clear browser cache.
-3. Test again.
-
-## Validation
-
-### To add object validation we should
-
-#### 1. Add dependency
-```xml
-<dependency>
-   <groupId>org.springframework.boot</groupId>
-   <artifactId>spring-boot-starter-validation</artifactId>
-   <version>${spring.boot}</version>
-</dependency>
+mvn -pl elastic spring-boot:run
 ```
 
-#### 2. Put required annotations on the class
-```java
-public class UserClick {
-    @NotEmpty
-    String userId;
-    @NotBlank
-    String documentId;
-    @NotBlank
-    String searchType;
-    @NotBlank
-    String searchPattern;
-}
+| URL | Description |
+|-----|-------------|
+| http://localhost:8001/swagger-ui/index.html | Swagger UI |
+| http://localhost:8001/v3/api-docs | OpenAPI JSON |
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Client["HTTP Client"]
+    AC["AdminController\n/api/admin"]
+    SC["SearchController\n/api/services/search"]
+    UHC["UserHistoryController\n/api/services/user-history"]
+    AS["AdminService"]
+    SS["SearchService"]
+    UHS["UserHistoryService"]
+    UHIS["UserHistoryIngestionService"]
+    UHPS["UserHistoryPopularService"]
+    UHTS["UserHistoryTrendingService"]
+    SCHED["SchedulerJobs\n(hourly cleanup)"]
+    ES[("Elasticsearch\nlocalhost:9200")]
+
+    Client -->|PUT setup indexes| AC
+    Client -->|search POST| SC
+    Client -->|history POST/GET/DELETE| UHC
+    AC --> AS
+    SC --> SS
+    UHC --> UHS
+    UHC --> UHIS
+    UHC --> UHPS
+    UHC --> UHTS
+    AS -->|"create indexes:\nbooks, movies, music,\nuser-history"| ES
+    SS -->|"query indexes:\nbooks, movies, music"| ES
+    UHS --> ES
+    UHIS -->|"upsert: user-history"| ES
+    UHPS -->|"query: user-history"| ES
+    UHTS -->|"query: user-history"| ES
+    SCHED -->|delete docs older than 180 days| ES
 ```
 
-#### 3. Add @Valid annotation in REST controller
-```java
-public ResponseEntity<UpdateResponse> capture(
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-             required = true,
-             description = "User history values",
-             useParameterTypeSchema = true,
-             content = @Content(schema = @Schema(
-                     implementation = UserClick.class
-             ))
-    )
-    @RequestBody @Valid UserClick userClick) throws IOException {
-    
-    ...
-}
-```
+---
 
-### Validating That a String Matches a Value of an Enum
+## API Reference
 
-#### Annotation
-```java
-@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
-@Retention(RUNTIME)
-@Documented
-@Constraint(validatedBy = ValueOfEnumValidator.class)
-public @interface ValueOfEnum {
-    Class<? extends Enum<?>> enumClass();
-    String message() default "must be any of enum {enumClass}";
-    Class<?>[] groups() default {};
-    Class<? extends Payload>[] payload() default {};
-}
-```
-#### Validator
-```java
-public class ValueOfEnumValidator implements ConstraintValidator<ValueOfEnum, CharSequence> {
-   private List<String> acceptedValues;
-   
-   @Override
-   public void initialize(ValueOfEnum annotation) {
-      acceptedValues = Stream.of(annotation.enumClass().getEnumConstants())
-              .map(Enum::name)
-              .collect(Collectors.toList());
-   }
+### Admin — `/api/admin`
 
-   @Override
-   public boolean isValid(CharSequence value, ConstraintValidatorContext context) {
-      if (value == null) {
-         return true;
-      }
+One-time setup endpoints. Call these **before** using `SearchController` or
+`UserHistoryController`. Each endpoint creates a specific index with a fixed, pre-defined
+schema — no request body or path variables are accepted.
 
-      return acceptedValues.contains(value.toString().toUpperCase());
-   }
-}
-```
+| Method | Path | Creates index | Used by |
+|--------|------|---------------|---------|
+| `PUT` | `/api/admin/indexes/user-history` | `user-history` | `UserHistoryController` |
+| `PUT` | `/api/admin/indexes/books` | `books` | `SearchController` |
+| `PUT` | `/api/admin/indexes/movies` | `movies` | `SearchController` |
+| `PUT` | `/api/admin/indexes/music` | `music` | `SearchController` |
 
-#### Usage
-```java
-@ValueOfEnum(enumClass = Client.class)
-String client;
-```
+**Response — `CreateIndexResponse`:**
 
-## UUID
-
-### Overview
-UUID (Universally Unique Identifier), also known as GUID (Globally Unique Identifier), is a 128-bit value that is unique for all practical purposes. 
-Their uniqueness doesn’t depend on a central registration authority or coordination between the parties generating them, unlike most other numbering schemes.
-
-### Structure
-Canonical UUID looks like
-```bash
-123e4567-e89b-42d3-a456-556642440000
-xxxxxxxx-xxxx-Bxxx-Axxx-xxxxxxxxxxxx
-```
-The standard representation is composed of 32 hexadecimal (base-16) digits, displayed in five groups separated by hyphens, in the form 8-4-4-4-12, for a total of 36 characters (32 hexadecimal characters and 4 hyphens).
-
-### Versions
-Looking again at the standard representation, B represents the version. The version field holds a value that describes the type of the given UUID. The version (value of B) in the example UUID above is 4.
-
-There are five different basic types of UUIDs:
-
-* Version 1 (Time-Based): based on the current timestamp, measured in units of 100 nanoseconds from October 15, 1582, concatenated with the MAC address of the device where the UUID is created.
-* Version 2 (DCE – Distributed Computing Environment): uses the current time, along with the MAC address (or node) for a network interface on the local machine. Additionally, a version 2 UUID replaces the low part of the time field with a local identifier such as the user ID or group ID of the local account that created the UUID.
-* Version 3 (Name-based): The UUIDs are generated using the hash of namespace and name. The namespace identifiers are UUIDs like Domain Name System (DNS), Object Identifiers (OIDs), and URLs.
-* Version 4 (Randomly generated): In this version, UUID identifiers are randomly generated and do not contain any information about the time they are created or the machine that generated them.
-* Version 5 (Name-based using SHA-1): Generated using the same approach as version 3, with the difference of the hashing algorithm. This version uses SHA-1 (160 bits) hashing of a namespace identifier and name.
-
-### UUID.nameUUIDFromBytes
-UUID.nameUUIDFromBytes uses Version 3
-
-## SSL certificate
-
-How to create an SSL certificate from .crt
-
-```java
- public SSLContext getSslContext() throws Exception {
-     Certificate trustedCa;
-     ClassPathResource trustResource = new ClassPathResource(sslPath);
-     try (InputStream is = trustResource.getInputStream()) {
-         CertificateFactory factory = CertificateFactory.getInstance("X.509");
-         trustedCa = factory.generateCertificate(is);
-     }
-     KeyStore trustStore = KeyStore.getInstance("pkcs12");
-     trustStore.load(null, null);
-     trustStore.setCertificateEntry("ca", trustedCa);
-     return SSLContexts
-             .custom()
-             .loadTrustMaterial(trustStore, null)
-             .build();
- }
-```
-
-## Dev-tools queries
-
-### Create index 'hit_count'.
-```bash
-PUT hit_count
-```
-
-### Create 'updated' field with the required 'date' format.
-```bash
-PUT /hit_count/_mapping
+```json
 {
-    "properties": {
-        "updated": {
-            "type": "date"
-        }
-    }
+  "index": "user-history",
+  "acknowledged": true,
+  "shards_acknowledged": true
 }
 ```
 
-### <b>Upsert</b>
-```bash
-POST /hit_count/_update/did-1
+Calling an endpoint when the index already exists returns `500` with an ES
+`resource_already_exists_exception` message.
+
+#### Index field mappings
+
+**`user-history`** — field types are chosen to match the exact queries used at runtime:
+
+| Field | ES type | Rationale |
+|-------|---------|-----------|
+| `count` | `long` | incremented by the Painless upsert script |
+| `updated` | `date` (`strict_date_optional_time`) | used in range queries by `UserHistoryTrendingService` |
+| `userId` | `keyword` | exact-match term query in `UserHistoryPopularService` |
+| `recordId` | `keyword` | used in aggregations in `UserHistoryTrendingService` |
+| `searchType` | `keyword` | exact-match term query |
+| `elasticId` | `keyword` | composite document ID, not queried |
+| `searchValue` | `text` | stored only, not queried directly |
+
+**`books`** — `name`, `author`, `synopsis` — all `text` (full-text search)
+
+**`movies`** — `name`, `director`, `synopsis` — all `text` (full-text search)
+
+**`music`** — `band`, `album`, `name`, `lyrics` — all `text` (full-text search)
+
+Fields match exactly what is configured in `metadata.json` and queried by `SearchService`.
+
+---
+
+### Search — `/api/services/search`
+
+All search endpoints accept `POST` with `application/json` and return `application/json`.
+
+| Method | Path | Query strategy |
+|--------|------|----------------|
+| `POST` | `/api/services/search` | Multi-index search (msearch across configured fields) |
+| `POST` | `/api/services/search/wildcard` | Wildcard + SimpleQueryString |
+| `POST` | `/api/services/search/fuzzy` | MatchQuery with fuzziness=2 |
+| `POST` | `/api/services/search/interval` | IntervalsQuery (maxGaps=3, ordered=true) |
+| `POST` | `/api/services/search/span` | SpanNearQuery (slop=3, inOrder=true) |
+
+**Request body — `SeekRequest`:**
+
+```json
 {
-  "script": {
-    "source": "ctx._source.count++"
-  },
-  "upsert": {
-    "searchType": "Obligor",
-    "count": 1,
-    "searchPattern": "1111",
-    "userId": "nl84439"
-  }
+  "type": "ALL",
+  "pattern": "imprisoned",
+  "client": "WEB"
 }
 ```
 
-### <b>GET document by Id</b>
-```bash
-GET /hit_count/_doc/did-1
+| Field | Type | Allowed values |
+|-------|------|----------------|
+| `type` | String | `ALL`, `BOOKS`, `COMPANIES`, `MUSIC`, `MOVIES`, `PEOPLE` |
+| `pattern` | String | Search string (wildcards `*`/`?` allowed for wildcard endpoint) |
+| `client` | String | `MOBILE`, `WEB` |
+
+Both `type` and `client` are validated with `@ValueOfEnum` — case-insensitive, 400 on invalid value.
+
+---
+
+### User History — `/api/services/user-history`
+
+#### Ingest a user click
+
+```
+POST /api/services/user-history
 ```
 
-### <b>Find top 10 documents belonging to userId="nl84439" and sorted in desc order</b>
+Request body — `UserClick`:
+
+```json
+{
+  "userId": "nl84439",
+  "recordId": "did-1",
+  "searchType": "People",
+  "searchPattern": "John"
+}
+```
+
+All fields are required (`@NotEmpty` / `@NotBlank`). On each call the service upserts a document
+into the `user-history` index — it creates the document on first occurrence and increments
+`count` on subsequent calls for the same `(recordId, searchType, userId)` combination.
+
+Response — `UserClickResponse`:
+
+```json
+{
+  "documentId": "did-1-People-nl84439",
+  "result": "Updated"
+}
+```
+
+---
+
+#### Retrieve history
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/services/user-history/documents/{documentId}` | Get a single document by ES document ID |
+| `GET` | `/api/services/user-history/users/{userId}?size=10` | Popular searches for a specific user (sorted by count DESC) |
+| `GET` | `/api/services/user-history/users?size=10` | Global trending searches in the last 7 days |
+
+#### Delete
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `DELETE` | `/api/services/user-history/indexes/{index}` | Delete an entire index |
+| `DELETE` | `/api/services/user-history/indexes/{index}/documents/{documentId}` | Delete a single document |
+
+---
+
+## Data Model
+
+### `UserHistory` (Elasticsearch document, index: `user-history`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `elasticId` | String | Composite key: `{recordId}-{searchType}-{userId}` |
+| `userId` | String | User identifier |
+| `recordId` | String | Identifier of the record that was clicked |
+| `searchType` | String | Category of the search (e.g. `People`, `Books`) |
+| `searchValue` | String | The search pattern used |
+| `count` | Long | Number of times this record was clicked |
+| `updated` | String | ISO 8601 timestamp of last update |
+
+### `UserClick` (inbound event)
+
+| Field | Constraint | Description |
+|-------|-----------|-------------|
+| `userId` | `@NotEmpty` | User identifier |
+| `recordId` | `@NotBlank` | Record being clicked |
+| `searchType` | `@NotBlank` | Search category |
+| `searchPattern` | `@NotBlank` | Search pattern |
+
+---
+
+## User History Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant C as HTTP Client
+    participant UHC as UserHistoryController
+    participant UHIS as UserHistoryIngestionService
+    participant ES as Elasticsearch
+
+    C->>UHC: POST /user-history (UserClick)
+    UHC->>UHIS: ingestUserClick(userClick, now)
+    UHIS->>ES: Upsert doc id={recordId}-{searchType}-{userId}
+    note over ES: Script: ctx._source.count++\nupsert: {count:1, updated:...}
+    ES-->>UHIS: UpdateResponse
+    UHIS-->>UHC: UserClickResponse
+    UHC-->>C: 200 {documentId, result}
+```
+
+---
+
+## Configuration
+
+`elastic/src/main/resources/application.yaml`:
+
+```yaml
+scheduler:
+  enabled: true          # set false to disable hourly cleanup job
+
+server:
+  port: "8001"
+
+spring:
+  elastic:
+    cluster:
+      host: "localhost"
+      port: "9200"
+      user: "elastic"
+      pass: "elastic"
+      schema: "https"    # use "http" for unsecured local instances
+      ssl:
+        enabled: false
+        path: "cert/http_ca.crt"  # CA cert used by Kibana to connect to ES
+
+springdoc:
+  swagger-ui:
+    tagsSorter: alpha
+```
+
+The SSL certificate is loaded from the classpath. Place the `.crt` file in
+`src/main/resources/cert/` before starting the application.
+
+### Docker security enabled check
+
+Next command allows you to check HTTP SSL status & password in ES docker image  (local running)
 ```bash
-GET /hit_count/_search
+docker inspect es-local-dev --format '{{range .Config.Env}}{{println .}}{{end}}' \
+| grep -E 'xpack.security.enabled|xpack.security.http.ssl.enabled|ELASTIC_PASSWORD'
+```
+Output:
+```bash
+xpack.security.enabled=true
+xpack.security.http.ssl.enabled=false
+ELASTIC_PASSWORD=FverGoe0
+```
+
+---
+
+## Scheduler
+
+`SchedulerJobs` runs a cleanup task every hour (`0 0 * * * *`) when `scheduler.enabled=true`.
+It deletes all documents from the `user-history` index where `updated` is older than 180 days.
+
+Disable for local development:
+
+```yaml
+scheduler:
+  enabled: false
+```
+
+---
+
+## Query Types
+
+### Default (multi-search)
+
+Executes an Elasticsearch `_msearch` request across all index fields configured for the
+given `SeekType` in `metadata.json`. Returns raw Elasticsearch `Document` objects.
+
+### Wildcard
+
+Wildcard queries match words with missing characters, prefixes, or suffixes. Supports:
+- `*` — zero or more characters
+- `?` — exactly one character
+
+Example: `god*ather` matches `godfather`, `godmother`, etc.
+
+```json
 {
   "query": {
-    "match": {
-      "userId": "nl84439"
-    }
-  },
-  "size": 10,
-  "sort" : {
-    "count": {
-      "order": "desc"
+    "wildcard": {
+      "synopsis": { "value": "imprisoned*" }
     }
   }
 }
 ```
 
-### GET type of field values for hit_count index
-```bash
-GET /hit_count/_mapping
-```
+### Fuzzy
 
-### <b>DELETE</b>
-```bash
-DELETE /hit_count/_doc/did-1
-```
+Fuzzy queries find terms similar to the search term using
+[Levenshtein edit distance](https://en.wikipedia.org/wiki/Levenshtein_distance).
+An edit distance counts single-character changes (insert, delete, substitute, transpose).
 
-## Query types
+Example: `imprtdoned` (fuzziness=2) still matches `imprisoned`.
 
-### Wildcard search
-
-Wildcard queries let you search on words with missing characters, suffixes, and prefixes. At times, we want to use wildcards to do a search. For example, when searching for Godfather movie, all possible combinations of movies with titles ending with father or god, or even missing a single character like god?ather, are expected searches. This is where we use a wildcard query.
-
-The wildcard query in Elasticsearch accepts an asterisk (*) or a question mark (?) in the search word. 
-
-The following list describes these characters.
-
-* '*' (asterisk) — searching for zero or more characters
-* '?' (question mark) — searching for a single character
-
-Simple wildcard query
-```bash
-GET movies/_search
-{
-   "query": {
-       "wildcard": {
-           "synopsis": {
-              "value": "imprisoned"
-           }
-       }
-   }
-}
-```
-
-Bool query for wildcard.
-```bash
-GET /movies/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "bool": {
-            "should": [
-              {
-                "wildcard": {
-                  "synopsis": {
-                    "boost": 1.0,
-                    "wildcard": "imprisoned"
-                  }
-                }
-              },
-              {
-                "simple_query_string": {
-                  "boost": 1.0,
-                  "analyze_wildcard": true,
-                  "default_operator": "and",
-                  "fields": [
-                    "synopsis"
-                  ],
-                  "query": "imprisoned"
-                }
-              }
-            ]
-          }
-        }
-      ]
-    }
-  }
-}
-```
-
-### Fuzzy search
-
-Fuzzy query returns documents that contain terms similar to the search term, as measured by a <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein edit distance.</a>
-
-An edit distance is the number of one-character changes needed to turn one term into another. These changes can include:
-
-* Changing a character (<b>b</b>ox → f</b>ox)
-* Removing a character (<b>b</b>lack → lack)
-* Inserting a character (sic → sic<b>k</b>)
-* Transposing two adjacent characters (<b>ac</b>t → <b>ca</b>t)
-
-To find similar terms, the fuzzy query creates a set of all possible variations, or expansions, of the search term within a specified edit distance. The query then returns exact matches for each expansion.
-
-Fuzzy queries are an essential component of Elasticsearch when it comes to handling approximate or imprecise search terms. 
-They allow users to search for documents containing terms that are similar to the specified query term, even if they are not exactly the same. 
-This can be particularly useful in scenarios where users might make typos, or input variations of the same term.
-
-Simple fuzzy query
-```bash
-GET movies/_search
+```json
 {
   "query": {
     "fuzzy": {
-      "synopsis": {
-        "value": "imprtdoned",
-        "fuzziness": 2
-      }
+      "synopsis": { "value": "imprtdoned", "fuzziness": 2 }
     }
   }
 }
 ```
 
-Bool query for fuzzy.
-```bash
-GET /movies/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "match": {
-            "synopsis": {
-              "boost": 1.0,
-              "fuzziness": "2",
-              "fuzzy_transpositions": true,
-              "operator": "and",
-              "query": "imprtdoned"
-            }
-          }
-        }
-      ]
-    }
-  }
-}
-```
+### Interval
 
-### Span query
-Span queries are low-level positional queries which provide expert control over the order and proximity of the specified terms. These are typically used to implement very specific queries on legal documents or patents.
+Interval queries give fine-grained control over the proximity and order of matching terms.
+The service uses `maxGaps=3, ordered=true` — matched terms must appear within 3 tokens of each
+other in the specified order.
 
-It is only allowed to set boost on an outer span query. Compound span queries, like span_near, only use the list of matching spans of inner span queries in order to find their own spans, which they then use to produce a score. Scores are never computed on inner span queries, which is the reason why boosts are not allowed: they only influence the way scores are computed, not spans.
+### Span
 
-Simple span query
-```bash
-GET /movies/_search
+Span queries are low-level positional queries suited for legal or patent documents where
+exact term ordering and proximity matter. The service uses `slop=3, inOrder=true`.
+
+```json
 {
   "query": {
     "span_near": {
       "clauses": [
-        { "span_term": { "field": "value1" } },
-        { "span_term": { "field": "value2" } },
-        { "span_term": { "field": "value3" } }
+        { "span_term": { "synopsis": "imprisoned" } },
+        { "span_term": { "synopsis": "over" } }
       ],
-      "slop": 12,
-      "in_order": false
+      "slop": 3,
+      "in_order": true
     }
   }
 }
 ```
 
-Bool span query
-```bash
-GET /movies/_search
+---
+
+## Validation
+
+### Bean Validation on request bodies
+
+Endpoints annotated with `@Valid` trigger Jakarta Bean Validation. Invalid requests return `400`.
+
+| Annotation | Applied to | Meaning |
+|-----------|-----------|---------|
+| `@NotEmpty` | `userId` | Must not be null or empty |
+| `@NotBlank` | `recordId`, `searchType`, `searchPattern` | Must not be blank |
+| `@ValueOfEnum` | `type`, `client` in `SeekRequest` | Must match a known enum constant (case-insensitive) |
+
+### `@ValueOfEnum` — Custom enum validator
+
+Validates that a `String` field matches one of the constants of a given enum class.
+Case-insensitive comparison is applied, `null` values are allowed (treated as valid).
+
+Usage:
+
+```java
+@ValueOfEnum(enumClass = SeekType.class)
+String type;
+```
+
+---
+
+## Error Handling
+
+`ErrorExceptionHandler` (`@ControllerAdvice`) catches all `Throwable` exceptions and returns:
+
+```
+HTTP 500 Internal Server Error
+Content-Type: application/json
+Body: <exception message>
+```
+
+The full stack trace is logged at `ERROR` level.
+
+---
+
+## CORS — Swagger "Failed to fetch"
+
+If Swagger UI returns a CORS error:
+
+```
+Failed to fetch.
+Possible Reasons: CORS / Network Failure / URL scheme must be "http" or "https"
+```
+
+This is typically caused by an ad-blocking browser extension intercepting the request.
+
+**Fix:**
+1. Disable or remove the ad-blocking extension for `localhost`.
+2. Restart the application, refresh the browser, and clear browser cache.
+3. Retry the request from Swagger UI.
+
+---
+
+## Dev Console Queries
+
+Use the Kibana Dev Console (or any Elasticsearch REST client) to interact with the
+`user-history` index directly.
+
+### Create the index
+
+```json
+PUT user-history
+```
+
+### Add a date mapping for the `updated` field
+
+```json
+PUT /user-history/_mapping
+{
+  "properties": {
+    "updated": { "type": "date" }
+  }
+}
+```
+
+### Upsert a document (increment count on existing)
+
+```json
+POST /user-history/_update/did-1-People-nl84439
+{
+  "script": {
+    "source": "ctx._source.count++; ctx._source.updated = params['updated'];",
+    "params": { "updated": "2024-01-08T18:16:41.531Z" }
+  },
+  "upsert": {
+    "searchType": "People",
+    "count": 1,
+    "searchPattern": "John",
+    "userId": "nl84439",
+    "recordId": "did-1",
+    "updated": "2024-01-08T18:16:41.531Z"
+  }
+}
+```
+
+### Get a document by ID
+
+```json
+GET /user-history/_doc/did-1-People-nl84439
+```
+
+### Find top 10 documents for a user, sorted by count descending
+
+```json
+GET /user-history/_search
 {
   "query": {
-    "bool": {
-      "must": [
-        {
-          "span_near": {
-            "boost": 1.0,
-            "clauses": [
-              {
-                "span_term": {
-                  "synopsis": {
-                    "boost": 1.0,
-                    "value": "imprisoned"
-                  }
-                }
-              },
-              {
-                "span_term": {
-                  "synopsis": {
-                    "boost": 1.0,
-                    "value": "over"
-                  }
-                }
-              }
-            ],
-            "in_order": false,
-            "slop": 3
-          }
-        }
-      ]
-    }
-  }
+    "match": { "userId": "nl84439" }
+  },
+  "size": 10,
+  "sort": { "count": { "order": "desc" } }
 }
 ```
 
-### Multi-Search query
+### Inspect field mappings
 
-Elasticsearch provides a powerful and efficient way to execute multiple search queries in a single request using the Multi-Search API (_msearch). 
-This feature allows you to send multiple search requests within a single HTTP request, reducing the overhead of multiple round-trips to the server. 
-In this article, we will discuss the benefits, use cases, and best practices for optimizing _msearch in Elasticsearch.
+```json
+GET /user-history/_mapping
+```
+
+### Delete a document
+
+```json
+DELETE /user-history/_doc/did-1-People-nl84439
+```
+
+---
+
+## Tests
+
+Run all tests for this module:
 
 ```bash
-GET /movies/_search
-{
-  "query": {
-    "bool": {
-      "boost": 1.0,
-      "must": [
-        {
-          "bool": {
-            "should": [
-              {
-                "wildcard": {
-                  "synopsis": {
-                    "boost": 1.0,
-                    "wildcard": "imprisoned"
-                  }
-                }
-              },
-              {
-                "simple_query_string": {
-                  "boost": 1.0,
-                  "analyze_wildcard": true,
-                  "default_operator": "and",
-                  "fields": [
-                    "synopsis"
-                  ],
-                  "query": "imprisoned"
-                }
-              }
-            ]
-          }
-        }
-      ]
-    }
-  }
-}
+mvn -pl elastic test
 ```
+
+| Test class | Type | Covers |
+|-----------|------|--------|
+| `AdminControllerTest` | Unit | All four index-creation endpoint responses |
+| `AdminServiceTest` | Unit | Index creation requests for all four indexes |
+| `SearchControllerTest` | Unit | All five search endpoint responses |
+| `UserHistoryControllerTest` | Unit | Capture, retrieve, trending, popular, delete |
+| `UserHistoryIngestionServiceTest` | Unit | Upsert logic, Painless script generation |
+| `UserHistoryPopularServiceTest` | Unit | Per-user history query/sort |
+| `ValueOfEnumValidatorTest` | Unit | Case-insensitive enum validation |
+| `ErrorExceptionHandlerTest` | Unit | 500 error response format |
+| `SchedulerJobsTest` | Unit | Cleanup scheduler trigger |
+| `UserHistoryTest` / `UserClickTest` | Unit | Model construction and JSON serialization |
+| Cucumber feature files | Integration (BDD) | Search, ingestion, history, and scheduler scenarios |
+
+BDD integration tests require a live Elasticsearch instance. Unit tests use Mockito and
+do not require any external infrastructure.
