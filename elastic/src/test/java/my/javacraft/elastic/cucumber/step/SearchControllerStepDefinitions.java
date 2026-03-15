@@ -35,88 +35,52 @@ public class SearchControllerStepDefinitions {
 
     @When("wildcard search for {string} in {string}")
     public void testWildcard(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
-
         String jsonBody = jsonBody(pattern, type);
-
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<LinkedHashMap<String, Object>>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/search/wildcard".formatted(port),
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<>() {
-                }
-        );
-        compareHttpResponseToDataTable(httpResponse, dataTable);
+        assertSearchResponseEventually("/api/services/search/wildcard", jsonBody, dataTable);
     }
 
     @When("fuzzy search for {string} in {string}")
     public void testFuzzy(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
-
         String jsonBody = jsonBody(pattern, type);
-
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<LinkedHashMap<String, Object>>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/search/fuzzy".formatted(port),
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<>() {
-                }
-        );
-        compareHttpResponseToDataTable(httpResponse, dataTable);
+        assertSearchResponseEventually("/api/services/search/fuzzy", jsonBody, dataTable);
     }
 
     @When("span search for {string} in {string}")
     public void testSpan(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
-
         String jsonBody = jsonBody(pattern, type);
-
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<LinkedHashMap<String, Object>>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/search/span".formatted(port),
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<>() {
-                }
-        );
-        compareHttpResponseToDataTable(httpResponse, dataTable);
+        assertSearchResponseEventually("/api/services/search/span", jsonBody, dataTable);
     }
 
     @When("search for {string} in {string}")
     public void testSearch(String pattern, String type, DataTable dataTable) throws IOException, InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
-
         String jsonBody = jsonBody(pattern, type);
+        assertSearchResponseEventually("/api/services/search", jsonBody, dataTable);
+    }
 
+    private void assertSearchResponseEventually(String path, String jsonBody, DataTable dataTable) throws InterruptedException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
         RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:%s%s".formatted(port, path);
+        int expectedRows = dataTable.height();
+
+        Assertions.assertTrue(CucumberSpringConfiguration.assertWithWait(expectedRows, () -> {
+            ResponseEntity<List<LinkedHashMap<String, Object>>> currentResponse = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            List<LinkedHashMap<String, Object>> currentBody = currentResponse.getBody();
+            return currentBody == null ? 0 : currentBody.size();
+        }));
 
         ResponseEntity<List<LinkedHashMap<String, Object>>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/search".formatted(port),
+                url,
                 HttpMethod.POST,
                 entity,
                 new ParameterizedTypeReference<>() {

@@ -16,10 +16,7 @@ public class CucumberSpringConfiguration {
     private static final int POLL_INTERVAL_MILLIS = 200;
     private static final int MAX_WAIT_MILLIS = 2000;
 
-    public static void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
-        Thread.sleep(2000);
-    }
-
+    // ES is eventually consistent so there is a delay in updating & retrieving updated data
     public static <T> boolean assertWithWait(T expected, Supplier<T> supplier) throws InterruptedException {
         boolean confirmed = false;
 
