@@ -6,9 +6,17 @@ of internal packages.
 
 **Stack:** at least Java 9
 
+## Contents
+1. [Quick Start](#1-quick-start)
+2. [Architecture](#2-architecture)
+3. [Modules](#3-modules)
+4. [JPMS Features Demonstrated](#4-jpms-features-demonstrated)
+5. [ServiceLoader Flow](#5-serviceloader-flow)
+6. [Tests](#6-tests)
+
 ---
 
-## Quick Start
+## 1. Quick Start
 
 ### Build and test
 
@@ -33,7 +41,8 @@ Hello World from Modules!
 
 ---
 
-## Architecture
+## 2. Architecture
+<sub>[Back to top](#java-platform-module-system-jpms)</sub>
 
 ```mermaid
 flowchart TD
@@ -60,7 +69,8 @@ flowchart TD
 
 ---
 
-## Modules
+## 3. Modules
+<sub>[Back to top](#java-platform-module-system-jpms)</sub>
 
 ### `module.util` — Utility module
 
@@ -126,7 +136,8 @@ Util.printMessage(message);
 
 ---
 
-## JPMS Features Demonstrated
+## 4. JPMS Features Demonstrated
+<sub>[Back to top](#java-platform-module-system-jpms)</sub>
 
 | Feature | Module | Directive | What it achieves |
 |---------|--------|-----------|------------------|
@@ -139,7 +150,8 @@ Util.printMessage(message);
 
 ---
 
-## ServiceLoader Flow
+## 5. ServiceLoader Flow
+<sub>[Back to top](#java-platform-module-system-jpms)</sub>
 
 ```mermaid
 sequenceDiagram
@@ -159,7 +171,8 @@ sequenceDiagram
 
 ---
 
-## Tests
+## 6. Tests
+<sub>[Back to top](#java-platform-module-system-jpms)</sub>
 
 Run all tests:
 
@@ -167,12 +180,20 @@ Run all tests:
 mvn -pl modules/module-app -am test
 ```
 
-Tests live in `module-app` and cover both the JPMS descriptor structure and end-to-end runtime behaviour.
+### Coverage summary
 
-| Test class | Test method | Validates |
-|------------|-------------|-----------|
-| `JpmsDescriptorTest` | `testModuleAppShouldDeclareUsesForHelloService` | `module.app` descriptor contains `uses HelloService` |
-| `JpmsDescriptorTest` | `testModuleHelloShouldProvideHelloServiceImplementation` | `module.hello` descriptor contains `provides HelloService with HelloServiceImpl` |
-| `JpmsDescriptorTest` | `testModuleUtilShouldExportUtilPackageOnlyToModuleApp` | qualified export targets `module.app` only (`isQualified = true`) |
-| `JpmsDescriptorTest` | `testModuleUtilShouldNotExportSecretPackage` | `my.javacraft.modules.util.secret` is absent from the export list |
-| `ServiceLoaderIntegrationTest` | `testRunOnModulePathShouldResolveHelloServiceProvider` | Launches a real JVM on `--module-path`; asserts exit code `0` and output contains `"Hello World from Modules!"` |
+| Module | Tests | Line coverage |
+|--------|------:|--------------:|
+| modules/module-app | 5 | 0% ⚠ |
+
+> [!TIP]
+> JaCoCo reports 0 % because neither test class exercises the production `App.java` directly: `JpmsDescriptorTest` inspects module descriptors via reflection, and `ServiceLoaderIntegrationTest` launches a subprocess JVM — code running in a forked process is not instrumented by the JaCoCo agent attached to the test JVM.
+
+| Test class | Tests | Type | Covers |
+|------------|------:|------|--------|
+| `JpmsDescriptorTest` | 4 | Unit | JPMS descriptor assertions: `uses`, `provides`, qualified export targets, hidden package absence |
+| `ServiceLoaderIntegrationTest` | 1 | Integration | Launches a real JVM on `--module-path`; asserts exit code `0` and output contains `"Hello World from Modules!"` |
+
+**Total — 5 tests**
+
+Tests live in `module-app` and cover both the JPMS descriptor structure and end-to-end runtime behaviour.
