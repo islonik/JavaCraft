@@ -39,8 +39,6 @@ public class SearchControllerStepDefinitions {
 
         String jsonBody = jsonBody(pattern, type);
 
-        log.info("created json:\n" + jsonBody);
-
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
@@ -63,8 +61,6 @@ public class SearchControllerStepDefinitions {
         CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
-
-        log.info("created json:\n" + jsonBody);
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
@@ -89,8 +85,6 @@ public class SearchControllerStepDefinitions {
 
         String jsonBody = jsonBody(pattern, type);
 
-        log.info("created json:\n" + jsonBody);
-
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
@@ -113,8 +107,6 @@ public class SearchControllerStepDefinitions {
         CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
 
         String jsonBody = jsonBody(pattern, type);
-
-        log.info("created json:\n" + jsonBody);
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
@@ -162,7 +154,9 @@ public class SearchControllerStepDefinitions {
         seekRequest.setClient(Client.WEB.toString());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(seekRequest);
+        String jsonBody = objectMapper.writeValueAsString(seekRequest);
+        log.info("created json:\n{}", jsonBody);
+        return jsonBody;
     }
 
 

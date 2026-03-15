@@ -3,8 +3,10 @@ package my.javacraft.elastic.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,6 +37,9 @@ public class AdminService {
 
     private final ElasticsearchClient esClient;
 
+    public record IndexCreationResult(CreateIndexResponse response, boolean created) {
+    }
+
     /**
      * Creates the {@code user-history} index with typed field mappings.
      * <p>
@@ -49,7 +54,7 @@ public class AdminService {
      *   <li>{@code searchValue} – {@code text} (full-text field, not queried directly)</li>
      * </ul>
      */
-    public CreateIndexResponse createUserHistoryIndex() throws IOException {
+    public IndexCreationResult createUserHistoryIndex() throws IOException {
         log.info("creating index '{}'...", UserHistoryService.INDEX_USER_HISTORY);
 
         Map<String, Property> properties = new LinkedHashMap<>();
@@ -61,13 +66,7 @@ public class AdminService {
         properties.put("searchType", Property.of(p -> p.keyword(k -> k)));
         properties.put("searchValue", Property.of(p -> p.text(t -> t)));
 
-        CreateIndexResponse response = createIndex(UserHistoryService.INDEX_USER_HISTORY, properties);
-        log.info(
-                "index '{}' created (acknowledged={})",
-                UserHistoryService.INDEX_USER_HISTORY,
-                response.acknowledged()
-        );
-        return response;
+        return createIndex(UserHistoryService.INDEX_USER_HISTORY, properties);
     }
 
     /**
@@ -75,7 +74,7 @@ public class AdminService {
      * Fields match the search fields configured in {@code metadata.json}:
      * {@code name}, {@code author}, {@code synopsis}.
      */
-    public CreateIndexResponse createBooksIndex() throws IOException {
+    public IndexCreationResult createBooksIndex() throws IOException {
         return createSearchIndex(INDEX_BOOKS, "name", "author", "synopsis");
     }
 
@@ -84,7 +83,7 @@ public class AdminService {
      * Fields match the search fields configured in {@code metadata.json}:
      * {@code name}, {@code director}, {@code synopsis}.
      */
-    public CreateIndexResponse createMoviesIndex() throws IOException {
+    public IndexCreationResult createMoviesIndex() throws IOException {
         return createSearchIndex(INDEX_MOVIES, "name", "director", "synopsis");
     }
 
@@ -93,7 +92,7 @@ public class AdminService {
      * Fields match the search fields configured in {@code metadata.json}:
      * {@code band}, {@code album}, {@code name}, {@code lyrics}.
      */
-    public CreateIndexResponse createMusicIndex() throws IOException {
+    public IndexCreationResult createMusicIndex() throws IOException {
         return createSearchIndex(INDEX_MUSIC, "band", "album", "name", "lyrics");
     }
 
@@ -105,7 +104,7 @@ public class AdminService {
      * Creates a search index where every field is mapped as {@code text}
      * to support full-text queries (wildcard, fuzzy, interval, span).
      */
-    private CreateIndexResponse createSearchIndex(String indexName, String... textFields) throws IOException {
+    private IndexCreationResult createSearchIndex(String indexName, String... textFields) throws IOException {
         log.info("creating search index '{}'...", indexName);
 
         Map<String, Property> properties = new LinkedHashMap<>();
@@ -113,17 +112,31 @@ public class AdminService {
             properties.put(field, Property.of(p -> p.text(t -> t)));
         }
 
-        CreateIndexResponse response = createIndex(indexName, properties);
-        log.info("search index '{}' created (acknowledged={})", indexName, response.acknowledged());
-        return response;
+        return createIndex(indexName, properties);
     }
 
-    private CreateIndexResponse createIndex(String indexName, Map<String, Property> properties) throws IOException {
+    private IndexCreationResult createIndex(String indexName, Map<String, Property> properties) throws IOException {
         ElasticsearchIndicesClient indicesClient = esClient.indices();
+        ExistsRequest existsRequest = new ExistsRequest.Builder()
+                .index(indexName)
+                .build();
+        BooleanResponse existsResponse = indicesClient.exists(existsRequest);
+        if (existsResponse.value()) {
+            log.info("index '{}' already exists, nothing to create", indexName);
+            CreateIndexResponse noOpResponse = CreateIndexResponse.of(builder -> builder
+                    .index(indexName)
+                    .acknowledged(true)
+                    .shardsAcknowledged(true)
+            );
+            return new IndexCreationResult(noOpResponse, false);
+        }
+
         CreateIndexRequest request = CreateIndexRequest.of(b -> b
                 .index(indexName)
                 .mappings(m -> m.properties(properties))
         );
-        return indicesClient.create(request);
+        CreateIndexResponse createdResponse = indicesClient.create(request);
+        log.info("index '{}' created (acknowledged={})", indexName, createdResponse.acknowledged());
+        return new IndexCreationResult(createdResponse, true);
     }
 }

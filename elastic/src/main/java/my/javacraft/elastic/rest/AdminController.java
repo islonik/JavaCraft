@@ -9,6 +9,7 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.service.AdminService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link UserHistoryController}. No user input is accepted — each endpoint
  * creates a specific, pre-defined index with a fixed schema.
  * <p>
- * Re-running an endpoint when the index already exists will result in a 500
- * response from Elasticsearch ({@code resource_already_exists_exception}).
+ * Re-running an endpoint when the index already exists returns 201 and does
+ * not modify the index.
  */
 @Slf4j
 @RestController
@@ -41,13 +42,14 @@ public class AdminController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Index created successfully"),
-            @ApiResponse(responseCode = "500", description = "Index already exists or Elasticsearch error")
+            @ApiResponse(responseCode = "201", description = "Index already exists; no changes were made"),
+            @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
     @PutMapping(value = "/indexes/user-history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateIndexResponse> createUserHistoryIndex() throws IOException {
         log.info("request to create user-history index");
-        CreateIndexResponse response = adminService.createUserHistoryIndex();
-        return ResponseEntity.ok().body(response);
+        AdminService.IndexCreationResult result = adminService.createUserHistoryIndex();
+        return buildResponse(result);
     }
 
     @Operation(
@@ -57,13 +59,14 @@ public class AdminController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Index created successfully"),
-            @ApiResponse(responseCode = "500", description = "Index already exists or Elasticsearch error")
+            @ApiResponse(responseCode = "201", description = "Index already exists; no changes were made"),
+            @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
     @PutMapping(value = "/indexes/books", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateIndexResponse> createBooksIndex() throws IOException {
         log.info("request to create books index");
-        CreateIndexResponse response = adminService.createBooksIndex();
-        return ResponseEntity.ok().body(response);
+        AdminService.IndexCreationResult result = adminService.createBooksIndex();
+        return buildResponse(result);
     }
 
     @Operation(
@@ -73,13 +76,14 @@ public class AdminController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Index created successfully"),
-            @ApiResponse(responseCode = "500", description = "Index already exists or Elasticsearch error")
+            @ApiResponse(responseCode = "201", description = "Index already exists; no changes were made"),
+            @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
     @PutMapping(value = "/indexes/movies", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateIndexResponse> createMoviesIndex() throws IOException {
         log.info("request to create movies index");
-        CreateIndexResponse response = adminService.createMoviesIndex();
-        return ResponseEntity.ok().body(response);
+        AdminService.IndexCreationResult result = adminService.createMoviesIndex();
+        return buildResponse(result);
     }
 
     @Operation(
@@ -89,12 +93,18 @@ public class AdminController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Index created successfully"),
-            @ApiResponse(responseCode = "500", description = "Index already exists or Elasticsearch error")
+            @ApiResponse(responseCode = "201", description = "Index already exists; no changes were made"),
+            @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
     @PutMapping(value = "/indexes/music", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateIndexResponse> createMusicIndex() throws IOException {
         log.info("request to create music index");
-        CreateIndexResponse response = adminService.createMusicIndex();
-        return ResponseEntity.ok().body(response);
+        AdminService.IndexCreationResult result = adminService.createMusicIndex();
+        return buildResponse(result);
+    }
+
+    private ResponseEntity<CreateIndexResponse> buildResponse(AdminService.IndexCreationResult result) {
+        HttpStatus status = result.created() ? HttpStatus.OK : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(result.response());
     }
 }

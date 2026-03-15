@@ -13,6 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 public class CucumberSpringConfiguration {
 
     public static void waitAsElasticSearchIsEventuallyConsistentDB() throws InterruptedException {
-        Thread.sleep(1000);
+        Thread.sleep(2000);
     }
 }

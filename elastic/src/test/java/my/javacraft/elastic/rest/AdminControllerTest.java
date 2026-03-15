@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import static org.mockito.Mockito.when;
@@ -23,51 +23,89 @@ public class AdminControllerTest {
     public void testCreateUserHistoryIndex() throws IOException {
         AdminController adminController = new AdminController(adminService);
 
-        CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
-        when(adminService.createUserHistoryIndex()).thenReturn(createIndexResponse);
+        CreateIndexResponse createIndexResponse = CreateIndexResponse.of(builder -> builder
+                .index("user-history")
+                .acknowledged(true)
+                .shardsAcknowledged(true)
+        );
+        when(adminService.createUserHistoryIndex()).thenReturn(new AdminService.IndexCreationResult(createIndexResponse, true));
 
         ResponseEntity<CreateIndexResponse> response = adminController.createUserHistoryIndex();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     public void testCreateBooksIndex() throws IOException {
         AdminController adminController = new AdminController(adminService);
 
-        CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
-        when(adminService.createBooksIndex()).thenReturn(createIndexResponse);
+        CreateIndexResponse createIndexResponse = CreateIndexResponse.of(builder -> builder
+                .index("books")
+                .acknowledged(true)
+                .shardsAcknowledged(true)
+        );
+        when(adminService.createBooksIndex()).thenReturn(new AdminService.IndexCreationResult(createIndexResponse, true));
 
         ResponseEntity<CreateIndexResponse> response = adminController.createBooksIndex();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     public void testCreateMoviesIndex() throws IOException {
         AdminController adminController = new AdminController(adminService);
 
-        CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
-        when(adminService.createMoviesIndex()).thenReturn(createIndexResponse);
+        CreateIndexResponse createIndexResponse = CreateIndexResponse.of(builder -> builder
+                .index("movies")
+                .acknowledged(true)
+                .shardsAcknowledged(true)
+        );
+        when(adminService.createMoviesIndex()).thenReturn(new AdminService.IndexCreationResult(createIndexResponse, true));
 
         ResponseEntity<CreateIndexResponse> response = adminController.createMoviesIndex();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     public void testCreateMusicIndex() throws IOException {
         AdminController adminController = new AdminController(adminService);
 
-        CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
-        when(adminService.createMusicIndex()).thenReturn(createIndexResponse);
+        CreateIndexResponse createIndexResponse = CreateIndexResponse.of(builder -> builder
+                .index("music")
+                .acknowledged(true)
+                .shardsAcknowledged(true)
+        );
+        when(adminService.createMusicIndex()).thenReturn(new AdminService.IndexCreationResult(createIndexResponse, true));
 
         ResponseEntity<CreateIndexResponse> response = adminController.createMusicIndex();
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    public void testCreateBooksIndexShouldReturnCreatedWhenAlreadyExists() throws IOException {
+        AdminController adminController = new AdminController(adminService);
+
+        CreateIndexResponse createIndexResponse = CreateIndexResponse.of(builder -> builder
+                .index("books")
+                .acknowledged(true)
+                .shardsAcknowledged(true)
+        );
+        when(adminService.createBooksIndex()).thenReturn(new AdminService.IndexCreationResult(createIndexResponse, false));
+
+        ResponseEntity<CreateIndexResponse> response = adminController.createBooksIndex();
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 }

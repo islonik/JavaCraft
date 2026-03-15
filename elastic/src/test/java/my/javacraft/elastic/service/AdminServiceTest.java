@@ -3,7 +3,9 @@ package my.javacraft.elastic.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,13 +31,16 @@ public class AdminServiceTest {
         CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
 
         when(esClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.exists(any(ExistsRequest.class))).thenReturn(new BooleanResponse(false));
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(createIndexResponse);
         when(createIndexResponse.acknowledged()).thenReturn(true);
 
-        CreateIndexResponse response = adminService.createUserHistoryIndex();
+        AdminService.IndexCreationResult response = adminService.createUserHistoryIndex();
 
         Assertions.assertNotNull(response);
-        Assertions.assertTrue(response.acknowledged());
+        Assertions.assertTrue(response.created());
+        Assertions.assertNotNull(response.response());
+        Assertions.assertTrue(response.response().acknowledged());
     }
 
     @Test
@@ -46,13 +51,16 @@ public class AdminServiceTest {
         CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
 
         when(esClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.exists(any(ExistsRequest.class))).thenReturn(new BooleanResponse(false));
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(createIndexResponse);
         when(createIndexResponse.acknowledged()).thenReturn(true);
 
-        CreateIndexResponse response = adminService.createBooksIndex();
+        AdminService.IndexCreationResult response = adminService.createBooksIndex();
 
         Assertions.assertNotNull(response);
-        Assertions.assertTrue(response.acknowledged());
+        Assertions.assertTrue(response.created());
+        Assertions.assertNotNull(response.response());
+        Assertions.assertTrue(response.response().acknowledged());
     }
 
     @Test
@@ -63,13 +71,16 @@ public class AdminServiceTest {
         CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
 
         when(esClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.exists(any(ExistsRequest.class))).thenReturn(new BooleanResponse(false));
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(createIndexResponse);
         when(createIndexResponse.acknowledged()).thenReturn(true);
 
-        CreateIndexResponse response = adminService.createMoviesIndex();
+        AdminService.IndexCreationResult response = adminService.createMoviesIndex();
 
         Assertions.assertNotNull(response);
-        Assertions.assertTrue(response.acknowledged());
+        Assertions.assertTrue(response.created());
+        Assertions.assertNotNull(response.response());
+        Assertions.assertTrue(response.response().acknowledged());
     }
 
     @Test
@@ -80,12 +91,32 @@ public class AdminServiceTest {
         CreateIndexResponse createIndexResponse = Mockito.mock(CreateIndexResponse.class);
 
         when(esClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.exists(any(ExistsRequest.class))).thenReturn(new BooleanResponse(false));
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(createIndexResponse);
         when(createIndexResponse.acknowledged()).thenReturn(true);
 
-        CreateIndexResponse response = adminService.createMusicIndex();
+        AdminService.IndexCreationResult response = adminService.createMusicIndex();
 
         Assertions.assertNotNull(response);
-        Assertions.assertTrue(response.acknowledged());
+        Assertions.assertTrue(response.created());
+        Assertions.assertNotNull(response.response());
+        Assertions.assertTrue(response.response().acknowledged());
+    }
+
+    @Test
+    public void testCreateIndexShouldReturnNoOpWhenIndexAlreadyExists() throws IOException {
+        AdminService adminService = new AdminService(esClient);
+        ElasticsearchIndicesClient indicesClient = Mockito.mock(ElasticsearchIndicesClient.class);
+
+        when(esClient.indices()).thenReturn(indicesClient);
+        when(indicesClient.exists(any(ExistsRequest.class))).thenReturn(new BooleanResponse(true));
+
+        AdminService.IndexCreationResult response = adminService.createBooksIndex();
+
+        Assertions.assertNotNull(response);
+        Assertions.assertFalse(response.created());
+        Assertions.assertNotNull(response.response());
+        Assertions.assertEquals("books", response.response().index());
+        Assertions.assertTrue(response.response().acknowledged());
     }
 }

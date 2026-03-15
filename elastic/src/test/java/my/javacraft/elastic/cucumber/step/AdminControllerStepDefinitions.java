@@ -5,24 +5,57 @@ import co.elastic.clients.elasticsearch.core.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import java.io.*;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-public class IngestionStepDefinitions {
+public class AdminControllerStepDefinitions {
+
+    private static final Set<String> SUPPORTED_INDEXES = Set.of("books", "movies", "music", "user-history");
+
+    @LocalServerPort
+    int port;
 
     @Autowired
     ElasticsearchClient esClient;
 
-    @Given("ingest {string} json file with {int} entities in {string} index")
+    @Given("index {string} exists")
+    public void createIndex(String index) {
+        if (!SUPPORTED_INDEXES.contains(index)) {
+            throw new IllegalArgumentException("AdminController does not support index: " + index);
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(
+                "http://localhost:%s/api/admin/indexes/%s".formatted(port, index),
+                HttpMethod.PUT,
+                HttpEntity.EMPTY,
+                String.class
+        );
+        int statusCode = response.getStatusCode().value();
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
+        Assertions.assertTrue(statusCode == 200 || statusCode == 201);
+        Assertions.assertTrue(response.getBody().contains("\"acknowledged\":true"));
+        log.info("index '{}' ensured via admin endpoint with status {}", index, statusCode);
+    }
+
+    @Then("ingest {string} json file with {int} entities in {string} index")
     public void ingestJson(String pathToFile, Integer expectedItems, String index) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         File resource = new ClassPathResource(pathToFile).getFile();

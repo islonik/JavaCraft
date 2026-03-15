@@ -1,4 +1,4 @@
-Feature: UserHistoryController
+Feature: test UserHistoryController
 
   Scenario: prepare data
     Given index 'user-history' exists

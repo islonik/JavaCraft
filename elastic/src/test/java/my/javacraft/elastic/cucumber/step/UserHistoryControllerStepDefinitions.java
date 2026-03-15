@@ -1,11 +1,9 @@
 package my.javacraft.elastic.cucumber.step;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.indices.*;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
@@ -13,7 +11,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -49,57 +46,6 @@ public class UserHistoryControllerStepDefinitions {
 
     @Autowired
     ElasticsearchClient esClient;
-
-    @Given("index {string} exists")
-    public void createIndex(String index) throws IOException {
-        boolean isIndexExists = isIndexExists(index);
-
-        if (isIndexExists) {
-            log.info("index '{}' exists", index);
-        } else {
-            CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder().index(index).build();
-
-            CreateIndexResponse createIndexResponse = esClient.indices().create(createIndexRequest);
-
-            Assertions.assertEquals(index, createIndexResponse.index());
-            log.info("index '{}' created", index);
-
-            String jsonMapping = """
-                    {
-                      "properties": {
-                        "updated": {
-                          "type": "date"
-                        }
-                      }
-                    }""";
-            PutMappingRequest putMappingRequest = new PutMappingRequest
-                    .Builder()
-                    .index(index)
-                    .withJson(new StringReader(jsonMapping))
-                    .build();
-            PutMappingResponse putMappingResponse = esClient.indices().putMapping(putMappingRequest);
-            Assertions.assertNotNull(putMappingResponse);
-            log.info("mapping for index '{}' updated", index);
-        }
-    }
-
-    private boolean isIndexExists(String index) {
-        try {
-            DeleteIndexRequest request = new DeleteIndexRequest.Builder()
-                    .index(index)
-                    .build();
-            DeleteIndexResponse deleteIndexResponse = esClient.indices().delete(request);
-            log.info("{}", deleteIndexResponse);
-
-            ExistsRequest existsRequest = new ExistsRequest.Builder().index(index).build();
-
-            BooleanResponse existsResponse = esClient.indices().exists(existsRequest);
-            return existsResponse.value();
-        } catch (ElasticsearchException | IOException ee) {
-            log.error(ee.getMessage());
-            return false;
-        }
-    }
 
     @Given("user {string} doesn't have any events")
     public void clearUserHistory(String userId) throws IOException {
