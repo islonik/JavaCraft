@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.service.history.UserHistoryService;
@@ -33,9 +34,9 @@ public class SchedulerService {
             // use -Dlogging.level.tracer=TRACE to print a full curl statement
             DeleteByQueryResponse deleteByQueryResponse = esClient.deleteByQuery(deleteByQueryRequest);
             return deleteByQueryResponse.deleted();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return 0L;
+        } catch (IOException ioe) {
+            log.error("Failed to remove outdated user-history records.", ioe);
+            throw new IllegalStateException("Failed to remove outdated user-history records.", ioe);
         }
     }
 }
