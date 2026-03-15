@@ -4,35 +4,20 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import io.cucumber.java.en.Given;
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class IngestionDefinition {
-
-    @Value("${spring.elastic.cluster.port}")
-    int port;
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+public class IngestionStepDefinitions {
 
     @Autowired
     ElasticsearchClient esClient;

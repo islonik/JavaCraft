@@ -570,3 +570,9 @@ mvn -pl elastic test
 | Test class | Type | Covers |
 |------------|------|--------|
 | Cucumber feature files | Integration (BDD) | Search, ingestion, history, and scheduler scenarios end-to-end |
+
+> [!WARNING]
+> We need to have cucumber.properties to avoid java.lang.NoClassDefFoundError: com/sun/jna/platform/win32/Win32Exception
+> that because WARNING: Failed to load methods of class 'net.bytebuddy.agent.VirtualMachine$ForOpenJ9$Dispatcher$ForJnaWindowsEnvironment'.
+By default Cucumber scans the entire classpath for step definitions.
+You can restrict this by configuring the glue path.

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
+import my.javacraft.elastic.cucumber.conf.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.SeekType;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
@@ -19,9 +19,11 @@ import org.springframework.context.annotation.Scope;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
+
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class SchedulerDefinition {
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+public class SchedulerStepDefinitions {
 
     @Autowired
     UserHistoryIngestionService userHistoryIngestionService;

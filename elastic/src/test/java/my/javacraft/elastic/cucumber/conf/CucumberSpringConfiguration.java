@@ -1,5 +1,4 @@
-package my.javacraft.elastic.cucumber.config;
-
+package my.javacraft.elastic.cucumber.conf;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 import my.javacraft.elastic.Application;
@@ -9,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 @CucumberContextConfiguration
 @SpringBootTest(
         classes = Application.class,
-        webEnvironment = WebEnvironment.DEFINED_PORT
+        webEnvironment = WebEnvironment.RANDOM_PORT
 )
 public class CucumberSpringConfiguration {
 

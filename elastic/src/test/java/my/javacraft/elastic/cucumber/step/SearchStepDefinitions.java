@@ -8,12 +8,12 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
+import my.javacraft.elastic.cucumber.conf.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.Client;
 import my.javacraft.elastic.model.SeekRequest;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -28,9 +28,9 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class SearchDefinition {
+public class SearchStepDefinitions {
 
-    @Value("${server.port}")
+    @LocalServerPort
     int port;
 
     @When("wildcard search for {string} in {string}")

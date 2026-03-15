@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.cucumber.config.CucumberSpringConfiguration;
+import my.javacraft.elastic.cucumber.conf.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
@@ -28,7 +28,7 @@ import my.javacraft.elastic.service.history.UserHistoryService;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -41,9 +41,10 @@ import org.springframework.web.client.RestTemplate;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class UserHistoryDefinition {
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+public class UserHistoryStepDefinitions {
 
-    @Value("${server.port}")
+    @LocalServerPort
     int port;
 
     @Autowired
@@ -80,30 +81,6 @@ public class UserHistoryDefinition {
             Assertions.assertNotNull(putMappingResponse);
             log.info("mapping for index '{}' updated", index);
         }
-    }
-
-    @Given("index {string} has next mapping")
-    public void applyMappingToIndex(String index, DataTable data) throws IOException {
-        PutMappingRequest.Builder putMappingRequest = new PutMappingRequest.Builder().index(index);
-        List<List<String>> rows = data.cells();
-        for (List<String> row : rows) {
-            String fieldName = row.get(0);
-            String type = row.get(1);
-
-            switch (type) {
-                case "text" -> putMappingRequest.properties(fieldName, p -> p.text(tpr -> tpr));
-                case "date" -> putMappingRequest.properties(fieldName, p -> p.date(tpr -> tpr));
-                case "float" -> putMappingRequest.properties(fieldName, p -> p.float_(tpr -> tpr));
-                case "double" -> putMappingRequest.properties(fieldName, p -> p.double_(tpr -> tpr));
-                case "keyword" -> putMappingRequest.properties(fieldName, p -> p.keyword(tpr -> tpr));
-                case "integer" -> putMappingRequest.properties(fieldName, p -> p.integer(tpr -> tpr));
-            }
-
-        }
-        PutMappingResponse putMappingResponse = esClient
-                .indices()
-                .putMapping(putMappingRequest.build());
-        log.info("mapping applied = {}", putMappingResponse.acknowledged());
     }
 
     private boolean isIndexExists(String index) {
