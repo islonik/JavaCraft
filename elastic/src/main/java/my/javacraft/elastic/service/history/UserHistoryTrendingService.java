@@ -20,6 +20,18 @@ import my.javacraft.elastic.model.UserHistory;
 import my.javacraft.elastic.service.DateService;
 import org.springframework.stereotype.Service;
 
+/*
+ * Trending means something is growing rapidly right now.
+ *
+ * Platforms detect sudden spikes in activity.
+ *
+ * Typical signals:
+ *
+ * 1) rapid increase in views
+ * 2) sudden rise in searches
+ * 3) engagement growth rate
+ * 4) activity in the last minutes/hours
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

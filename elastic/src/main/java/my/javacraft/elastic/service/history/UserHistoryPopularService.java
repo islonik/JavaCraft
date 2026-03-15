@@ -13,6 +13,17 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserHistory;
 import org.springframework.stereotype.Service;
 
+/*
+ * Popular means something has high overall engagement or usage over a longer period.
+ *
+ * Typical signals used:
+ *
+ * 1) total views
+ * 2) total likes
+ * 3) total downloads
+ * 4) total purchases
+ * 5) long-term user activity
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

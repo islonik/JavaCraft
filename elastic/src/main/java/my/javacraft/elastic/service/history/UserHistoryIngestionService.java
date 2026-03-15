@@ -46,7 +46,7 @@ public class UserHistoryIngestionService {
                 .build();
 
         // use -Dlogging.level.tracer=TRACE to print a full curl statement
-        log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(updateRequest, esClient._jsonpMapper()));
+        log.debug("JSON representation of a query: {}", JsonpUtils.toJsonString(updateRequest, esClient._jsonpMapper()));
         // execute request to ES cluster
         UpdateResponse<UserHistory> updateResponse = esClient.update(updateRequest, UserHistory.class);
 
