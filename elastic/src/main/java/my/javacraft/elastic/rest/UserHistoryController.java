@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
@@ -23,11 +25,13 @@ import my.javacraft.elastic.service.history.UserHistoryService;
 import my.javacraft.elastic.service.history.UserHistoryTrendingService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Slf4j
 @RestController
+@Validated
 @Tag(name = "2. User history", description = "API(s) for hit count services")
 @RequestMapping(path = "/api/services/user-history")
 @RequiredArgsConstructor
@@ -101,12 +105,12 @@ public class UserHistoryController {
     @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserHistory>> retrievePopularUserSearches(
             @PathVariable("userId") String userId,
-            @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
-        int limitSize = Integer.parseInt(size);
+            @RequestParam(required = false, name = "size", defaultValue = "10")
+            @Min(1) @Max(UserHistoryService.MAX_VALUES) int size) throws IOException {
 
-        log.info("retrieving popular user searches (userId = '{}' and limit = '{}')...", userId, limitSize);
+        log.info("retrieving popular user searches (userId = '{}' and limit = '{}')...", userId, size);
 
-        List<UserHistory> mapList = userHistoryPopularService.retrievePopularUserSearches(userId, limitSize);
+        List<UserHistory> mapList = userHistoryPopularService.retrievePopularUserSearches(userId, size);
 
         return ResponseEntity.ok().body(mapList);
     }
@@ -122,12 +126,12 @@ public class UserHistoryController {
     })
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserHistory>> retrieveTrendingUserSearches(
-            @RequestParam(required = false, name = "size", defaultValue = "10") String size) throws IOException {
-        int limitSize = Integer.parseInt(size);
+            @RequestParam(required = false, name = "size", defaultValue = "10")
+            @Min(1) @Max(UserHistoryService.MAX_VALUES) int size) throws IOException {
 
-        log.info("retrieving trending user searches (limit = '{}')...", limitSize);
+        log.info("retrieving trending user searches (limit = '{}')...", size);
 
-        List<UserHistory> mapList = userHistoryTrendingService.retrieveTrendingUserSearches(limitSize);
+        List<UserHistory> mapList = userHistoryTrendingService.retrieveTrendingUserSearches(size);
 
         return ResponseEntity.ok().body(mapList);
     }

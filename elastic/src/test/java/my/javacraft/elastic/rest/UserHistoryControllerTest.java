@@ -3,9 +3,14 @@ package my.javacraft.elastic.rest;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
+import java.lang.reflect.Method;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.model.UserHistory;
@@ -104,7 +109,7 @@ public class UserHistoryControllerTest {
         when(userHistoryPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(historyList);
 
         ResponseEntity<List<UserHistory>> response = userHistoryController
-                .retrievePopularUserSearches("nl88888", "10");
+                .retrievePopularUserSearches("nl88888", 10);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -124,7 +129,7 @@ public class UserHistoryControllerTest {
         when(userHistoryTrendingService.retrieveTrendingUserSearches(anyInt())).thenReturn(historyList);
 
         ResponseEntity<List<UserHistory>> response = userHistoryController
-                .retrieveTrendingUserSearches("10");
+                .retrieveTrendingUserSearches(10);
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
@@ -168,6 +173,47 @@ public class UserHistoryControllerTest {
 
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testPopularSearchHistoryValidationShouldFailWhenSizeLessThanOne() throws NoSuchMethodException {
+        UserHistoryController userHistoryController = new UserHistoryController(
+                dateService,
+                userHistoryService,
+                userHistoryPopularService,
+                userHistoryTrendingService,
+                userHistoryIngestionService
+        );
+        Method method = UserHistoryController.class.getMethod("retrievePopularUserSearches", String.class, int.class);
+
+        Set<ConstraintViolation<UserHistoryController>> violations;
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            violations = validatorFactory.getValidator().forExecutables()
+                    .validateParameters(userHistoryController, method, new Object[]{"nl88888", 0});
+        }
+
+        Assertions.assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("greater than or equal to 1")));
+    }
+
+    @Test
+    public void testTrendingSearchHistoryValidationShouldFailWhenSizeExceedsMaxValue() throws NoSuchMethodException {
+        UserHistoryController userHistoryController = new UserHistoryController(
+                dateService,
+                userHistoryService,
+                userHistoryPopularService,
+                userHistoryTrendingService,
+                userHistoryIngestionService
+        );
+        Method method = UserHistoryController.class.getMethod("retrieveTrendingUserSearches", int.class);
+
+        Set<ConstraintViolation<UserHistoryController>> violations;
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            violations = validatorFactory.getValidator().forExecutables()
+                    .validateParameters(userHistoryController, method, new Object[]{UserHistoryService.MAX_VALUES + 1});
+        }
+
+        Assertions.assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("less than or equal to " + UserHistoryService.MAX_VALUES)));
     }
 
 }
