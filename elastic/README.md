@@ -8,12 +8,27 @@ via REST, ingests user click events into a history index, and returns popular/tr
 
 **Stack:** Spring Boot, Spring Data Elasticsearch, Swagger/OpenAPI, Cucumber (BDD)
 
+## Contents
+1. [Quick Start](#1-quick-start)
+2. [Architecture](#2-architecture)
+3. [API Reference](#3-api-reference)
+4. [Data Model](#4-data-model)
+5. [User History Lifecycle](#5-user-history-lifecycle)
+6. [Configuration](#6-configuration)
+7. [Scheduler](#7-scheduler)
+8. [Query Types](#8-query-types)
+9. [Validation](#9-validation)
+10. [Error Handling](#10-error-handling)
+11. [CORS — Swagger "Failed to fetch"](#11-cors--swagger-failed-to-fetch)
+12. [Dev Console Queries](#12-dev-console-queries)
+13. [Tests](#13-tests)
+
 ---
 
-## Quick Start
+## 1. Quick Start
 
 **Prerequisites:**
-- Elasticsearch running on `localhost:9200` (HTTPS, Basic auth) [Docker installation](https://www.elastic.co/docs/deploy-manage/deploy/self-managed/local-development-installation-quickstart) 
+- Elasticsearch running on `localhost:9200` (HTTPS, Basic auth) [Docker installation](https://www.elastic.co/docs/deploy-manage/deploy/self-managed/local-development-installation-quickstart)
 - *(If SSL enabled) CA certificate placed at `src/main/resources/cert/http_ca.crt`
 
 ```bash
@@ -27,7 +42,8 @@ mvn -pl elastic spring-boot:run
 
 ---
 
-## Architecture
+## 2. Architecture
+<sub>[Back to top](#elasticsearch)</sub>
 
 ```mermaid
 flowchart TD
@@ -64,7 +80,8 @@ flowchart TD
 
 ---
 
-## API Reference
+## 3. API Reference
+<sub>[Back to top](#elasticsearch)</sub>
 
 ### Admin — `/api/admin`
 
@@ -199,7 +216,8 @@ Response — `UserClickResponse`:
 
 ---
 
-## Data Model
+## 4. Data Model
+<sub>[Back to top](#elasticsearch)</sub>
 
 ### `UserHistory` (Elasticsearch document, index: `user-history`)
 
@@ -224,7 +242,8 @@ Response — `UserClickResponse`:
 
 ---
 
-## User History Lifecycle
+## 5. User History Lifecycle
+<sub>[Back to top](#elasticsearch)</sub>
 
 ```mermaid
 sequenceDiagram
@@ -244,7 +263,8 @@ sequenceDiagram
 
 ---
 
-## Configuration
+## 6. Configuration
+<sub>[Back to top](#elasticsearch)</sub>
 
 `elastic/src/main/resources/application.yaml`:
 
@@ -291,7 +311,8 @@ ELASTIC_PASSWORD=FverGoe0
 
 ---
 
-## Scheduler
+## 7. Scheduler
+<sub>[Back to top](#elasticsearch)</sub>
 
 `SchedulerJobs` runs a cleanup task every hour (`0 0 * * * *`) when `scheduler.enabled=true`.
 It deletes all documents from the `user-history` index where `updated` is older than 180 days.
@@ -305,7 +326,8 @@ scheduler:
 
 ---
 
-## Query Types
+## 8. Query Types
+<sub>[Back to top](#elasticsearch)</sub>
 
 ### Default (multi-search)
 
@@ -376,7 +398,8 @@ exact term ordering and proximity matter. The service uses `slop=3, inOrder=true
 
 ---
 
-## Validation
+## 9. Validation
+<sub>[Back to top](#elasticsearch)</sub>
 
 ### Bean Validation on request bodies
 
@@ -402,7 +425,8 @@ String type;
 
 ---
 
-## Error Handling
+## 10. Error Handling
+<sub>[Back to top](#elasticsearch)</sub>
 
 `ErrorExceptionHandler` (`@ControllerAdvice`) catches all `Throwable` exceptions and returns:
 
@@ -416,7 +440,8 @@ The full stack trace is logged at `ERROR` level.
 
 ---
 
-## CORS — Swagger "Failed to fetch"
+## 11. CORS — Swagger "Failed to fetch"
+<sub>[Back to top](#elasticsearch)</sub>
 
 If Swagger UI returns a CORS error:
 
@@ -434,7 +459,8 @@ This is typically caused by an ad-blocking browser extension intercepting the re
 
 ---
 
-## Dev Console Queries
+## 12. Dev Console Queries
+<sub>[Back to top](#elasticsearch)</sub>
 
 Use the Kibana Dev Console (or any Elasticsearch REST client) to interact with the
 `user-history` index directly.
@@ -509,7 +535,8 @@ DELETE /user-history/_doc/did-1-People-nl84439
 
 ---
 
-## Tests
+## 13. Tests
+<sub>[Back to top](#elasticsearch)</sub>
 
 Run all tests for this module:
 
@@ -517,19 +544,29 @@ Run all tests for this module:
 mvn -pl elastic test
 ```
 
-| Test class | Type | Covers |
-|-----------|------|--------|
-| `AdminControllerTest` | Unit | All four index-creation endpoint responses |
-| `AdminServiceTest` | Unit | Index creation requests for all four indexes |
-| `SearchControllerTest` | Unit | All five search endpoint responses |
-| `UserHistoryControllerTest` | Unit | Capture, retrieve, trending, popular, delete |
-| `UserHistoryIngestionServiceTest` | Unit | Upsert logic, Painless script generation |
-| `UserHistoryPopularServiceTest` | Unit | Per-user history query/sort |
-| `ValueOfEnumValidatorTest` | Unit | Case-insensitive enum validation |
-| `ErrorExceptionHandlerTest` | Unit | 500 error response format |
-| `SchedulerJobsTest` | Unit | Cleanup scheduler trigger |
-| `UserHistoryTest` / `UserClickTest` | Unit | Model construction and JSON serialization |
-| Cucumber feature files | Integration (BDD) | Search, ingestion, history, and scheduler scenarios |
+### Coverage summary
 
-BDD integration tests require a live Elasticsearch instance. Unit tests use Mockito and
-do not require any external infrastructure.
+| Module | Tests | Line coverage |
+|--------|------:|--------------:|
+| elastic (unit) | 30 | 38.0% |
+| elastic (BDD) | — | requires live ES |
+
+> [!TIP]
+> Coverage is measured on unit tests only. BDD/Cucumber integration tests require a live Elasticsearch instance and are not included in the coverage run. Controllers, scheduler, and validation packages reach 100 %; services that call Elasticsearch directly show low coverage because their execution paths are only reachable via BDD tests.
+
+### Per-package line coverage (unit tests only)
+
+| Package | Line coverage |
+|---------|-------------:|
+| `config` | 6.1% |
+| `model` | 83.3% |
+| `rest` | 100.0% ✅ |
+| `scheduler` | 100.0% ✅ |
+| `service` | 22.4% |
+| `validation` | 100.0% ✅ |
+
+### BDD integration tests _(require live Elasticsearch)_
+
+| Test class | Type | Covers |
+|------------|------|--------|
+| Cucumber feature files | Integration (BDD) | Search, ingestion, history, and scheduler scenarios end-to-end |
