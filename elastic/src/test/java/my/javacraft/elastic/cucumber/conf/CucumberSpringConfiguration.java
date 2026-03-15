@@ -20,13 +20,13 @@ public class CucumberSpringConfiguration {
         Thread.sleep(2000);
     }
 
-    public static boolean assertWithWait(long expected, Supplier<Long> supplier) throws InterruptedException {
+    public static <T> boolean assertWithWait(T expected, Supplier<T> supplier) throws InterruptedException {
         boolean confirmed = false;
 
         int elapsedMillis = 0;
         while (elapsedMillis < MAX_WAIT_MILLIS) {
 
-            if (expected == supplier.get()) {
+            if (expected.equals(supplier.get())) {
                 confirmed = true;
                 break;
             }

@@ -131,56 +131,80 @@ public class UserActivityControllerStepDefinitions {
             String recordId,
             String type,
             String pattern) throws InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
-
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
 
         RestTemplate restTemplate = new RestTemplate();
+        String userActivityUrl = "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId);
 
-        HttpEntity<List<UserActivity>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId),
+        Assertions.assertTrue(CucumberSpringConfiguration.assertWithWait(1, () -> {
+            HttpEntity<List<UserActivity>> currentResponse = restTemplate.exchange(
+                    userActivityUrl,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            List<UserActivity> currentBody = currentResponse.getBody();
+            return currentBody == null ? 0 : currentBody.size();
+        }));
+
+        HttpEntity<List<UserActivity>> finalResponse = restTemplate.exchange(
+                userActivityUrl,
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
                 }
         );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(1, httpResponse.getBody().size());
-        UserActivity userActivity = httpResponse.getBody().getFirst();
+        Assertions.assertNotNull(finalResponse.getBody());
+        List<UserActivity> body = finalResponse.getBody();
+        Assertions.assertEquals(1, body.size());
+
+        UserActivity userActivity = body.getFirst();
         Assertions.assertEquals(hitCounts, userActivity.getCount());
         Assertions.assertEquals("%s-%s-%s".formatted(recordId, type, userId), userActivity.getElasticId());
         Assertions.assertEquals(recordId, userActivity.getRecordId());
         Assertions.assertEquals(pattern, userActivity.getSearchValue());
-
     }
 
     @Then("user {string} has next sorting results")
     public void testSortingOrder(String userId, DataTable dataTable) throws InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
 
         RestTemplate restTemplate = new RestTemplate();
+        String userActivityUrl = "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId);
 
-        HttpEntity<List<UserActivity>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId),
+        Assertions.assertTrue(CucumberSpringConfiguration.assertWithWait(dataTable.height(), () -> {
+            HttpEntity<List<UserActivity>> currentResponse = restTemplate.exchange(
+                    userActivityUrl,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            List<UserActivity> currentBody = currentResponse.getBody();
+            return currentBody == null ? 0 : currentBody.size();
+        }));
+
+        HttpEntity<List<UserActivity>> finalResponse = restTemplate.exchange(
+                userActivityUrl,
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
                 }
         );
-        Assertions.assertNotNull(httpResponse);
-        Assertions.assertNotNull(httpResponse.getBody());
-        Assertions.assertEquals(2, httpResponse.getBody().size());
+        Assertions.assertNotNull(finalResponse.getBody());
+        List<UserActivity> body = finalResponse.getBody();
+        Assertions.assertEquals(dataTable.height(), body.size());
+
         List<List<String>> expectedResults = dataTable.cells();
-        for (int i = 0; i < httpResponse.getBody().size(); i++) {
-            UserActivity userActivity = httpResponse.getBody().get(i);
+        for (int i = 0; i < finalResponse.getBody().size(); i++) {
+            UserActivity userActivity = finalResponse.getBody().get(i);
             Assertions.assertEquals(expectedResults.get(i).get(0), userActivity.getSearchValue());
             Assertions.assertEquals(Long.parseLong(expectedResults.get(i).get(1)), userActivity.getCount());
         }
