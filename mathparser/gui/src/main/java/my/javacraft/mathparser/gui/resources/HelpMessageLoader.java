@@ -3,6 +3,7 @@ package my.javacraft.mathparser.gui.resources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 /**
  * Loads help text from resources so GUI code stays maintainable and ready for i18n.
@@ -18,7 +19,12 @@ public final class HelpMessageLoader {
      * Returns help text from classpath, with a safe fallback for missing/corrupted resources.
      */
     public static String loadHelpMessage() {
-        try (InputStream inputStream = HelpMessageLoader.class.getResourceAsStream(HELP_RESOURCE_PATH)) {
+        return loadHelpMessage(() -> HelpMessageLoader.class.getResourceAsStream(HELP_RESOURCE_PATH));
+    }
+
+    // for testing
+    static String loadHelpMessage(Supplier<InputStream> helpResourceSupplier) {
+        try (InputStream inputStream = helpResourceSupplier.get()) {
             if (inputStream == null) {
                 return FALLBACK_MESSAGE;
             }

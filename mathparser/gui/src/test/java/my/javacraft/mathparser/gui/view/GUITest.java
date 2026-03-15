@@ -14,13 +14,24 @@ import my.javacraft.mathparser.parser.ParserException;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-/**
+/*
  * User: Lipatov Nikita
+ *
+ * Every test should contain @Timeout annotation
+ *
+ * Timeout in JUnit 5 sets a maximum allowed execution time for a test (or test method/class).
+ *
+ * If the test exceeds that time, JUnit fails it with a timeout error.
+ *
+ * It's necessary in test class, as GUI can fail in MacOS system
+ * (I develop & test in MacOS, so I cannot disable it)
  */
 public class GUITest {
 
     @Test
+    @Timeout(100)
     public void testCalculateButton() {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         Parser mathParser = new Parser();
@@ -39,6 +50,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testClearButton() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -56,6 +68,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testBackspaceButton() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -73,6 +86,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testSaveButton() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -91,6 +105,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testUnitSelection() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -116,6 +131,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testMoreLessToggle() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -136,6 +152,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testHelpButton() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
@@ -151,6 +168,7 @@ public class GUITest {
     }
 
     @Test
+    @Timeout(100)
     public void testErrorDisplay() throws Exception {
         Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "Requires graphics environment");
         GUI instance = new GUI();
