@@ -9,10 +9,17 @@ spring:
       port: "9200"
       user: "elastic"
       pass: "FverGoe0"
-      schema: "https"
       ssl:
         enabled: false
         path: "cert/http_ca.crt" # the same certificate which Kibana uses to connect to elastic search instance
+      timeout:
+        connect-ms: 3000
+        socket-ms: 10000
+        request-ms: 2000
+      retry:
+        max-attempts: 3
+        initial-backoff-ms: 200
+        max-backoff-ms: 2000
 springdoc:
   swagger-ui:
     # turn on alphabetical ordering in Swagger

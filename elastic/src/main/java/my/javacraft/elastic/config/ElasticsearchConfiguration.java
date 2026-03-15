@@ -14,12 +14,14 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
+import my.javacraft.elastic.validation.PositiveNumber;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,12 +42,22 @@ public class ElasticsearchConfiguration {
     private String user;
     @Value("${spring.elastic.cluster.pass:elastic}")
     private String pass;
-    @Value("${spring.elastic.cluster.schema:https}")
-    private String schema;
     @Value("${spring.elastic.cluster.ssl.enabled:true}")
     private String sslEnabled;
     @Value("${spring.elastic.cluster.ssl.path:cert/http_ca.crt}")
     private String sslPath;
+    @Value("${spring.elastic.cluster.timeout.connect-ms:3000}")
+    private int connectTimeoutMs;
+    @Value("${spring.elastic.cluster.timeout.socket-ms:10000}")
+    private int socketTimeoutMs;
+    @Value("${spring.elastic.cluster.timeout.request-ms:2000}")
+    private int requestTimeoutMs;
+    @Value("${spring.elastic.cluster.retry.max-attempts:3}")
+    private int retryMaxAttempts;
+    @Value("${spring.elastic.cluster.retry.initial-backoff-ms:200}")
+    private long retryInitialBackoffMs;
+    @Value("${spring.elastic.cluster.retry.max-backoff-ms:2000}")
+    private long retryMaxBackoffMs;
 
     /**
      * I load there the same certificate which Kibana uses to connect to elastic search instance.
@@ -70,9 +82,28 @@ public class ElasticsearchConfiguration {
     public ElasticsearchClient getElasticsearchClient() throws Exception {
         boolean useSsl = isSslEnabled(sslEnabled);
         String resolvedSchema = resolveSchema(useSsl);
+        int resolvedConnectTimeout = PositiveNumber.positiveOrDefault(connectTimeoutMs, RestClientBuilder.DEFAULT_CONNECT_TIMEOUT_MILLIS);
+        int resolvedSocketTimeout = PositiveNumber.positiveOrDefault(socketTimeoutMs, RestClientBuilder.DEFAULT_SOCKET_TIMEOUT_MILLIS);
+        int resolvedRequestTimeout = PositiveNumber.positiveOrDefault(requestTimeoutMs, 1000);
+        int resolvedRetryAttempts = PositiveNumber.positiveOrDefault(retryMaxAttempts, 1);
+        long resolvedInitialBackoff = PositiveNumber.positiveOrDefault(retryInitialBackoffMs, 200L);
+        long resolvedMaxBackoff = Math.max(
+                resolvedInitialBackoff,
+                PositiveNumber.positiveOrDefault(retryMaxBackoffMs, 2_000L)
+        );
         String serverUrl = host + ":" + port;
-        log.info("Creating rest client for elasticsearch cluster (url = '{}' and schema = '{}' and ssl.enabled = '{}')...",
-                serverUrl, resolvedSchema, useSsl);
+        log.info(
+                "Creating rest client for elasticsearch cluster (url='{}', schema='{}', ssl.enabled='{}', connectTimeoutMs='{}', socketTimeoutMs='{}', requestTimeoutMs='{}', retryAttempts='{}', retryInitialBackoffMs='{}', retryMaxBackoffMs='{}')...",
+                serverUrl,
+                resolvedSchema,
+                useSsl,
+                resolvedConnectTimeout,
+                resolvedSocketTimeout,
+                resolvedRequestTimeout,
+                resolvedRetryAttempts,
+                resolvedInitialBackoff,
+                resolvedMaxBackoff
+        );
 
         BasicCredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
@@ -80,6 +111,11 @@ public class ElasticsearchConfiguration {
         SSLContext sslContext = useSsl ? getSslContext() : null;
         RestClient restClient = RestClient
                 .builder(new HttpHost(host, Integer.parseInt(port), resolvedSchema))
+                .setRequestConfigCallback(config -> config
+                        .setConnectTimeout(resolvedConnectTimeout)
+                        .setSocketTimeout(resolvedSocketTimeout)
+                        .setConnectionRequestTimeout(resolvedRequestTimeout)
+                )
                 .setHttpClientConfigCallback(hccc -> {
                     hccc.disableAuthCaching()
                             .setDefaultCredentialsProvider(provider);
@@ -91,8 +127,12 @@ public class ElasticsearchConfiguration {
                 .build();
 
         // Create the transport with a Jackson mapper
-        ElasticsearchTransport transport = new RestClientTransport(
-                restClient, new JacksonJsonpMapper());
+        ElasticsearchTransport transport = new RetryingElasticsearchTransport(
+                new RestClientTransport(restClient, new JacksonJsonpMapper()),
+                resolvedRetryAttempts,
+                resolvedInitialBackoff,
+                resolvedMaxBackoff
+        );
 
         // And create the API client
         return new ElasticsearchClient(transport);
