@@ -54,7 +54,7 @@ public class UserActivityTest {
     public void testValidationShouldFailWhenCountIsNull() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserActivity userActivity = createValidUserHistory();
+            UserActivity userActivity = createValidUserActivity();
             userActivity.setCount(null);
 
             Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
@@ -67,7 +67,7 @@ public class UserActivityTest {
     public void testValidationShouldFailWhenCountIsLessThanOne() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserActivity userActivity = createValidUserHistory();
+            UserActivity userActivity = createValidUserActivity();
             userActivity.setCount(0L);
 
             Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
@@ -80,7 +80,7 @@ public class UserActivityTest {
     public void testValidationShouldPassWhenCountIsPositive() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserActivity userActivity = createValidUserHistory();
+            UserActivity userActivity = createValidUserActivity();
             userActivity.setCount(1L);
 
             Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
@@ -89,7 +89,7 @@ public class UserActivityTest {
         }
     }
 
-    private UserActivity createValidUserHistory() {
+    private UserActivity createValidUserActivity() {
         UserActivity userActivity = new UserActivity();
         userActivity.setCount(1L);
         userActivity.setUpdated("2024-01-08T18:16:41.53");

@@ -25,25 +25,25 @@ class SchedulerServiceTest {
     private DateService dateService;
 
     @Test
-    void testRemoveOldHistoryRecordsShouldReturnDeletedCount() throws IOException {
+    void testRemoveOldActivityRecordsShouldReturnDeletedCount() throws IOException {
         SchedulerService schedulerService = new SchedulerService(esClient, dateService);
         DeleteByQueryResponse response = new DeleteByQueryResponse.Builder().deleted(42L).build();
 
         when(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
         when(esClient.deleteByQuery(any(DeleteByQueryRequest.class))).thenReturn(response);
 
-        Long deleted = schedulerService.removeOldHistoryRecords();
+        Long deleted = schedulerService.removeOldActivityRecords();
 
         Assertions.assertEquals(42L, deleted);
         ArgumentCaptor<DeleteByQueryRequest> requestCaptor = ArgumentCaptor.forClass(DeleteByQueryRequest.class);
         verify(esClient).deleteByQuery(requestCaptor.capture());
         Assertions.assertNotNull(requestCaptor.getValue());
-        Assertions.assertEquals(UserActivityService.INDEX_USER_HISTORY, requestCaptor.getValue().index().getFirst());
+        Assertions.assertEquals(UserActivityService.INDEX_USER_ACTIVITY, requestCaptor.getValue().index().getFirst());
         Assertions.assertNotNull(requestCaptor.getValue().query());
     }
 
     @Test
-    void testRemoveOldHistoryRecordsShouldThrowWhenDeleteByQueryFails() throws IOException {
+    void testRemoveOldActivityRecordsShouldThrowWhenDeleteByQueryFails() throws IOException {
         SchedulerService schedulerService = new SchedulerService(esClient, dateService);
 
         when(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
@@ -51,7 +51,7 @@ class SchedulerServiceTest {
 
         IllegalStateException exception = Assertions.assertThrows(
                 IllegalStateException.class,
-                schedulerService::removeOldHistoryRecords
+                schedulerService::removeOldActivityRecords
         );
 
         Assertions.assertEquals("Failed to remove outdated user-activity records.", exception.getMessage());

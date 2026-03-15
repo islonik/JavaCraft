@@ -38,7 +38,7 @@ public class UserActivityIngestionService {
         UserActivity userActivity = new UserActivity(datetime, userClick);
         String documentId = userActivity.getElasticId(userClick);
         UpdateRequest<UserActivity, Object> updateRequest = new UpdateRequest.Builder<UserActivity, Object>()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 .id(documentId)
                 .upsert(userActivity)
                 .script(script)

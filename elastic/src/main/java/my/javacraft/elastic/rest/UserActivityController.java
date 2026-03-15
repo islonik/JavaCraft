@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Slf4j
 @RestController
 @Validated
-@Tag(name = "2. User history", description = "API(s) for hit count services")
+@Tag(name = "2. User activity", description = "API(s) for hit count services")
 @RequestMapping(path = "/api/services/user-activity")
 @RequiredArgsConstructor
 public class UserActivityController {
@@ -58,7 +58,7 @@ public class UserActivityController {
     public ResponseEntity<UserClickResponse> captureUserClick(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    description = "User history values",
+                    description = "UserClick event",
                     useParameterTypeSchema = true,
                     content = @Content(schema = @Schema(
                             implementation = UserClick.class
@@ -74,8 +74,8 @@ public class UserActivityController {
     }
 
     @Operation(
-            summary = "Search History by userId",
-            description = "Fetch the search history by userId"
+            summary = "Search activity by userId",
+            description = "Fetch the search activity by userId"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful"),
@@ -88,14 +88,14 @@ public class UserActivityController {
 
         log.info("executing getHitCount (documentId = '{}')...", documentId);
 
-        GetResponse<UserActivity> map = userActivityService.getUserHistoryByDocumentId(documentId);
+        GetResponse<UserActivity> map = userActivityService.getUserActivityByDocumentId(documentId);
 
         return ResponseEntity.ok().body(map);
     }
 
     @Operation(
-            summary = "Search History by userId",
-            description = "Fetch the search history by userId"
+            summary = "Search activity by userId",
+            description = "Fetch the search activity by userId"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful"),

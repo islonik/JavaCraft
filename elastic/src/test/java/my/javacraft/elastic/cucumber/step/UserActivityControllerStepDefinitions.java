@@ -47,9 +47,9 @@ public class UserActivityControllerStepDefinitions {
     ElasticsearchClient esClient;
 
     @Given("user {string} doesn't have any events")
-    public void clearUserHistory(String userId) throws IOException {
+    public void clearUserActivity(String userId) throws IOException {
         DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 .query(q -> q.term(t -> t
                         .field(UserActivityService.USER_ID)
                         .value(v -> v.stringValue(userId))

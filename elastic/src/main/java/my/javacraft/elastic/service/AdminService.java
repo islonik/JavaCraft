@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
  * <p>
  * Two groups of indexes are managed:
  * <ul>
- *   <li><b>user-activity</b> – used by UserHistoryController for ingestion and retrieval</li>
+ *   <li><b>user-activity</b> – used by UserActivityController for ingestion and retrieval</li>
  *   <li><b>books / movies / music</b> – used by SearchController for full-text search</li>
  * </ul>
  * Index names for the search group match the lowercased {@code SeekType} enum values
@@ -44,8 +44,8 @@ public class AdminService {
      * Creates the {@code user-activity} index with typed field mappings.
      * <p>
      * Field types are chosen to match the queries used in
-     * {@link UserActivityService}, {@code UserHistoryPopularService}, and
-     * {@code UserHistoryTrendingService}:
+     * {@link UserActivityService}, {@code UserActivityPopularService}, and
+     * {@code UserActivityTrendingService}:
      * <ul>
      *   <li>{@code count} – {@code long} (incremented on upsert)</li>
      *   <li>{@code updated} – {@code date} with ISO-8601 format (used in range queries)</li>
@@ -54,8 +54,8 @@ public class AdminService {
      *   <li>{@code searchValue} – {@code text} (full-text field, not queried directly)</li>
      * </ul>
      */
-    public IndexCreationResult createUserHistoryIndex() throws IOException {
-        log.info("creating index '{}'...", UserActivityService.INDEX_USER_HISTORY);
+    public IndexCreationResult createUserActivityIndex() throws IOException {
+        log.info("creating index '{}'...", UserActivityService.INDEX_USER_ACTIVITY);
 
         Map<String, Property> properties = new LinkedHashMap<>();
         properties.put("count", Property.of(p -> p.long_(l -> l)));
@@ -66,7 +66,7 @@ public class AdminService {
         properties.put("searchType", Property.of(p -> p.keyword(k -> k)));
         properties.put("searchValue", Property.of(p -> p.text(t -> t)));
 
-        return createIndex(UserActivityService.INDEX_USER_HISTORY, properties);
+        return createIndex(UserActivityService.INDEX_USER_ACTIVITY, properties);
     }
 
     /**

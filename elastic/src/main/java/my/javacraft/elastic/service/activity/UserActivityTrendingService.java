@@ -45,7 +45,7 @@ public class UserActivityTrendingService {
 
         SearchResponse<UserActivity> searchResponse = esClient.search(searchRequest, UserActivity.class);
 
-        return prepareTrendingHistoryResult(searchResponse);
+        return prepareTrendingActivityResult(searchResponse);
     }
 
     private SearchRequest prepareTrendingSearchRequest(int size) {
@@ -82,7 +82,7 @@ public class UserActivityTrendingService {
                 ._toQuery();
 
         return new SearchRequest.Builder()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 .query(boolQuery)
                 .aggregations(UserActivityService.RECORD_ID, a1 -> a1
                         .terms(t -> t
@@ -100,7 +100,7 @@ public class UserActivityTrendingService {
                 .build();
     }
 
-    private List<UserActivity> prepareTrendingHistoryResult(SearchResponse<UserActivity> searchResponse) {
+    private List<UserActivity> prepareTrendingActivityResult(SearchResponse<UserActivity> searchResponse) {
         List<StringTermsBucket> buckets = searchResponse
                 .aggregations()
                 .get(UserActivityService.RECORD_ID)

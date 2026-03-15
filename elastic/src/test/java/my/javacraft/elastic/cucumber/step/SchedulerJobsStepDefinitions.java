@@ -76,7 +76,7 @@ public class SchedulerJobsStepDefinitions {
         Assertions.assertTrue(
                 CucumberSpringConfiguration.assertWithWait(
                         expectedResult,
-                        () -> schedulerService.removeOldHistoryRecords()
+                        () -> schedulerService.removeOldActivityRecords()
                 )
         );
     }
@@ -90,7 +90,7 @@ public class SchedulerJobsStepDefinitions {
                     )
             );
             CountRequest countRequest = new CountRequest.Builder()
-                    .index(UserActivityService.INDEX_USER_HISTORY)
+                    .index(UserActivityService.INDEX_USER_ACTIVITY)
                     .query(rangeQuery._toQuery())
                     .build();
             return esClient.count(countRequest).count();

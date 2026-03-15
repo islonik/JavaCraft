@@ -1,4 +1,4 @@
-Feature: test UserHistoryController
+Feature: test UserActivityController
 
   Scenario: prepare data
     Given index 'user-activity' exists

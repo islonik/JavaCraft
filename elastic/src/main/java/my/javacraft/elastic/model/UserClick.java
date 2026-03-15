@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.ToString;
 
-// Represents the incoming event for UserHistoryService
+// Represents the incoming event for UserActivityService
 @Data
 @ToString
 public class UserClick {

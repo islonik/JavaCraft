@@ -73,12 +73,12 @@ public class UserActivityControllerTest {
 
         UserActivity userActivity = Mockito.mock(UserActivity.class);
         GetResponse<UserActivity> getResponse = new GetResponse.Builder<UserActivity>()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 .found(true)
                 .id("part-of-mock-so-any-id")
                 .source(userActivity)
                 .build();
-        when(userActivityService.getUserHistoryByDocumentId(anyString())).thenReturn(getResponse);
+        when(userActivityService.getUserActivityByDocumentId(anyString())).thenReturn(getResponse);
 
         ResponseEntity<GetResponse<UserActivity>> response = userActivityController
                 .getHitCount("documentId");
@@ -88,13 +88,13 @@ public class UserActivityControllerTest {
     }
 
     @Test
-    public void testPopularSearchHistory() throws IOException {
+    public void testPopularSearchActivity() throws IOException {
         UserActivityController userActivityController = new UserActivityController(
                 dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
         );
 
-        List<UserActivity> historyList = new ArrayList<>();
-        when(userActivityPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(historyList);
+        List<UserActivity> activityList = new ArrayList<>();
+        when(userActivityPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(activityList);
 
         ResponseEntity<List<UserActivity>> response = userActivityController
                 .retrievePopularUserSearches("nl88888", 10);
@@ -104,13 +104,13 @@ public class UserActivityControllerTest {
     }
 
     @Test
-    public void testTrendingSearchHistory() throws IOException {
+    public void testTrendingSearchActivity() throws IOException {
         UserActivityController userActivityController = new UserActivityController(
                 dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
         );
 
-        List<UserActivity> historyList = new ArrayList<>();
-        when(userActivityTrendingService.retrieveTrendingUserSearches(anyInt())).thenReturn(historyList);
+        List<UserActivity> activityList = new ArrayList<>();
+        when(userActivityTrendingService.retrieveTrendingUserSearches(anyInt())).thenReturn(activityList);
 
         ResponseEntity<List<UserActivity>> response = userActivityController
                 .retrieveTrendingUserSearches(10);
@@ -152,7 +152,7 @@ public class UserActivityControllerTest {
     }
 
     @Test
-    public void testPopularSearchHistoryValidationShouldFailWhenSizeLessThanOne() throws NoSuchMethodException {
+    public void testPopularSearchActivityValidationShouldFailWhenSizeLessThanOne() throws NoSuchMethodException {
         UserActivityController userActivityController = new UserActivityController(
                 dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
         );
@@ -168,7 +168,7 @@ public class UserActivityControllerTest {
     }
 
     @Test
-    public void testTrendingSearchHistoryValidationShouldFailWhenSizeExceedsMaxValue() throws NoSuchMethodException {
+    public void testTrendingSearchActivityValidationShouldFailWhenSizeExceedsMaxValue() throws NoSuchMethodException {
         UserActivityController userActivityController = new UserActivityController(
                 dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
         );

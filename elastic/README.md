@@ -1,7 +1,7 @@
 # Elasticsearch
 
 An Elasticsearch-backed search and user-activity service. Exposes multiple query strategies
-via REST, ingests user click events into a history index, and returns popular/trending search history.
+via REST, ingests user click events into user-activity index, and returns popular/trending search activity.
 
 > **First time setup:** call the `AdminController` endpoints once to create all required
 > indexes and their field mappings before using `SearchController` or `UserActivityController`.
@@ -13,7 +13,7 @@ via REST, ingests user click events into a history index, and returns popular/tr
 2. [Architecture](#2-architecture)
 3. [API Reference](#3-api-reference)
 4. [Data Model](#4-data-model)
-5. [User History Lifecycle](#5-user-activity-lifecycle)
+5. [User Activity Lifecycle](#5-user-activity-lifecycle)
 6. [Configuration](#6-configuration)
 7. [Scheduler](#7-scheduler)
 8. [Query Types](#8-query-types)
@@ -62,7 +62,7 @@ flowchart TD
 
     Client -->|PUT setup indexes| AC
     Client -->|search POST| SC
-    Client -->|history POST/GET/DELETE| UHC
+    Client -->|activity POST/GET/DELETE| UHC
     AC --> AS
     SC --> SS
     UHC --> UHS
@@ -165,7 +165,7 @@ Both `type` and `client` are validated with `@ValueOfEnum` — case-insensitive,
 
 ---
 
-### User History — `/api/services/user-activity`
+### User Activity — `/api/services/user-activity`
 
 #### Ingest a user click
 
@@ -199,7 +199,7 @@ Response — `UserClickResponse`:
 
 ---
 
-#### Retrieve history
+#### Retrieve activity
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -567,9 +567,9 @@ mvn -pl elastic test
 
 ### BDD integration tests _(require live Elasticsearch)_
 
-| Test class | Type | Covers |
-|------------|------|--------|
-| Cucumber feature files | Integration (BDD) | Search, ingestion, history, and scheduler scenarios end-to-end |
+| Test class | Type | Covers                                                          |
+|------------|------|-----------------------------------------------------------------|
+| Cucumber feature files | Integration (BDD) | Search, ingestion, activity, and scheduler scenarios end-to-end |
 
 > [!WARNING]
 > We need to have cucumber.properties to avoid java.lang.NoClassDefFoundError: com/sun/jna/platform/win32/Win32Exception

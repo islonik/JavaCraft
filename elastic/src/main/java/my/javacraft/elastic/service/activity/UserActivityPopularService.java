@@ -33,7 +33,7 @@ public class UserActivityPopularService {
 
     public List<UserActivity> retrievePopularUserSearches(String userId, int searchLimitSize) throws IOException {
         SearchRequest searchRequest = new SearchRequest.Builder()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 // search by userId
                 .query(q -> q.term(t -> t
                         .field(UserActivityService.USER_ID)

@@ -18,7 +18,7 @@ public class SchedulerService {
     private final ElasticsearchClient esClient;
     private final DateService dateService;
 
-    public Long removeOldHistoryRecords() {
+    public Long removeOldActivityRecords() {
         try {
             RangeQuery rangeQuery = RangeQuery.of(r -> r
                     .date(d -> d
@@ -27,7 +27,7 @@ public class SchedulerService {
                     )
             );
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                    .index(UserActivityService.INDEX_USER_HISTORY)
+                    .index(UserActivityService.INDEX_USER_ACTIVITY)
                     .query(rangeQuery._toQuery())
                     .build();
 

@@ -24,7 +24,7 @@ public class AdminServiceTest {
     ElasticsearchClient esClient;
 
     @Test
-    public void testCreateUserHistoryIndex() throws IOException {
+    public void testCreateUserActivityIndex() throws IOException {
         AdminService adminService = new AdminService(esClient);
 
         ElasticsearchIndicesClient indicesClient = Mockito.mock(ElasticsearchIndicesClient.class);
@@ -35,7 +35,7 @@ public class AdminServiceTest {
         when(indicesClient.create(any(CreateIndexRequest.class))).thenReturn(createIndexResponse);
         when(createIndexResponse.acknowledged()).thenReturn(true);
 
-        AdminService.IndexCreationResult response = adminService.createUserHistoryIndex();
+        AdminService.IndexCreationResult response = adminService.createUserActivityIndex();
 
         Assertions.assertNotNull(response);
         Assertions.assertTrue(response.created());

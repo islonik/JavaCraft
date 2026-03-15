@@ -20,7 +20,7 @@ public class UserActivityService {
     public static final int SIX_MONTHS = 180;
     public static final int SEVEN_DAYS = 7;
     public static final int MAX_VALUES = 10000; // Elasticsearch limit
-    public static final String INDEX_USER_HISTORY = "user-activity";
+    public static final String INDEX_USER_ACTIVITY = "user-activity";
     public static final String COUNT = "count";
     public static final String UPDATED = "updated";
     public static final String RECORD_ID = "recordId";
@@ -28,9 +28,9 @@ public class UserActivityService {
 
     private final ElasticsearchClient esClient;
 
-    public GetResponse<UserActivity> getUserHistoryByDocumentId(String documentId) throws IOException {
+    public GetResponse<UserActivity> getUserActivityByDocumentId(String documentId) throws IOException {
         GetRequest getRequest = new GetRequest.Builder()
-                .index(INDEX_USER_HISTORY)
+                .index(INDEX_USER_ACTIVITY)
                 .id(documentId)
                 .build();
 

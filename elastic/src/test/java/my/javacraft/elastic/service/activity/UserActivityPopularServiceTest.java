@@ -28,14 +28,14 @@ public class UserActivityPopularServiceTest {
     ElasticsearchClient esClient;
 
     @Test
-    public void testSearchHistoryByUserId() throws IOException {
+    public void testSearchActivityByUserId() throws IOException {
         UserActivityPopularService userActivityPopularService = new UserActivityPopularService(esClient);
 
         UserClick userClick = UserClickTest.createHitCount();
         UserActivity userActivity = new UserActivity("2024-01-08T18:16:41.530571300Z", userClick);
 
         Hit<UserActivity> hitMap = new Hit.Builder<UserActivity>()
-                .index(UserActivityService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_ACTIVITY)
                 .id(userActivity.getElasticId(userClick))
                 .source(userActivity)
                 .build();

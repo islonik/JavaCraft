@@ -38,7 +38,7 @@ public class AdminController {
     @Operation(
             summary = "Create user-activity index",
             description = "Creates the 'user-activity' index with typed field mappings (date, keyword, long, text). "
-                    + "Required by UserHistoryController for ingestion, retrieval, and trending queries."
+                    + "Required by UserActivityController for ingestion, retrieval, and trending queries."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Index created successfully"),
@@ -46,9 +46,9 @@ public class AdminController {
             @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
     @PutMapping(value = "/indexes/user-activity", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CreateIndexResponse> createUserHistoryIndex() throws IOException {
+    public ResponseEntity<CreateIndexResponse> createUserActivityIndex() throws IOException {
         log.info("request to create user-activity index");
-        AdminService.IndexCreationResult result = adminService.createUserHistoryIndex();
+        AdminService.IndexCreationResult result = adminService.createUserActivityIndex();
         return buildResponse(result);
     }
 
