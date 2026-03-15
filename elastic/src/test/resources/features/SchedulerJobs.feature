@@ -1,7 +1,7 @@
 Feature: test Scheduler jobs
 
   Scenario: nothing to remove
-    Given there are 0 outdated records
+    Given there are no outdated records
     Then execute cleanup job with expected result of 0
 
   Scenario: remove 10 old documents

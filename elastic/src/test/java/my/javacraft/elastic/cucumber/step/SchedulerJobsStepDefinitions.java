@@ -1,5 +1,8 @@
 package my.javacraft.elastic.cucumber.step;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
+import co.elastic.clients.elasticsearch.core.CountRequest;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import java.io.IOException;
@@ -13,12 +16,12 @@ import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.SchedulerService;
 import my.javacraft.elastic.service.activity.UserActivityIngestionService;
+import my.javacraft.elastic.service.activity.UserActivityService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
-
 
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
@@ -31,9 +34,25 @@ public class SchedulerJobsStepDefinitions {
     DateService dateService;
     @Autowired
     SchedulerService schedulerService;
+    @Autowired
+    ElasticsearchClient esClient;
+
+    @Given("there are no outdated records")
+    public void ensureThereAreNoOutdatedRecords() throws InterruptedException {
+        log.info("confirming there are no outdated records...");
+
+        Assertions.assertTrue(
+                CucumberSpringConfiguration.assertWithWait(0L, this::countOutdatedRecords)
+        );
+
+        log.info("confirmed there are no outdated records");
+    }
 
     @Given("there are {int} outdated records")
     public void createOutdatedRecords(Integer records) throws IOException {
+        if (records <= 0) {
+            throw new IllegalArgumentException("The amount of records should be positive!");
+        }
         log.info("creating outdated records...");
 
         List<UserClickResponse> responses = new ArrayList<>();
@@ -50,13 +69,34 @@ public class SchedulerJobsStepDefinitions {
         }
 
         log.info("created outdated records = {}", responses.size());
-
     }
 
     @Then("execute cleanup job with expected result of {long}")
     public void executeCleanUpJob(Long expectedResult) throws InterruptedException {
-        CucumberSpringConfiguration.waitAsElasticSearchIsEventuallyConsistentDB();
+        Assertions.assertTrue(
+                CucumberSpringConfiguration.assertWithWait(
+                        expectedResult,
+                        () -> schedulerService.removeOldHistoryRecords()
+                )
+        );
+    }
 
-        Assertions.assertEquals(expectedResult, schedulerService.removeOldHistoryRecords());
+    private long countOutdatedRecords() {
+        try {
+            RangeQuery rangeQuery = RangeQuery
+                    .of(r -> r.date(d -> d
+                            .field(UserActivityService.UPDATED)
+                            .lte(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS))
+                    )
+            );
+            CountRequest countRequest = new CountRequest.Builder()
+                    .index(UserActivityService.INDEX_USER_HISTORY)
+                    .query(rangeQuery._toQuery())
+                    .build();
+            return esClient.count(countRequest).count();
+        } catch (IOException ioe) {
+            log.error(ioe.getMessage(), ioe);
+            return -1;
+        }
     }
 }
