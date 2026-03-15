@@ -6,9 +6,22 @@ Supports arithmetic, trig, logarithms, variables, and implicit multiplication ou
 
 **Stack:** Java, Swing (GUI module)
 
+## Contents
+1. [Quick Start](#1-quick-start)
+2. [Architecture](#2-architecture)
+3. [Expression Syntax](#3-expression-syntax)
+4. [Functions Reference](#4-functions-reference)
+5. [Variables](#5-variables)
+6. [Angle Units](#6-angle-units)
+7. [Evaluation Flow](#7-evaluation-flow)
+8. [Parser API](#8-parser-api)
+9. [Limits](#9-limits)
+10. [Error Reference](#10-error-reference)
+11. [Tests](#11-tests)
+
 ---
 
-## Quick Start
+## 1. Quick Start
 
 **Prerequisites:** Java installed, Maven installed
 
@@ -32,7 +45,8 @@ parser.calculate("1 / 0")                 // → "Division by zero"
 
 ---
 
-## Architecture
+## 2. Architecture
+<sub>[Back to top](#mathparser)</sub>
 
 ```mermaid
 flowchart TD
@@ -62,7 +76,8 @@ flowchart TD
 
 ---
 
-## Expression Syntax
+## 3. Expression Syntax
+<sub>[Back to top](#mathparser)</sub>
 
 ### Operators
 
@@ -97,7 +112,8 @@ The parser recognises juxtaposition as multiplication — no `*` operator needed
 
 ---
 
-## Functions Reference
+## 4. Functions Reference
+<sub>[Back to top](#mathparser)</sub>
 
 ### One-parameter functions
 
@@ -140,7 +156,8 @@ Accept any number of comma-separated arguments (≥ 1).
 
 ---
 
-## Variables
+## 5. Variables
+<sub>[Back to top](#mathparser)</sub>
 
 Variables are assigned and looked up within the **same `Parser` instance**. The assignment
 expression itself returns the assigned value as a `String`.
@@ -161,7 +178,8 @@ parser.calculate("a + b");    // → "7.0"
 
 ---
 
-## Angle Units
+## 6. Angle Units
+<sub>[Back to top](#mathparser)</sub>
 
 Trigonometric and inverse-trigonometric functions use the angle unit configured on the
 `Parser` instance. The default is **DEGREE**.
@@ -186,7 +204,8 @@ parser.calculate("sin(100)");         // → "1.0"  (100 grad = 90°)
 
 ---
 
-## Evaluation Flow
+## 7. Evaluation Flow
+<sub>[Back to top](#mathparser)</sub>
 
 ```mermaid
 sequenceDiagram
@@ -227,7 +246,8 @@ The seven precedence levels, from lowest to highest:
 
 ---
 
-## Parser API
+## 8. Parser API
+<sub>[Back to top](#mathparser)</sub>
 
 ```java
 // Constructors
@@ -246,7 +266,8 @@ Function names are matched case-insensitively using `Locale.ROOT` to avoid Turki
 
 ---
 
-## Limits
+## 9. Limits
+<sub>[Back to top](#mathparser)</sub>
 
 | Limit | Value | Error returned |
 |-------|-------|----------------|
@@ -257,7 +278,8 @@ Function names are matched case-insensitively using `Locale.ROOT` to avoid Turki
 
 ---
 
-## Error Reference
+## 10. Error Reference
+<sub>[Back to top](#mathparser)</sub>
 
 All errors are members of `ParserException.Error`. `calculate()` returns the corresponding
 message string when an error is detected.
@@ -278,7 +300,8 @@ message string when an error is detected.
 
 ---
 
-## Tests
+## 11. Tests
+<sub>[Back to top](#mathparser)</sub>
 
 Run all parser tests:
 
@@ -286,15 +309,20 @@ Run all parser tests:
 mvn -pl mathparser/parser test
 ```
 
-Compile GUI tests (real Swing windows — unstable in headless/macOS CI environments):
+Compile GUI tests (real Swing windows — unstable in macOS environments):
 
 ```bash
 mvn -pl mathparser/gui test-compile
 ```
 
-| Test class | Type | Covers |
-|------------|------|--------|
-| `ParserTest` | Unit | 87 tests — addition, subtraction, multiplication, division, modulo, exponentiation, combinations (precedence, brackets, implicit multiplication, constants), variables, all one/two/multi-param functions across all angle modes, whitespace normalization, locale safety |
-| `ParserExceptionTest` | Unit | 44 tests — all 11 `ParserException.Error` constants with multiple edge cases each, organised by enum declaration order |
-| `GUITest` | Unit (Swing) | 8 tests — calculate button, clear, backspace, history save, angle-unit radio toggle, "More" panel toggle, help dialog, error display |
-| `HelpMessageLoaderTest` | Unit | Help text resource loading from classpath and fallback for missing resource |
+### Coverage summary
+
+| Module |   Tests |               Line coverage |
+|--------|--------:|----------------------------:|
+| mathparser/parser |     131 |                     99.4% ✅ |
+| mathparser/gui |      11 |                        97 ✅ |
+| **Total** | **140** |     **98%** |
+
+> [!TIP]
+> Main.java is not covered. GUI tests could fail or not to be executed at all.
+
