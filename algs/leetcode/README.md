@@ -5,23 +5,14 @@ This module should contain leetcode problems, solutions, and tests.
 ## Solutions
 1. [Two pointers](#1-two-pointers)
 2. [Fast and slow pointers](#2-fast-and-slow-pointers)
+3. [Sliding Window](#3-sliding-window)
 
 ---
 ### 1. Two pointers
 
 The Two-Pointers Technique is a simple yet powerful strategy where you use two indices (pointers) that traverse a data structure - such as an array, list, or string - either toward each other or in the same direction to solve problems more efficiently.
 
-#### When to Use Two Pointers:
-* <b>Sorted Input</b> : If the array or list is already sorted (or can be sorted), two pointers can efficiently find pairs or ranges. Example: Find two numbers in a sorted array that add up to a target.
-* <b>Pairs or Subarrays</b> : When the problem asks about two elements, subarrays, or ranges instead of working with single elements. Example: Longest substring without repeating characters, maximum consecutive ones, checking if a string is palindrome.
-* <b>Sliding Window Problems</b> : When you need to maintain a window of elements that grows/shrinks based on conditions. Example: Find smallest subarray with sum ≥ K, move all zeros to end while maintaining order.
-* <b>Linked Lists (Slow–Fast pointers)</b> : Detecting cycles, finding the middle node, or checking palindrome property. Example: Floyd’s Cycle Detection Algorithm (Tortoise and Hare).
-
-#### Complexity
-Time complexity - O(n)
-Memory complexity - O(1)
-
-#### Idea
+#### 1.1. Idea
 The idea of this technique is to begin with two corners of the given array. We use two index variables <b>left</b> and <b>right</b> to traverse from both corners.
 
 Initialize: left = 0, right = n - 1
@@ -33,11 +24,22 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 * If the <b>sum</b> is less than the <b>target</b>, move the <b>left</b> pointer to the right to increase the <b>sum</b>.
 * If the <b>sum</b> is greater than the <b>target</b>, move the <b>right</b> pointer to the left to decrease the <b>sum</b>.
 
-#### Illustration
+#### 1.2. Illustration
 
 ![Two pointers diagram](./images/1_two_pointers.webp)
 
-#### How to detect it should be used
+#### 1.3. Complexity
+
+Time: O(n)<br/>
+Space: O(1)
+
+#### 1.4. When to Use Two Pointers:
+* <b>Sorted Input</b> : If the array or list is already sorted (or can be sorted), two pointers can efficiently find pairs or ranges. Example: Find two numbers in a sorted array that add up to a target.
+* <b>Pairs or Subarrays</b> : When the problem asks about two elements, subarrays, or ranges instead of working with single elements. Example: Longest substring without repeating characters, maximum consecutive ones, checking if a string is palindrome.
+* <b>Sliding Window Problems</b> : When you need to maintain a window of elements that grows/shrinks based on conditions. Example: Find smallest subarray with sum ≥ K, move all zeros to end while maintaining order.
+* <b>Linked Lists (Slow–Fast pointers)</b> : Detecting cycles, finding the middle node, or checking palindrome property. Example: Floyd’s Cycle Detection Algorithm (Tortoise and Hare).
+
+#### 1.5. How to detect it should be used
 
 * <b>The input is sorted</b> : A sorted array or list is the clearest signal — opposite-end traversal can find pairs or validate ranges in one pass. Example: merge sorted array (#88), search insert position (#35).
 * <b>"Find a pair / two elements"</b> : Any problem asking for two indices or values that satisfy a condition (sum, difference, product) is a direct match. Example: two sum (#1).
@@ -52,13 +54,30 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 
 Similar to the two pointers pattern, the fast and slow pointers pattern uses two pointers to traverse an iterable data structure, but at different speeds, often to identify cycles or find a specific target. The speeds of the pointers can be adjusted according to the problem statement. The two pointers pattern focuses on comparing data values, whereas the fast and slow pointers method is typically used to analyze the structure or properties of the data.
 
+#### 2.1. Idea
+
 The key idea is that the pointers start at the same location and then start moving at different speeds. The slow pointer moves one step at a time, while the fast pointer moves by two steps. Due to the different speeds of the pointers, this pattern is also commonly known as the <b>Hare and Tortoise algorithm</b>, where the Hare is the fast pointer while Tortoise is the slow pointer. If a cycle exists, the two pointers will eventually meet during traversal. This approach enables the algorithm to detect specific properties within the data structure, such as cycles, midpoints, or intersections.
 
-#### Illustration
+#### 2.2. Illustration
 
 ![Fast and slow pointers diagram](./images/2_fast_and_slow_pointers.webp)
 
-#### How to detect it should be used
+#### 2.3. Complexity
+Time: O(n)<br/>
+Space: O(1)
+
+##### 2.3.1. Why O(n) time:
+
+* No cycle — the fast pointer hits null after traversing at most n nodes (it skips every other node, so at most n/2 steps, still O(n))<br/>
+* Cycle exists — once both pointers are inside the cycle, the fast pointer gains one step on the slow pointer per iteration. The cycle length is at most n, so they meet within n more steps → still O(n) total<br/>
+* Finding the middle — fast reaches the end after n/2 steps → O(n)<br/>
+* Intersection of two lists — each pointer walks at most m + n nodes before meeting → O(m + n)
+
+##### 2.3.2. Why O(1) space:
+
+Only two pointer variables (slow, fast) are maintained regardless of list size. No auxiliary data structure (array, set, map) is ever allocated. This is the key advantage over the hash-set alternative — for example, hasCycle2 in LinkedListCycle.java solves the same problem in O(n) space by storing visited nodes in a HashSet.
+
+#### 2.4. How to detect it should be used
 
 * <b>Input is a linked list</b> : Fast/slow pointers are the primary tool for linked-list structural problems because you can't index directly into a list and often must use O(1) space. Example: linked list cycle (#141), intersection of two linked lists (#160).
 * <b>"Cycle" or "loop" in the problem title or constraints</b> : Detecting whether a cycle exists, and finding where it starts, is the textbook use case for Floyd's Tortoise and Hare algorithm. Example: linked list cycle (#141).
@@ -67,5 +86,58 @@ The key idea is that the pointers start at the same location and then start movi
 * <b>"Nth node from the end" or "remove kth from end"</b> : Advance the fast pointer N steps first, then move both together — when fast hits null, slow is exactly at the target.
 * <b>O(1) space required on a linked list</b> : Hash-set alternatives work but use O(n) space; fast/slow pointers solve the same problems in constant space. Example: `hasCycle2` in linked list cycle (#141) shows the hash-set contrast.
 * <b>Keywords to watch for</b> : "linked list", "cycle", "loop", "circular", "middle node", "intersection", "nth from end", "detect", "Floyd".
+
+---
+
+### 3. Sliding Window
+<sub>[Back to solutions](#Solutions)</sub>
+
+Imagine you have a tray of 10 cookies and want to find the most chocolate chips in any 3 cookies next to each other. Using a naive approach, you’d stand at each cookie and count its chocolate chips along with those of its immediate left and right neighbors to form every possible group of 3. This means repeating the counting process for each cookie, which quickly becomes inefficient as the number of cookies grows.
+
+#### 3.1. Idea
+
+We can avoid this hassle by using a smarter approach. Instead of recounting the chips for each group from scratch, you start by counting the chips in the first 3 cookies. Then, as you move to the next group, you simply subtract the chips from the cookie you leave behind and add the chips from the new cookie you include.
+
+Consider the following steps:
+
+1. Count the chips in the first three cookies. This is your starting total—and your initial “best so far.”
+2. Slide the window one cookie to the right:
+    1. Subtract the chips from the cookie that just slipped out of the window.
+    2. Add the chips from the fresh cookie that slid into view.
+3. If this new sum tops your current record, replace it with the initial “best so far”.
+4. Repeat the above steps for each group of three cookies, all the way to the last one.
+
+By updating the total in constant time with each slide, you find the group of neighboring cookies with maximum chocolate chips without ever recounting the entire window—a perfect illustration of the sliding-window technique.
+
+#### 3.2. Illustration
+
+![Sliding window](./images/3_sliding_window_1.webp)
+
+![Sliding window](./images/3_sliding_window_2.webp)
+
+#### 3.3. Complexity
+
+Time: O(n)<br/>
+Space: O(1) or O(k)
+
+##### 3.3.1. Why O(n) time:
+
+Each element is touched at most twice — once when the right pointer expands the window over it, and once when the left pointer shrinks past it. Despite looking like a nested loop, the total pointer movements across the entire run is bounded by 2n → O(n).
+
+##### 3.3.2. Why the space depends on window type:
+
+There are two variants:
+
+* Fixed-size window (like the cookie example in the README) — only a running sum and a max variable are needed → O(1) space
+* Dynamic/variable window — the window grows and shrinks based on a condition (e.g. "longest substring without repeating characters"), which typically requires a HashMap or HashSet to track what's currently inside the window → O(k) space, where k is the number of distinct elements in the window (≤ alphabet size, so often treated as O(1) for fixed alphabets, or O(n) worst case for arbitrary inputs)
+
+#### 3.4. How to detect it should be used
+
+* <b>"k consecutive elements" or "subarray of size k"</b> : Any mention of a fixed-length contiguous segment is the clearest signal for a fixed window — slide it one step at a time and update the aggregate in O(1). Classic example: maximum average subarray of size k (#643), best time to buy and sell stock (#121).
+* <b>"Longest / shortest subarray or substring"</b> : When the problem asks for the optimal-length contiguous segment under a constraint (sum ≥ target, no repeating characters, at most k distinct elements), use a variable window: expand right to grow toward the constraint, shrink left once it is satisfied. Classic example: longest substring without repeating characters (#3), minimum size subarray sum (#209).
+* <b>You can see an O(n²) brute force with two nested loops</b> : If the naive solution tries every (start, end) pair, sliding window is the O(n) upgrade — it avoids recomputing the inner loop by maintaining a running aggregate that is updated in constant time with each slide.
+* <b>The condition is monotone as the window grows</b> : Sliding window works when making the window larger always pushes the aggregate in one direction (adding elements only increases the sum, only increases distinct count, etc.), so you know exactly when to stop growing and start shrinking.
+* <b>Elements must be contiguous</b> : This is the key differentiator from two pointers — sliding window only applies when the answer involves adjacent elements. If the problem lets you pick any two elements regardless of position, two pointers is the right pattern instead.
+* <b>Keywords to watch for</b> : "subarray", "substring", "contiguous", "consecutive", "window of size k", "longest", "shortest", "minimum length", "maximum sum", "at most k distinct", "no repeating".
 
 ---
