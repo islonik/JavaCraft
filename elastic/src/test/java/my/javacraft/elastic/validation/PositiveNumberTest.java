@@ -13,5 +13,4 @@ public class PositiveNumberTest {
         Assertions.assertEquals(100L, PositiveNumber.positiveOrDefault(100L, 5L));
         Assertions.assertEquals(5L, PositiveNumber.positiveOrDefault(-1L, 5L));
     }
-
 }

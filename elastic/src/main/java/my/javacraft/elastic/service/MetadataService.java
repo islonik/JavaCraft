@@ -4,24 +4,29 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Set;
-import lombok.Getter;
 import my.javacraft.elastic.model.SeekTypeMetadata;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 @Service
-@Getter
 public class MetadataService {
 
-    Set<SeekTypeMetadata> seekTypeMetadata;
+    private final Set<SeekTypeMetadata> seekTypeMetadata;
 
+    // metadata.json must always be present in the current architecture.
+    // If it is missing, the application should fail fast.
     public MetadataService() throws IOException {
         ClassPathResource metadataResource = new ClassPathResource("metadata.json");
         ObjectMapper objectMapper = new ObjectMapper();
         try (InputStream metadataStream = metadataResource.getInputStream()) {
             seekTypeMetadata = objectMapper.readValue(metadataStream, new TypeReference<>() {});
         }
+    }
+
+    public Set<SeekTypeMetadata> getSeekTypeMetadata() {
+        return Collections.unmodifiableSet(seekTypeMetadata);
     }
 
 }

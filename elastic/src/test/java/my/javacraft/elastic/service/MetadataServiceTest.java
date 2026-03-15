@@ -25,4 +25,18 @@ class MetadataServiceTest {
         Assertions.assertTrue(seekTypes.contains(SeekType.MOVIES));
         Assertions.assertTrue(seekTypes.contains(SeekType.MUSIC));
     }
+
+    @Test
+    void testChangeOnUnmodifiableCollection() throws IOException {
+        MetadataService metadataService = new MetadataService();
+
+        Set<SeekTypeMetadata> set = metadataService.getSeekTypeMetadata();
+
+        try {
+            set.add(new SeekTypeMetadata());
+            Assertions.fail();
+        } catch (UnsupportedOperationException uoe) {
+            Assertions.assertNotNull(uoe);
+        }
+    }
 }

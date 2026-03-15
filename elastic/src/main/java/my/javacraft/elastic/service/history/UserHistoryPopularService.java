@@ -39,7 +39,7 @@ public class UserHistoryPopularService {
                 ).build();
 
         // use -Dlogging.level.tracer=TRACE to print a full CURL statement or see
-        log.debug("JSON representation of a query: " + JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
+        log.debug("JSON representation of a query: {}", JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
         List<UserHistory> userHistoryList = esClient.search(searchRequest, UserHistory.class)
                 .hits()
                 .hits()

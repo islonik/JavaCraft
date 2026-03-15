@@ -1,12 +1,13 @@
 package my.javacraft.elastic.validation;
 
-public interface PositiveNumber {
+// Utility class with static methods
+public final class PositiveNumber {
 
-    static int positiveOrDefault(int value, int defaultValue) {
+    public static int positiveOrDefault(int value, int defaultValue) {
         return value > 0 ? value : defaultValue;
     }
 
-    static long positiveOrDefault(long value, long defaultValue) {
+    public static long positiveOrDefault(long value, long defaultValue) {
         return value > 0 ? value : defaultValue;
     }
 }
