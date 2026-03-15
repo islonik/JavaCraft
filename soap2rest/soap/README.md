@@ -128,16 +128,16 @@ mvn -pl soap2rest/soap -Dtest=my.javacraft.soap2rest.soap.cucumber.CucumberRunne
 - Runner: `CucumberRunner`
 - Spring test context: `CucumberSpringConfiguration`
 - Step definitions:
-  - `WireMockDefinition`
-  - `ElectricServiceDefinition`
-  - `GasServiceDefinition`
-  - `SmartServiceDefinition`
+  - `ElectricStepDefinitions`
+  - `GasStepDefinitions`
+  - `SmartStepDefinitions`
+  - `WireMockStepDefinitions`
 - Feature files:
   - `src/test/resources/features/ElectricService.feature`
   - `src/test/resources/features/GasService.feature`
   - `src/test/resources/features/SmartService.feature`
 
-All REST HTTP calls in Cucumber tests are mocked with WireMock stubs from `WireMockDefinition`.
+All REST HTTP calls in Cucumber tests are mocked with WireMock stubs from `WireMockStepDefinitions`.
 
 ## Expected output
 

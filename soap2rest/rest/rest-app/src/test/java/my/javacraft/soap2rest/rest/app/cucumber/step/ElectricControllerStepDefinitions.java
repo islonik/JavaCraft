@@ -31,7 +31,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
  */
 @Scope(SCOPE_CUCUMBER_GLUE)
 @RequiredArgsConstructor
-public class ElectricStepDefinitions {
+public class ElectricControllerStepDefinitions {
 
     @LocalServerPort
     int port;

@@ -31,7 +31,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class SmartStepDefinitions {
+public class SmartControllerStepDefinitions {
 
     @LocalServerPort
     int port;

@@ -18,7 +18,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class WireMockDefinition {
+public class WireMockStepDefinitions {
 
     private static final String FIRST_METRIC_ADDED = "FIRST_METRIC_ADDED";
     private static final String SECOND_METRIC_ADDED = "SECOND_METRIC_ADDED";

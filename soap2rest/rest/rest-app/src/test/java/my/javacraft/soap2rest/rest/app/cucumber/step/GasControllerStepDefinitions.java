@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class GasStepDefinitions {
+public class GasControllerStepDefinitions {
 
     @LocalServerPort
     int port;

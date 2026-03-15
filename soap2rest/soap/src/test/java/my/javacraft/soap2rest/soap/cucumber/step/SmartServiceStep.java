@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class SmartServiceDefinition extends BaseDefinition {
+public class SmartServiceStep extends BaseSoapStep {
 
     private static final String SUCCESS_CODE = "200";
 
