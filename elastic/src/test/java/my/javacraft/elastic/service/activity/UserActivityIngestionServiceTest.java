@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 @ExtendWith(MockitoExtension.class)
-public class UserHistoryIngestionServiceTest {
+public class UserActivityIngestionServiceTest {
 
     @Mock
     ElasticsearchClient esClient;
@@ -36,13 +36,13 @@ public class UserHistoryIngestionServiceTest {
         when(esClient.update(any(UpdateRequest.class), any())).thenReturn(updateResponse);
         UserClick userClick = UserClickTest.createHitCount();
 
-        UserHistoryIngestionService ingestionService = new UserHistoryIngestionService(esClient);
+        UserActivityIngestionService ingestionService = new UserActivityIngestionService(esClient);
         Assertions.assertNotNull(ingestionService.ingestUserClick(userClick, dateService.getCurrentDate()));
     }
 
     @Test
     public void testCreateInlineScript() {
-        UserHistoryIngestionService ingestionService = new UserHistoryIngestionService(esClient);
+        UserActivityIngestionService ingestionService = new UserActivityIngestionService(esClient);
         Assertions.assertEquals("""
                         ctx._source.count++;
                         ctx._source.updated=params['updated'];

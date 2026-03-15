@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickTest;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,41 +22,41 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked"})
 @ExtendWith(MockitoExtension.class)
-public class UserHistoryPopularServiceTest {
+public class UserActivityPopularServiceTest {
 
     @Mock
     ElasticsearchClient esClient;
 
     @Test
     public void testSearchHistoryByUserId() throws IOException {
-        UserHistoryPopularService userHistoryPopularService = new UserHistoryPopularService(esClient);
+        UserActivityPopularService userActivityPopularService = new UserActivityPopularService(esClient);
 
         UserClick userClick = UserClickTest.createHitCount();
-        UserHistory userHistory = new UserHistory("2024-01-08T18:16:41.530571300Z", userClick);
+        UserActivity userActivity = new UserActivity("2024-01-08T18:16:41.530571300Z", userClick);
 
-        Hit<UserHistory> hitMap = new Hit.Builder<UserHistory>()
-                .index(UserHistoryService.INDEX_USER_HISTORY)
-                .id(userHistory.getElasticId(userClick))
-                .source(userHistory)
+        Hit<UserActivity> hitMap = new Hit.Builder<UserActivity>()
+                .index(UserActivityService.INDEX_USER_HISTORY)
+                .id(userActivity.getElasticId(userClick))
+                .source(userActivity)
                 .build();
 
-        List<Hit<UserHistory>> hitList = new ArrayList<>();
+        List<Hit<UserActivity>> hitList = new ArrayList<>();
         hitList.add(hitMap);
 
-        HitsMetadata<UserHistory> hitsMetadata = mock(HitsMetadata.class);
+        HitsMetadata<UserActivity> hitsMetadata = mock(HitsMetadata.class);
         when(hitsMetadata.hits()).thenReturn(hitList);
 
-        SearchResponse<UserHistory> searchResponse = mock(SearchResponse.class);
+        SearchResponse<UserActivity> searchResponse = mock(SearchResponse.class);
         when(searchResponse.hits()).thenReturn(hitsMetadata);
 
         when(esClient._jsonpMapper()).thenReturn(new JacksonJsonpMapper());
-        when(esClient.search(any(SearchRequest.class), eq(UserHistory.class))).thenReturn(searchResponse);
+        when(esClient.search(any(SearchRequest.class), eq(UserActivity.class))).thenReturn(searchResponse);
 
-        List<UserHistory> result = userHistoryPopularService.retrievePopularUserSearches("nl8888", 10);
+        List<UserActivity> result = userActivityPopularService.retrievePopularUserSearches("nl8888", 10);
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.size());
 
-        UserHistory resultHit = result.getFirst();
+        UserActivity resultHit = result.getFirst();
         Assertions.assertEquals(1L, resultHit.getCount());
         Assertions.assertEquals("nl8888", resultHit.getUserId());
         Assertions.assertEquals("12345", resultHit.getRecordId());

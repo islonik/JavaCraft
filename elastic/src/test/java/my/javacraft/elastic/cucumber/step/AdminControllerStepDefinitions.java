@@ -25,7 +25,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 public class AdminControllerStepDefinitions {
 
-    private static final Set<String> SUPPORTED_INDEXES = Set.of("books", "movies", "music", "user-history");
+    private static final Set<String> SUPPORTED_INDEXES = Set.of("books", "movies", "music", "user-activity");
 
     @LocalServerPort
     int port;

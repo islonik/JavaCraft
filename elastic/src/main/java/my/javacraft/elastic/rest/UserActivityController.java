@@ -17,12 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import my.javacraft.elastic.service.DateService;
-import my.javacraft.elastic.service.history.UserHistoryIngestionService;
-import my.javacraft.elastic.service.history.UserHistoryPopularService;
-import my.javacraft.elastic.service.history.UserHistoryService;
-import my.javacraft.elastic.service.history.UserHistoryTrendingService;
+import my.javacraft.elastic.service.activity.UserActivityIngestionService;
+import my.javacraft.elastic.service.activity.UserActivityPopularService;
+import my.javacraft.elastic.service.activity.UserActivityService;
+import my.javacraft.elastic.service.activity.UserActivityTrendingService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,15 +33,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @Validated
 @Tag(name = "2. User history", description = "API(s) for hit count services")
-@RequestMapping(path = "/api/services/user-history")
+@RequestMapping(path = "/api/services/user-activity")
 @RequiredArgsConstructor
-public class UserHistoryController {
+public class UserActivityController {
 
     private final DateService dateService;
-    private final UserHistoryService userHistoryService;
-    private final UserHistoryPopularService userHistoryPopularService;
-    private final UserHistoryTrendingService userHistoryTrendingService;
-    private final UserHistoryIngestionService userHistoryIngestionService;
+    private final UserActivityService userActivityService;
+    private final UserActivityPopularService userActivityPopularService;
+    private final UserActivityTrendingService userActivityTrendingService;
+    private final UserActivityIngestionService userActivityIngestionService;
 
     @Operation(
             summary = "Capture user click",
@@ -68,7 +68,7 @@ public class UserHistoryController {
 
         log.info("ingesting (UserClick = {})...", userClick);
 
-        UserClickResponse userClickResponse = userHistoryIngestionService.ingestUserClick(userClick, dateService.getCurrentDate());
+        UserClickResponse userClickResponse = userActivityIngestionService.ingestUserClick(userClick, dateService.getCurrentDate());
 
         return ResponseEntity.ok().body(userClickResponse);
     }
@@ -83,12 +83,12 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping(value = "/documents/{documentId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GetResponse<UserHistory>> getHitCount(
+    public ResponseEntity<GetResponse<UserActivity>> getHitCount(
             @PathVariable("documentId") String documentId) throws IOException {
 
         log.info("executing getHitCount (documentId = '{}')...", documentId);
 
-        GetResponse<UserHistory> map = userHistoryService.getUserHistoryByDocumentId(documentId);
+        GetResponse<UserActivity> map = userActivityService.getUserHistoryByDocumentId(documentId);
 
         return ResponseEntity.ok().body(map);
     }
@@ -103,14 +103,14 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserHistory>> retrievePopularUserSearches(
+    public ResponseEntity<List<UserActivity>> retrievePopularUserSearches(
             @PathVariable("userId") String userId,
             @RequestParam(required = false, name = "size", defaultValue = "10")
-            @Min(1) @Max(UserHistoryService.MAX_VALUES) int size) throws IOException {
+            @Min(1) @Max(UserActivityService.MAX_VALUES) int size) throws IOException {
 
         log.info("retrieving popular user searches (userId = '{}' and limit = '{}')...", userId, size);
 
-        List<UserHistory> mapList = userHistoryPopularService.retrievePopularUserSearches(userId, size);
+        List<UserActivity> mapList = userActivityPopularService.retrievePopularUserSearches(userId, size);
 
         return ResponseEntity.ok().body(mapList);
     }
@@ -125,13 +125,13 @@ public class UserHistoryController {
             @ApiResponse(responseCode = "406", description = "Resource unavailable")
     })
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserHistory>> retrieveTrendingUserSearches(
+    public ResponseEntity<List<UserActivity>> retrieveTrendingUserSearches(
             @RequestParam(required = false, name = "size", defaultValue = "10")
-            @Min(1) @Max(UserHistoryService.MAX_VALUES) int size) throws IOException {
+            @Min(1) @Max(UserActivityService.MAX_VALUES) int size) throws IOException {
 
         log.info("retrieving trending user searches (limit = '{}')...", size);
 
-        List<UserHistory> mapList = userHistoryTrendingService.retrieveTrendingUserSearches(size);
+        List<UserActivity> mapList = userActivityTrendingService.retrieveTrendingUserSearches(size);
 
         return ResponseEntity.ok().body(mapList);
     }
@@ -151,7 +151,7 @@ public class UserHistoryController {
 
         log.info("executing deleteIndex (index = '{}')...", index);
 
-        DeleteIndexResponse deleteIndexResponse = userHistoryService.deleteIndex(index);
+        DeleteIndexResponse deleteIndexResponse = userActivityService.deleteIndex(index);
 
         return ResponseEntity.ok()
                 .body(deleteIndexResponse);
@@ -173,7 +173,7 @@ public class UserHistoryController {
 
         log.info("executing deleteHitCountDocument (index = '{}', documentId = '{}')...", index, documentId);
 
-        DeleteResponse deleteResponse = userHistoryService.deleteDocument(index, documentId);
+        DeleteResponse deleteResponse = userActivityService.deleteDocument(index, documentId);
 
         return ResponseEntity.ok()
                 .body(deleteResponse);

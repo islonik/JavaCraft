@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Script;
@@ -11,16 +11,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import org.springframework.stereotype.Service;
 
 /**
- * Index 'user-history' should be created with the 'updated' field set up as a 'date' format. See README.md.
+ * Index 'user-activity' should be created with the 'updated' field set up as a 'date' format. See README.md.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserHistoryIngestionService {
+public class UserActivityIngestionService {
 
     private static final int RETRY_ATTEMPTS = 3;
 
@@ -32,15 +32,15 @@ public class UserHistoryIngestionService {
 
         Script script = Script.of(s -> s
                 .source(createScriptOrigin())
-                .params(UserHistoryService.UPDATED, JsonData.of(datetime))
+                .params(UserActivityService.UPDATED, JsonData.of(datetime))
         );
 
-        UserHistory userHistory = new UserHistory(datetime, userClick);
-        String documentId = userHistory.getElasticId(userClick);
-        UpdateRequest<UserHistory, Object> updateRequest = new UpdateRequest.Builder<UserHistory, Object>()
-                .index(UserHistoryService.INDEX_USER_HISTORY)
+        UserActivity userActivity = new UserActivity(datetime, userClick);
+        String documentId = userActivity.getElasticId(userClick);
+        UpdateRequest<UserActivity, Object> updateRequest = new UpdateRequest.Builder<UserActivity, Object>()
+                .index(UserActivityService.INDEX_USER_HISTORY)
                 .id(documentId)
-                .upsert(userHistory)
+                .upsert(userActivity)
                 .script(script)
                 .retryOnConflict(RETRY_ATTEMPTS)
                 .build();
@@ -48,7 +48,7 @@ public class UserHistoryIngestionService {
         // use -Dlogging.level.tracer=TRACE to print a full curl statement
         log.debug("JSON representation of a query: {}", JsonpUtils.toJsonString(updateRequest, esClient._jsonpMapper()));
         // execute request to ES cluster
-        UpdateResponse<UserHistory> updateResponse = esClient.update(updateRequest, UserHistory.class);
+        UpdateResponse<UserActivity> updateResponse = esClient.update(updateRequest, UserActivity.class);
 
         // prepare response
         UserClickResponse userClickResponse = new UserClickResponse();
@@ -61,6 +61,6 @@ public class UserHistoryIngestionService {
         return """
                 ctx._source.%s++;
                 ctx._source.%s=params['%s'];
-                """.formatted(UserHistoryService.COUNT, UserHistoryService.UPDATED, UserHistoryService.UPDATED);
+                """.formatted(UserActivityService.COUNT, UserActivityService.UPDATED, UserActivityService.UPDATED);
     }
 }

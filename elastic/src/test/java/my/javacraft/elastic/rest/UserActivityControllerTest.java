@@ -1,0 +1,187 @@
+package my.javacraft.elastic.rest;
+
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
+import java.lang.reflect.Method;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import my.javacraft.elastic.model.UserClick;
+import my.javacraft.elastic.model.UserClickResponse;
+import my.javacraft.elastic.model.UserActivity;
+import my.javacraft.elastic.service.DateService;
+import my.javacraft.elastic.service.activity.UserActivityIngestionService;
+import my.javacraft.elastic.service.activity.UserActivityPopularService;
+import my.javacraft.elastic.service.activity.UserActivityService;
+import my.javacraft.elastic.service.activity.UserActivityTrendingService;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class UserActivityControllerTest {
+
+    @Mock
+    DateService dateService;
+    @Mock
+    UserActivityService userActivityService;
+    @Mock
+    UserActivityPopularService userActivityPopularService;
+    @Mock
+    UserActivityTrendingService userActivityTrendingService;
+    @Mock
+    UserActivityIngestionService userActivityIngestionService;
+
+    @Test
+    public void testCapture() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        when(dateService.getCurrentDate()).thenReturn("2024-01-15");
+
+        UserClickResponse userClickResponse = Mockito.mock(UserClickResponse.class);
+        when(userActivityIngestionService.ingestUserClick(any(), anyString())).thenReturn(userClickResponse);
+
+        UserClick userClick = new UserClick();
+        userClick.setRecordId("did-1");
+        userClick.setSearchType("Obligor");
+        userClick.setSearchPattern("1111");
+
+        ResponseEntity<UserClickResponse> response = userActivityController.captureUserClick(userClick);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetHitCount() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        UserActivity userActivity = Mockito.mock(UserActivity.class);
+        GetResponse<UserActivity> getResponse = new GetResponse.Builder<UserActivity>()
+                .index(UserActivityService.INDEX_USER_HISTORY)
+                .found(true)
+                .id("part-of-mock-so-any-id")
+                .source(userActivity)
+                .build();
+        when(userActivityService.getUserHistoryByDocumentId(anyString())).thenReturn(getResponse);
+
+        ResponseEntity<GetResponse<UserActivity>> response = userActivityController
+                .getHitCount("documentId");
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testPopularSearchHistory() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        List<UserActivity> historyList = new ArrayList<>();
+        when(userActivityPopularService.retrievePopularUserSearches(anyString(), anyInt())).thenReturn(historyList);
+
+        ResponseEntity<List<UserActivity>> response = userActivityController
+                .retrievePopularUserSearches("nl88888", 10);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testTrendingSearchHistory() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        List<UserActivity> historyList = new ArrayList<>();
+        when(userActivityTrendingService.retrieveTrendingUserSearches(anyInt())).thenReturn(historyList);
+
+        ResponseEntity<List<UserActivity>> response = userActivityController
+                .retrieveTrendingUserSearches(10);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testDeleteIndex() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        DeleteIndexResponse deleteIndexResponse = Mockito.mock(DeleteIndexResponse.class);
+        when(userActivityService.deleteIndex(anyString())).thenReturn(deleteIndexResponse);
+
+        ResponseEntity<DeleteIndexResponse> response = userActivityController
+                .deleteIndex("nl88888");
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testDeleteHitCountDocument() throws IOException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+
+        DeleteResponse deleteResponse = Mockito.mock(DeleteResponse.class);
+        when(userActivityService.deleteDocument(anyString(), anyString())).thenReturn(deleteResponse);
+
+        ResponseEntity<DeleteResponse> response = userActivityController
+                .deleteHitCountDocument("hit_count", "nl88888");
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getBody());
+    }
+
+    @Test
+    public void testPopularSearchHistoryValidationShouldFailWhenSizeLessThanOne() throws NoSuchMethodException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+        Method method = UserActivityController.class.getMethod("retrievePopularUserSearches", String.class, int.class);
+
+        Set<ConstraintViolation<UserActivityController>> violations;
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            violations = validatorFactory.getValidator().forExecutables()
+                    .validateParameters(userActivityController, method, new Object[]{"nl88888", 0});
+        }
+
+        Assertions.assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("greater than or equal to 1")));
+    }
+
+    @Test
+    public void testTrendingSearchHistoryValidationShouldFailWhenSizeExceedsMaxValue() throws NoSuchMethodException {
+        UserActivityController userActivityController = new UserActivityController(
+                dateService, userActivityService, userActivityPopularService, userActivityTrendingService, userActivityIngestionService
+        );
+        Method method = UserActivityController.class.getMethod("retrieveTrendingUserSearches", int.class);
+
+        Set<ConstraintViolation<UserActivityController>> violations;
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            violations = validatorFactory.getValidator().forExecutables()
+                    .validateParameters(userActivityController, method, new Object[]{UserActivityService.MAX_VALUES + 1});
+        }
+
+        Assertions.assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("less than or equal to " + UserActivityService.MAX_VALUES)));
+    }
+
+}

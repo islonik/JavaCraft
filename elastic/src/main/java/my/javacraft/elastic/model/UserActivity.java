@@ -9,7 +9,7 @@ import lombok.ToString;
 
 @Data
 @ToString
-public class UserHistory {
+public class UserActivity {
     @NotNull
     @Min(1)
     Long count;
@@ -26,9 +26,9 @@ public class UserHistory {
     @NotEmpty
     String searchValue;
 
-    public UserHistory() {} // we need default constructor for jackson
+    public UserActivity() {} // we need default constructor for jackson
 
-    public UserHistory(String updated, UserClick userClick) {
+    public UserActivity(String updated, UserClick userClick) {
         this.count = 1L;
         this.updated = updated;
         this.recordId = userClick.getRecordId();

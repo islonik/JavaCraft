@@ -10,7 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class UserHistoryTest {
+public class UserActivityTest {
 
     @Test
     public void testGetCompositeId() {
@@ -20,14 +20,14 @@ public class UserHistoryTest {
         userClick.setSearchType("Companies");
         userClick.setSearchPattern("Microsoft");
 
-        UserHistory userHistory = new UserHistory();
+        UserActivity userActivity = new UserActivity();
 
-        Assertions.assertEquals("12345-Companies-nl8888", userHistory.getElasticId(userClick));
+        Assertions.assertEquals("12345-Companies-nl8888", userActivity.getElasticId(userClick));
     }
 
     @Test
     public void testJsonFormat() throws IOException {
-        UserHistory userHistory = new UserHistory(
+        UserActivity userActivity = new UserActivity(
                 "2024-01-08T18:16:41.53",
                 UserClickTest.createHitCount()
         );
@@ -45,7 +45,7 @@ public class UserHistoryTest {
                 }""",
                 objectMapper
                         .writerWithDefaultPrettyPrinter()
-                        .writeValueAsString(userHistory)
+                        .writeValueAsString(userActivity)
                         .replaceAll("\r", "")
         );
     }
@@ -54,10 +54,10 @@ public class UserHistoryTest {
     public void testValidationShouldFailWhenCountIsNull() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserHistory userHistory = createValidUserHistory();
-            userHistory.setCount(null);
+            UserActivity userActivity = createValidUserHistory();
+            userActivity.setCount(null);
 
-            Set<ConstraintViolation<UserHistory>> violations = validator.validate(userHistory);
+            Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
 
             Assertions.assertTrue(violations.stream().anyMatch(v -> "count".equals(v.getPropertyPath().toString())));
         }
@@ -67,10 +67,10 @@ public class UserHistoryTest {
     public void testValidationShouldFailWhenCountIsLessThanOne() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserHistory userHistory = createValidUserHistory();
-            userHistory.setCount(0L);
+            UserActivity userActivity = createValidUserHistory();
+            userActivity.setCount(0L);
 
-            Set<ConstraintViolation<UserHistory>> violations = validator.validate(userHistory);
+            Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
 
             Assertions.assertTrue(violations.stream().anyMatch(v -> "count".equals(v.getPropertyPath().toString())));
         }
@@ -80,24 +80,24 @@ public class UserHistoryTest {
     public void testValidationShouldPassWhenCountIsPositive() {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            UserHistory userHistory = createValidUserHistory();
-            userHistory.setCount(1L);
+            UserActivity userActivity = createValidUserHistory();
+            userActivity.setCount(1L);
 
-            Set<ConstraintViolation<UserHistory>> violations = validator.validate(userHistory);
+            Set<ConstraintViolation<UserActivity>> violations = validator.validate(userActivity);
 
             Assertions.assertTrue(violations.isEmpty());
         }
     }
 
-    private UserHistory createValidUserHistory() {
-        UserHistory userHistory = new UserHistory();
-        userHistory.setCount(1L);
-        userHistory.setUpdated("2024-01-08T18:16:41.53");
-        userHistory.setElasticId("12345-People-nl8888");
-        userHistory.setUserId("nl8888");
-        userHistory.setRecordId("12345");
-        userHistory.setSearchType("People");
-        userHistory.setSearchValue("Nikita");
-        return userHistory;
+    private UserActivity createValidUserHistory() {
+        UserActivity userActivity = new UserActivity();
+        userActivity.setCount(1L);
+        userActivity.setUpdated("2024-01-08T18:16:41.53");
+        userActivity.setElasticId("12345-People-nl8888");
+        userActivity.setUserId("nl8888");
+        userActivity.setRecordId("12345");
+        userActivity.setSearchType("People");
+        userActivity.setSearchValue("Nikita");
+        return userActivity;
     }
 }

@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldSort;
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import org.springframework.stereotype.Service;
 
 /*
@@ -27,23 +27,23 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserHistoryPopularService {
+public class UserActivityPopularService {
 
     private final ElasticsearchClient esClient;
 
-    public List<UserHistory> retrievePopularUserSearches(String userId, int searchLimitSize) throws IOException {
+    public List<UserActivity> retrievePopularUserSearches(String userId, int searchLimitSize) throws IOException {
         SearchRequest searchRequest = new SearchRequest.Builder()
-                .index(UserHistoryService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_HISTORY)
                 // search by userId
                 .query(q -> q.term(t -> t
-                        .field(UserHistoryService.USER_ID)
+                        .field(UserActivityService.USER_ID)
                         .value(v -> v.stringValue(userId))
                 ))
                 .size(searchLimitSize) // limit result to N values
                 // the result values with the highest count are going to be displayed
                 .sort(so -> so.field(
                                 FieldSort.of(f -> f
-                                        .field(UserHistoryService.COUNT)
+                                        .field(UserActivityService.COUNT)
                                         .order(SortOrder.Desc)
                                 )
                         )
@@ -51,14 +51,14 @@ public class UserHistoryPopularService {
 
         // use -Dlogging.level.tracer=TRACE to print a full CURL statement or see
         log.debug("JSON representation of a query: {}", JsonpUtils.toJsonString(searchRequest, esClient._jsonpMapper()));
-        List<UserHistory> userHistoryList = esClient.search(searchRequest, UserHistory.class)
+        List<UserActivity> userActivityList = esClient.search(searchRequest, UserActivity.class)
                 .hits()
                 .hits()
                 .stream()
                 .filter(hit -> hit.source() != null)
                 .map(Hit::source)
                 .toList();
-        log.trace(userHistoryList.toString());
-        return userHistoryList;
+        log.trace(userActivityList.toString());
+        return userActivityList;
     }
 }

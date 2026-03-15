@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
@@ -7,20 +7,20 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import org.springframework.stereotype.Service;
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserHistoryService {
+public class UserActivityService {
 
     // we keep 180 days or close to 6 months of data in the index
     public static final int SIX_MONTHS = 180;
     public static final int SEVEN_DAYS = 7;
     public static final int MAX_VALUES = 10000; // Elasticsearch limit
-    public static final String INDEX_USER_HISTORY = "user-history";
+    public static final String INDEX_USER_HISTORY = "user-activity";
     public static final String COUNT = "count";
     public static final String UPDATED = "updated";
     public static final String RECORD_ID = "recordId";
@@ -28,13 +28,13 @@ public class UserHistoryService {
 
     private final ElasticsearchClient esClient;
 
-    public GetResponse<UserHistory> getUserHistoryByDocumentId(String documentId) throws IOException {
+    public GetResponse<UserActivity> getUserHistoryByDocumentId(String documentId) throws IOException {
         GetRequest getRequest = new GetRequest.Builder()
                 .index(INDEX_USER_HISTORY)
                 .id(documentId)
                 .build();
 
-        return esClient.get(getRequest, UserHistory.class);
+        return esClient.get(getRequest, UserActivity.class);
     }
 
     public DeleteIndexResponse deleteIndex(String index) throws IOException {

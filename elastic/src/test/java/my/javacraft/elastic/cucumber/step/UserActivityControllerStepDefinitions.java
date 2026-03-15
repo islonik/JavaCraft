@@ -3,7 +3,6 @@ package my.javacraft.elastic.cucumber.step;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.elasticsearch.indices.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
@@ -20,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import my.javacraft.elastic.cucumber.conf.CucumberSpringConfiguration;
 import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
-import my.javacraft.elastic.model.UserHistory;
-import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.model.UserActivity;
+import my.javacraft.elastic.service.activity.UserActivityService;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-public class UserHistoryControllerStepDefinitions {
+public class UserActivityControllerStepDefinitions {
 
     @LocalServerPort
     int port;
@@ -50,9 +49,9 @@ public class UserHistoryControllerStepDefinitions {
     @Given("user {string} doesn't have any events")
     public void clearUserHistory(String userId) throws IOException {
         DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                .index(UserHistoryService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_HISTORY)
                 .query(q -> q.term(t -> t
-                        .field(UserHistoryService.USER_ID)
+                        .field(UserActivityService.USER_ID)
                         .value(v -> v.stringValue(userId))
                 )).build();
         DeleteByQueryResponse deleteByQueryResponse = esClient.deleteByQuery(deleteByQueryRequest);
@@ -74,7 +73,7 @@ public class UserHistoryControllerStepDefinitions {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity<UserClickResponse> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user-history".formatted(port),
+                "http://localhost:%s/api/services/user-activity".formatted(port),
                 HttpMethod.POST,
                 entity,
                 UserClickResponse.class
@@ -105,7 +104,7 @@ public class UserHistoryControllerStepDefinitions {
                     RestTemplate restTemplate = new RestTemplate();
 
                     return restTemplate.exchange(
-                            "http://localhost:%s/api/services/user-history".formatted(port),
+                            "http://localhost:%s/api/services/user-activity".formatted(port),
                             HttpMethod.POST,
                             entity,
                             UserClickResponse.class
@@ -141,8 +140,8 @@ public class UserHistoryControllerStepDefinitions {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user-history/users/%s".formatted(port, userId),
+        HttpEntity<List<UserActivity>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId),
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -151,11 +150,11 @@ public class UserHistoryControllerStepDefinitions {
         Assertions.assertNotNull(httpResponse);
         Assertions.assertNotNull(httpResponse.getBody());
         Assertions.assertEquals(1, httpResponse.getBody().size());
-        UserHistory userHistory = httpResponse.getBody().getFirst();
-        Assertions.assertEquals(hitCounts, userHistory.getCount());
-        Assertions.assertEquals("%s-%s-%s".formatted(recordId, type, userId), userHistory.getElasticId());
-        Assertions.assertEquals(recordId, userHistory.getRecordId());
-        Assertions.assertEquals(pattern, userHistory.getSearchValue());
+        UserActivity userActivity = httpResponse.getBody().getFirst();
+        Assertions.assertEquals(hitCounts, userActivity.getCount());
+        Assertions.assertEquals("%s-%s-%s".formatted(recordId, type, userId), userActivity.getElasticId());
+        Assertions.assertEquals(recordId, userActivity.getRecordId());
+        Assertions.assertEquals(pattern, userActivity.getSearchValue());
 
     }
 
@@ -169,8 +168,8 @@ public class UserHistoryControllerStepDefinitions {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        HttpEntity<List<UserHistory>> httpResponse = restTemplate.exchange(
-                "http://localhost:%s/api/services/user-history/users/%s".formatted(port, userId),
+        HttpEntity<List<UserActivity>> httpResponse = restTemplate.exchange(
+                "http://localhost:%s/api/services/user-activity/users/%s".formatted(port, userId),
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -181,9 +180,9 @@ public class UserHistoryControllerStepDefinitions {
         Assertions.assertEquals(2, httpResponse.getBody().size());
         List<List<String>> expectedResults = dataTable.cells();
         for (int i = 0; i < httpResponse.getBody().size(); i++) {
-            UserHistory userHistory = httpResponse.getBody().get(i);
-            Assertions.assertEquals(expectedResults.get(i).get(0), userHistory.getSearchValue());
-            Assertions.assertEquals(Long.parseLong(expectedResults.get(i).get(1)), userHistory.getCount());
+            UserActivity userActivity = httpResponse.getBody().get(i);
+            Assertions.assertEquals(expectedResults.get(i).get(0), userActivity.getSearchValue());
+            Assertions.assertEquals(Long.parseLong(expectedResults.get(i).get(1)), userActivity.getCount());
         }
     }
 

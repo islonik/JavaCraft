@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.service.activity.UserActivityService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
  * <p>
  * Two groups of indexes are managed:
  * <ul>
- *   <li><b>user-history</b> – used by UserHistoryController for ingestion and retrieval</li>
+ *   <li><b>user-activity</b> – used by UserHistoryController for ingestion and retrieval</li>
  *   <li><b>books / movies / music</b> – used by SearchController for full-text search</li>
  * </ul>
  * Index names for the search group match the lowercased {@code SeekType} enum values
@@ -41,10 +41,10 @@ public class AdminService {
     }
 
     /**
-     * Creates the {@code user-history} index with typed field mappings.
+     * Creates the {@code user-activity} index with typed field mappings.
      * <p>
      * Field types are chosen to match the queries used in
-     * {@link UserHistoryService}, {@code UserHistoryPopularService}, and
+     * {@link UserActivityService}, {@code UserHistoryPopularService}, and
      * {@code UserHistoryTrendingService}:
      * <ul>
      *   <li>{@code count} – {@code long} (incremented on upsert)</li>
@@ -55,7 +55,7 @@ public class AdminService {
      * </ul>
      */
     public IndexCreationResult createUserHistoryIndex() throws IOException {
-        log.info("creating index '{}'...", UserHistoryService.INDEX_USER_HISTORY);
+        log.info("creating index '{}'...", UserActivityService.INDEX_USER_HISTORY);
 
         Map<String, Property> properties = new LinkedHashMap<>();
         properties.put("count", Property.of(p -> p.long_(l -> l)));
@@ -66,7 +66,7 @@ public class AdminService {
         properties.put("searchType", Property.of(p -> p.keyword(k -> k)));
         properties.put("searchValue", Property.of(p -> p.text(t -> t)));
 
-        return createIndex(UserHistoryService.INDEX_USER_HISTORY, properties);
+        return createIndex(UserActivityService.INDEX_USER_HISTORY, properties);
     }
 
     /**

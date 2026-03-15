@@ -7,7 +7,7 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.service.activity.UserActivityService;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -22,12 +22,12 @@ public class SchedulerService {
         try {
             RangeQuery rangeQuery = RangeQuery.of(r -> r
                     .date(d -> d
-                            .field(UserHistoryService.UPDATED)
-                            .lte(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS))
+                            .field(UserActivityService.UPDATED)
+                            .lte(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS))
                     )
             );
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
-                    .index(UserHistoryService.INDEX_USER_HISTORY)
+                    .index(UserActivityService.INDEX_USER_HISTORY)
                     .query(rangeQuery._toQuery())
                     .build();
 
@@ -35,8 +35,8 @@ public class SchedulerService {
             DeleteByQueryResponse deleteByQueryResponse = esClient.deleteByQuery(deleteByQueryRequest);
             return deleteByQueryResponse.deleted();
         } catch (IOException ioe) {
-            log.error("Failed to remove outdated user-history records.", ioe);
-            throw new IllegalStateException("Failed to remove outdated user-history records.", ioe);
+            log.error("Failed to remove outdated user-activity records.", ioe);
+            throw new IllegalStateException("Failed to remove outdated user-activity records.", ioe);
         }
     }
 }

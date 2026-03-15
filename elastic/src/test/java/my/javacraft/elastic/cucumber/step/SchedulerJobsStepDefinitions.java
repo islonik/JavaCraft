@@ -12,7 +12,7 @@ import my.javacraft.elastic.model.UserClick;
 import my.javacraft.elastic.model.UserClickResponse;
 import my.javacraft.elastic.service.DateService;
 import my.javacraft.elastic.service.SchedulerService;
-import my.javacraft.elastic.service.history.UserHistoryIngestionService;
+import my.javacraft.elastic.service.activity.UserActivityIngestionService;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -26,7 +26,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 public class SchedulerJobsStepDefinitions {
 
     @Autowired
-    UserHistoryIngestionService userHistoryIngestionService;
+    UserActivityIngestionService userActivityIngestionService;
     @Autowired
     DateService dateService;
     @Autowired
@@ -44,7 +44,7 @@ public class SchedulerJobsStepDefinitions {
             userClick.setUserId("nl8111");
             userClick.setSearchPattern("FIXED INCOME");
 
-            UserClickResponse userClickResponse = userHistoryIngestionService.ingestUserClick(
+            UserClickResponse userClickResponse = userActivityIngestionService.ingestUserClick(
                     userClick, dateService.getNDaysBeforeDate(200 + i));
             responses.add(userClickResponse);
         }

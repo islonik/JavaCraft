@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import java.io.IOException;
-import my.javacraft.elastic.service.history.UserHistoryService;
+import my.javacraft.elastic.service.activity.UserActivityService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ class SchedulerServiceTest {
         SchedulerService schedulerService = new SchedulerService(esClient, dateService);
         DeleteByQueryResponse response = new DeleteByQueryResponse.Builder().deleted(42L).build();
 
-        when(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
+        when(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
         when(esClient.deleteByQuery(any(DeleteByQueryRequest.class))).thenReturn(response);
 
         Long deleted = schedulerService.removeOldHistoryRecords();
@@ -38,7 +38,7 @@ class SchedulerServiceTest {
         ArgumentCaptor<DeleteByQueryRequest> requestCaptor = ArgumentCaptor.forClass(DeleteByQueryRequest.class);
         verify(esClient).deleteByQuery(requestCaptor.capture());
         Assertions.assertNotNull(requestCaptor.getValue());
-        Assertions.assertEquals(UserHistoryService.INDEX_USER_HISTORY, requestCaptor.getValue().index().getFirst());
+        Assertions.assertEquals(UserActivityService.INDEX_USER_HISTORY, requestCaptor.getValue().index().getFirst());
         Assertions.assertNotNull(requestCaptor.getValue().query());
     }
 
@@ -46,7 +46,7 @@ class SchedulerServiceTest {
     void testRemoveOldHistoryRecordsShouldThrowWhenDeleteByQueryFails() throws IOException {
         SchedulerService schedulerService = new SchedulerService(esClient, dateService);
 
-        when(dateService.getNDaysBeforeDate(UserHistoryService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
+        when(dateService.getNDaysBeforeDate(UserActivityService.SIX_MONTHS)).thenReturn("2024-01-01T00:00:00Z");
         when(esClient.deleteByQuery(any(DeleteByQueryRequest.class))).thenThrow(new IOException("cluster unavailable"));
 
         IllegalStateException exception = Assertions.assertThrows(
@@ -54,7 +54,7 @@ class SchedulerServiceTest {
                 schedulerService::removeOldHistoryRecords
         );
 
-        Assertions.assertEquals("Failed to remove outdated user-history records.", exception.getMessage());
+        Assertions.assertEquals("Failed to remove outdated user-activity records.", exception.getMessage());
         Assertions.assertNotNull(exception.getCause());
         Assertions.assertEquals("cluster unavailable", exception.getCause().getMessage());
     }

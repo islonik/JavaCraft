@@ -1,10 +1,10 @@
 # Elasticsearch
 
-An Elasticsearch-backed search and user-history service. Exposes multiple query strategies
+An Elasticsearch-backed search and user-activity service. Exposes multiple query strategies
 via REST, ingests user click events into a history index, and returns popular/trending search history.
 
 > **First time setup:** call the `AdminController` endpoints once to create all required
-> indexes and their field mappings before using `SearchController` or `UserHistoryController`.
+> indexes and their field mappings before using `SearchController` or `UserActivityController`.
 
 **Stack:** Spring Boot, Spring Data Elasticsearch, Swagger/OpenAPI, Cucumber (BDD)
 
@@ -13,7 +13,7 @@ via REST, ingests user click events into a history index, and returns popular/tr
 2. [Architecture](#2-architecture)
 3. [API Reference](#3-api-reference)
 4. [Data Model](#4-data-model)
-5. [User History Lifecycle](#5-user-history-lifecycle)
+5. [User History Lifecycle](#5-user-activity-lifecycle)
 6. [Configuration](#6-configuration)
 7. [Scheduler](#7-scheduler)
 8. [Query Types](#8-query-types)
@@ -50,13 +50,13 @@ flowchart TD
     Client["HTTP Client"]
     AC["AdminController\n/api/admin"]
     SC["SearchController\n/api/services/search"]
-    UHC["UserHistoryController\n/api/services/user-history"]
+    UHC["UserActivityController\n/api/services/user-activity"]
     AS["AdminService"]
     SS["SearchService"]
-    UHS["UserHistoryService"]
-    UHIS["UserHistoryIngestionService"]
-    UHPS["UserHistoryPopularService"]
-    UHTS["UserHistoryTrendingService"]
+    UHS["UserActivityService"]
+    UHIS["UserActivityIngestionService"]
+    UHPS["UserActivityPopularService"]
+    UHTS["UserActivityTrendingService"]
     SCHED["SchedulerJobs\n(hourly cleanup)"]
     ES[("Elasticsearch\nlocalhost:9200")]
 
@@ -69,12 +69,12 @@ flowchart TD
     UHC --> UHIS
     UHC --> UHPS
     UHC --> UHTS
-    AS -->|"create indexes:\nbooks, movies, music,\nuser-history"| ES
+    AS -->|"create indexes:\nbooks, movies, music,\nuser-activity"| ES
     SS -->|"query indexes:\nbooks, movies, music"| ES
     UHS --> ES
-    UHIS -->|"upsert: user-history"| ES
-    UHPS -->|"query: user-history"| ES
-    UHTS -->|"query: user-history"| ES
+    UHIS -->|"upsert: user-activity"| ES
+    UHPS -->|"query: user-activity"| ES
+    UHTS -->|"query: user-activity"| ES
     SCHED -->|delete docs older than 180 days| ES
 ```
 
@@ -86,12 +86,12 @@ flowchart TD
 ### Admin — `/api/admin`
 
 One-time setup endpoints. Call these **before** using `SearchController` or
-`UserHistoryController`. Each endpoint creates a specific index with a fixed, pre-defined
+`UserActivityController`. Each endpoint creates a specific index with a fixed, pre-defined
 schema — no request body or path variables are accepted.
 
 | Method | Path | Creates index | Used by |
 |--------|------|---------------|---------|
-| `PUT` | `/api/admin/indexes/user-history` | `user-history` | `UserHistoryController` |
+| `PUT` | `/api/admin/indexes/user-activity` | `user-activity` | `UserActivityController` |
 | `PUT` | `/api/admin/indexes/books` | `books` | `SearchController` |
 | `PUT` | `/api/admin/indexes/movies` | `movies` | `SearchController` |
 | `PUT` | `/api/admin/indexes/music` | `music` | `SearchController` |
@@ -100,7 +100,7 @@ schema — no request body or path variables are accepted.
 
 ```json
 {
-  "index": "user-history",
+  "index": "user-activity",
   "acknowledged": true,
   "shards_acknowledged": true
 }
@@ -111,14 +111,14 @@ Calling an endpoint when the index already exists returns `500` with an ES
 
 #### Index field mappings
 
-**`user-history`** — field types are chosen to match the exact queries used at runtime:
+**`user-activity`** — field types are chosen to match the exact queries used at runtime:
 
 | Field | ES type | Rationale |
 |-------|---------|-----------|
 | `count` | `long` | incremented by the Painless upsert script |
-| `updated` | `date` (`strict_date_optional_time`) | used in range queries by `UserHistoryTrendingService` |
-| `userId` | `keyword` | exact-match term query in `UserHistoryPopularService` |
-| `recordId` | `keyword` | used in aggregations in `UserHistoryTrendingService` |
+| `updated` | `date` (`strict_date_optional_time`) | used in range queries by `UserActivityTrendingService` |
+| `userId` | `keyword` | exact-match term query in `UserActivityPopularService` |
+| `recordId` | `keyword` | used in aggregations in `UserActivityTrendingService` |
 | `searchType` | `keyword` | exact-match term query |
 | `elasticId` | `keyword` | composite document ID, not queried |
 | `searchValue` | `text` | stored only, not queried directly |
@@ -165,12 +165,12 @@ Both `type` and `client` are validated with `@ValueOfEnum` — case-insensitive,
 
 ---
 
-### User History — `/api/services/user-history`
+### User History — `/api/services/user-activity`
 
 #### Ingest a user click
 
 ```
-POST /api/services/user-history
+POST /api/services/user-activity
 ```
 
 Request body — `UserClick`:
@@ -185,7 +185,7 @@ Request body — `UserClick`:
 ```
 
 All fields are required (`@NotEmpty` / `@NotBlank`). On each call the service upserts a document
-into the `user-history` index — it creates the document on first occurrence and increments
+into the `user-activity` index — it creates the document on first occurrence and increments
 `count` on subsequent calls for the same `(recordId, searchType, userId)` combination.
 
 Response — `UserClickResponse`:
@@ -203,23 +203,23 @@ Response — `UserClickResponse`:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/services/user-history/documents/{documentId}` | Get a single document by ES document ID |
-| `GET` | `/api/services/user-history/users/{userId}?size=10` | Popular searches for a specific user (sorted by count DESC) |
-| `GET` | `/api/services/user-history/users?size=10` | Global trending searches in the last 7 days |
+| `GET` | `/api/services/user-activity/documents/{documentId}` | Get a single document by ES document ID |
+| `GET` | `/api/services/user-activity/users/{userId}?size=10` | Popular searches for a specific user (sorted by count DESC) |
+| `GET` | `/api/services/user-activity/users?size=10` | Global trending searches in the last 7 days |
 
 #### Delete
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `DELETE` | `/api/services/user-history/indexes/{index}` | Delete an entire index |
-| `DELETE` | `/api/services/user-history/indexes/{index}/documents/{documentId}` | Delete a single document |
+| `DELETE` | `/api/services/user-activity/indexes/{index}` | Delete an entire index |
+| `DELETE` | `/api/services/user-activity/indexes/{index}/documents/{documentId}` | Delete a single document |
 
 ---
 
 ## 4. Data Model
 <sub>[Back to top](#elasticsearch)</sub>
 
-### `UserHistory` (Elasticsearch document, index: `user-history`)
+### `UserActivity` (Elasticsearch document, index: `user-activity`)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -242,17 +242,17 @@ Response — `UserClickResponse`:
 
 ---
 
-## 5. User History Lifecycle
+## 5. User Activity Lifecycle
 <sub>[Back to top](#elasticsearch)</sub>
 
 ```mermaid
 sequenceDiagram
     participant C as HTTP Client
-    participant UHC as UserHistoryController
-    participant UHIS as UserHistoryIngestionService
+    participant UHC as UserActivityController
+    participant UHIS as UserActivityIngestionService
     participant ES as Elasticsearch
 
-    C->>UHC: POST /user-history (UserClick)
+    C->>UHC: POST /user-activity (UserClick)
     UHC->>UHIS: ingestUserClick(userClick, now)
     UHIS->>ES: Upsert doc id={recordId}-{searchType}-{userId}
     note over ES: Script: ctx._source.count++\nupsert: {count:1, updated:...}
@@ -315,7 +315,7 @@ ELASTIC_PASSWORD=FverGoe0
 <sub>[Back to top](#elasticsearch)</sub>
 
 `SchedulerJobs` runs a cleanup task every hour (`0 0 * * * *`) when `scheduler.enabled=true`.
-It deletes all documents from the `user-history` index where `updated` is older than 180 days.
+It deletes all documents from the `user-activity` index where `updated` is older than 180 days.
 
 Disable for local development:
 
@@ -463,18 +463,18 @@ This is typically caused by an ad-blocking browser extension intercepting the re
 <sub>[Back to top](#elasticsearch)</sub>
 
 Use the Kibana Dev Console (or any Elasticsearch REST client) to interact with the
-`user-history` index directly.
+`user-activity` index directly.
 
 ### Create the index
 
 ```json
-PUT user-history
+PUT user-activity
 ```
 
 ### Add a date mapping for the `updated` field
 
 ```json
-PUT /user-history/_mapping
+PUT /user-activity/_mapping
 {
   "properties": {
     "updated": { "type": "date" }
@@ -485,7 +485,7 @@ PUT /user-history/_mapping
 ### Upsert a document (increment count on existing)
 
 ```json
-POST /user-history/_update/did-1-People-nl84439
+POST /user-activity/_update/did-1-People-nl84439
 {
   "script": {
     "source": "ctx._source.count++; ctx._source.updated = params['updated'];",
@@ -505,13 +505,13 @@ POST /user-history/_update/did-1-People-nl84439
 ### Get a document by ID
 
 ```json
-GET /user-history/_doc/did-1-People-nl84439
+GET /user-activity/_doc/did-1-People-nl84439
 ```
 
 ### Find top 10 documents for a user, sorted by count descending
 
 ```json
-GET /user-history/_search
+GET /user-activity/_search
 {
   "query": {
     "match": { "userId": "nl84439" }
@@ -524,13 +524,13 @@ GET /user-history/_search
 ### Inspect field mappings
 
 ```json
-GET /user-history/_mapping
+GET /user-activity/_mapping
 ```
 
 ### Delete a document
 
 ```json
-DELETE /user-history/_doc/did-1-People-nl84439
+DELETE /user-activity/_doc/did-1-People-nl84439
 ```
 
 ---

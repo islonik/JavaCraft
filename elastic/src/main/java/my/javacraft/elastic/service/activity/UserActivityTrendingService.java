@@ -1,4 +1,4 @@
-package my.javacraft.elastic.service.history;
+package my.javacraft.elastic.service.activity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldSort;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import my.javacraft.elastic.model.UserHistory;
+import my.javacraft.elastic.model.UserActivity;
 import my.javacraft.elastic.service.DateService;
 import org.springframework.stereotype.Service;
 
@@ -35,46 +35,46 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserHistoryTrendingService {
+public class UserActivityTrendingService {
 
     private final ElasticsearchClient esClient;
     private final DateService dateService;
 
-    public List<UserHistory> retrieveTrendingUserSearches(int size) throws IOException {
+    public List<UserActivity> retrieveTrendingUserSearches(int size) throws IOException {
         SearchRequest searchRequest = prepareTrendingSearchRequest(size);
 
-        SearchResponse<UserHistory> searchResponse = esClient.search(searchRequest, UserHistory.class);
+        SearchResponse<UserActivity> searchResponse = esClient.search(searchRequest, UserActivity.class);
 
         return prepareTrendingHistoryResult(searchResponse);
     }
 
     private SearchRequest prepareTrendingSearchRequest(int size) {
         final FieldSort fieldSort = FieldSort.of(f -> f
-                .field(UserHistoryService.UPDATED)
+                .field(UserActivityService.UPDATED)
                 .order(SortOrder.Desc)
         );
 
         List<Query> mustQueryList = new ArrayList<>();
         RangeQuery rangeQuery = RangeQuery.of(r -> r
                 .date(d -> d
-                        .field(UserHistoryService.UPDATED)
+                        .field(UserActivityService.UPDATED)
                         .lte(dateService.getCurrentDate())
-                        .gte(dateService.getNDaysBeforeDate(UserHistoryService.SEVEN_DAYS))
+                        .gte(dateService.getNDaysBeforeDate(UserActivityService.SEVEN_DAYS))
                 )
         );
         mustQueryList.add(rangeQuery._toQuery());
 
         List<NamedValue<SortOrder>> namedValueList = new ArrayList<>();
         namedValueList.add(new NamedValue<>("_count", SortOrder.Desc));
-        namedValueList.add(new NamedValue<>(UserHistoryService.COUNT, SortOrder.Desc));
+        namedValueList.add(new NamedValue<>(UserActivityService.COUNT, SortOrder.Desc));
 
         // provided for aggregation
         // query size should be more
-        int querySize = Math.min(size * 10, UserHistoryService.MAX_VALUES);
+        int querySize = Math.min(size * 10, UserActivityService.MAX_VALUES);
 
         // similar to DISTINCT in SQL
         FieldCollapse.Builder fieldCollapse = new FieldCollapse.Builder();
-        fieldCollapse.field(UserHistoryService.USER_ID);
+        fieldCollapse.field(UserActivityService.USER_ID);
 
         Query boolQuery = new BoolQuery.Builder()
                 .must(mustQueryList)
@@ -82,16 +82,16 @@ public class UserHistoryTrendingService {
                 ._toQuery();
 
         return new SearchRequest.Builder()
-                .index(UserHistoryService.INDEX_USER_HISTORY)
+                .index(UserActivityService.INDEX_USER_HISTORY)
                 .query(boolQuery)
-                .aggregations(UserHistoryService.RECORD_ID, a1 -> a1
+                .aggregations(UserActivityService.RECORD_ID, a1 -> a1
                         .terms(t -> t
-                                .field(UserHistoryService.RECORD_ID)
+                                .field(UserActivityService.RECORD_ID)
                                 .size(size)
                                 .order(namedValueList)
                         )
-                        .aggregations(UserHistoryService.COUNT, a2 -> a2
-                                .sum(s -> s.field(UserHistoryService.COUNT))
+                        .aggregations(UserActivityService.COUNT, a2 -> a2
+                                .sum(s -> s.field(UserActivityService.COUNT))
                         )
                 )
                 .size(querySize)
@@ -100,10 +100,10 @@ public class UserHistoryTrendingService {
                 .build();
     }
 
-    private List<UserHistory> prepareTrendingHistoryResult(SearchResponse<UserHistory> searchResponse) {
+    private List<UserActivity> prepareTrendingHistoryResult(SearchResponse<UserActivity> searchResponse) {
         List<StringTermsBucket> buckets = searchResponse
                 .aggregations()
-                .get(UserHistoryService.RECORD_ID)
+                .get(UserActivityService.RECORD_ID)
                 .sterms()
                 .buckets()
                 .array();
@@ -115,13 +115,13 @@ public class UserHistoryTrendingService {
         }
 
         // define order for values
-        Map<String, UserHistory> resultMap = new LinkedHashMap<>();
+        Map<String, UserActivity> resultMap = new LinkedHashMap<>();
         for (String recordId : recordIds) {
             resultMap.put(recordId, null);
         }
 
         // get ALL values which were used in aggregation
-        List<UserHistory> allRecords = searchResponse
+        List<UserActivity> allRecords = searchResponse
                 .hits()
                 .hits()
                 .stream()
@@ -130,7 +130,7 @@ public class UserHistoryTrendingService {
                 .toList();
 
         // populate values if key exist, but value is null
-        for (UserHistory curr : allRecords) {
+        for (UserActivity curr : allRecords) {
             String key = curr.getRecordId();
             if (resultMap.containsKey(key) && resultMap.get(key) == null) {
                 resultMap.putIfAbsent(key, curr);

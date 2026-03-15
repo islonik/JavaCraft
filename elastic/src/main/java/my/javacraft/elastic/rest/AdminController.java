@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * One-time setup controller: creates Elasticsearch indexes and their field mappings.
  * <p>
  * Call these endpoints once before using {@link SearchController} or
- * {@link UserHistoryController}. No user input is accepted — each endpoint
+ * {@link UserActivityController}. No user input is accepted — each endpoint
  * creates a specific, pre-defined index with a fixed schema.
  * <p>
  * Re-running an endpoint when the index already exists returns 201 and does
@@ -36,8 +36,8 @@ public class AdminController {
     private final AdminService adminService;
 
     @Operation(
-            summary = "Create user-history index",
-            description = "Creates the 'user-history' index with typed field mappings (date, keyword, long, text). "
+            summary = "Create user-activity index",
+            description = "Creates the 'user-activity' index with typed field mappings (date, keyword, long, text). "
                     + "Required by UserHistoryController for ingestion, retrieval, and trending queries."
     )
     @ApiResponses(value = {
@@ -45,9 +45,9 @@ public class AdminController {
             @ApiResponse(responseCode = "201", description = "Index already exists; no changes were made"),
             @ApiResponse(responseCode = "500", description = "Elasticsearch error")
     })
-    @PutMapping(value = "/indexes/user-history", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/indexes/user-activity", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateIndexResponse> createUserHistoryIndex() throws IOException {
-        log.info("request to create user-history index");
+        log.info("request to create user-activity index");
         AdminService.IndexCreationResult result = adminService.createUserHistoryIndex();
         return buildResponse(result);
     }
