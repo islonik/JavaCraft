@@ -1,6 +1,8 @@
 package my.javacraft.elastic.model;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.nio.charset.StandardCharsets;
 import lombok.Data;
 import lombok.ToString;
@@ -8,7 +10,8 @@ import lombok.ToString;
 @Data
 @ToString
 public class UserHistory {
-    @NotEmpty
+    @NotNull
+    @Min(1)
     Long count;
     @NotEmpty
     String updated;
