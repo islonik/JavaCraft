@@ -5,9 +5,19 @@ and customisable player symbols.
 
 **Stack:** Java, Swing
 
+## Contents
+1. [Quick Start](#1-quick-start)
+2. [Architecture](#2-architecture)
+3. [Game Flow](#3-game-flow)
+4. [Components](#4-components)
+5. [AI Strategy](#5-ai-strategy)
+6. [Configuration](#6-configuration)
+7. [Image Customisation](#7-image-customisation)
+8. [Tests](#8-tests)
+
 ---
 
-## Quick Start
+## 1. Quick Start
 
 ### Build and run
 
@@ -18,7 +28,8 @@ java -jar tic-tac-toe/target/tic-tac-toe.jar
 
 ---
 
-## Architecture
+## 2. Architecture
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 MVC pattern: `Controller` mediates between the Swing view and the pure-Java model.
 The model has zero Swing dependencies and is fully unit-testable.
@@ -61,7 +72,8 @@ flowchart TD
 
 ---
 
-## Game Flow
+## 3. Game Flow
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 ```mermaid
 sequenceDiagram
@@ -99,7 +111,8 @@ The board is a 3×3 array of `Player` references (null = empty). Cells are numbe
 
 ---
 
-## Components
+## 4. Components
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 ### Model
 
@@ -130,7 +143,8 @@ The board is a 3×3 array of `Player` references (null = empty). Cells are numbe
 
 ---
 
-## AI Strategy
+## 5. AI Strategy
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 The AI evaluates three priorities in order each turn:
 
@@ -143,7 +157,8 @@ incomplete two-in-a-line (two of the target player + one empty) wins the scan.
 
 ---
 
-## Configuration
+## 6. Configuration
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 The **Options** dialog (menu → *Options*) controls three settings:
 
@@ -159,7 +174,8 @@ so the loser of the previous game goes first in the next.
 
 ---
 
-## Image Customisation
+## 7. Image Customisation
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 The **Image** menu lets each player pick their symbol icon. 14 options are available:
 
@@ -183,7 +199,8 @@ All images live in `src/main/resources/img/` and are bundled inside the JAR.
 
 ---
 
-## Tests
+## 8. Tests
+<sub>[Back to top](#tic-tac-toe)</sub>
 
 Run all tests:
 
@@ -191,11 +208,12 @@ Run all tests:
 mvn -pl tic-tac-toe test
 ```
 
-| Test class | Type | Covers |
-|------------|------|--------|
-| `PlayerTest` | Unit | Default constructor, full constructor, name and `isComputer` setters |
-| `GameFieldTest` | Unit | Cell mapping (buttons 1–9 → array indices), `getWinner()` for all 8 winning lines, draw state returns null |
-| `GameSettingsTest` | Unit | Singleton, default values, `changeGamerMove()` toggle; uses reflection to reset singleton between tests |
-| `TicTacToeTest` | Unit | Human moves for both players, alternation, computer first move lands on centre, no computer move when second player is human |
-| `ArtificialIntelligenceTest` | Unit | First move prefers centre; winning move priority over defensive; horizontal, vertical, diagonal line completion; board-full returns 0; random retry on collision |
-| `ControllerTest` | Unit (Mockito) | Full single-game and two-game flows with mocked `GUI` and `TicTacToe`; draw detection; game-over blocks further moves; first-move config; computer move only when enabled |
+### Coverage summary
+
+| Module | Tests | Line coverage |
+|--------|------:|--------------:|
+| tic-tac-toe | 45 | 65.7% |
+
+> [!TIP]
+> Model and Controller packages are at 100 %. The overall figure is pulled down by Swing view classes (GUI, Cell, About, Options, ImageOptions) which cannot be exercised in a headless test environment.
+
