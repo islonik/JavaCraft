@@ -23,7 +23,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Slf4j
 @Scope(SCOPE_CUCUMBER_GLUE)
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-public class SchedulerStepDefinitions {
+public class SchedulerJobsStepDefinitions {
 
     @Autowired
     UserHistoryIngestionService userHistoryIngestionService;
