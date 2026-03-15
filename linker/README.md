@@ -5,9 +5,18 @@ collision-safe short IDs, redirects users, and tracks redirect analytics.
 
 **Stack:** Spring Boot, MongoDB, Swagger/OpenAPI
 
+## Contents
+1. [Quick Start](#1-quick-start)
+2. [Architecture](#2-architecture)
+3. [API Reference](#3-api-reference)
+4. [Data Model](#4-data-model)
+5. [Collision-safe ID Strategy](#5-collision-safe-id-strategy)
+6. [Configuration](#6-configuration)
+7. [Tests](#7-tests)
+
 ---
 
-## Quick Start
+## 1. Quick Start
 
 **Prerequisites:** MongoDB running on `localhost:27017`
 
@@ -22,7 +31,8 @@ mvn -pl linker spring-boot:run
 
 ---
 
-## Architecture
+## 2. Architecture
+<sub>[Back to top](#linker)</sub>
 
 ```mermaid
 flowchart TD
@@ -42,7 +52,8 @@ flowchart TD
 
 ---
 
-## API Reference
+## 3. API Reference
+<sub>[Back to top](#linker)</sub>
 
 Base path: `/api/v1/links`
 
@@ -102,7 +113,8 @@ Returns `404 Not Found` for an unknown short code, otherwise:
 
 ---
 
-## Data Model
+## 4. Data Model
+<sub>[Back to top](#linker)</sub>
 
 **`Link`** — MongoDB document stored in collection `link`.
 
@@ -118,7 +130,8 @@ Returns `404 Not Found` for an unknown short code, otherwise:
 
 ---
 
-## Collision-safe ID Strategy
+## 5. Collision-safe ID Strategy
+<sub>[Back to top](#linker)</sub>
 
 Short codes are random alphanumeric strings (default: 6 characters, charset A–Z a–z 0–9).
 The service handles both pre-insert collisions and concurrent-insert races:
@@ -144,7 +157,8 @@ flowchart TD
 
 ---
 
-## Configuration
+## 6. Configuration
+<sub>[Back to top](#linker)</sub>
 
 `linker/src/main/resources/application.yaml`:
 
@@ -166,7 +180,8 @@ spring:
 
 ---
 
-## Tests
+## 7. Tests
+<sub>[Back to top](#linker)</sub>
 
 Run the full test suite for this module:
 
@@ -174,13 +189,13 @@ Run the full test suite for this module:
 mvn -pl linker test
 ```
 
-| Test class | Type | Covers |
-|-----------|------|--------|
-| `SymbolGeneratorServicesTest` | Unit | ID generation: length, charset, determinism, rejection of invalid length |
-| `LinkServicesTest` | Unit | Create/resolve business logic, collision retry, URL deduplication, expiration check |
-| `LinkControllerTest` | Unit (MockMvc) | HTTP layer: status codes, `Location` header on redirect, response bodies |
-| `LinkRepositoryTest` | Persistence | MongoDB queries via in-memory server |
-| `LinkControllerIntegrationTest` | Integration | Full flow: create → redirect → analytics; expiration; deduplication across requests |
+### Coverage summary
 
-In-memory MongoDB is provided by `mongo-java-server` — no external MongoDB process is
-required for tests.
+| Test class | Tests | Line coverage |
+|------------|------:|--------------:|
+| vfs-linker | 24 | 88.3% ✅ |
+
+> [!TIP]
+> `Application.java` (entry point) is excluded from meaningful coverage — it has only one line that starts the Spring context.
+
+In-memory MongoDB is provided by `mongo-java-server` — no external MongoDB process is required for tests.
