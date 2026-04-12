@@ -15,7 +15,7 @@ Solutions are sorted by complexity and then by usefulness.
 6. [Cyclic Sort](solutions/EASY.md#6-cyclic-sort)
 
 ### Medium
-1. [Breadth-First Search]
+1. [Breadth-First Search](solutions/MEDIUM.md#1-breadth-first-search)
 2. [Depth-First Search]
 3. [Top K Elements]
 4. [Intervals](solutions/MEDIUM.md#4-intervals)
