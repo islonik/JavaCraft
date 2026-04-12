@@ -1,7 +1,7 @@
 # 1. Breadth-First Search
 <sub>[Back to solutions](../README.md#solutions)</sub>
 
-Breadth First Search (BFS) is a graph traversal algorithm that starts from a source node and explores the graph level by level. First, it visits all nodes directly adjacent to the source. Then, it moves on to visit the adjacent nodes of those nodes, and this process continues until all reachable nodes are visited.
+<b>Breadth First Search</b> (BFS) is a graph traversal algorithm that starts from a source node and explores the graph level by level. First, it visits all nodes directly adjacent to the source. Then, it moves on to visit the adjacent nodes of those nodes, and this process continues until all reachable nodes are visited.
 
 * BFS is different from DFS in a way that closest vertices are visited before others. We mainly traverse vertices level by level.
 * Popular graph algorithms like Dijkstra's shortest path, Kahn's Algorithm, and Prim's algorithm are based on BFS.
@@ -58,7 +58,7 @@ public List<List<Integer>> bfs(TreeNode root) {
 }
 ```
 
-Output: [[3], [9, 20], [15, 7]]<br/>
+<b>Output</b>: [[3], [9, 20], [15, 7]]<br/>
 This is the classic level-order traversal (LeetCode 102).
 
 ## 1.2. Illustration
@@ -103,6 +103,172 @@ Hard
 * https://leetcode.com/problems/word-ladder-ii/
 * https://leetcode.com/problems/shortest-path-to-get-all-keys/
 
+---
+
+# 2. Depth-First Search
+<sub>[Back to solutions](../README.md#solutions)</sub>
+
+<b>Depth-First Search</b> (DFS) is one of the most fundamental algorithms in computer science, used for traversing or searching data structures such as trees and graphs. It explores as far as possible along one branch before backtracking, making it particularly useful for scenarios like pathfinding, solving puzzles, and detecting cycles.
+
+<b>Depth-First Search</b> is an algorithm used for searching tree data structures for a particular node or a node with a particular value associated with it. It is also more generally used as a tree traversal algorithm, specifying an order in which to exhaustively access all nodes of a tree.
+
+The algorithm begins at the root node and explores deeper into the tree until it reaches a leaf node. Then, it backtracks up the tree until it finds an unexplored child node. This process continues until the desired node is found or all nodes have been explored.
+
+Key characteristics:
+
+* Recursive nature: The natural recursive structure of DFS makes it easier to implement, but for very deep graphs, recursion can lead to stack overflow unless converted to an iterative approach.
+* Memory usage: DFS generally requires less memory than BFS (Breadth-First Search) because it only stores the path it’s currently exploring, not all nodes at the current level.
+* Deterministic traversal: For a given starting point and adjacency ordering, DFS will always produce the same traversal order, making it predictable for testing and debugging.
+* Risk of infinite loops: If the graph has cycles and we don’t mark visited nodes, DFS can get stuck in an infinite loop. Hence, maintaining a visited set or array is crucial.
+
+## 2.1. Idea
+
+There are two strategies for implementing Depth-First Search:
+
+* Recursive implementation
+* Iterative implementation
+
+Let’s go through them one by one.
+
+### 2.1.1. Recursive implementation
+The recursive version of the algorithm works by starting at the root node and breaking the tree up into subtrees, until it finds the target node, or until every node in the tree has been considered as the root of a subtree. We recursively call the function on all of our root’s children, treating each child node as a root of its own subtree.
+
+We define a function that accepts a tree node and a target value as input parameters. The recursive DFS algorithm implements the following logic:
+
+If the input node value matches our target value, then return the input node.
+For each child of the input node, recursively call this function and return the first non-null value returned by a recursive call.
+If this root node has no children, or the recursive calls did not return any node, then return null.
+To search a tree with this function, we invoke the function with the root node of our tree.
+
+For example
+
+        3
+       / \
+      9   20
+         /  \
+        15   7
+
+```java
+public List<Integer> dfs(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    traverse(root, result);
+    return result;
+}
+
+private void traverse(TreeNode node, List<Integer> result) {
+    if (node == null) return;
+
+    result.add(node.val);      // pre-order: process before children
+    traverse(node.left, result);
+    traverse(node.right, result);
+}
+```
+<b>Output</b>: [3, 9, 20, 15, 7]
+
+
+### 2.1.2. Iterative implementation
+The iterative algorithm does not make use of any recursive calls. Instead, we maintain a stack of references to unexplored siblings of the nodes we have already accessed. The recursive algorithm is effectively doing something very similar, but the program call stack is implicitly used to store the path from the root to the current node.
+
+With the iterative algorithm, we need to implement a stack ourselves. These two implementations have the same time and space complexity, so the choice of which to implement is usually a matter of personal preference.
+
+For example
+
+        3
+       / \
+      9   20
+         /  \
+        15   7
+
+```java
+public List<Integer> dfs(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    if (root == null) return result;
+
+    Stack<TreeNode> stack = new Stack<>();
+    stack.push(root);
+
+    while (!stack.isEmpty()) {
+        TreeNode node = stack.pop();
+        result.add(node.val);
+
+        if (node.right != null) stack.push(node.right);  // right first
+        if (node.left != null)  stack.push(node.left);   // so left is processed first
+    }
+
+    return result;
+}
+```
+<b>Output</b>: [3, 9, 20, 15, 7]
+
+
+## 2.2. Illustration
+
+![Intervals](images/medium/2_dfs_traversal.gif)
+
+## 2.3. Complexity
+Time: O(n)<br/>
+Space: O(n)
+
+## 2.4. How to detect it should be used
+
+Key signals that DFS is the right approach:
+
+1) <b>Find all paths / any path</b> — exploring every possible route (e.g., all paths from source to target).
+2) <b>Permutations / combinations / subsets</b> — backtracking problems that build candidates incrementally.
+3) <b>Connected components / islands</b> — flood-fill style marking of reachable regions.
+4) <b>Detect a cycle</b> — in directed or undirected graphs.
+5) <b>Topological sort</b> — ordering tasks with dependencies (DFS post-order + reverse).
+6) <b>Tree depth / height / diameter</b> — problems requiring you to go deep before going wide.
+7) <b>Validate structure recursively</b> — e.g., validate BST, symmetric tree, same tree.
+8) <b>Path with a constraint</b> — path sum, max path sum, longest path — where you need to explore branches fully.
+
+## 2.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/binary-tree-inorder-traversal/
+* https://leetcode.com/problems/symmetric-tree/
+* https://leetcode.com/problems/path-sum/
+* https://leetcode.com/problems/binary-tree-preorder-traversal/
+* https://leetcode.com/problems/binary-tree-postorder-traversal/
+* https://leetcode.com/problems/maximum-depth-of-n-ary-tree/
+* https://leetcode.com/problems/flood-fill/
+
+Medium
+* https://leetcode.com/problems/letter-combinations-of-a-phone-number/
+* https://leetcode.com/problems/combination-sum/
+* https://leetcode.com/problems/combination-sum-ii/
+* https://leetcode.com/problems/permutations/
+* https://leetcode.com/problems/permutations-ii/
+* https://leetcode.com/problems/subsets/
+* https://leetcode.com/problems/word-search/
+* https://leetcode.com/problems/subsets-ii/
+* https://leetcode.com/problems/validate-binary-search-tree/
+* https://leetcode.com/problems/path-sum-ii/
+* https://leetcode.com/problems/surrounded-regions/
+* https://leetcode.com/problems/clone-graph/
+* https://leetcode.com/problems/number-of-islands/
+* https://leetcode.com/problems/course-schedule/
+* https://leetcode.com/problems/course-schedule-ii/
+* https://leetcode.com/problems/evaluate-division/
+* https://leetcode.com/problems/pacific-atlantic-water-flow/
+* https://leetcode.com/problems/target-sum/
+* https://leetcode.com/problems/number-of-provinces/
+* https://leetcode.com/problems/max-area-of-island/
+* https://leetcode.com/problems/is-graph-bipartite/
+* https://leetcode.com/problems/all-paths-from-source-to-target/
+* https://leetcode.com/problems/find-eventual-safe-states/
+* https://leetcode.com/problems/number-of-enclaves/
+
+Hard
+* https://leetcode.com/problems/word-ladder-ii/
+* https://leetcode.com/problems/word-break-ii/
+* https://leetcode.com/problems/word-search-ii/
+* https://leetcode.com/problems/longest-increasing-path-in-a-matrix/
+* https://leetcode.com/problems/regions-cut-by-slashes/
+* https://leetcode.com/problems/unique-paths-iii/
+* https://leetcode.com/problems/critical-connections-in-a-network/
+
+---
 
 # 4. Intervals
 <sub>[Back to solutions](../README.md#solutions)</sub>
