@@ -17,7 +17,7 @@ Solutions are sorted by complexity and then by usefulness.
 ### Medium
 1. [Breadth-First Search](solutions/MEDIUM.md#1-breadth-first-search)
 2. [Depth-First Search](solutions/MEDIUM.md#2-depth-first-search)
-3. [Top K Elements]
+3. [Top K Elements](solutions/MEDIUM.md#3-top-k-elements)
 4. [Intervals](solutions/MEDIUM.md#4-intervals)
 5. [Subsets]
 6. [Two Heaps](solutions/MEDIUM.md#6-two-heaps)

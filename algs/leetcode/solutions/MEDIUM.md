@@ -63,7 +63,7 @@ This is the classic level-order traversal (LeetCode 102).
 
 ## 1.2. Illustration
 
-![Intervals](images/medium/1_bfs-traversal.gif)
+![BFS](images/medium/1_bfs-traversal.gif)
 
 ## 1.3. Complexity
 
@@ -203,7 +203,7 @@ public List<Integer> dfs(TreeNode root) {
 
 ## 2.2. Illustration
 
-![Intervals](images/medium/2_dfs_traversal.gif)
+![DFS](images/medium/2_dfs_traversal.gif)
 
 ## 2.3. Complexity
 Time: O(n)<br/>
@@ -267,6 +267,118 @@ Hard
 * https://leetcode.com/problems/regions-cut-by-slashes/
 * https://leetcode.com/problems/unique-paths-iii/
 * https://leetcode.com/problems/critical-connections-in-a-network/
+
+---
+
+# 3. Top K Elements
+<sub>[Back to solutions](../README.md#solutions)</sub>
+
+Maintain a <b>heap of size K</b> that acts as a <b>gatekeeper</b> — only the "best" K elements survive.
+
+## 3.1. Idea
+Imagine a room with K chairs. People arrive one by one:
+
+```text
+Room capacity: 3 chairs (K = 3)
+Goal: keep the 3 TALLEST people
+
+Person arrives → Room not full?
+                  YES → sit down
+                  NO  → compare with the SHORTEST person sitting
+                         Taller?  → shortest leaves, new person sits
+                         Shorter? → new person leaves
+```
+
+### 3.1.1. K largest 
+
+```java
+public int[] topKLargest(int[] nums, int k) {
+    PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+    for (int num : nums) {
+        minHeap.offer(num); // add every element to the heap
+        if (minHeap.size() > k) { // evict the smallest, only K largest survive
+            minHeap.poll();
+        }
+    }
+
+    // remaining K elements are the answer
+    int[] result = new int[k];
+    for (int i = 0; i < k; i++) {
+        result[i] = minHeap.poll();
+    }
+    return result;
+}
+```
+
+### 3.1.2. K smallest
+
+```java
+public int[] bottomKSmallest(int[] nums, int k) {
+    // largest element sits on top
+    PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+
+    for (int num : nums) {
+        maxHeap.offer(num); // add every element to the heap
+        if (maxHeap.size() > k) { // evict the largest, only K smallest survive
+            maxHeap.poll();
+        }
+    }
+
+    // remaining K elements are the answer
+    int[] result = new int[k];
+    for (int i = 0; i < k; i++) {
+        result[i] = maxHeap.poll();
+    }
+    return result;
+}
+```
+
+## 3.2. Illustration
+![Top K Elements](images/medium/3_top_k_elements.webp)
+
+## 3.3. Complexity
+
+Time: O(N log K) - each offer/poll is O(log k), done n times<br/>
+Space: O(K) - heap never exceeds size k<br/>
+
+### 3.3.1. Why not just sort?
+| Approach       | Time       | Space | When to use               |
+|----------------|------------|-------|---------------------------|
+| Full sort      | O(n log n) | O(n)  | Need all elements ordered |
+| Heap of size K | O(n log k) | O(k)  | Only need top K ✓         |
+| QuickSelect    | O(n) avg   | O(1)  | Only need the Kth element |
+
+When K is much smaller than N, the heap approach wins:
+
+```text
+n = 1,000,000    k = 10
+
+Sort:        O(n log n) = ~20,000,000 operations
+Heap size K: O(n log k) = ~3,300,000 operations  ← 6x faster
+```
+
+## 3.4. How to detect it should be used
+
+Key signals that Top K Elements is the right approach:
+
+1) <b>K largest / K smallest</b> — find the K biggest or smallest elements.
+2) <b>K most frequent</b> — top K elements by frequency/count.
+3) <b>K closest</b> — K nearest points, K closest to a value.
+4) <b>Kth largest / Kth smallest</b> — find the single element at position K.
+5) <b>Sort partially</b> — don't need full sort, just the top/bottom K.
+6) <b>Streaming data</b> — maintain top K as elements arrive continuously.
+
+## 3.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/kth-largest-element-in-a-stream/
+
+Medium
+* https://leetcode.com/problems/kth-largest-element-in-an-array/
+* https://leetcode.com/problems/top-k-frequent-elements/
+* https://leetcode.com/problems/top-k-frequent-words/
+* https://leetcode.com/problems/k-closest-points-to-origin/
 
 ---
 
