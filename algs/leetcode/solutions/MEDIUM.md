@@ -307,6 +307,39 @@ Space: O(N), as we need to return a list containing all the merged intervals.
 
 This approach is quite useful when dealing with intervals, overlapping items or merging intervals.
 
+## 4.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/meeting-rooms/
+* https://leetcode.com/problems/points-that-intersect-with-cars/
+
+Medium
+* https://leetcode.com/problems/merge-intervals/
+* https://leetcode.com/problems/insert-interval/
+* https://leetcode.com/problems/meeting-rooms-ii/
+* https://leetcode.com/problems/non-overlapping-intervals/
+* https://leetcode.com/problems/find-right-interval/
+* https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/
+* https://leetcode.com/problems/my-calendar-i/
+* https://leetcode.com/problems/my-calendar-ii/
+* https://leetcode.com/problems/interval-list-intersections/
+* https://leetcode.com/problems/video-stitching/
+* https://leetcode.com/problems/car-pooling/
+* https://leetcode.com/problems/meeting-scheduler/
+* https://leetcode.com/problems/remove-covered-intervals/
+* https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended/
+* https://leetcode.com/problems/the-number-of-the-smallest-unoccupied-chair/
+* https://leetcode.com/problems/divide-intervals-into-minimum-number-of-groups/
+* https://leetcode.com/problems/count-days-without-meetings/
+
+Hard
+* https://leetcode.com/problems/data-stream-as-disjoint-intervals/
+* https://leetcode.com/problems/my-calendar-iii/
+* https://leetcode.com/problems/set-intersection-size-at-least-two/
+* https://leetcode.com/problems/employee-free-time/
+* https://leetcode.com/problems/minimum-interval-to-include-each-query/
+* https://leetcode.com/problems/minimum-time-to-complete-all-tasks/
+
 ---
 
 # 6. Two Heaps
@@ -363,5 +396,13 @@ LeetCode problems:
 * LeetCode 480 - Sliding Window Median [hard]
 * LeetCode 502 - IPO [hard]
 
+## 6.5. LeetCode problems
+
+Two Heaps is a small pattern on LeetCode, and the standard public set is all Hard.
+
+Hard
+* https://leetcode.com/problems/find-median-from-data-stream/
+* https://leetcode.com/problems/sliding-window-median/
+* https://leetcode.com/problems/ipo/
 
 ---

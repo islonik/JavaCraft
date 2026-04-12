@@ -24,20 +24,82 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 Time: O(n)<br/>
 Space: O(1)
 
-## 1.4. When to Use Two Pointers:
-* <b>Sorted Input</b> : If the array or list is already sorted (or can be sorted), two pointers can efficiently find pairs or ranges. Example: Find two numbers in a sorted array that add up to a target.
-* <b>Pairs or Subarrays</b> : When the problem asks about two elements, subarrays, or ranges instead of working with single elements. Example: Longest substring without repeating characters, maximum consecutive ones, checking if a string is palindrome.
-* <b>Sliding Window Problems</b> : When you need to maintain a window of elements that grows/shrinks based on conditions. Example: Find smallest subarray with sum ≥ K, move all zeros to end while maintaining order.
-* <b>Linked Lists (Slow–Fast pointers)</b> : Detecting cycles, finding the middle node, or checking palindrome property. Example: Floyd’s Cycle Detection Algorithm (Tortoise and Hare).
+## 1.4. How to detect it should be used
 
-## 1.5. How to detect it should be used
+Key signals that Two Pointers is the right approach:
 
-* <b>The input is sorted</b> : A sorted array or list is the clearest signal — opposite-end traversal can find pairs or validate ranges in one pass. Example: merge sorted array (#88), search insert position (#35).
-* <b>"Find a pair / two elements"</b> : Any problem asking for two indices or values that satisfy a condition (sum, difference, product) is a direct match. Example: two sum (#1).
-* <b>"In-place" or "O(1) extra space"</b> : When the problem forbids auxiliary data structures, two pointers let you shift, overwrite, or partition the array without allocating memory. Example: remove duplicates (#26), remove element (#27).
-* <b>Comparing from both ends</b> : Problems that check symmetry or mirroring — palindromes, balanced strings — are solved by converging left and right pointers. Example: valid palindrome (#125).
-* <b>Merging two sorted sequences</b> : When two sorted arrays or lists need to be combined in-place or in a single traversal, one pointer per sequence keeps the merge linear. Example: merge sorted array (#88).
-* <b>Keywords to watch for</b> : "sorted", "in-place", "without extra space", "pair that sums to", "palindrome", "merge two sorted", "remove duplicates", "partition".
+1) <b>Sorted array/list</b> — problem involves a sorted collection and asks for pairs/triplets satisfying a condition.
+2) <b>Find a pair with target sum</b> — two sum in a sorted array, 3Sum, 4Sum.
+3) <b>Remove duplicates in-place</b> — one pointer reads, one writes.
+4) <b>Partition / rearrange in-place</b> — move zeroes, sort colors (Dutch flag), separate odds/evens.
+5) <b>Palindrome check</b> — compare from both ends moving inward.
+6) <b>Merge two sorted arrays/lists</b> — one pointer per collection.
+7) <b>Container with most water</b> / <b>trapping rain water</b> — shrink from both ends based on a condition.
+8) <b>Subsequence check</b> — is string s a subsequence of string t?
+
+## 1.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/remove-duplicates-from-sorted-array/
+* https://leetcode.com/problems/remove-element/
+* https://leetcode.com/problems/merge-sorted-array/
+* https://leetcode.com/problems/valid-palindrome/
+* https://leetcode.com/problems/linked-list-cycle/
+* https://leetcode.com/problems/intersection-of-two-linked-lists/
+* https://leetcode.com/problems/happy-number/
+* https://leetcode.com/problems/palindrome-linked-list/
+* https://leetcode.com/problems/move-zeroes/
+* https://leetcode.com/problems/reverse-string/
+* https://leetcode.com/problems/reverse-vowels-of-a-string/
+* https://leetcode.com/problems/is-subsequence/
+* https://leetcode.com/problems/assign-cookies/
+* https://leetcode.com/problems/valid-palindrome-ii/
+* https://leetcode.com/problems/backspace-string-compare/
+* https://leetcode.com/problems/middle-of-the-linked-list/
+* https://leetcode.com/problems/squares-of-a-sorted-array/
+* https://leetcode.com/problems/duplicate-zeros/
+* https://leetcode.com/problems/check-if-n-and-its-double-exist/
+* https://leetcode.com/problems/merge-strings-alternately/
+* https://leetcode.com/problems/minimum-common-value/
+* https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target/
+
+Medium
+* https://leetcode.com/problems/container-with-most-water/
+* https://leetcode.com/problems/3sum/
+* https://leetcode.com/problems/3sum-closest/
+* https://leetcode.com/problems/4sum/
+* https://leetcode.com/problems/remove-nth-node-from-end-of-list/
+* https://leetcode.com/problems/next-permutation/
+* https://leetcode.com/problems/sort-colors/
+* https://leetcode.com/problems/remove-duplicates-from-sorted-array-ii/
+* https://leetcode.com/problems/reorder-list/
+* https://leetcode.com/problems/compare-version-numbers/
+* https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/
+* https://leetcode.com/problems/rotate-array/
+* https://leetcode.com/problems/find-the-duplicate-number/
+* https://leetcode.com/problems/string-compression/
+* https://leetcode.com/problems/longest-word-in-dictionary-through-deleting/
+* https://leetcode.com/problems/permutation-in-string/
+* https://leetcode.com/problems/valid-triangle-number/
+* https://leetcode.com/problems/find-k-closest-elements/
+* https://leetcode.com/problems/swap-adjacent-in-lr-string/
+* https://leetcode.com/problems/boats-to-save-people/
+* https://leetcode.com/problems/interval-list-intersections/
+* https://leetcode.com/problems/number-of-subsequences-that-satisfy-the-given-sum-condition/
+* https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted/
+* https://leetcode.com/problems/max-number-of-k-sum-pairs/
+* https://leetcode.com/problems/minimum-length-of-string-after-deleting-similar-ends/
+* https://leetcode.com/problems/maximum-distance-between-a-pair-of-values/
+* https://leetcode.com/problems/maximum-twin-sum-of-a-linked-list/
+* https://leetcode.com/problems/successful-pairs-of-spells-and-potions/
+
+Hard
+* https://leetcode.com/problems/trapping-rain-water/
+* https://leetcode.com/problems/find-k-th-smallest-pair-distance/
+* https://leetcode.com/problems/longest-chunked-palindrome-decomposition/
+* https://leetcode.com/problems/last-substring-in-lexicographical-order/
+* https://leetcode.com/problems/get-the-maximum-score/
+* https://leetcode.com/problems/closest-subsequence-sum/
 
 ---
 
@@ -94,26 +156,88 @@ There are two variants:
 
 ## 2.5. LeetCode problems
 
+Easy
 * https://leetcode.com/problems/contains-duplicate-ii/
+* https://leetcode.com/problems/longest-harmonious-subsequence/
+* https://leetcode.com/problems/maximum-average-subarray-i/
+* https://leetcode.com/problems/defuse-the-bomb/
+* https://leetcode.com/problems/substrings-of-size-three-with-distinct-characters/
+* https://leetcode.com/problems/minimum-difference-between-highest-and-lowest-of-k-scores/
+* https://leetcode.com/problems/find-the-k-beauty-of-a-number/
+* https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/
+
+Medium
+* https://leetcode.com/problems/longest-substring-without-repeating-characters/
+* https://leetcode.com/problems/repeated-dna-sequences/
+* https://leetcode.com/problems/minimum-size-subarray-sum/
+* https://leetcode.com/problems/longest-repeating-character-replacement/
+* https://leetcode.com/problems/find-all-anagrams-in-a-string/
+* https://leetcode.com/problems/permutation-in-string/
+* https://leetcode.com/problems/subarray-product-less-than-k/
+* https://leetcode.com/problems/fruit-into-baskets/
+* https://leetcode.com/problems/binary-subarrays-with-sum/
+* https://leetcode.com/problems/max-consecutive-ones-iii/
+* https://leetcode.com/problems/grumpy-bookstore-owner/
+* https://leetcode.com/problems/get-equal-substrings-within-budget/
+* https://leetcode.com/problems/replace-the-substring-for-balanced-string/
+* https://leetcode.com/problems/count-number-of-nice-subarrays/
+* https://leetcode.com/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/
+* https://leetcode.com/problems/number-of-substrings-containing-all-three-characters/
+* https://leetcode.com/problems/maximum-points-you-can-obtain-from-cards/
+* https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/
+* https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/
+* https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element/
+* https://leetcode.com/problems/minimum-operations-to-reduce-x-to-zero/
+* https://leetcode.com/problems/maximum-erasure-value/
+* https://leetcode.com/problems/frequency-of-the-most-frequent-element/
+* https://leetcode.com/problems/minimum-number-of-flips-to-make-the-binary-string-alternating/
+* https://leetcode.com/problems/maximize-the-confusion-of-an-exam/
+* https://leetcode.com/problems/minimum-consecutive-cards-to-pick-up/
+* https://leetcode.com/problems/longest-nice-subarray/
+* https://leetcode.com/problems/maximum-sum-of-distinct-subarrays-with-length-k/
+* https://leetcode.com/problems/count-the-number-of-good-subarrays/
+* https://leetcode.com/problems/find-the-longest-semi-repetitive-substring/
+
+Hard
+* https://leetcode.com/problems/substring-with-concatenation-of-all-words/
+* https://leetcode.com/problems/minimum-window-substring/
+* https://leetcode.com/problems/contains-duplicate-iii/
+* https://leetcode.com/problems/sliding-window-maximum/
+* https://leetcode.com/problems/sliding-window-median/
+* https://leetcode.com/problems/maximum-sum-of-3-non-overlapping-subarrays/
+* https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/
+* https://leetcode.com/problems/subarrays-with-k-different-integers/
+* https://leetcode.com/problems/minimum-number-of-k-consecutive-bit-flips/
+* https://leetcode.com/problems/longest-duplicate-substring/
+* https://leetcode.com/problems/constrained-subsequence-sum/
+* https://leetcode.com/problems/max-value-of-equation/
+* https://leetcode.com/problems/minimum-adjacent-swaps-for-k-consecutive-ones/
+* https://leetcode.com/problems/minimum-number-of-operations-to-make-array-continuous/
+* https://leetcode.com/problems/count-subarrays-with-score-less-than-k/
+* https://leetcode.com/problems/maximum-number-of-robots-within-budget/
+* https://leetcode.com/problems/count-subarrays-with-fixed-bounds/
+* https://leetcode.com/problems/maximize-the-minimum-powered-city/
 
 ---
 
 # 3. Modified Binary search
 <sub>[Back to solutions](../README.md#solutions)</sub>
 
-[Rotated Array](#35-rotated-array)
+[Rotated Array](#32-rotated-array)
+
+## 3.1. Binary Search
 
 Binary Search is the most popular Searching Algorithm which is most asked in coding interviews. Its popularity is because of it’s time complexity, where the linear search algorithm takes O(N) time, the Binary Search takes O(log N) time. The only condition in Binary Search is that the array should be sorted.
 
-## 3.1. Idea
+### 3.1.1. Idea
 
 The reason why Binary Search provides O(log N) time complexity is that on each iteration it eliminates half of the array and searches the element in the remaining half.
 
-## 3.2. Illustration
+### 3.1.2. Illustration
 
 ![Binary search](images/easy/3_binary_search_1.webp)
 
-## 3.3. Complexity
+### 3.1.3. Complexity
 
 <b>Iterative Algorithm</b>: 
 * Time: O(log n)
@@ -123,7 +247,7 @@ The reason why Binary Search provides O(log N) time complexity is that on each i
 * Time: O(log n)
 * Space: O(Log n)
 
-## 3.4. How to detect it should be used
+### 3.1.4. How to detect it should be used
 
 1. Data is sorted or partially sorted (e.g., rotated array)
 2. You need O(log n) time (large input)
@@ -136,17 +260,17 @@ The reason why Binary Search provides O(log N) time complexity is that on each i
 9. You’re effectively finding the first valid / last invalid
 10. Each step can safely discard half of the search space
 
-LeetCode problems: 
+### 3.1.5. LeetCode problems
 * https://leetcode.com/problems/binary-search/
 * https://leetcode.com/problems/search-insert-position/
 * https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/
 * https://leetcode.com/problems/first-bad-version/
 
-## 3.5. Rotated array
+## 3.2. Rotated array
 <sub>[Back to solutions](../README.md#solutions)</sub><br/>
 <sub>[Back to Modified Binary search](#3-modified-binary-search)</sub>
 
-### 3.5.1. Problem statement
+### 3.2.1. Problem statement
 
 ```text
 Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.
@@ -158,7 +282,7 @@ Input: [3,4,5,1,2]
 Output: 1
 ```
 
-### 3.5.2. Problem solution
+### 3.2.2. Problem solution
 
 Let us look at this rotated array example carefully:
 
@@ -177,13 +301,13 @@ The approach is similar to the standard binary search where we find the middle e
 
 When we find the middle element ( in the above example number 7 is the middle element ) we can observe that the array is divided into two halves where one half is sorted and the other half is unsorted. Another interesting observation is that the minimum element is always in the unsorted half.
 
-### 3.5.3. Algorithm
+### 3.2.3. Algorithm
 
 1. Find the middle element of the array.
 2. Check if the middle element is the minimum element
 3. If the middle element does not satisfy the minimum element condition then apply binary search on the unsorted half of the array.
 
-### 3.5.4. Illustrations
+### 3.2.4. Illustrations
 
 ![1](images/easy/3_rotated_array_1.webp)
 ![2](images/easy/3_rotated_array_2.webp)
@@ -194,7 +318,7 @@ When we find the middle element ( in the above example number 7 is the middle el
 ![7](images/easy/3_rotated_array_7.webp)
 ![8](images/easy/3_rotated_array_8.webp)
 
-### 3.5.5. LeetCode problems
+### 3.2.5. LeetCode problems
 
 * https://leetcode.com/problems/search-in-rotated-sorted-array/
 * https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/
@@ -239,6 +363,21 @@ Only two pointer variables (slow, fast) are maintained regardless of list size. 
 * <b>O(1) space required on a linked list</b> : Hash-set alternatives work but use O(n) space; fast/slow pointers solve the same problems in constant space. Example: `hasCycle2` in linked list cycle (#141) shows the hash-set contrast.
 * <b>Keywords to watch for</b> : "linked list", "cycle", "loop", "circular", "middle node", "intersection", "nth from end", "detect", "Floyd".
 
+## 4.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/linked-list-cycle/
+* https://leetcode.com/problems/happy-number/
+* https://leetcode.com/problems/palindrome-linked-list/
+* https://leetcode.com/problems/middle-of-the-linked-list/
+
+Medium
+* https://leetcode.com/problems/remove-nth-node-from-end-of-list/
+* https://leetcode.com/problems/linked-list-cycle-ii/
+* https://leetcode.com/problems/reorder-list/
+* https://leetcode.com/problems/find-the-duplicate-number/
+* https://leetcode.com/problems/circular-array-loop/
+
 ---
 
 # 5. In-Place Reversal of a Linked List
@@ -260,36 +399,6 @@ The in-place reversal algorithm for a singly linked list follows these key steps
 6. Set the new head of the reversed list to prev.
 
 This algorithm effectively reverses the direction of each link in the list, thereby reversing the entire list.
-
-## 5.2. Illustration
-
-![1](images/easy/5_reverse_linked_list_1.webp)
-![2](images/easy/5_reverse_linked_list_2.webp)
-![3](images/easy/5_reverse_linked_list_3.webp)
-![4](images/easy/5_reverse_linked_list_4.webp)
-![5](images/easy/5_reverse_linked_list_5.webp)
-![6](images/easy/5_reverse_linked_list_6.webp)
-![7](images/easy/5_reverse_linked_list_7.webp)
-![8](images/easy/5_reverse_linked_list_8.webp)
-
-## 5.3. Complexity
-
-Time: O(n)<br/>
-Space: O(1)
-
-### 5.3.1. Why O(n) time:
-The time complexity of this algorithm is O(n), where n is the number of nodes in the linked list. This is because we traverse the list exactly once, performing a constant number of operations for each node.
-
-### 5.3.1. Why O(1) space:
-The space complexity is O(1), or constant space. We only use a fixed number of pointers (prev, current, and next) regardless of the size of the input list. This is what makes the algorithm “in-place” – it doesn’t require additional space proportional to the input size.
-
-This combination of linear time complexity and constant space complexity makes the in-place reversal algorithm highly efficient and desirable in many scenarios, especially when dealing with large lists or in memory-constrained environments.
-
-## 5.4. How to detect it should be used
-
-https://leetcode.com/problems/reverse-linked-list/description/
-
-## 5.5. Code
 
 ```java
 import java.util.ArrayList;
@@ -349,6 +458,55 @@ public class ReverseLinkedListExample {
 }
 ```
 
+## 5.2. Illustration
+
+![1](images/easy/5_reverse_linked_list_1.webp)
+![2](images/easy/5_reverse_linked_list_2.webp)
+![3](images/easy/5_reverse_linked_list_3.webp)
+![4](images/easy/5_reverse_linked_list_4.webp)
+![5](images/easy/5_reverse_linked_list_5.webp)
+![6](images/easy/5_reverse_linked_list_6.webp)
+![7](images/easy/5_reverse_linked_list_7.webp)
+![8](images/easy/5_reverse_linked_list_8.webp)
+
+## 5.3. Complexity
+
+Time: O(n)<br/>
+Space: O(1)
+
+### 5.3.1. Why O(n) time:
+The time complexity of this algorithm is O(n), where n is the number of nodes in the linked list. This is because we traverse the list exactly once, performing a constant number of operations for each node.
+
+### 5.3.1. Why O(1) space:
+The space complexity is O(1), or constant space. We only use a fixed number of pointers (prev, current, and next) regardless of the size of the input list. This is what makes the algorithm “in-place” – it doesn’t require additional space proportional to the input size.
+
+This combination of linear time complexity and constant space complexity makes the in-place reversal algorithm highly efficient and desirable in many scenarios, especially when dealing with large lists or in memory-constrained environments.
+
+## 5.4. How to detect it should be used
+Key signals that In-Place Reversal is the right approach:
+
+1) <b>Reverse a linked list</b> — fully or partially (reverse between positions m and n).
+2) <b>Reverse in groups of K</b> — reverse nodes in k-group, swap pairs.
+3) <b>Palindrome linked list</b> — reverse the second half, then compare.
+4) <b>Reorder list</b> — interleave first half with reversed second half.
+5) <b>Rotate list</b> — rearranging node order without extra space.
+6) O(1) space constraint — cannot use extra data structures, must modify pointers in place.
+
+## 5.5. LeetCode problems
+
+Easy
+* https://leetcode.com/problems/reverse-linked-list/
+
+Medium
+* https://leetcode.com/problems/swap-nodes-in-pairs/
+* https://leetcode.com/problems/rotate-list/
+* https://leetcode.com/problems/reverse-linked-list-ii/
+* https://leetcode.com/problems/reorder-list/
+* https://leetcode.com/problems/odd-even-linked-list/
+
+Hard
+* https://leetcode.com/problems/reverse-nodes-in-k-group/
+
 ---
 
 # 6. Cyclic Sort
@@ -387,9 +545,17 @@ Use cyclic sort when:
 
 ## 6.5. LeetCode problems
 
+Easy
 * https://leetcode.com/problems/missing-number/
 * https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/
+* https://leetcode.com/problems/set-mismatch/
+
+Medium
 * https://leetcode.com/problems/find-the-duplicate-number/
 * https://leetcode.com/problems/find-all-duplicates-in-an-array/
+
+Hard
+* https://leetcode.com/problems/first-missing-positive/
+
 
 ---
