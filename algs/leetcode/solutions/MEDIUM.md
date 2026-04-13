@@ -20,7 +20,7 @@ Let’s go through a step-by-step breakdown of how breadth-first search operates
 
 This systematic, level-based approach ensures that BFS finds the shortest route from the source to any other node in an unweighted graph.
 
-For example:
+**Implementation**
 
 Tree:
 
@@ -143,7 +143,7 @@ For each child of the input node, recursively call this function and return the 
 If this root node has no children, or the recursive calls did not return any node, then return null.
 To search a tree with this function, we invoke the function with the root node of our tree.
 
-For example
+**Implementation**
 
         3
        / \
@@ -174,7 +174,7 @@ The iterative algorithm does not make use of any recursive calls. Instead, we ma
 
 With the iterative algorithm, we need to implement a stack ourselves. These two implementations have the same time and space complexity, so the choice of which to implement is usually a matter of personal preference.
 
-For example
+**Implementation**
 
         3
        / \
@@ -594,6 +594,7 @@ This approach is quite useful when dealing with intervals, overlapping items or 
 ---
 
 # 5. Subsets
+<sub>[Back to solutions](../README.md#solutions)</sub>
 
 A subset is a set whose all elements are contained within another set. A subset is indicated by the symbol '⊆' and read as 'is a subset of' in set theory.
 
@@ -618,6 +619,7 @@ All subsets: [[], [1], [2], [1,2]]
 
 ```
 
+**Implementation**
 ```java
 public List<List<Integer>> subsets(int[] nums) {
     List<List<Integer>> result = new ArrayList<>();
@@ -722,6 +724,7 @@ Let’s assume that x is the median of the list. This means that, half of the it
 3. Inserting a number in a heap will take O(log N) (better than the brute force approach)
 4. The median of the current list of numbers can be calculated from the top element of the two heaps.
 
+**Implementation**
 ```java
 class MedianFinder {
     private PriorityQueue<Integer> maxHeap;  // smaller half (largest on top)

@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1280" viewBox="0 0 1400 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Topological sort illustration</title>
+  <desc id="desc">A Kahn's algorithm walkthrough for the DAG 0 to 1, 0 to 2, 1 to 3, 2 to 3, showing in-degrees, queue updates, and the final topological order.</desc>
+
+  <defs>
+    <style>
+      .bg-card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .card-title { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #35516d; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .mono { font: 700 16px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+      .label { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .step-card { fill: #ffffff; stroke: #c8d9eb; stroke-width: 2; rx: 22; ry: 22; }
+      .ready-chip { fill: #dff5e7; stroke: #57a77e; stroke-width: 2.5; rx: 14; ry: 14; }
+      .waiting-chip { fill: #edf3fb; stroke: #a7bdd7; stroke-width: 2; rx: 14; ry: 14; }
+      .note-card { fill: #fff8e8; stroke: #efc56d; stroke-width: 2; rx: 20; ry: 20; }
+      .node { fill: #ffffff; stroke: #93b0cf; stroke-width: 2.5; }
+      .node-ready { fill: #dff5e7; stroke: #57a77e; stroke-width: 2.5; }
+      .edge { stroke: #5e83b0; stroke-width: 3.2; fill: none; marker-end: url(#arrowBlue); }
+      .node-text { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; dominant-baseline: middle; }
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#5e83b0"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1280" fill="#edf5fb"/>
+  <rect x="32" y="28" width="1336" height="1224" class="bg-card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Topological Sort (Kahn's Algorithm)</text>
+  <text x="60" y="118" class="subtitle">A node is ready only when its in-degree becomes 0. We pop ready nodes from the queue, append them to the result, and reduce the in-degree of their neighbors.</text>
+
+  <rect x="70" y="155" width="1280" height="78" class="pipe"/>
+  <text x="105" y="189" class="card-title">Flow</text>
+  <text x="105" y="216" class="body">compute in-degrees -> queue all nodes with in-degree 0 -> poll queue -> append to result -> decrease neighbors' in-degree -> enqueue any new 0 in-degree nodes</text>
+
+  <rect x="70" y="270" width="1260" height="285" class="bg-card" rx="24" ry="24"/>
+  <text x="100" y="315" class="card-title">Example DAG</text>
+  <text x="100" y="345" class="body">Edges: 0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3</text>
+
+  <circle cx="240" cy="430" r="40" class="node-ready"/>
+  <text x="240" y="430" class="node-text">0</text>
+  <circle cx="430" cy="360" r="40" class="node"/>
+  <text x="430" y="360" class="node-text">1</text>
+  <circle cx="430" cy="500" r="40" class="node"/>
+  <text x="430" y="500" class="node-text">2</text>
+  <circle cx="630" cy="430" r="40" class="node"/>
+  <text x="630" y="430" class="node-text">3</text>
+
+  <path d="M278 416 L390 374" class="edge"/>
+  <path d="M278 444 L390 486" class="edge"/>
+  <path d="M470 374 L590 416" class="edge"/>
+  <path d="M470 486 L590 444" class="edge"/>
+
+  <rect x="700" y="320" width="250" height="190" class="pipe"/>
+  <text x="730" y="360" class="card-title">Initial in-degrees</text>
+  <text x="730" y="390" class="mono">0: 0</text>
+  <text x="730" y="420" class="mono">1: 1</text>
+  <text x="730" y="450" class="mono">2: 1</text>
+  <text x="730" y="480" class="mono">3: 2</text>
+
+  <rect x="1010" y="300" width="290" height="230" class="note-card"/>
+  <text x="1040" y="340" class="card-title">Start state</text>
+  <text x="1040" y="370" class="small">Only node 0 has in-degree 0, so the</text>
+  <text x="1040" y="390" class="small">queue starts as:</text>
+  <rect x="1040" y="410" width="160" height="40" class="ready-chip"/>
+  <text x="1120" y="435" class="mono" text-anchor="middle">queue = [0]</text>
+  <text x="1040" y="485" class="small">Everything else must wait until its </text>
+  <text x="1040" y="505" class="small">incoming edges are removed.</text>
+
+  <rect x="70" y="585" width="610" height="210" class="step-card"/>
+  <text x="100" y="625" class="card-title">Step 1</text>
+  <text x="100" y="655" class="body">Poll 0 from the queue and append it to the result.</text>
+  <text x="100" y="690" class="mono">Queue before: [0]</text>
+  <text x="100" y="720" class="mono">Result after: [0]</text>
+  <text x="100" y="750" class="mono">Update neighbors: 1 -> 0, 2 -> 0</text>
+  <text x="100" y="775" class="mono">Queue after: [1, 2]</text>
+
+  <rect x="720" y="585" width="610" height="210" class="step-card"/>
+  <text x="750" y="625" class="card-title">Step 2</text>
+  <text x="750" y="655" class="body">Poll 1 next. Node 3 is still not ready yet.</text>
+  <text x="750" y="690" class="mono">Queue before: [1, 2]</text>
+  <text x="750" y="720" class="mono">Result after: [0, 1]</text>
+  <text x="750" y="750" class="mono">Update neighbor: 3 -> 1</text>
+  <text x="750" y="775" class="mono">Queue after: [2]</text>
+
+  <rect x="70" y="815" width="610" height="210" class="step-card"/>
+  <text x="100" y="855" class="card-title">Step 3</text>
+  <text x="100" y="885" class="body">Poll 2. This removes the last unmet dependency for node 3.</text>
+  <text x="100" y="920" class="mono">Queue before: [2]</text>
+  <text x="100" y="950" class="mono">Result after: [0, 1, 2]</text>
+  <text x="100" y="980" class="mono">Update neighbor: 3 -> 0</text>
+  <text x="100" y="1005" class="mono">Queue after: [3]</text>
+
+  <rect x="720" y="815" width="610" height="210" class="step-card"/>
+  <text x="750" y="855" class="card-title">Step 4</text>
+  <text x="750" y="885" class="body">Poll 3. No neighbors remain, so the queue becomes empty.</text>
+  <text x="750" y="920" class="mono">Queue before: [3]</text>
+  <text x="750" y="950" class="mono">Result after: [0, 1, 2, 3]</text>
+  <text x="750" y="980" class="mono">Processed nodes = 4 / 4</text>
+  <text x="750" y="1005" class="mono">Queue after: []</text>
+
+  <rect x="90" y="1060" width="1240" height="145" class="result-card"/>
+  <text x="125" y="1105" class="result-title">Why the order is valid</text>
+  <text x="125" y="1140" class="result-body">A node enters the queue only after all incoming edges have been removed, so every prerequisite is already in the result.</text>
+  <text x="125" y="1172" class="result-body">If the queue becomes empty before all nodes are processed, the graph contains a cycle and no topological order exists.</text>
+</svg>

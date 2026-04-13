@@ -15,6 +15,7 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 * If the <b>sum</b> is less than the <b>target</b>, move the <b>left</b> pointer to the right to increase the <b>sum</b>.
 * If the <b>sum</b> is greater than the <b>target</b>, move the <b>right</b> pointer to the left to decrease the <b>sum</b>.
 
+**Implementation**
 ```java
 public int[] twoSum(int[] nums, int target) {
     int left = 0;
@@ -320,6 +321,7 @@ Binary Search is the most popular Searching Algorithm which is most asked in cod
 
 The reason why Binary Search provides `O(log N)` time complexity is that on each iteration it eliminates half of the array and searches the element in the remaining half.
 
+**Implementation**
 ```java
 public int binarySearch(int[] nums, int target) {
     int left = 0;
@@ -735,6 +737,7 @@ The in-place reversal algorithm for a singly linked list follows these key steps
 
 This algorithm effectively reverses the direction of each link in the list, thereby reversing the entire list.
 
+**Implementation**
 ```java
 import java.util.ArrayList;
 import java.util.List;

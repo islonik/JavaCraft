@@ -24,4 +24,4 @@ Solutions are sorted by complexity and then by usefulness.
 7. [K-way merge](solutions/MEDIUM.md#7-k-way-merge)
 
 ### Hard
-1. [Topological Sort]
+1. [Topological Sort](solutions/HARD.md#1-topological-sort)
