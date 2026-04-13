@@ -293,15 +293,36 @@ Key signals that Sliding Window is the right approach:
 
 ## 3.1. Binary Search
 
-Binary Search is the most popular Searching Algorithm which is most asked in coding interviews. Its popularity is because of it’s time complexity, where the linear search algorithm takes O(N) time, the Binary Search takes O(log N) time. The only condition in Binary Search is that the array should be sorted.
+Binary Search is the most popular Searching Algorithm which is most asked in coding interviews. Its popularity is because of it’s time complexity, where the linear search algorithm takes `O(N)` time, the Binary Search takes `O(log N)` time. The only condition in Binary Search is that the array should be sorted.
 
 ### 3.1.1. Idea
 
-The reason why Binary Search provides O(log N) time complexity is that on each iteration it eliminates half of the array and searches the element in the remaining half.
+The reason why Binary Search provides `O(log N)` time complexity is that on each iteration it eliminates half of the array and searches the element in the remaining half.
+
+```java
+public int binarySearch(int[] nums, int target) {
+    int left = 0;
+    int right = nums.length - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;  // avoid overflow
+
+        if (nums[mid] == target) {
+            return mid;
+        } else if (nums[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    return -1;
+}
+```
 
 ### 3.1.2. Illustration
 
-![Binary search](images/easy/3_binary_search_1.webp)
+![Binary search](images/easy/3_binary_search.svg)
 
 ### 3.1.3. Complexity
 
@@ -315,16 +336,16 @@ The reason why Binary Search provides O(log N) time complexity is that on each i
 
 ### 3.1.4. How to detect it should be used
 
-1. Data is sorted or partially sorted (e.g., rotated array)
-2. You need O(log n) time (large input)
-3. Searching for target / min / max / boundary (first/last)
-4. Problem can be reduced to left vs right elimination
-5. There is a monotonic condition (F → T or T → F)
-6. You can ask: “If X works, will bigger/smaller also work?”
-7. Answer space is numeric (e.g., speed, time, capacity)
-8. You can validate a guess with a check() function
-9. You’re effectively finding the first valid / last invalid
-10. Each step can safely discard half of the search space
+Key signals that Binary Search is the right approach:
+
+1) <b>Sorted array/matrix</b> — input is sorted or partially sorted.
+2) <b>Find target / position / index</b> — locate an element in sorted data.
+3) <b>First / last occurrence</b> — find boundary of duplicates.
+4) <b>Minimum / maximum that satisfies condition</b> — search on answer space.
+5) <b>Rotated sorted array</b> — half is always sorted, binary search still works.
+6) <b>O(log n) required</b> — problem explicitly demands logarithmic time.
+7) <b>Find peak / valley</b> — monotonic property on both sides.
+8) <b>Can you achieve X with capacity/speed/value Y?</b> — yes/no boundary in a range.
 
 ### 3.1.5. LeetCode problems
 * https://leetcode.com/problems/binary-search/

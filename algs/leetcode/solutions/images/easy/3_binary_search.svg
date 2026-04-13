@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="960" viewBox="0 0 1400 960" role="img" aria-labelledby="title desc">
+  <title id="title">Binary search illustration</title>
+  <desc id="desc">A step-by-step diagram showing binary search on a sorted array, narrowing the active range until the target value 23 is found.</desc>
+
+  <defs>
+    <style>
+      .bg { fill: #edf5fb; }
+      .card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #49647d; }
+      .section { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #34506a; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4c6780; }
+      .mono { font: 700 17px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .chip { rx: 18; ry: 18; }
+      .legend { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+
+      .panel { fill: #ffffff; stroke: #c8d9eb; stroke-width: 2; rx: 22; ry: 22; }
+      .panel-found { fill: #f7fbff; stroke: #2d8a4e; stroke-width: 3; rx: 22; ry: 22; }
+      .panel-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .panel-body { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #43617b; }
+      .formula { font: 700 18px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+
+      .index-text { font: 600 12px "SFMono-Regular", Consolas, monospace; fill: #5a738c; text-anchor: middle; }
+      .value { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; }
+      .value-muted { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #8a9bad; text-anchor: middle; }
+      .note { font: 700 15px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .note-mid { fill: #111111; }
+      .note-found { fill: #2d8a4e; }
+
+      .box { fill: #ffffff; stroke: #9db6d0; stroke-width: 2; rx: 10; ry: 10; }
+      .mid-box { fill: #ffffff; stroke: #111111; stroke-width: 3; rx: 10; ry: 10; }
+      .found-box { fill: #e6f6ec; stroke: #2d8a4e; stroke-width: 3; rx: 10; ry: 10; }
+      .discarded-box { fill: #eef2f6; stroke: #c5d0dc; stroke-width: 2; rx: 10; ry: 10; }
+      .range-frame { fill: none; stroke: #111111; stroke-width: 3; rx: 12; ry: 12; }
+
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="960" class="bg"/>
+  <rect x="32" y="28" width="1336" height="904" class="card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Binary Search</text>
+  <text x="60" y="118" class="subtitle">On a sorted array, compare the middle value to the target and discard half of the remaining search space each step.</text>
+
+  <rect x="70" y="150" width="1260" height="118" class="pipe"/>
+  <text x="100" y="188" class="section">Rule</text>
+  <text x="100" y="220" class="body">Keep an active range <tspan class="mono">[low, high]</tspan>. Compute <tspan class="mono">mid</tspan>, compare <tspan class="mono">nums[mid]</tspan> to the target, and move only one boundary.</text>
+  <text x="100" y="247" class="mono">mid = low + (high - low) / 2</text>
+
+  <rect x="90" y="300" width="1220" height="500" class="card" rx="24" ry="24"/>
+  <text x="125" y="344" class="section">Example: nums = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91], target = 23</text>
+
+  <rect x="125" y="370" width="170" height="42" class="chip" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
+  <text x="150" y="397" class="legend">active range</text>
+  <rect x="315" y="370" width="150" height="42" class="chip" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
+  <text x="340" y="397" class="legend">mid cell</text>
+  <rect x="485" y="370" width="165" height="42" class="chip" fill="#eef2f6" stroke="#c5d0dc" stroke-width="2.5"/>
+  <text x="510" y="397" class="legend">discarded</text>
+  <rect x="670" y="370" width="165" height="42" class="chip" fill="#e6f6ec" stroke="#2d8a4e" stroke-width="2.5"/>
+  <text x="695" y="397" class="legend">found target</text>
+
+  <rect x="110" y="430" width="360" height="300" class="panel"/>
+  <text x="135" y="465" class="panel-title">Step 1</text>
+  <text x="135" y="490" class="panel-body">low = 0, high = 9, mid = 4</text>
+  <text x="135" y="520" class="formula">nums[4] = 16 &lt; 23</text>
+  <text x="135" y="545" class="panel-body">Move right: low = mid + 1 = 5</text>
+  <text x="273" y="568" class="note note-mid">mid</text>
+  <text x="137" y="590" class="index-text">0</text>
+  <text x="171" y="590" class="index-text">1</text>
+  <text x="205" y="590" class="index-text">2</text>
+  <text x="239" y="590" class="index-text">3</text>
+  <text x="273" y="590" class="index-text">4</text>
+  <text x="307" y="590" class="index-text">5</text>
+  <text x="341" y="590" class="index-text">6</text>
+  <text x="375" y="590" class="index-text">7</text>
+  <text x="409" y="590" class="index-text">8</text>
+  <text x="443" y="590" class="index-text">9</text>
+  <rect x="120" y="598" width="340" height="56" class="range-frame"/>
+  <rect x="124" y="610" width="26" height="40" class="box"/>
+  <rect x="158" y="610" width="26" height="40" class="box"/>
+  <rect x="192" y="610" width="26" height="40" class="box"/>
+  <rect x="226" y="610" width="26" height="40" class="box"/>
+  <rect x="260" y="610" width="26" height="40" class="mid-box"/>
+  <rect x="294" y="610" width="26" height="40" class="box"/>
+  <rect x="328" y="610" width="26" height="40" class="box"/>
+  <rect x="362" y="610" width="26" height="40" class="box"/>
+  <rect x="396" y="610" width="26" height="40" class="box"/>
+  <rect x="430" y="610" width="26" height="40" class="box"/>
+  <text x="137" y="636" class="value">2</text>
+  <text x="171" y="636" class="value">5</text>
+  <text x="205" y="636" class="value">8</text>
+  <text x="239" y="636" class="value">12</text>
+  <text x="273" y="636" class="value">16</text>
+  <text x="307" y="636" class="value">23</text>
+  <text x="341" y="636" class="value">38</text>
+  <text x="375" y="636" class="value">56</text>
+  <text x="409" y="636" class="value">72</text>
+  <text x="443" y="636" class="value">91</text>
+  <text x="290" y="690" text-anchor="middle" class="small">Keep only the right half after index 4</text>
+
+  <rect x="520" y="430" width="360" height="300" class="panel"/>
+  <text x="545" y="465" class="panel-title">Step 2</text>
+  <text x="545" y="490" class="panel-body">low = 5, high = 9, mid = 7</text>
+  <text x="545" y="520" class="formula">nums[7] = 56 &gt; 23</text>
+  <text x="545" y="545" class="panel-body">Move left: high = mid - 1 = 6</text>
+  <text x="785" y="568" class="note note-mid">mid</text>
+  <text x="547" y="590" class="index-text">0</text>
+  <text x="581" y="590" class="index-text">1</text>
+  <text x="615" y="590" class="index-text">2</text>
+  <text x="649" y="590" class="index-text">3</text>
+  <text x="683" y="590" class="index-text">4</text>
+  <text x="717" y="590" class="index-text">5</text>
+  <text x="751" y="590" class="index-text">6</text>
+  <text x="785" y="590" class="index-text">7</text>
+  <text x="819" y="590" class="index-text">8</text>
+  <text x="853" y="590" class="index-text">9</text>
+  <rect x="700" y="598" width="170" height="56" class="range-frame"/>
+  <rect x="534" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="568" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="602" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="636" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="670" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="704" y="610" width="26" height="40" class="box"/>
+  <rect x="738" y="610" width="26" height="40" class="box"/>
+  <rect x="772" y="610" width="26" height="40" class="mid-box"/>
+  <rect x="806" y="610" width="26" height="40" class="box"/>
+  <rect x="840" y="610" width="26" height="40" class="box"/>
+  <text x="547" y="636" class="value-muted">2</text>
+  <text x="581" y="636" class="value-muted">5</text>
+  <text x="615" y="636" class="value-muted">8</text>
+  <text x="649" y="636" class="value-muted">12</text>
+  <text x="683" y="636" class="value-muted">16</text>
+  <text x="717" y="636" class="value">23</text>
+  <text x="751" y="636" class="value">38</text>
+  <text x="785" y="636" class="value">56</text>
+  <text x="819" y="636" class="value">72</text>
+  <text x="853" y="636" class="value">91</text>
+  <text x="700" y="690" text-anchor="middle" class="small">Keep only indices 5..6 after removing the upper half</text>
+
+  <rect x="930" y="430" width="360" height="300" class="panel-found"/>
+  <text x="955" y="465" class="panel-title">Step 3</text>
+  <text x="955" y="490" class="panel-body">low = 5, high = 6, mid = 5</text>
+  <text x="955" y="520" class="formula">nums[5] = 23 == target</text>
+  <text x="955" y="545" class="panel-body">Found the target at index 5</text>
+  <text x="1117" y="568" class="note note-found">found</text>
+  <text x="957" y="590" class="index-text">0</text>
+  <text x="991" y="590" class="index-text">1</text>
+  <text x="1025" y="590" class="index-text">2</text>
+  <text x="1059" y="590" class="index-text">3</text>
+  <text x="1093" y="590" class="index-text">4</text>
+  <text x="1127" y="590" class="index-text">5</text>
+  <text x="1161" y="590" class="index-text">6</text>
+  <text x="1195" y="590" class="index-text">7</text>
+  <text x="1229" y="590" class="index-text">8</text>
+  <text x="1263" y="590" class="index-text">9</text>
+  <rect x="1110" y="598" width="68" height="56" class="range-frame"/>
+  <rect x="944" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="978" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1012" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1046" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1080" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1114" y="610" width="26" height="40" class="found-box"/>
+  <rect x="1148" y="610" width="26" height="40" class="box"/>
+  <rect x="1182" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1216" y="610" width="26" height="40" class="discarded-box"/>
+  <rect x="1250" y="610" width="26" height="40" class="discarded-box"/>
+  <text x="957" y="636" class="value-muted">2</text>
+  <text x="991" y="636" class="value-muted">5</text>
+  <text x="1025" y="636" class="value-muted">8</text>
+  <text x="1059" y="636" class="value-muted">12</text>
+  <text x="1093" y="636" class="value-muted">16</text>
+  <text x="1127" y="636" class="value">23</text>
+  <text x="1161" y="636" class="value">38</text>
+  <text x="1195" y="636" class="value-muted">56</text>
+  <text x="1229" y="636" class="value-muted">72</text>
+  <text x="1263" y="636" class="value-muted">91</text>
+  <text x="1110" y="690" text-anchor="middle" class="small">The target is found before the range becomes empty</text>
+
+  <rect x="90" y="820" width="1220" height="90" class="result-card"/>
+  <text x="125" y="860" class="result-title">Each comparison cuts the remaining search space roughly in half</text>
+  <text x="125" y="888" class="result-body">That is why binary search runs in O(log n) time on a sorted array.</text>
+</svg>
