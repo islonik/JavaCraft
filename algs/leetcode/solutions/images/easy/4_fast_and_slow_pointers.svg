@@ -84,40 +84,40 @@
   <text x="568" y="400" class="legend">meeting point</text>
 
   <!-- Nodes -->
-  <circle cx="180" cy="520" r="44" class="node"/>
-  <text x="180" y="527" text-anchor="middle" class="node-text">10</text>
+  <circle cx="250" cy="545" r="44" class="node"/>
+  <text x="250" y="552" text-anchor="middle" class="node-text">10</text>
 
-  <circle cx="360" cy="520" r="44" class="node"/>
-  <text x="360" y="527" text-anchor="middle" class="node-text">20</text>
+  <circle cx="430" cy="545" r="44" class="node"/>
+  <text x="430" y="552" text-anchor="middle" class="node-text">20</text>
 
-  <circle cx="540" cy="520" r="44" class="node"/>
-  <text x="540" y="527" text-anchor="middle" class="node-text">30</text>
+  <circle cx="610" cy="545" r="44" class="node"/>
+  <text x="610" y="552" text-anchor="middle" class="node-text">30</text>
 
-  <circle cx="720" cy="520" r="44" class="cycle-node"/>
-  <text x="720" y="527" text-anchor="middle" class="node-text">40</text>
+  <circle cx="790" cy="545" r="44" class="cycle-node"/>
+  <text x="790" y="552" text-anchor="middle" class="node-text">40</text>
 
-  <circle cx="900" cy="520" r="44" class="cycle-node"/>
-  <text x="900" y="527" text-anchor="middle" class="node-text">50</text>
+  <circle cx="970" cy="545" r="44" class="cycle-node"/>
+  <text x="970" y="552" text-anchor="middle" class="node-text">50</text>
 
-  <circle cx="1080" cy="520" r="44" class="meet-node"/>
-  <text x="1080" y="527" text-anchor="middle" class="node-text">60</text>
+  <circle cx="1150" cy="545" r="44" class="meet-node"/>
+  <text x="1150" y="552" text-anchor="middle" class="node-text">60</text>
 
   <!-- Fast/slow step arrows -->
-  <path d="M209 487 Q270 448 331 487" class="slow-arrow"/>
-  <path d="M389 487 Q450 448 511 487" class="slow-arrow"/>
-  <path d="M193 478 Q360 410 527 478" class="fast-arrow"/>
-  <path d="M553 478 Q720 410 887 478" class="fast-arrow"/>
+  <path d="M279 512 Q340 473 401 512" class="slow-arrow"/>
+  <path d="M459 512 Q520 473 581 512" class="slow-arrow"/>
+  <path d="M263 503 Q430 435 597 503" class="fast-arrow"/>
+  <path d="M623 503 Q790 435 957 503" class="fast-arrow"/>
 
   <!-- Forward arrows -->
-  <path d="M224 520 L316 520" class="flow"/>
-  <path d="M404 520 L496 520" class="flow"/>
-  <path d="M584 520 L676 520" class="flow"/>
-  <path d="M764 520 L856 520" class="flow"/>
-  <path d="M944 520 L1036 520" class="flow"/>
+  <path d="M294 545 L386 545" class="flow"/>
+  <path d="M474 545 L566 545" class="flow"/>
+  <path d="M654 545 L746 545" class="flow"/>
+  <path d="M834 545 L926 545" class="flow"/>
+  <path d="M1014 545 L1106 545" class="flow"/>
 
   <!-- Cycle return arc (dashed, prominent) -->
-  <path d="M1080 564 C1080 610, 1005 628, 910 627 C835 626, 785 623, 745 610" class="cycle-track"/>
-  <path d="M745 610 C732 602, 720 588, 720 564" class="cycle-arrow"/>
+  <path d="M1150 589 C1150 635, 1075 653, 980 652 C905 651, 855 648, 815 635" class="cycle-track"/>
+  <path d="M815 635 C802 627, 790 613, 790 589" class="cycle-arrow"/>
 
   <!-- Step snapshots -->
   <rect x="90" y="720" width="1220" height="140" class="bg-card" rx="24" ry="24"/>

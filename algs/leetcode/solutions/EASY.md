@@ -720,7 +720,7 @@ Suppose there is an array arr which has n <b>distinct</b> elements. Given an ele
 
 ## 6.2. Illustration
 
-![Cyclic Sort](images/easy/6_cyclic_sort_1.webp)
+![Cyclic Sort](images/easy/6_cyclic_sort.svg)
 
 ## 6.3. Complexity
 
