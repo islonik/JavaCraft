@@ -1,0 +1,233 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1500" viewBox="0 0 1100 1500" role="img" aria-labelledby="title desc">
+  <title id="title">Two pointers illustration</title>
+  <desc id="desc">A vertical step-by-step diagram showing the two-pointers technique on a sorted array, moving the left and right pointers until their sum matches the target.</desc>
+
+  <defs>
+    <style>
+      .bg { fill: #edf5fb; }
+      .card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #49647d; }
+      .section { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #34506a; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4c6780; }
+      .mono { font: 700 17px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .chip { rx: 18; ry: 18; }
+      .legend { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+
+      .panel { fill: #ffffff; stroke: #c8d9eb; stroke-width: 2; rx: 22; ry: 22; }
+      .panel-found { fill: #f7fbff; stroke: #2d8a4e; stroke-width: 3; rx: 22; ry: 22; }
+      .panel-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .panel-body { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #43617b; }
+      .formula { font: 700 18px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+
+      .index-text { font: 600 12px "SFMono-Regular", Consolas, monospace; fill: #5a738c; text-anchor: middle; }
+      .value { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; }
+      .used-value { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #8a9bad; text-anchor: middle; }
+      .pointer-label { font: 700 15px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .left-label { fill: #c97030; }
+      .right-label { fill: #2f6fcd; }
+      .found-label { fill: #2d8a4e; }
+      .box { fill: #ffffff; stroke: #9db6d0; stroke-width: 2; rx: 10; ry: 10; }
+      .left-box { fill: #fff0e6; stroke: #d77d3d; stroke-width: 3; rx: 10; ry: 10; }
+      .right-box { fill: #e7f0ff; stroke: #2f6fcd; stroke-width: 3; rx: 10; ry: 10; }
+      .found-box { fill: #dff5e7; stroke: #2d8a4e; stroke-width: 3; rx: 10; ry: 10; }
+      .used-box { fill: #eef2f6; stroke: #c5d0dc; stroke-width: 2; rx: 10; ry: 10; }
+
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="1500" class="bg"/>
+  <rect x="25" y="28" width="1050" height="1444" class="card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Two Pointers</text>
+  <text x="60" y="118" class="subtitle">Start from both ends of a sorted array, compare the sum to the target, and move only the pointer that can improve the result.</text>
+
+  <rect x="60" y="150" width="980" height="112" class="pipe"/>
+  <text x="100" y="188" class="section">Rule</text>
+  <text x="100" y="220" class="body">If <tspan class="mono">nums[left] + nums[right]</tspan> is too small, move <tspan class="mono">left</tspan> rightward. If it is too large, move <tspan class="mono">right</tspan> leftward.</text>
+  <text x="100" y="245" class="mono">Only one pointer moves per step, so the scan stays O(n)</text>
+
+  <rect x="60" y="290" width="980" height="1040" class="card" rx="24" ry="24"/>
+  <text x="115" y="334" class="section">Example: nums = [1, 2, 4, 7, 11, 15, 20, 26], target = 19</text>
+
+  <rect x="115" y="360" width="145" height="42" class="chip" fill="#fff0e6" stroke="#d77d3d" stroke-width="2.5"/>
+  <text x="140" y="387" class="legend">left pointer</text>
+  <rect x="280" y="360" width="155" height="42" class="chip" fill="#e7f0ff" stroke="#2f6fcd" stroke-width="2.5"/>
+  <text x="305" y="387" class="legend">right pointer</text>
+  <rect x="455" y="360" width="150" height="42" class="chip" fill="#eef2f6" stroke="#c5d0dc" stroke-width="2.5"/>
+  <text x="480" y="387" class="legend">used index</text>
+  <rect x="625" y="360" width="150" height="42" class="chip" fill="#dff5e7" stroke="#2d8a4e" stroke-width="2.5"/>
+  <text x="650" y="387" class="legend">found pair</text>
+
+  <rect x="100" y="445" width="900" height="150" class="panel"/>
+  <text x="145" y="482" class="panel-title">Step 1</text>
+  <text x="145" y="510" class="panel-body">left = 0, right = 7</text>
+  <text x="145" y="540" class="formula">sum = 1 + 26 = 27</text>
+  <text x="145" y="570" class="panel-body">Too large. Move right to 6.</text>
+  <text x="576" y="485" class="pointer-label left-label">left</text>
+  <text x="870" y="485" class="pointer-label right-label">right</text>
+  <text x="576" y="506" class="index-text">0</text>
+  <text x="618" y="506" class="index-text">1</text>
+  <text x="660" y="506" class="index-text">2</text>
+  <text x="702" y="506" class="index-text">3</text>
+  <text x="744" y="506" class="index-text">4</text>
+  <text x="786" y="506" class="index-text">5</text>
+  <text x="828" y="506" class="index-text">6</text>
+  <text x="870" y="506" class="index-text">7</text>
+  <rect x="559" y="516" width="34" height="48" class="left-box"/>
+  <rect x="601" y="516" width="34" height="48" class="box"/>
+  <rect x="643" y="516" width="34" height="48" class="box"/>
+  <rect x="685" y="516" width="34" height="48" class="box"/>
+  <rect x="727" y="516" width="34" height="48" class="box"/>
+  <rect x="769" y="516" width="34" height="48" class="box"/>
+  <rect x="811" y="516" width="34" height="48" class="box"/>
+  <rect x="853" y="516" width="34" height="48" class="right-box"/>
+  <text x="576" y="547" class="value">1</text>
+  <text x="618" y="547" class="value">2</text>
+  <text x="660" y="547" class="value">4</text>
+  <text x="702" y="547" class="value">7</text>
+  <text x="744" y="547" class="value">11</text>
+  <text x="786" y="547" class="value">15</text>
+  <text x="828" y="547" class="value">20</text>
+  <text x="870" y="547" class="value">26</text>
+
+  <rect x="100" y="615" width="900" height="150" class="panel"/>
+  <text x="145" y="652" class="panel-title">Step 2</text>
+  <text x="145" y="680" class="panel-body">left = 0, right = 6</text>
+  <text x="145" y="710" class="formula">sum = 1 + 20 = 21</text>
+  <text x="145" y="740" class="panel-body">Too large. Move right to 5.</text>
+  <text x="576" y="655" class="pointer-label left-label">left</text>
+  <text x="828" y="655" class="pointer-label right-label">right</text>
+  <text x="576" y="676" class="index-text">0</text>
+  <text x="618" y="676" class="index-text">1</text>
+  <text x="660" y="676" class="index-text">2</text>
+  <text x="702" y="676" class="index-text">3</text>
+  <text x="744" y="676" class="index-text">4</text>
+  <text x="786" y="676" class="index-text">5</text>
+  <text x="828" y="676" class="index-text">6</text>
+  <text x="870" y="676" class="index-text">7</text>
+  <rect x="559" y="686" width="34" height="48" class="left-box"/>
+  <rect x="601" y="686" width="34" height="48" class="box"/>
+  <rect x="643" y="686" width="34" height="48" class="box"/>
+  <rect x="685" y="686" width="34" height="48" class="box"/>
+  <rect x="727" y="686" width="34" height="48" class="box"/>
+  <rect x="769" y="686" width="34" height="48" class="box"/>
+  <rect x="811" y="686" width="34" height="48" class="right-box"/>
+  <rect x="853" y="686" width="34" height="48" class="used-box"/>
+  <text x="576" y="717" class="value">1</text>
+  <text x="618" y="717" class="value">2</text>
+  <text x="660" y="717" class="value">4</text>
+  <text x="702" y="717" class="value">7</text>
+  <text x="744" y="717" class="value">11</text>
+  <text x="786" y="717" class="value">15</text>
+  <text x="828" y="717" class="value">20</text>
+  <text x="870" y="717" class="used-value">26</text>
+
+  <rect x="100" y="785" width="900" height="150" class="panel"/>
+  <text x="145" y="822" class="panel-title">Step 3</text>
+  <text x="145" y="850" class="panel-body">left = 0, right = 5</text>
+  <text x="145" y="880" class="formula">sum = 1 + 15 = 16</text>
+  <text x="145" y="910" class="panel-body">Too small. Move left to 1.</text>
+  <text x="576" y="825" class="pointer-label left-label">left</text>
+  <text x="786" y="825" class="pointer-label right-label">right</text>
+  <text x="576" y="846" class="index-text">0</text>
+  <text x="618" y="846" class="index-text">1</text>
+  <text x="660" y="846" class="index-text">2</text>
+  <text x="702" y="846" class="index-text">3</text>
+  <text x="744" y="846" class="index-text">4</text>
+  <text x="786" y="846" class="index-text">5</text>
+  <text x="828" y="846" class="index-text">6</text>
+  <text x="870" y="846" class="index-text">7</text>
+  <rect x="559" y="856" width="34" height="48" class="left-box"/>
+  <rect x="601" y="856" width="34" height="48" class="box"/>
+  <rect x="643" y="856" width="34" height="48" class="box"/>
+  <rect x="685" y="856" width="34" height="48" class="box"/>
+  <rect x="727" y="856" width="34" height="48" class="box"/>
+  <rect x="769" y="856" width="34" height="48" class="right-box"/>
+  <rect x="811" y="856" width="34" height="48" class="used-box"/>
+  <rect x="853" y="856" width="34" height="48" class="used-box"/>
+  <text x="576" y="887" class="value">1</text>
+  <text x="618" y="887" class="value">2</text>
+  <text x="660" y="887" class="value">4</text>
+  <text x="702" y="887" class="value">7</text>
+  <text x="744" y="887" class="value">11</text>
+  <text x="786" y="887" class="value">15</text>
+  <text x="828" y="887" class="used-value">20</text>
+  <text x="870" y="887" class="used-value">26</text>
+
+  <rect x="100" y="955" width="900" height="150" class="panel"/>
+  <text x="145" y="992" class="panel-title">Step 4</text>
+  <text x="145" y="1020" class="panel-body">left = 1, right = 5</text>
+  <text x="145" y="1050" class="formula">sum = 2 + 15 = 17</text>
+  <text x="145" y="1080" class="panel-body">Too small. Move left to 2.</text>
+  <text x="618" y="995" class="pointer-label left-label">left</text>
+  <text x="786" y="995" class="pointer-label right-label">right</text>
+  <text x="576" y="1016" class="index-text">0</text>
+  <text x="618" y="1016" class="index-text">1</text>
+  <text x="660" y="1016" class="index-text">2</text>
+  <text x="702" y="1016" class="index-text">3</text>
+  <text x="744" y="1016" class="index-text">4</text>
+  <text x="786" y="1016" class="index-text">5</text>
+  <text x="828" y="1016" class="index-text">6</text>
+  <text x="870" y="1016" class="index-text">7</text>
+  <rect x="559" y="1026" width="34" height="48" class="used-box"/>
+  <rect x="601" y="1026" width="34" height="48" class="left-box"/>
+  <rect x="643" y="1026" width="34" height="48" class="box"/>
+  <rect x="685" y="1026" width="34" height="48" class="box"/>
+  <rect x="727" y="1026" width="34" height="48" class="box"/>
+  <rect x="769" y="1026" width="34" height="48" class="right-box"/>
+  <rect x="811" y="1026" width="34" height="48" class="used-box"/>
+  <rect x="853" y="1026" width="34" height="48" class="used-box"/>
+  <text x="576" y="1057" class="used-value">1</text>
+  <text x="618" y="1057" class="value">2</text>
+  <text x="660" y="1057" class="value">4</text>
+  <text x="702" y="1057" class="value">7</text>
+  <text x="744" y="1057" class="value">11</text>
+  <text x="786" y="1057" class="value">15</text>
+  <text x="828" y="1057" class="used-value">20</text>
+  <text x="870" y="1057" class="used-value">26</text>
+
+  <rect x="100" y="1125" width="900" height="150" class="panel-found"/>
+  <text x="145" y="1162" class="panel-title">Step 5</text>
+  <text x="145" y="1190" class="panel-body">left = 2, right = 5</text>
+  <text x="145" y="1220" class="formula">sum = 4 + 15 = 19</text>
+  <text x="145" y="1250" class="panel-body">Match found. Return [4, 15].</text>
+  <text x="660" y="1165" class="pointer-label found-label">left</text>
+  <text x="786" y="1165" class="pointer-label found-label">right</text>
+  <text x="576" y="1186" class="index-text">0</text>
+  <text x="618" y="1186" class="index-text">1</text>
+  <text x="660" y="1186" class="index-text">2</text>
+  <text x="702" y="1186" class="index-text">3</text>
+  <text x="744" y="1186" class="index-text">4</text>
+  <text x="786" y="1186" class="index-text">5</text>
+  <text x="828" y="1186" class="index-text">6</text>
+  <text x="870" y="1186" class="index-text">7</text>
+  <rect x="559" y="1196" width="34" height="48" class="used-box"/>
+  <rect x="601" y="1196" width="34" height="48" class="used-box"/>
+  <rect x="643" y="1196" width="34" height="48" class="found-box"/>
+  <rect x="685" y="1196" width="34" height="48" class="box"/>
+  <rect x="727" y="1196" width="34" height="48" class="box"/>
+  <rect x="769" y="1196" width="34" height="48" class="found-box"/>
+  <rect x="811" y="1196" width="34" height="48" class="used-box"/>
+  <rect x="853" y="1196" width="34" height="48" class="used-box"/>
+  <text x="576" y="1227" class="used-value">1</text>
+  <text x="618" y="1227" class="used-value">2</text>
+  <text x="660" y="1227" class="value">4</text>
+  <text x="702" y="1227" class="value">7</text>
+  <text x="744" y="1227" class="value">11</text>
+  <text x="786" y="1227" class="value">15</text>
+  <text x="828" y="1227" class="used-value">20</text>
+  <text x="870" y="1227" class="used-value">26</text>
+
+  <rect x="60" y="1352" width="980" height="104" class="result-card"/>
+  <text x="115" y="1388" class="result-title">
+    <tspan x="115" dy="0">Each comparison removes one impossible side</tspan>
+    <tspan x="115" dy="26">and keeps only the range that can still reach the target</tspan>
+  </text>
+  <text x="115" y="1436" class="result-body">That is why two pointers solves sorted-array pair problems in O(n) time and O(1) space.</text>
+</svg>
