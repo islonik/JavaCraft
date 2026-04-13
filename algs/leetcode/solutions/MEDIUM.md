@@ -406,6 +406,135 @@ Corner cases:
 * Duplicate intervals (exactly the same start and end)
 * Intervals which start right where another interval ends - [[1, 2], [2, 3]]
 
+### 4.1.1. Merge intervals
+
+```java
+public int[][] merge(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> a[0] - b[0]);  // sort by start
+
+    List<int[]> result = new ArrayList<>();
+    int[] current = intervals[0];
+    result.add(current);
+
+    for (int[] next : intervals) {
+        if (next[0] <= current[1]) {
+            current[1] = Math.max(current[1], next[1]);  // merge
+        } else {
+            current = next;                                // no overlap
+            result.add(current);
+        }
+    }
+
+    return result.toArray(new int[result.size()][]);
+}
+```
+
+```text
+Input (sorted):  [[1,3], [2,6], [8,10], [15,18]]
+
+[1,3] + [2,6] → overlap (2 ≤ 3) → merge → [1,6]
+[1,6] + [8,10] → no overlap (8 > 6) → keep separate
+[8,10] + [15,18] → no overlap (15 > 10) → keep separate
+
+Output: [[1,6], [8,10], [15,18]]
+```
+
+### 4.1.2. Insert Interval
+
+```java
+public int[][] insert(int[][] intervals, int[] newInterval) {
+    List<int[]> result = new ArrayList<>();
+    int i = 0;
+    int n = intervals.length;
+
+    // 1. add all intervals that come BEFORE new interval
+    while (i < n && intervals[i][1] < newInterval[0]) {
+        result.add(intervals[i]);
+        i++;
+    }
+
+    // 2. merge all overlapping intervals with new interval
+    while (i < n && intervals[i][0] <= newInterval[1]) {
+        newInterval[0] = Math.min(newInterval[0], intervals[i][0]);
+        newInterval[1] = Math.max(newInterval[1], intervals[i][1]);
+        i++;
+    }
+    result.add(newInterval);
+
+    // 3. add all intervals that come AFTER new interval
+    while (i < n) {
+        result.add(intervals[i]);
+        i++;
+    }
+
+    return result.toArray(new int[result.size()][]);
+}
+```
+
+```text
+Input: [[1,3], [6,9]]  newInterval: [2,5]
+
+Before [2,5]: [1,3] → end 3 ≥ start 2 → not before, stop
+Overlap:      [1,3] overlaps → merge → [1,5]
+              [6,9] → start 6 > end 5 → no overlap, stop
+After:        [6,9]
+
+Output: [[1,5], [6,9]]
+
+```
+
+### 4.1.3. Check Overlap
+
+```java
+public boolean canAttendMeetings(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+
+    for (int i = 1; i < intervals.length; i++) {
+        if (intervals[i][0] < intervals[i - 1][1]) {
+            return false;   // overlap found
+        }
+    }
+
+    return true;
+}
+```
+
+### 4.1.4. Minimum Meetings Room
+
+```java
+public int minMeetingRooms(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> a[0] - b[0]);  // sort by start
+
+    // min-heap tracks end times of active meetings
+    PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+    for (int[] interval : intervals) {
+        // earliest meeting ended before this one starts → reuse room
+        if (!minHeap.isEmpty() && minHeap.peek() <= interval[0]) {
+            minHeap.poll();
+        }
+        minHeap.offer(interval[1]);  // allocate room with this end time
+    }
+
+    return minHeap.size();  // rooms still in use = rooms needed
+}
+```
+
+```text
+Input: [[0,30], [5,10], [15,20]]
+
+sort by start → [[0,30], [5,10], [15,20]]
+
+[0,30]  → heap empty → add 30          heap: [30]         rooms: 1
+[5,10]  → peek 30 > 5 → can't reuse   heap: [10, 30]     rooms: 2
+         → add 10
+[15,20] → peek 10 ≤ 15 → reuse room   heap: [20, 30]     rooms: 2
+         → poll 10, add 20
+
+Result: 2 rooms
+
+```
+
 ## 4.2. Illustration
 
 ![Intervals](images/medium/4_intervals.webp)
@@ -451,6 +580,100 @@ Hard
 * https://leetcode.com/problems/employee-free-time/
 * https://leetcode.com/problems/minimum-interval-to-include-each-query/
 * https://leetcode.com/problems/minimum-time-to-complete-all-tasks/
+
+---
+
+# 5. Subsets
+
+A subset is a set whose all elements are contained within another set. A subset is indicated by the symbol '⊆' and read as 'is a subset of' in set theory.
+
+## 5.1. Idea
+For each element, make a <b>binary decision: include it</b> or <b>skip it</b>. Every combination of these decisions produces a unique subset.
+
+```text
+Input: [1, 2]
+
+Element 1: include or skip?
+Element 2: include or skip?
+
+          start []
+         /          \
+    include 1      skip 1
+      [1]            []
+     /    \         /    \
+  incl 2  skip 2  incl 2  skip 2
+  [1,2]    [1]     [2]      []
+
+All subsets: [[], [1], [2], [1,2]]
+
+```
+
+```java
+public List<List<Integer>> subsets(int[] nums) {
+    List<List<Integer>> result = new ArrayList<>();
+    backtrack(result, new ArrayList<>(), nums, 0);
+    return result;
+}
+                                                        //  Time contribution
+private void backtrack(List<List<Integer>> result,      //
+                       List<Integer> path,              //
+                       int[] nums, int start) {         //
+    result.add(new ArrayList<>(path));                  //  O(n) copy × 2ⁿ calls
+
+    for (int i = start; i < nums.length; i++) {
+        path.add(nums[i]);                              //  O(1)
+        backtrack(result, path, nums, i + 1);           //  2ⁿ total calls
+        path.remove(path.size() - 1);                   //  O(1)
+    }
+}
+```
+
+<b>Summary</b>
+```text
+1. Start with empty path []
+2. At each step:
+   a. Snapshot current path into result (every path is a valid subset)
+   b. Try adding each remaining element (from start to end)
+   c. Go deeper with that element
+   d. Remove it and try the next one
+3. "start" parameter ensures we never go backward → no duplicates
+4. Recursion naturally explores all 2ⁿ combinations
+```
+
+
+## 5.2. Illustration
+
+![Subsets](images/medium/5_subsets.svg)
+
+## 5.3. Complexity
+
+<b>Time: O(n × 2ⁿ)</b><br/>
+<b>Space: O(n × 2ⁿ)</b><br/>
+
+## 5.4. How to detect it should be used
+
+Key signals that Subsets pattern is the right approach:
+
+1) <b>Find all subsets / power set</b> — generate every possible combination of elements.
+2) <b>Find all combinations</b> — pick K elements from N in all possible ways.
+3) <b>Find all permutations</b> — arrange elements in every possible order.
+4) <b>Generate all valid / possible</b> — enumerate all valid states (parentheses, IP addresses, letter combos).
+5) <b>Partition into groups</b> — split a set into subsets satisfying constraints.
+6) <b>Can you achieve target using subset?</b> — subset sum, combination sum.
+
+## 5.5. LeetCode problems
+
+Medium
+* https://leetcode.com/problems/letter-combinations-of-a-phone-number/
+* https://leetcode.com/problems/generate-parentheses/
+* https://leetcode.com/problems/combination-sum/
+* https://leetcode.com/problems/combination-sum-ii/
+* https://leetcode.com/problems/permutations/
+* https://leetcode.com/problems/permutations-ii/
+* https://leetcode.com/problems/combinations/
+* https://leetcode.com/problems/subsets/
+* https://leetcode.com/problems/subsets-ii/
+* https://leetcode.com/problems/letter-case-permutation/
 
 ---
 
@@ -503,10 +726,6 @@ Space: O(N)
 This approach is quite useful when dealing with the problems where we are given a set of elements such that we can divide them into two parts.
 
 To be able to solve these kinds of problems, we want to know the smallest element in one part and the biggest element in the other part. Two Heaps pattern uses two Heap data structure to solve these problems; a <b>Min Heap</b> to find the smallest element and a <b>Max Heap</b> to find the biggest element.
-
-LeetCode problems:
-* LeetCode 480 - Sliding Window Median [hard]
-* LeetCode 502 - IPO [hard]
 
 ## 6.5. LeetCode problems
 

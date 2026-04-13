@@ -19,7 +19,7 @@ Solutions are sorted by complexity and then by usefulness.
 2. [Depth-First Search](solutions/MEDIUM.md#2-depth-first-search)
 3. [Top K Elements](solutions/MEDIUM.md#3-top-k-elements)
 4. [Intervals](solutions/MEDIUM.md#4-intervals)
-5. [Subsets]
+5. [Subsets](solutions/MEDIUM.md#5-subsets)
 6. [Two Heaps](solutions/MEDIUM.md#6-two-heaps)
 7. [K-way merge]
 
