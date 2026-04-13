@@ -21,7 +21,7 @@ Solutions are sorted by complexity and then by usefulness.
 4. [Intervals](solutions/MEDIUM.md#4-intervals)
 5. [Subsets](solutions/MEDIUM.md#5-subsets)
 6. [Two Heaps](solutions/MEDIUM.md#6-two-heaps)
-7. [K-way merge]
+7. [K-way merge](solutions/MEDIUM.md#7-k-way-merge)
 
 ### Hard
 1. [Topological Sort]

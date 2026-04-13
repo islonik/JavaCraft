@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1740" viewBox="0 0 1200 1740" role="img" aria-labelledby="title desc">
+  <title id="title">K-way merge illustration</title>
+  <desc id="desc">Vertical diagram showing how a min heap merges three sorted lists by always removing the smallest current head and pushing the next value from the same list.</desc>
+
+  <defs>
+    <style>
+      .bg-card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .card-title { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #35516d; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .label { font: 700 16px "Segoe UI", Arial, sans-serif; }
+      .chip { rx: 16; ry: 16; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .list-a { fill: #fff0ea; stroke: #e89971; stroke-width: 2.5; }
+      .list-b { fill: #eaf2ff; stroke: #6e95d8; stroke-width: 2.5; }
+      .list-c { fill: #edf8f4; stroke: #6cb39b; stroke-width: 2.5; }
+      .used-box { fill: #eef2f6; stroke: #c5d0dc; stroke-width: 2; }
+      .neutral-box { fill: #ffffff; stroke: #9fb7d3; stroke-width: 2; }
+      .box-text { font: 700 19px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; dominant-baseline: middle; }
+      .heap-line { stroke: #7f93aa; stroke-width: 3; fill: none; }
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1740" fill="#edf5fb"/>
+  <rect x="32" y="28" width="1136" height="1684" class="bg-card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">K-way Merge with a Min Heap</text>
+  <text x="60" y="120" class="subtitle">Store one current value from each sorted list in a min heap. </text>
+  <text x="60" y="150" class="subtitle">Pop the global minimum, append it to the answer, then push the next value from the same list.</text>
+
+  <rect x="70" y="175" width="1060" height="85" class="pipe"/>
+  <text x="105" y="210" class="card-title">Flow</text>
+  <text x="105" y="240" class="body">push first value from each list -&gt; poll smallest heap value -&gt; append to merged output -&gt; push next value from that same list -&gt; repeat</text>
+
+  <rect x="90" y="280" width="1020" height="320" class="bg-card" rx="24" ry="24"/>
+  <text x="120" y="325" class="card-title">1. Sorted input lists</text>
+  <text x="120" y="355" class="body">Example snapshot after the first three pops. Gray values are already merged, and colored values are the current heads.</text>
+
+  <rect x="125" y="395" width="84" height="38" class="list-a chip"/>
+  <text x="167" y="415" class="label" fill="#9a5528" text-anchor="middle" dominant-baseline="middle">List A</text>
+  <rect x="245" y="390" width="60" height="52" class="used-box" rx="12" ry="12"/>
+  <rect x="317" y="390" width="60" height="52" class="list-a" rx="12" ry="12"/>
+  <rect x="389" y="390" width="60" height="52" class="neutral-box" rx="12" ry="12"/>
+  <text x="275" y="416" class="box-text" fill="#8597aa">1</text>
+  <text x="347" y="416" class="box-text">4</text>
+  <text x="419" y="416" class="box-text">7</text>
+
+  <rect x="125" y="465" width="84" height="38" class="list-b chip"/>
+  <text x="167" y="485" class="label" fill="#3f69ad" text-anchor="middle" dominant-baseline="middle">List B</text>
+  <rect x="245" y="460" width="60" height="52" class="used-box" rx="12" ry="12"/>
+  <rect x="317" y="460" width="60" height="52" class="list-b" rx="12" ry="12"/>
+  <rect x="389" y="460" width="60" height="52" class="neutral-box" rx="12" ry="12"/>
+  <text x="275" y="486" class="box-text" fill="#8597aa">2</text>
+  <text x="347" y="486" class="box-text">5</text>
+  <text x="419" y="486" class="box-text">8</text>
+
+  <rect x="125" y="535" width="84" height="38" class="list-c chip"/>
+  <text x="167" y="555" class="label" fill="#2c7c61" text-anchor="middle" dominant-baseline="middle">List C</text>
+  <rect x="245" y="530" width="60" height="52" class="used-box" rx="12" ry="12"/>
+  <rect x="317" y="530" width="60" height="52" class="list-c" rx="12" ry="12"/>
+  <rect x="389" y="530" width="60" height="52" class="neutral-box" rx="12" ry="12"/>
+  <text x="275" y="556" class="box-text" fill="#8597aa">3</text>
+  <text x="347" y="556" class="box-text">6</text>
+  <text x="419" y="556" class="box-text">9</text>
+
+  <rect x="615" y="390" width="460" height="178" class="pipe"/>
+  <text x="635" y="428" class="card-title">Why only the heads matter</text>
+  <text x="635" y="460" class="small">Each list is already sorted.</text>
+  <text x="635" y="490" class="body">So the first unseen value from a list is the only candidate</text>
+  <text x="635" y="520" class="body">from that list that can be the next global minimum.</text>
+  <text x="635" y="550" class="small">That is why the heap only needs one value per list.</text>
+
+  <rect x="90" y="650" width="1020" height="340" class="bg-card" rx="24" ry="24"/>
+  <text x="120" y="695" class="card-title">2. Min heap of current heads</text>
+  <text x="120" y="720" class="body">After popping 1, 2, and 3, the next candidates are 4 from A, 5 from B, and 6 from C.</text>
+
+  <path d="M360 835 L285 905" class="heap-line"/>
+  <path d="M360 835 L435 905" class="heap-line"/>
+  <circle cx="360" cy="795" r="40" class="list-a"/>
+  <text x="360" y="795" class="box-text">4</text>
+  <text x="440" y="800" class="small" text-anchor="middle">heap top</text>
+  <circle cx="285" cy="935" r="36" class="list-b"/>
+  <text x="285" y="935" class="box-text">5</text>
+  <circle cx="435" cy="935" r="36" class="list-c"/>
+  <text x="435" y="935" class="box-text">6</text>
+
+  <rect x="620" y="770" width="400" height="70" class="pipe"/>
+  <text x="650" y="813" class="label" fill="#17324b">Heap size stays K = 3</text>
+  <rect x="620" y="860" width="400" height="78" class="pipe"/>
+  <text x="650" y="892" class="small">poll min -&gt; append it to output</text>
+  <text x="650" y="920" class="small">push the next value from the same list</text>
+
+  <rect x="90" y="1040" width="1020" height="220" class="bg-card" rx="24" ry="24"/>
+  <text x="120" y="1085" class="card-title">3. Merged output grows in sorted order</text>
+  <text x="120" y="1115" class="body">Because the heap top is always the smallest current head, the output is built in global ascending order.</text>
+
+  <rect x="160" y="1155" width="56" height="52" class="list-a" rx="12" ry="12"/>
+  <rect x="228" y="1155" width="56" height="52" class="list-b" rx="12" ry="12"/>
+  <rect x="296" y="1155" width="56" height="52" class="list-c" rx="12" ry="12"/>
+  <rect x="364" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <rect x="432" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <rect x="500" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <rect x="568" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <rect x="636" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <rect x="704" y="1155" width="56" height="52" class="neutral-box" rx="12" ry="12"/>
+  <text x="188" y="1181" class="box-text">1</text>
+  <text x="256" y="1181" class="box-text">2</text>
+  <text x="324" y="1181" class="box-text">3</text>
+  <text x="392" y="1181" class="box-text">4</text>
+  <text x="460" y="1181" class="box-text">5</text>
+  <text x="528" y="1181" class="box-text">6</text>
+  <text x="596" y="1181" class="box-text">7</text>
+  <text x="664" y="1181" class="box-text">8</text>
+  <text x="732" y="1181" class="box-text">9</text>
+  <text x="845" y="1185" class="label" fill="#17324b">After 3 steps: output = [1, 2, 3]</text>
+
+  <rect x="90" y="1290" width="1020" height="260" class="bg-card" rx="24" ry="24"/>
+  <text x="120" y="1335" class="card-title">4. First three iterations</text>
+
+  <rect x="125" y="1360" width="950" height="42" class="pipe"/>
+  <text x="150" y="1387" class="small">Step 1: heap starts with [1A, 2B, 3C] -&gt; poll 1 -&gt; output [1] -&gt; push 4 from List A -&gt; heap becomes [2B, 3C, 4A]</text>
+
+  <rect x="125" y="1420" width="950" height="42" class="pipe"/>
+  <text x="150" y="1447" class="small">Step 2: poll 2 -&gt; output [1, 2] -&gt; push 5 from List B -&gt; heap becomes [3C, 4A, 5B]</text>
+
+  <rect x="125" y="1480" width="950" height="42" class="pipe"/>
+  <text x="150" y="1507" class="small">Step 3: poll 3 -&gt; output [1, 2, 3] -&gt; push 6 from List C -&gt; heap becomes [4A, 5B, 6C]</text>
+
+  <rect x="90" y="1588" width="1020" height="98" class="result-card"/>
+  <text x="125" y="1628" class="result-title">Why K-way merge works</text>
+  <text x="125" y="1658" class="result-body">The heap always exposes the smallest current head, so each pop is the next correct value in the final merged order.</text>
+</svg>

@@ -766,6 +766,15 @@ This approach is quite useful when dealing with the problems where we are given 
 
 To be able to solve these kinds of problems, we want to know the smallest element in one part and the biggest element in the other part. Two Heaps pattern uses two Heap data structure to solve these problems; a <b>Min Heap</b> to find the smallest element and a <b>Max Heap</b> to find the biggest element.
 
+Key signals that Two Heaps is the right approach:
+
+1) <b>Find median</b> — from a stream or dynamic data set.
+2) <b>Middle value / center element</b> — need the element that splits data in half.
+3) <b>Balance two halves</b> — divide elements into a smaller half and a larger half.
+4) <b>Sliding window median</b> — median that changes as window moves.
+5) <b>Schedule / intervals + minimize</b> — sometimes needs tracking of two sides (e.g., smallest of large values, largest of small values).
+6) <b>Kth smallest + Kth largest simultaneously</b> — need access to both ends of sorted data.
+
 ## 6.5. LeetCode problems
 
 Two Heaps is a small pattern on LeetCode, and the standard public set is all Hard.
@@ -774,5 +783,147 @@ Two Heaps is a small pattern on LeetCode, and the standard public set is all Har
 * https://leetcode.com/problems/find-median-from-data-stream/
 * https://leetcode.com/problems/sliding-window-median/
 * https://leetcode.com/problems/ipo/
+
+---
+
+# 7. K-way merge
+<sub>[Back to solutions](../README.md#solutions)</sub>
+
+The k-way merge problem consists of merging k sorted arrays to produce <b>a single sorted array</b> with the same elements.
+
+## 7.1. Idea
+You have <b>K sorted lists</b>. Instead of comparing every element with every other, use a <b>min-heap of size K</b> that always holds <b>one element per list</b>. Poll the smallest, then refill from that same list.
+
+Imagine K lanes at a toll booth, each with cars lined up by arrival time. You always let the car with the earliest time go through, then the next car in that same lane pulls forward.
+
+```text
+Lane 1:  [1] → 4 → 7
+Lane 2:  [2] → 5 → 8
+Lane 3:  [3] → 6 → 9
+
+Toll booth (min-heap) sees: [1, 2, 3]
+  → Let 1 through (from lane 1)
+  → Lane 1's next car (4) pulls forward
+
+Toll booth now sees: [2, 3, 4]
+  → Let 2 through (from lane 2)
+  → Lane 2's next car (5) pulls forward
+
+...and so on
+
+result: [1, 2, 3, 4, 5, 6, 7, 8, 9] ✓
+
+```
+
+### 7.1.1. Why a heap?
+
+```text
+Without heap: compare K heads every time → O(K) per element
+With heap:    poll + push → O(log K) per element
+
+N total elements across all lists:
+
+  Brute force:  O(N × K)
+  With heap:    O(N × log K)   ← much faster when K is large
+
+  K = 1000, N = 1,000,000:
+    Brute force: 1,000,000,000 ops
+    With heap:        10,000,000 ops  ← 100x faster
+```
+
+### 7.1.2. What the Heap Holds
+
+```text
+Each heap entry tracks 3 things:
+
+  ┌─────────┬──────────┬───────────┐
+  │  value  │  which   │  index    │
+  │         │  list    │  in list  │
+  └─────────┴──────────┴───────────┘
+
+  (5, list=0, index=1)
+   ↑           ↑          ↑
+   the value   came from   next element
+   to compare  list 0      is at index 2
+
+  When we poll this entry, we know:
+  - 5 goes into the result
+  - push list 0, index 2 into the heap next
+
+```
+
+### 7.1.3. Implementation
+
+```java
+public List<Integer> mergeKSorted(int[][] arrays) {
+    List<Integer> result = new ArrayList<>();
+    // heap holds [value, arrayIndex, elementIndex]
+    PriorityQueue<int[]> minHeap = new PriorityQueue<>(
+        (a, b) -> a[0] - b[0]
+    );
+
+    // 1. seed: first element of each array
+    for (int i = 0; i < arrays.length; i++) {
+        if (arrays[i].length > 0) {
+            minHeap.offer(new int[]{arrays[i][0], i, 0});
+        }
+    }
+
+    // 2. process: poll smallest, refill from same array
+    while (!minHeap.isEmpty()) {
+        int[] smallest = minHeap.poll();
+        int val = smallest[0];
+        int arr = smallest[1];
+        int idx = smallest[2];
+
+        result.add(val);
+
+        if (idx + 1 < arrays[arr].length) {
+            minHeap.offer(new int[]{arrays[arr][idx + 1], arr, idx + 1});
+        }
+    }
+
+    return result;
+}
+
+```
+
+## 7.2. Illustration
+
+![K-way merge](images/medium/7_k_way_merge.svg)
+
+## 7.3. Complexity
+
+**Time complexity:** `O(N log K)`  
+Each heap push/pop costs `O(log K)`, and we process `N` total elements.
+
+**Space complexity:** `O(K)`  
+The heap stores at most one current element from each list.
+
+Where:
+- `N` = total number of elements across all lists
+- `K` = number of sorted lists
+
+
+## 7.4. How to detect it should be used
+
+Key signals that K-way Merge is the right approach:
+
+1) <b>Merge K sorted</b> — combine multiple sorted lists/arrays into one.
+2) <b>Smallest/largest across K lists</b> — find the next element from multiple sorted sources.
+3) <b>Kth smallest in sorted matrix</b> — matrix where rows and columns are sorted.
+4) <b>K sorted arrays/lists</b> — multiple pre-sorted inputs to combine.
+5) <b>Merge intervals from multiple sources</b> — combine sorted streams.
+6) <b>Smallest range covering elements from K lists</b> — need one element from each list.
+
+## 7.5. LeetCode problems
+
+**Medium**
+* https://leetcode.com/problems/find-k-pairs-with-smallest-sums/
+* https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/
+
+**Hard**
+* https://leetcode.com/problems/merge-k-sorted-lists/
+* https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists/
 
 ---

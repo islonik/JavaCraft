@@ -369,16 +369,23 @@ Key signals that Binary Search is the right approach:
 8) <b>Can you achieve X with capacity/speed/value Y?</b> — yes/no boundary in a range.
 
 ### 3.1.5. LeetCode problems
-* https://leetcode.com/problems/binary-search/
+
+**Easy**
 * https://leetcode.com/problems/search-insert-position/
-* https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/
 * https://leetcode.com/problems/first-bad-version/
+* https://leetcode.com/problems/guess-number-higher-or-lower/
+* https://leetcode.com/problems/binary-search/
+* https://leetcode.com/problems/find-smallest-letter-greater-than-target/
+
+**Medium**
+* https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/
+* https://leetcode.com/problems/search-a-2d-matrix/
 
 ## 3.2. Rotated array
 <sub>[Back to solutions](../README.md#solutions)</sub><br/>
 <sub>[Back to Modified Binary search](#3-modified-binary-search)</sub>
 
-### 3.2.1. Problem statement
+### 3.2.1. Idea
 
 ```text
 Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.
@@ -390,7 +397,7 @@ Input: [3,4,5,1,2]
 Output: 1
 ```
 
-### 3.2.2. Problem solution
+#### 3.2.1.1. Problem solution
 
 Let us look at this rotated array example carefully:
 
@@ -409,13 +416,13 @@ The approach is similar to the standard binary search where we find the middle e
 
 When we find the middle element ( in the above example number 7 is the middle element ) we can observe that the array is divided into two halves where one half is sorted and the other half is unsorted. Another interesting observation is that the minimum element is always in the unsorted half.
 
-### 3.2.3. Algorithm
+#### 3.2.1.2. Algorithm
 
 1. Find the middle element of the array.
 2. Check if the middle element is the minimum element
 3. If the middle element does not satisfy the minimum element condition then apply binary search on the unsorted half of the array.
 
-### 3.2.4. Illustrations
+### 3.2.2. Illustrations
 
 ![1](images/easy/3_rotated_array_1.webp)
 ![2](images/easy/3_rotated_array_2.webp)
@@ -426,10 +433,29 @@ When we find the middle element ( in the above example number 7 is the middle el
 ![7](images/easy/3_rotated_array_7.webp)
 ![8](images/easy/3_rotated_array_8.webp)
 
+### 3.2.4. How to detect it should be used
+
+Key signals that Rotated Array is the right approach:
+
+1) <b>Sorted and rotated</b> — explicitly stated in the problem.
+2) <b>Shifted / pivoted array</b> — array was sorted then rotated at some pivot.
+3) <b>Find minimum in rotated</b> — locate the rotation point.
+4) <b>Search in rotated</b> — find a target in a rotated sorted array.
+5) <b>Find pivot / inflection point</b> — where the order breaks.
+
 ### 3.2.5. LeetCode problems
 
+**Easy**
+* https://leetcode.com/problems/rotate-array/
+* https://leetcode.com/problems/check-if-array-is-sorted-and-rotated/
+
+**Medium**
 * https://leetcode.com/problems/search-in-rotated-sorted-array/
+* https://leetcode.com/problems/search-in-rotated-sorted-array-ii/
 * https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/
+
+**Hard**
+* https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii/
 
 ---
 
@@ -662,13 +688,15 @@ Only two pointer variables (slow, fast) are maintained regardless of list size. 
 
 ## 4.4. How to detect it should be used
 
-* <b>Input is a linked list</b> : Fast/slow pointers are the primary tool for linked-list structural problems because you can't index directly into a list and often must use `O(1)` space. Example: linked list cycle (#141), intersection of two linked lists (#160).
-* <b>"Cycle" or "loop" in the problem title or constraints</b> : Detecting whether a cycle exists, and finding where it starts, is the textbook use case for Floyd's Tortoise and Hare algorithm. Example: linked list cycle (#141).
-* <b>Finding the middle without knowing the length</b> : When the slow pointer reaches the end, the fast pointer is at the midpoint — useful before reversing the second half for a palindrome check.
-* <b>Two lists of different lengths need to meet</b> : If both pointers swap to the other list's head on reaching null, they meet after exactly m + n steps regardless of individual lengths. Example: intersection of two linked lists (#160).
-* <b>"Nth node from the end" or "remove kth from end"</b> : Advance the fast pointer N steps first, then move both together — when fast hits null, slow is exactly at the target.
-* <b>O(1) space required on a linked list</b> : Hash-set alternatives work but use O(n) space; fast/slow pointers solve the same problems in constant space. Example: `hasCycle2` in linked list cycle (#141) shows the hash-set contrast.
-* <b>Keywords to watch for</b> : "linked list", "cycle", "loop", "circular", "middle node", "intersection", "nth from end", "detect", "Floyd".
+Key signals that Fast and Slow Pointers is the right approach:
+
+1) <b>Cycle in linked list</b> — detect if a loop exists.
+2) <b>Find cycle start</b> — locate where the cycle begins.
+3) <b>Middle of linked list</b> — find the center node.
+4) <b>Palindrome linked list</b> — need to compare first half with reversed second half.
+5) <b>Happy number</b> — detect cycle in a number sequence.
+6) <b>O(1) space</b> + linked list — can't use extra data structures.
+7) <b>Nth from end</b> — find a node relative to the tail.
 
 ## 4.5. LeetCode problems
 
