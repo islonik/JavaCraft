@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title desc">
+  <title id="title">Fast and slow pointers illustration</title>
+  <desc id="desc">A linked-list cycle diagram showing a slow pointer moving one step, a fast pointer moving two steps, and both eventually meeting inside the cycle.</desc>
+
+  <defs>
+    <style>
+      .bg-card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .card-title { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #2a4460; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #3a5a78; }
+      .label { font: 600 16px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .chip { rx: 18; ry: 18; }
+
+      .node { fill: #ffffff; stroke: #7a9abf; stroke-width: 3; }
+      .cycle-node { fill: #e3f0ff; stroke: #4a7cc9; stroke-width: 3; }
+      .meet-node { fill: #d4f5dc; stroke: #2d8a4e; stroke-width: 4; }
+      .node-text { font: 700 20px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+
+      .slow-chip { fill: #fff1e7; stroke: #c97030; stroke-width: 2.5; }
+      .fast-chip { fill: #e2f5eb; stroke: #2d8a4e; stroke-width: 2.5; }
+      .legend { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+
+      .flow { stroke: #5a7d9e; stroke-width: 3; fill: none; marker-end: url(#arrow); stroke-linecap: round; stroke-linejoin: round; }
+      .cycle-track { stroke: #4a7cc9; stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12 6; }
+      .cycle-arrow { stroke: #4a7cc9; stroke-width: 4; fill: none; marker-end: url(#arrowBlue); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12 6; }
+      .slow-arrow { stroke: #c97030; stroke-width: 4; fill: none; marker-end: url(#arrowOrange); stroke-linecap: round; stroke-linejoin: round; }
+      .fast-arrow { stroke: #2d8a4e; stroke-width: 4; fill: none; marker-end: url(#arrowGreen); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 7; }
+
+      .slow-label { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #b05a20; }
+      .fast-label { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #1e7a3a; }
+
+      .snap-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .snap-body { font: 600 16px "Segoe UI", Arial, sans-serif; fill: #2a4460; }
+
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+
+    <marker id="arrow" viewBox="0 0 12 12" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="#5a7d9e"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 12 12" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="#4a7cc9"/>
+    </marker>
+    <marker id="arrowOrange" viewBox="0 0 12 12" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="#c97030"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 12 12" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="#2d8a4e"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1400" height="1020" fill="#edf5fb"/>
+  <rect x="32" y="28" width="1336" height="964" class="bg-card" rx="28" ry="28"/>
+
+  <!-- Header -->
+  <text x="60" y="84" class="title">Fast and Slow Pointers: Detect Cycle</text>
+  <text x="60" y="118" class="subtitle">Move one pointer by 1 step and another by 2 steps. If a cycle exists, they must eventually meet.</text>
+
+  <!-- Why it works -->
+  <rect x="70" y="150" width="1260" height="110" class="pipe"/>
+  <text x="105" y="186" class="card-title" dominant-baseline="middle">Why it works</text>
+  <text x="105" y="214" class="body" dominant-baseline="middle">Inside a cycle the fast pointer gains one node per iteration on the slow pointer,</text>
+  <text x="105" y="238" class="body" dominant-baseline="middle">so the gap shrinks by 1 each step and eventually reaches zero (they meet).</text>
+
+  <!-- Diagram card -->
+  <rect x="90" y="290" width="1220" height="400" class="bg-card" rx="24" ry="24"/>
+  <text x="125" y="335" class="card-title">Example: linked list with a cycle</text>
+
+  <!-- Legend chips -->
+  <rect x="135" y="372" width="175" height="44" class="slow-chip chip"/>
+  <circle cx="160" cy="394" r="8" fill="#c97030"/>
+  <text x="178" y="400" class="legend">slow = 1 step</text>
+  <rect x="330" y="372" width="175" height="44" class="fast-chip chip"/>
+  <circle cx="355" cy="394" r="8" fill="#2d8a4e"/>
+  <text x="373" y="400" class="legend">fast = 2 steps</text>
+  <rect x="525" y="372" width="200" height="44" class="chip" fill="#d4f5dc" stroke="#2d8a4e" stroke-width="2.5"/>
+  <circle cx="550" cy="394" r="8" fill="#2d8a4e"/>
+  <text x="568" y="400" class="legend">meeting point</text>
+
+  <!-- Nodes -->
+  <circle cx="180" cy="520" r="44" class="node"/>
+  <text x="180" y="527" text-anchor="middle" class="node-text">10</text>
+
+  <circle cx="360" cy="520" r="44" class="node"/>
+  <text x="360" y="527" text-anchor="middle" class="node-text">20</text>
+
+  <circle cx="540" cy="520" r="44" class="node"/>
+  <text x="540" y="527" text-anchor="middle" class="node-text">30</text>
+
+  <circle cx="720" cy="520" r="44" class="cycle-node"/>
+  <text x="720" y="527" text-anchor="middle" class="node-text">40</text>
+
+  <circle cx="900" cy="520" r="44" class="cycle-node"/>
+  <text x="900" y="527" text-anchor="middle" class="node-text">50</text>
+
+  <circle cx="1080" cy="520" r="44" class="meet-node"/>
+  <text x="1080" y="527" text-anchor="middle" class="node-text">60</text>
+
+  <!-- Fast/slow step arrows -->
+  <path d="M209 487 Q270 448 331 487" class="slow-arrow"/>
+  <path d="M389 487 Q450 448 511 487" class="slow-arrow"/>
+  <path d="M193 478 Q360 410 527 478" class="fast-arrow"/>
+  <path d="M553 478 Q720 410 887 478" class="fast-arrow"/>
+
+  <!-- Forward arrows -->
+  <path d="M224 520 L316 520" class="flow"/>
+  <path d="M404 520 L496 520" class="flow"/>
+  <path d="M584 520 L676 520" class="flow"/>
+  <path d="M764 520 L856 520" class="flow"/>
+  <path d="M944 520 L1036 520" class="flow"/>
+
+  <!-- Cycle return arc (dashed, prominent) -->
+  <path d="M1080 564 C1080 610, 1005 628, 910 627 C835 626, 785 623, 745 610" class="cycle-track"/>
+  <path d="M745 610 C732 602, 720 588, 720 564" class="cycle-arrow"/>
+
+  <!-- Step snapshots -->
+  <rect x="90" y="720" width="1220" height="140" class="bg-card" rx="24" ry="24"/>
+  <text x="125" y="762" class="card-title">Step snapshots</text>
+
+  <!-- Snapshot 1: Start -->
+  <rect x="130" y="778" width="280" height="65" class="pipe"/>
+  <text x="155" y="802" class="snap-title">Start</text>
+  <text x="155" y="828" class="snap-body">slow = 10  &amp;  fast = 10</text>
+
+  <!-- Snapshot 2: After a few moves -->
+  <rect x="440" y="778" width="330" height="65" class="pipe"/>
+  <text x="465" y="802" class="snap-title">After a few moves</text>
+  <text x="465" y="828" class="snap-body">slow = 30  &amp;  fast = 50</text>
+
+  <!-- Snapshot 3: Meeting point -->
+  <rect x="800" y="778" width="490" height="65" fill="#d4f5dc" stroke="#2d8a4e" stroke-width="2" rx="18" ry="18"/>
+  <text x="825" y="802" class="snap-title">Meeting point found</text>
+  <text x="825" y="828" class="snap-body">slow = 60  &amp;  fast = 60  →  cycle confirmed</text>
+
+  <!-- Result card -->
+  <rect x="90" y="890" width="1220" height="90" class="result-card"/>
+  <text x="125" y="930" class="result-title">Meeting inside the loop confirms a cycle exists</text>
+  <text x="125" y="958" class="result-body">The same pattern also finds the middle node, detects palindromes, and locates the cycle start.</text>
+</svg>

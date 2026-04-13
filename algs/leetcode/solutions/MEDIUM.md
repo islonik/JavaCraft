@@ -86,10 +86,10 @@ Key signals that BFS is the right approach:
 
 ## 1.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/flood-fill/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/binary-tree-level-order-traversal/
 * https://leetcode.com/problems/word-ladder/
 * https://leetcode.com/problems/number-of-islands/
@@ -102,7 +102,7 @@ Medium
 * https://leetcode.com/problems/shortest-path-in-binary-matrix/
 * https://leetcode.com/problems/as-far-from-land-as-possible/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/word-ladder-ii/
 * https://leetcode.com/problems/shortest-path-to-get-all-keys/
 
@@ -228,7 +228,7 @@ Key signals that DFS is the right approach:
 
 ## 2.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/binary-tree-inorder-traversal/
 * https://leetcode.com/problems/symmetric-tree/
 * https://leetcode.com/problems/path-sum/
@@ -237,7 +237,7 @@ Easy
 * https://leetcode.com/problems/maximum-depth-of-n-ary-tree/
 * https://leetcode.com/problems/flood-fill/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/letter-combinations-of-a-phone-number/
 * https://leetcode.com/problems/combination-sum/
 * https://leetcode.com/problems/combination-sum-ii/
@@ -263,7 +263,7 @@ Medium
 * https://leetcode.com/problems/find-eventual-safe-states/
 * https://leetcode.com/problems/number-of-enclaves/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/word-ladder-ii/
 * https://leetcode.com/problems/word-break-ii/
 * https://leetcode.com/problems/word-search-ii/
@@ -378,10 +378,10 @@ Key signals that Top K Elements is the right approach:
 
 ## 3.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/kth-largest-element-in-a-stream/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/kth-largest-element-in-an-array/
 * https://leetcode.com/problems/top-k-frequent-elements/
 * https://leetcode.com/problems/top-k-frequent-words/
@@ -544,7 +544,7 @@ Result: 2 rooms
 
 ## 4.2. Illustration
 
-![Intervals](images/medium/4_intervals.webp)
+![Intervals](images/medium/4_intervals.svg)
 
 ## 4.3. Complexity
 
@@ -560,11 +560,11 @@ This approach is quite useful when dealing with intervals, overlapping items or 
 
 ## 4.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/meeting-rooms/
 * https://leetcode.com/problems/points-that-intersect-with-cars/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/merge-intervals/
 * https://leetcode.com/problems/insert-interval/
 * https://leetcode.com/problems/meeting-rooms-ii/
@@ -583,7 +583,7 @@ Medium
 * https://leetcode.com/problems/divide-intervals-into-minimum-number-of-groups/
 * https://leetcode.com/problems/count-days-without-meetings/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/data-stream-as-disjoint-intervals/
 * https://leetcode.com/problems/my-calendar-iii/
 * https://leetcode.com/problems/set-intersection-size-at-least-two/
@@ -673,7 +673,7 @@ Key signals that Subsets pattern is the right approach:
 
 ## 5.5. LeetCode problems
 
-Medium
+**Medium**
 * https://leetcode.com/problems/letter-combinations-of-a-phone-number/
 * https://leetcode.com/problems/generate-parentheses/
 * https://leetcode.com/problems/combination-sum/
@@ -770,7 +770,7 @@ To be able to solve these kinds of problems, we want to know the smallest elemen
 
 Two Heaps is a small pattern on LeetCode, and the standard public set is all Hard.
 
-Hard
+**Hard**
 * https://leetcode.com/problems/find-median-from-data-stream/
 * https://leetcode.com/problems/sliding-window-median/
 * https://leetcode.com/problems/ipo/

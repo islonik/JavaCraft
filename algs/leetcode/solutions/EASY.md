@@ -39,7 +39,7 @@ Key signals that Two Pointers is the right approach:
 
 ## 1.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/remove-duplicates-from-sorted-array/
 * https://leetcode.com/problems/remove-element/
 * https://leetcode.com/problems/merge-sorted-array/
@@ -63,7 +63,7 @@ Easy
 * https://leetcode.com/problems/minimum-common-value/
 * https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/container-with-most-water/
 * https://leetcode.com/problems/3sum/
 * https://leetcode.com/problems/3sum-closest/
@@ -93,7 +93,7 @@ Medium
 * https://leetcode.com/problems/maximum-twin-sum-of-a-linked-list/
 * https://leetcode.com/problems/successful-pairs-of-spells-and-potions/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/trapping-rain-water/
 * https://leetcode.com/problems/find-k-th-smallest-pair-distance/
 * https://leetcode.com/problems/longest-chunked-palindrome-decomposition/
@@ -136,14 +136,14 @@ By updating the total in constant time with each slide, you find the group of ne
 
 ### 2.3.1. Why O(n) time:
 
-Each element is touched at most twice — once when the right pointer expands the window over it, and once when the left pointer shrinks past it. Despite looking like a nested loop, the total pointer movements across the entire run is bounded by 2n → O(n).
+Each element is touched at most twice — once when the right pointer expands the window over it, and once when the left pointer shrinks past it. Despite looking like a nested loop, the total pointer movements across the entire run is bounded by 2n → `O(n)`.
 
 ### 2.3.2. Why the space depends on window type:
 
 There are two variants:
 
-* Fixed-size window (like the cookie example in the README) — only a running sum and a max variable are needed → O(1) space
-* Dynamic/variable window — the window grows and shrinks based on a condition (e.g. "longest substring without repeating characters"), which typically requires a HashMap or HashSet to track what's currently inside the window → O(k) space, where k is the number of distinct elements in the window (≤ alphabet size, so often treated as O(1) for fixed alphabets, or O(n) worst case for arbitrary inputs)
+* Fixed-size window (like the cookie example in the README) — only a running sum and a max variable are needed → `O(1)` space
+* Dynamic/variable window — the window grows and shrinks based on a condition (e.g. "longest substring without repeating characters"), which typically requires a HashMap or HashSet to track what's currently inside the window → `O(k)` space, where k is the number of distinct elements in the window (≤ alphabet size, so often treated as `O(1)` for fixed alphabets, or `O(n)` worst case for arbitrary inputs)
 
 ## 2.4. How to detect it should be used
 
@@ -156,7 +156,7 @@ There are two variants:
 
 ## 2.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/contains-duplicate-ii/
 * https://leetcode.com/problems/longest-harmonious-subsequence/
 * https://leetcode.com/problems/maximum-average-subarray-i/
@@ -166,7 +166,7 @@ Easy
 * https://leetcode.com/problems/find-the-k-beauty-of-a-number/
 * https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/longest-substring-without-repeating-characters/
 * https://leetcode.com/problems/repeated-dna-sequences/
 * https://leetcode.com/problems/minimum-size-subarray-sum/
@@ -198,7 +198,7 @@ Medium
 * https://leetcode.com/problems/count-the-number-of-good-subarrays/
 * https://leetcode.com/problems/find-the-longest-semi-repetitive-substring/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/substring-with-concatenation-of-all-words/
 * https://leetcode.com/problems/minimum-window-substring/
 * https://leetcode.com/problems/contains-duplicate-iii/
@@ -334,29 +334,227 @@ Similar to the two pointers pattern, the fast and slow pointers pattern uses two
 
 The key idea is that the pointers start at the same location and then start moving at different speeds. The slow pointer moves one step at a time, while the fast pointer moves by two steps. Due to the different speeds of the pointers, this pattern is also commonly known as the <b>Hare and Tortoise algorithm</b>, where the Hare is the fast pointer while Tortoise is the slow pointer. If a cycle exists, the two pointers will eventually meet during traversal. This approach enables the algorithm to detect specific properties within the data structure, such as cycles, midpoints, or intersections.
 
+### 4.1.1. Detect Cycle
+
+```java
+public boolean hasCycle(ListNode head) {
+    ListNode slow = head;
+    ListNode fast = head;
+
+    while (fast != null && fast.next != null) {
+        slow = slow.next;           // 1 step
+        fast = fast.next.next;      // 2 steps
+
+        if (slow == fast) {
+            return true;            // they met → cycle exists
+        }
+    }
+
+    return false;                   // fast reached end → no cycle
+}
+```
+
+```text
+No cycle:   1 → 2 → 3 → 4 → null
+            s
+            f
+            
+            1 → 2 → 3 → 4 → null
+                s   f
+
+            1 → 2 → 3 → 4 → null
+                    s           f (null) → no cycle
+
+Cycle:      1 → 2 → 3 → 4
+                ↑       |
+                └───────┘
+            
+            slow: 1 → 2 → 3 → 4 → 2 → 3
+            fast: 1 → 3 → 2 → 4 → 3
+                                  ↑   ↑
+                                  slow=fast → cycle!
+```
+
+### 4.1.2. Find Cycle Start
+
+```java
+public ListNode detectCycleStart(ListNode head) {
+    ListNode slow = head;
+    ListNode fast = head;
+
+    // 1. detect cycle
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+
+        if (slow == fast) {
+            // 2. find cycle start
+            ListNode start = head;
+            while (start != slow) {
+                start = start.next;     // 1 step from head
+                slow = slow.next;       // 1 step from meeting point
+            }
+            return start;               // they meet at cycle start
+        }
+    }
+
+    return null;
+}
+```
+
+```text
+    head              cycle start
+      ↓               ↓
+      1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+                      ↑           |
+                      └───────────┘
+      |←───── a ─────→|←─ b ─→|
+      
+      Meeting point is b steps into the cycle.
+      Distance from head to cycle start = a
+      Distance from meeting point to cycle start = a  (math works out)
+      
+      So move one pointer from HEAD, one from MEETING POINT,
+      both at speed 1 → they meet at CYCLE START.
+
+```
+
+### 4.1.3. Find Middle of Linked List
+
+```java
+public ListNode findMiddle(ListNode head) {
+    ListNode slow = head;
+    ListNode fast = head;
+
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+
+    return slow;   // slow is at the middle
+}
+```
+
+```text
+Odd:   1 → 2 → 3 → 4 → 5
+       s       
+       f
+
+       1 → 2 → 3 → 4 → 5
+               s       
+                       f
+
+       1 → 2 → 3 → 4 → 5
+               ↑
+             middle (3)
+
+Even:  1 → 2 → 3 → 4
+       s       
+       f
+
+       1 → 2 → 3 → 4
+               s       
+                       f (null)
+               ↑
+         middle (3, second of two)
+```
+
+### 4.1.4. Palindrome Linked List
+
+```java
+public boolean isPalindrome(ListNode head) {
+    // 1. find middle
+    ListNode slow = head;
+    ListNode fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+
+    // 2. reverse second half
+    ListNode prev = null;
+    while (slow != null) {
+        ListNode next = slow.next;
+        slow.next = prev;
+        prev = slow;
+        slow = next;
+    }
+
+    // 3. compare both halves
+    ListNode left = head;
+    ListNode right = prev;
+    while (right != null) {
+        if (left.val != right.val) return false;
+        left = left.next;
+        right = right.next;
+    }
+
+    return true;
+}
+```
+
+```text
+Input:  1 → 2 → 3 → 2 → 1
+
+Step 1 - find middle:       3
+Step 2 - reverse 2nd half:  1 → 2 → 3   1 → 2
+Step 3 - compare:           1==1 ✓  2==2 ✓  → palindrome
+```
+
+### 4.1.5. Happy Number
+
+```java
+public boolean isHappy(int n) {
+    int slow = n;
+    int fast = n;
+
+    do {
+        slow = sumOfSquares(slow);                  // 1 step
+        fast = sumOfSquares(sumOfSquares(fast));     // 2 steps
+    } while (slow != fast);
+
+    return slow == 1;   // if cycle lands on 1 → happy
+}
+
+private int sumOfSquares(int n) {
+    int sum = 0;
+    while (n > 0) {
+        int digit = n % 10;
+        sum += digit * digit;
+        n /= 10;
+    }
+    return sum;
+}
+```
+
+```text
+Happy (19):     19 → 82 → 68 → 100 → 1 → 1 → 1  (cycle at 1 ✓)
+Not happy (2):  2 → 4 → 16 → 37 → 58 → 89 → 145 → 42 → 20 → 4  (cycle not at 1)
+```
+
 ## 4.2. Illustration
 
-![Fast and slow pointers diagram](images/easy/4_fast_and_slow_pointers.webp)
+![Fast and slow pointers diagram](images/easy/4_fast_and_slow_pointers.svg)
 
 ## 4.3. Complexity
 
 **Time complexity:** `O(n)`  
 **Space complexity:** `O(1)`
 
-### 4.3.1. Why O(n) time:
+### 4.3.1. Why `O(n)` time:
 
-* No cycle — the fast pointer hits null after traversing at most n nodes (it skips every other node, so at most n/2 steps, still O(n))<br/>
-* Cycle exists — once both pointers are inside the cycle, the fast pointer gains one step on the slow pointer per iteration. The cycle length is at most n, so they meet within n more steps → still O(n) total<br/>
-* Finding the middle — fast reaches the end after n/2 steps → O(n)<br/>
-* Intersection of two lists — each pointer walks at most m + n nodes before meeting → O(m + n)
+* No cycle — the fast pointer hits null after traversing at most n nodes (it skips every other node, so at most n/2 steps, still `O(n)`)<br/>
+* Cycle exists — once both pointers are inside the cycle, the fast pointer gains one step on the slow pointer per iteration. The cycle length is at most n, so they meet within n more steps → still `O(n)` total<br/>
+* Finding the middle — fast reaches the end after n/2 steps → `O(n)`<br/>
+* Intersection of two lists — each pointer walks at most m + n nodes before meeting → `O(m + n)`
 
 ### 4.3.2. Why O(1) space:
 
-Only two pointer variables (slow, fast) are maintained regardless of list size. No auxiliary data structure (array, set, map) is ever allocated. This is the key advantage over the hash-set alternative — for example, hasCycle2 in LinkedListCycle.java solves the same problem in O(n) space by storing visited nodes in a HashSet.
+Only two pointer variables (slow, fast) are maintained regardless of list size. No auxiliary data structure (array, set, map) is ever allocated. This is the key advantage over the hash-set alternative — for example, hasCycle2 in LinkedListCycle.java solves the same problem in `O(n)` space by storing visited nodes in a HashSet.
 
 ## 4.4. How to detect it should be used
 
-* <b>Input is a linked list</b> : Fast/slow pointers are the primary tool for linked-list structural problems because you can't index directly into a list and often must use O(1) space. Example: linked list cycle (#141), intersection of two linked lists (#160).
+* <b>Input is a linked list</b> : Fast/slow pointers are the primary tool for linked-list structural problems because you can't index directly into a list and often must use `O(1)` space. Example: linked list cycle (#141), intersection of two linked lists (#160).
 * <b>"Cycle" or "loop" in the problem title or constraints</b> : Detecting whether a cycle exists, and finding where it starts, is the textbook use case for Floyd's Tortoise and Hare algorithm. Example: linked list cycle (#141).
 * <b>Finding the middle without knowing the length</b> : When the slow pointer reaches the end, the fast pointer is at the midpoint — useful before reversing the second half for a palindrome check.
 * <b>Two lists of different lengths need to meet</b> : If both pointers swap to the other list's head on reaching null, they meet after exactly m + n steps regardless of individual lengths. Example: intersection of two linked lists (#160).
@@ -366,13 +564,13 @@ Only two pointer variables (slow, fast) are maintained regardless of list size. 
 
 ## 4.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/linked-list-cycle/
 * https://leetcode.com/problems/happy-number/
 * https://leetcode.com/problems/palindrome-linked-list/
 * https://leetcode.com/problems/middle-of-the-linked-list/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/remove-nth-node-from-end-of-list/
 * https://leetcode.com/problems/linked-list-cycle-ii/
 * https://leetcode.com/problems/reorder-list/
@@ -475,11 +673,11 @@ public class ReverseLinkedListExample {
 **Time complexity:** `O(n)`  
 **Space complexity:** `O(1)`
 
-### 5.3.1. Why O(n) time:
-The time complexity of this algorithm is O(n), where n is the number of nodes in the linked list. This is because we traverse the list exactly once, performing a constant number of operations for each node.
+### 5.3.1. Why `O(n)` time:
+`n` is the number of nodes in the linked list. Since we traverse the list once and do `O(1)` work per node, the total time is `O(n)`.
 
-### 5.3.1. Why O(1) space:
-The space complexity is O(1), or constant space. We only use a fixed number of pointers (prev, current, and next) regardless of the size of the input list. This is what makes the algorithm “in-place” – it doesn’t require additional space proportional to the input size.
+### 5.3.1. Why `O(1)` space:
+We only use a fixed number of pointers (prev, current, and next) regardless of the size of the input list. This is what makes the algorithm “in-place” – it doesn’t require additional space proportional to the input size.
 
 This combination of linear time complexity and constant space complexity makes the in-place reversal algorithm highly efficient and desirable in many scenarios, especially when dealing with large lists or in memory-constrained environments.
 
@@ -495,17 +693,17 @@ Key signals that In-Place Reversal is the right approach:
 
 ## 5.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/reverse-linked-list/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/swap-nodes-in-pairs/
 * https://leetcode.com/problems/rotate-list/
 * https://leetcode.com/problems/reverse-linked-list-ii/
 * https://leetcode.com/problems/reorder-list/
 * https://leetcode.com/problems/odd-even-linked-list/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/reverse-nodes-in-k-group/
 
 ---
@@ -543,20 +741,20 @@ Use cyclic sort when:
    * duplicate(s)
    * corrupt pair
    * first missing positive (variant)
-4. Constraints ask for O(n) time and O(1) extra space.
+4. Constraints ask for `O(n)` time and `O(1)` extra space.
 
 ## 6.5. LeetCode problems
 
-Easy
+**Easy**
 * https://leetcode.com/problems/missing-number/
 * https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/
 * https://leetcode.com/problems/set-mismatch/
 
-Medium
+**Medium**
 * https://leetcode.com/problems/find-the-duplicate-number/
 * https://leetcode.com/problems/find-all-duplicates-in-an-array/
 
-Hard
+**Hard**
 * https://leetcode.com/problems/first-missing-positive/
 
 
