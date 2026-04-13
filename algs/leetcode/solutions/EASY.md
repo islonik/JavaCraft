@@ -123,11 +123,74 @@ Consider the following steps:
 
 By updating the total in constant time with each slide, you find the group of neighboring cookies with maximum chocolate chips without ever recounting the entire window—a perfect illustration of the sliding-window technique.
 
+### 2.1.1. Fixed Size Window
+
+```java
+public int maxSumSubarray(int[] nums, int k) {
+    int windowSum = 0;
+    int maxSum = Integer.MIN_VALUE;
+
+    for (int i = 0; i < nums.length; i++) {
+        windowSum += nums[i];              // expand window
+
+        if (i >= k - 1) {
+            maxSum = Math.max(maxSum, windowSum);
+            windowSum -= nums[i - (k - 1)]; // shrink window
+        }
+    }
+
+    return maxSum;
+}
+```
+
+### 2.1.2. Variable Size Window (Smallest subarray with sum >= target)
+
+```java
+public int minSubArrayLen(int target, int[] nums) {
+    int left = 0;
+    int windowSum = 0;
+    int minLength = Integer.MAX_VALUE;
+
+    for (int right = 0; right < nums.length; right++) {
+        windowSum += nums[right];              // expand
+
+        while (windowSum >= target) {          // shrink while valid
+            minLength = Math.min(minLength, right - left + 1);
+            windowSum -= nums[left];
+            left++;
+        }
+    }
+
+    return minLength == Integer.MAX_VALUE ? 0 : minLength;
+}
+```
+
+### 2.1.3. Window with HashMap (Longest substring without repeating chars)
+
+```java
+public int lengthOfLongestSubstring(String s) {
+   Map<Character, Integer> lastSeen = new HashMap<>();
+   int left = 0;
+   int maxLength = 0;
+
+   for (int right = 0; right < s.length(); right++) {
+      char c = s.charAt(right);
+
+      if (lastSeen.containsKey(c) && lastSeen.get(c) >= left) {
+         left = lastSeen.get(c) + 1;   // jump left past duplicate
+      }
+
+      lastSeen.put(c, right);
+      maxLength = Math.max(maxLength, right - left + 1);
+   }
+
+   return maxLength;
+}
+```
+
 ## 2.2. Illustration
 
-![Sliding window](images/easy/2_sliding_window_1.webp)
-
-![Sliding window](images/easy/2_sliding_window_2.webp)
+![Sliding window](images/easy/2_sliding_window.svg)
 
 ## 2.3. Complexity
 
@@ -147,12 +210,15 @@ There are two variants:
 
 ## 2.4. How to detect it should be used
 
-* <b>"k consecutive elements" or "subarray of size k"</b> : Any mention of a fixed-length contiguous segment is the clearest signal for a fixed window — slide it one step at a time and update the aggregate in O(1). Classic example: maximum average subarray of size k (#643), best time to buy and sell stock (#121).
-* <b>"Longest / shortest subarray or substring"</b> : When the problem asks for the optimal-length contiguous segment under a constraint (sum ≥ target, no repeating characters, at most k distinct elements), use a variable window: expand right to grow toward the constraint, shrink left once it is satisfied. Classic example: longest substring without repeating characters (#3), minimum size subarray sum (#209).
-* <b>You can see an O(n²) brute force with two nested loops</b> : If the naive solution tries every (start, end) pair, sliding window is the O(n) upgrade — it avoids recomputing the inner loop by maintaining a running aggregate that is updated in constant time with each slide.
-* <b>The condition is monotone as the window grows</b> : Sliding window works when making the window larger always pushes the aggregate in one direction (adding elements only increases the sum, only increases distinct count, etc.), so you know exactly when to stop growing and start shrinking.
-* <b>Elements must be contiguous</b> : This is the key differentiator from two pointers — sliding window only applies when the answer involves adjacent elements. If the problem lets you pick any two elements regardless of position, two pointers is the right pattern instead.
-* <b>Keywords to watch for</b> : "subarray", "substring", "contiguous", "consecutive", "window of size k", "longest", "shortest", "minimum length", "maximum sum", "at most k distinct", "no repeating".
+Key signals that Sliding Window is the right approach:
+
+1) <b>Subarray / substring</b> — problem involves a contiguous sequence of elements.
+2) <b>Maximum / minimum of size K</b> — find best subarray of a fixed length.
+3) <b>Longest / shortest with constraint</b> — find variable-size window satisfying a condition.
+4) <b>At most K distinct</b> — limit on diversity inside the window.
+5) <b>Contains all characters of</b> — minimum window covering required elements.
+6) <b>Consecutive</b> — contiguous elements satisfying a property.
+7) <b>Anagram / permutation in string</b> — fixed-size frequency match.
 
 ## 2.5. LeetCode problems
 

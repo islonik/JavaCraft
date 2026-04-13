@@ -73,15 +73,21 @@
   <text x="125" y="335" class="card-title">Example: linked list with a cycle</text>
 
   <!-- Legend chips -->
-  <rect x="135" y="372" width="175" height="44" class="slow-chip chip"/>
-  <circle cx="160" cy="394" r="8" fill="#c97030"/>
-  <text x="178" y="400" class="legend">slow = 1 step</text>
-  <rect x="330" y="372" width="175" height="44" class="fast-chip chip"/>
-  <circle cx="355" cy="394" r="8" fill="#2d8a4e"/>
-  <text x="373" y="400" class="legend">fast = 2 steps</text>
-  <rect x="525" y="372" width="200" height="44" class="chip" fill="#d4f5dc" stroke="#2d8a4e" stroke-width="2.5"/>
-  <circle cx="550" cy="394" r="8" fill="#2d8a4e"/>
-  <text x="568" y="400" class="legend">meeting point</text>
+  <rect x="125" y="372" width="165" height="44" class="slow-chip chip"/>
+  <circle cx="150" cy="394" r="8" fill="#c97030"/>
+  <text x="168" y="400" class="legend">slow = 1 step</text>
+  <rect x="305" y="372" width="170" height="44" class="chip" fill="#f8fbff" stroke="#2d8a4e" stroke-width="2.5" stroke-dasharray="9 6"/>
+  <circle cx="330" cy="394" r="8" fill="#2d8a4e"/>
+  <text x="348" y="400" class="legend">fast = 2 steps</text>
+  <rect x="490" y="372" width="185" height="44" class="chip" fill="#d4f5dc" stroke="#2d8a4e" stroke-width="2.5"/>
+  <circle cx="515" cy="394" r="8" fill="#2d8a4e"/>
+  <text x="533" y="400" class="legend">meeting point</text>
+  <rect x="690" y="372" width="165" height="44" class="chip" fill="#e3f0ff" stroke="#4a7cc9" stroke-width="2.5"/>
+  <circle cx="715" cy="394" r="8" fill="#e3f0ff" stroke="#4a7cc9" stroke-width="2.5"/>
+  <text x="733" y="400" class="legend">cycle nodes</text>
+  <rect x="870" y="372" width="245" height="44" class="pipe"/>
+  <path d="M895 394 L945 394" class="cycle-arrow"/>
+  <text x="960" y="400" class="legend">cycle return edge</text>
 
   <!-- Nodes -->
   <circle cx="250" cy="545" r="44" class="node"/>
