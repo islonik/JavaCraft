@@ -21,8 +21,8 @@ Run a loop while <b>left</b> < <b>right</b>, do the following inside the loop
 
 ## 1.3. Complexity
 
-Time: O(n)<br/>
-Space: O(1)
+**Time complexity:** `O(n)`  
+**Space complexity:** `O(1)`
 
 ## 1.4. How to detect it should be used
 
@@ -131,8 +131,8 @@ By updating the total in constant time with each slide, you find the group of ne
 
 ## 2.3. Complexity
 
-Time: O(n)<br/>
-Space: O(1) or O(k)
+**Time complexity:** `O(n)`  
+**Space complexity:** `O(1)` or `O(k)`
 
 ### 2.3.1. Why O(n) time:
 
@@ -239,13 +239,13 @@ The reason why Binary Search provides O(log N) time complexity is that on each i
 
 ### 3.1.3. Complexity
 
-<b>Iterative Algorithm</b>: 
-* Time: O(log n)
-* Space: O(1)
+**Iterative algorithm**
+- **Time complexity:** `O(log n)`
+- **Space complexity:** `O(1)`
 
-<b>Recursive Algorithm</b>: 
-* Time: O(log n)
-* Space: O(Log n)
+**Recursive algorithm**
+- **Time complexity:** `O(log n)`
+- **Space complexity:** `O(log n)`
 
 ### 3.1.4. How to detect it should be used
 
@@ -339,8 +339,9 @@ The key idea is that the pointers start at the same location and then start movi
 ![Fast and slow pointers diagram](images/easy/4_fast_and_slow_pointers.webp)
 
 ## 4.3. Complexity
-Time: O(n)<br/>
-Space: O(1)
+
+**Time complexity:** `O(n)`  
+**Space complexity:** `O(1)`
 
 ### 4.3.1. Why O(n) time:
 
@@ -471,8 +472,8 @@ public class ReverseLinkedListExample {
 
 ## 5.3. Complexity
 
-Time: O(n)<br/>
-Space: O(1)
+**Time complexity:** `O(n)`  
+**Space complexity:** `O(1)`
 
 ### 5.3.1. Why O(n) time:
 The time complexity of this algorithm is O(n), where n is the number of nodes in the linked list. This is because we traverse the list exactly once, performing a constant number of operations for each node.
@@ -525,9 +526,10 @@ Suppose there is an array arr which has n <b>distinct</b> elements. Given an ele
 
 ## 6.3. Complexity
 
-Time: O(n)<br/>
-Although we are not incrementing the index i when swapping the numbers, this will result in more than n iterations of the loop, but in the worst-case scenario, the while loop will swap a total of n-1 numbers and once a number is at its correct index, we will move on to the next number by incrementing i. So overall, our algorithm will take O(n) + O(n-1) which is asymptotically equivalent to O(n).<br/>
-Space: O(1)<br/>
+**Time complexity:** `O(n)`  
+Even though some indices may be revisited after swaps, each number is moved to its correct position at most once, so the total work is linear.
+
+**Space complexity:** `O(1)`
 
 Cycle Sort isn’t a stable sorting algorithm
 

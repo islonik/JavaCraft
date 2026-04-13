@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="980" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Two heaps pattern illustration</title>
+  <desc id="desc">Diagram showing a max heap for the lower half, a min heap for the upper half, rebalancing rules, and median lookup.</desc>
+
+  <defs>
+    <style>
+      .bg-card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .card-title { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #35516d; }
+      .label { font: 600 16px "Segoe UI", Arial, sans-serif; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4a647f; }
+      .heap-left { fill: #fff0ea; stroke: #e89971; stroke-width: 2.5; }
+      .heap-right { fill: #eef8f6; stroke: #64b39a; stroke-width: 2.5; }
+      .heap-text { font: 700 20px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .chip { rx: 16; ry: 16; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+      .left-line { stroke: #d27b45; stroke-width: 3.5; fill: none; }
+      .right-line { stroke: #329377; stroke-width: 3.5; fill: none; }
+      .flow { stroke: #6184a8; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .rebalance { stroke: #7b64c7; stroke-width: 3; fill: none; marker-end: url(#arrowPurple); stroke-dasharray: 10 8; }
+    </style>
+
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#6184a8"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#7b64c7"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="980" fill="#edf5fb"/>
+  <rect x="32" y="28" width="1336" height="924" class="bg-card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Two Heaps for Running Median</text>
+  <text x="60" y="118" class="subtitle">Split the stream into two halves: the lower half goes to a max heap, the upper half goes to a min heap.</text>
+
+  <rect x="70" y="160" width="1260" height="110" class="pipe"/>
+  <text x="105" y="200" class="card-title">Flow</text>
+  <text x="105" y="235" class="body">Insert number → compare with maxHeap top → place into one heap → rebalance sizes → read median from heap roots</text>
+
+  <rect x="95" y="320" width="520" height="420" class="bg-card" rx="24" ry="24"/>
+  <text x="125" y="365" class="card-title">Lower half: Max Heap</text>
+  <text x="125" y="395" class="body">Keeps the smaller numbers. The root is the largest value in the lower half.</text>
+
+  <rect x="785" y="320" width="520" height="420" class="bg-card" rx="24" ry="24"/>
+  <text x="815" y="365" class="card-title">Upper half: Min Heap</text>
+  <text x="815" y="395" class="body">Keeps the larger numbers. The root is the smallest value in the upper half.</text>
+
+  <rect x="630" y="405" width="140" height="150" class="pipe"/>
+  <text x="700" y="442" text-anchor="middle" class="card-title" font-size="22">Rebalance</text>
+  <text x="650" y="478" class="small">size diff ≤ 1</text>
+  <text x="650" y="506" class="small">move root across</text>
+  <text x="650" y="534" class="small">when one heap</text>
+  <text x="650" y="562" class="small">gets too big</text>
+
+  <circle cx="355" cy="465" r="38" class="heap-left"/>
+  <text x="355" y="472" text-anchor="middle" class="heap-text">5</text>
+  <circle cx="235" cy="575" r="34" class="heap-left"/>
+  <text x="235" y="582" text-anchor="middle" class="heap-text">4</text>
+  <circle cx="475" cy="575" r="34" class="heap-left"/>
+  <text x="475" y="582" text-anchor="middle" class="heap-text">2</text>
+
+  <path d="M355 503 L235 542" class="left-line"/>
+  <path d="M355 503 L475 542" class="left-line"/>
+
+  <circle cx="1045" cy="465" r="38" class="heap-right"/>
+  <text x="1045" y="472" text-anchor="middle" class="heap-text">8</text>
+  <circle cx="925" cy="575" r="34" class="heap-right"/>
+  <text x="925" y="582" text-anchor="middle" class="heap-text">10</text>
+  <circle cx="1165" cy="575" r="34" class="heap-right"/>
+  <text x="1165" y="582" text-anchor="middle" class="heap-text">12</text>
+
+  <path d="M1045 503 L925 542" class="right-line"/>
+  <path d="M1045 503 L1165 542" class="right-line"/>
+
+  <rect x="160" y="640" width="390" height="62" class="heap-left chip"/>
+  <text x="195" y="679" class="label" fill="#9a5528">maxHeap stores: [5, 4, 2]</text>
+
+  <rect x="850" y="640" width="390" height="62" class="heap-right chip"/>
+  <text x="885" y="679" class="label" fill="#236f59">minHeap stores: [8, 10, 12]</text>
+
+  <path d="M615 480 C640 480, 640 480, 668 480" class="flow"/>
+  <path d="M785 480 C760 480, 760 480, 732 480" class="flow"/>
+  <path d="M620 610 C680 640, 720 640, 785 610" class="rebalance"/>
+  <path d="M780 355 C720 325, 680 325, 620 355" class="rebalance"/>
+
+  <text x="625" y="618" class="label" fill="#6e59b6">move root if left side is too large</text>
+  <text x="640" y="340" class="label" fill="#6e59b6">move root if right side is too large</text>
+
+  <rect x="90" y="790" width="1220" height="115" class="result-card"/>
+  <text x="125" y="835" class="result-title">Median lookup</text>
+  <text x="125" y="870" class="result-body">Equal sizes → median = (maxHeap.peek() + minHeap.peek()) / 2 = (5 + 8) / 2 = 6.5</text>
+
+  <rect x="1060" y="170" width="245" height="88" class="heap-left chip"/>
+  <text x="1090" y="205" class="label" fill="#9a5528">Invariant 1</text>
+  <text x="1090" y="233" class="small">all left values ≤ all right values</text>
+
+  <rect x="785" y="170" width="245" height="88" class="heap-right chip"/>
+  <text x="815" y="205" class="label" fill="#236f59">Invariant 2</text>
+  <text x="815" y="233" class="small">heap sizes differ by at most one</text>
+
+  <rect x="90" y="170" width="285" height="88" class="pipe"/>
+  <text x="120" y="205" class="label" fill="#17324b">Example stream</text>
+  <text x="120" y="233" class="small">add 5, 2, 10, 4, 12, 8</text>
+</svg>

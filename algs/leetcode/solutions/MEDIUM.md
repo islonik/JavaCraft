@@ -67,9 +67,12 @@ This is the classic level-order traversal (LeetCode 102).
 
 ## 1.3. Complexity
 
-Time: O(V + E)<br/>
-Space: O(V)<br/>
-Where V - vertices and E - edges<br/>
+**Time complexity:** `O(V + E)`  
+**Space complexity:** `O(V)`
+
+Where:
+- `V` = number of vertices
+- `E` = number of edges
 
 ## 1.4. How to detect it should be used
 Key signals that BFS is the right approach:
@@ -206,8 +209,9 @@ public List<Integer> dfs(TreeNode root) {
 ![DFS](images/medium/2_dfs_traversal.gif)
 
 ## 2.3. Complexity
-Time: O(n)<br/>
-Space: O(n)
+
+**Time complexity:** `O(N)`  
+**Space complexity:** `O(N)`
 
 ## 2.4. How to detect it should be used
 
@@ -339,8 +343,11 @@ public int[] bottomKSmallest(int[] nums, int k) {
 
 ## 3.3. Complexity
 
-Time: O(N log K) - each offer/poll is O(log k), done n times<br/>
-Space: O(K) - heap never exceeds size k<br/>
+**Time complexity:** `O(N log K)`  
+Each `offer` / `poll` operation costs `O(log K)`, and we do it `N` times.
+
+**Space complexity:** `O(K)`  
+The heap never stores more than `K` elements.
 
 ### 3.3.1. Why not just sort?
 | Approach       | Time       | Space | When to use               |
@@ -541,8 +548,11 @@ Result: 2 rooms
 
 ## 4.3. Complexity
 
-Time: O(N * log N) where N is the total number of intervals. In the beginning, since we sort the intervals, our algorithm will take O(N * log N) to run.<br/>
-Space: O(N), as we need to return a list containing all the merged intervals.
+**Time complexity:** `O(N log N)`  
+Sorting the intervals dominates the runtime.
+
+**Space complexity:** `O(N)`  
+We store the merged intervals in the result list.
 
 ## 4.4. How to detect it should be used
 
@@ -647,8 +657,8 @@ private void backtrack(List<List<Integer>> result,      //
 
 ## 5.3. Complexity
 
-<b>Time: O(n × 2ⁿ)</b><br/>
-<b>Space: O(n × 2ⁿ)</b><br/>
+**Time complexity:** `O(n × 2ⁿ)`  
+**Space complexity:** `O(n × 2ⁿ)`
 
 ## 5.4. How to detect it should be used
 
@@ -712,14 +722,43 @@ Let’s assume that x is the median of the list. This means that, half of the it
 3. Inserting a number in a heap will take O(log N) (better than the brute force approach)
 4. The median of the current list of numbers can be calculated from the top element of the two heaps.
 
+```java
+class MedianFinder {
+    private PriorityQueue<Integer> maxHeap;  // smaller half (largest on top)
+    private PriorityQueue<Integer> minHeap;  // larger half  (smallest on top)
+
+    public MedianFinder() {
+        maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+        minHeap = new PriorityQueue<>();
+    }
+
+    public void addNum(int num) {
+        maxHeap.offer(num);                        // 1. always add to max-heap first
+        minHeap.offer(maxHeap.poll());             // 2. move largest of smaller half to min-heap
+
+        if (minHeap.size() > maxHeap.size()) {     // 3. balance: max-heap should be ≥ min-heap
+            maxHeap.offer(minHeap.poll());
+        }
+    }
+
+    public double findMedian() {
+        if (maxHeap.size() > minHeap.size()) {
+            return maxHeap.peek();                 // odd count: median is max-heap top
+        }
+        return (maxHeap.peek() + minHeap.peek()) / 2.0;  // even count: average of both tops
+    }
+}
+
+```
+
 ## 6.2. Illustration
 
-![Two heaps](images/medium/6_two_heaps.webp)
+![Two heaps](images/medium/6_two_heaps.svg)
 
 ## 6.3. Complexity
 
-Time: O (log N) for insertions, O(1) - to find median<br/>
-Space: O(N)
+**Time complexity:** `O(log N)` for insertion, `O(1)` for median lookup  
+**Space complexity:** `O(N)`
 
 ## 6.4. How to detect it should be used
 
