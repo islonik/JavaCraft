@@ -424,16 +424,9 @@ When we find the middle element ( in the above example number 7 is the middle el
 2. Check if the middle element is the minimum element
 3. If the middle element does not satisfy the minimum element condition then apply binary search on the unsorted half of the array.
 
-### 3.2.2. Illustrations
+### 3.2.2. Illustration
 
-![1](images/easy/3_rotated_array_1.webp)
-![2](images/easy/3_rotated_array_2.webp)
-![3](images/easy/3_rotated_array_3.webp)
-![4](images/easy/3_rotated_array_4.webp)
-![5](images/easy/3_rotated_array_5.webp)
-![6](images/easy/3_rotated_array_6.webp)
-![7](images/easy/3_rotated_array_7.webp)
-![8](images/easy/3_rotated_array_8.webp)
+![Rotated array](images/easy/3_rotated_array.svg)
 
 ### 3.2.4. How to detect it should be used
 
