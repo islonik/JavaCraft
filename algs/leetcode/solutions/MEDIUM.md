@@ -339,7 +339,7 @@ public int[] bottomKSmallest(int[] nums, int k) {
 ```
 
 ## 3.2. Illustration
-![Top K Elements](images/medium/3_top_k_elements.webp)
+![Top K Elements](images/medium/3_top_k_elements.svg)
 
 ## 3.3. Complexity
 

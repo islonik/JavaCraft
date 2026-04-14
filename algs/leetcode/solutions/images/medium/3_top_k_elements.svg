@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1840" viewBox="0 0 1400 1840" role="img" aria-labelledby="title desc">
+  <title id="title">Top K elements illustration</title>
+  <desc id="desc">A four-step vertical walkthrough showing how a min heap of size 3 keeps the three largest elements from the array 3, 1, 5, 12, 2, 11.</desc>
+
+  <defs>
+    <style>
+      .bg { fill: #edf5fb; }
+      .card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #49647d; }
+      .section { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #35506a; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4c6780; }
+      .legend { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .panel { fill: #ffffff; stroke: #c8d9eb; stroke-width: 2; rx: 22; ry: 22; }
+      .panel-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .panel-body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #43617b; }
+      .step-no { font: 800 32px "Segoe UI", Arial, sans-serif; fill: #1e9f66; }
+      .step-word { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .processed-box { fill: #bce8dd; stroke: #4d739d; stroke-width: 2.5; rx: 8; ry: 8; }
+      .current-box { fill: #ff8f8f; stroke: #4d739d; stroke-width: 2.5; rx: 8; ry: 8; }
+      .upcoming-box { fill: #fde9e5; stroke: #4d739d; stroke-width: 2.5; rx: 8; ry: 8; }
+      .value { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; dominant-baseline: middle; }
+      .heap-box { fill: #f4f2ff; stroke: #4d739d; stroke-width: 2.5; rx: 8; ry: 8; }
+      .heap-arrow { stroke: #4d739d; stroke-width: 1.5; fill: none; marker-end: url(#arrowBlue); }
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#4d739d"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1840" class="bg"/>
+  <rect x="32" y="28" width="1336" height="1784" class="card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Top K Elements with a heap of size K</text>
+  <text x="60" y="118" class="subtitle">Keep a min heap of size 3. The heap root is the smallest among the current top 3 candidates, so any new value must beat that root to stay.</text>
+
+  <text x="60" y="170" class="section">Example: nums = [3, 1, 5, 12, 2, 11], K = 3</text>
+  <rect x="100" y="194" width="160" height="38" class="processed-box"/>
+  <text x="180" y="218" class="legend" text-anchor="middle">already considered</text>
+  <rect x="290" y="194" width="160" height="38" class="current-box"/>
+  <text x="370" y="218" class="legend" text-anchor="middle">current value</text>
+  <rect x="480" y="194" width="160" height="38" class="upcoming-box"/>
+  <text x="560" y="218" class="legend" text-anchor="middle">not processed yet</text>
+
+  <!-- Step 1 -->
+  <rect x="60" y="270" width="1280" height="320" class="panel"/>
+  <text x="90" y="322" class="step-no">01</text>
+  <text x="92" y="344" class="step-word">Step</text>
+  <text x="160" y="320" class="panel-title">Given array:</text>
+  <rect x="160" y="360" width="90" height="64" class="processed-box"/>
+  <rect x="250" y="360" width="90" height="64" class="processed-box"/>
+  <rect x="340" y="360" width="90" height="64" class="processed-box"/>
+  <rect x="430" y="360" width="90" height="64" class="upcoming-box"/>
+  <rect x="520" y="360" width="90" height="64" class="upcoming-box"/>
+  <rect x="610" y="360" width="90" height="64" class="upcoming-box"/>
+  <text x="205" y="392" class="value">3</text>
+  <text x="295" y="392" class="value">1</text>
+  <text x="385" y="392" class="value">5</text>
+  <text x="475" y="392" class="value">12</text>
+  <text x="565" y="392" class="value">2</text>
+  <text x="655" y="392" class="value">11</text>
+  <text x="160" y="495" class="panel-body">Insert the first three</text>
+  <text x="160" y="535" class="panel-body">numbers in the heap</text>
+  <rect x="1000" y="330" width="90" height="70" class="heap-box"/>
+  <rect x="900" y="470" width="90" height="70" class="heap-box"/>
+  <rect x="1100" y="470" width="90" height="70" class="heap-box"/>
+  <text x="1045" y="365" class="value">1</text>
+  <text x="945" y="505" class="value">5</text>
+  <text x="1145" y="505" class="value">3</text>
+  <path d="M1030 400 945 465" class="heap-arrow"/>
+  <path d="M1060 400 1145 465" class="heap-arrow"/>
+
+  <!-- Step 2 -->
+  <rect x="60" y="630" width="1280" height="320" class="panel"/>
+  <text x="90" y="682" class="step-no">02</text>
+  <text x="92" y="704" class="step-word">Step</text>
+  <text x="160" y="680" class="panel-title">Given array:</text>
+  <rect x="160" y="720" width="90" height="64" class="processed-box"/>
+  <rect x="250" y="720" width="90" height="64" class="processed-box"/>
+  <rect x="340" y="720" width="90" height="64" class="processed-box"/>
+  <rect x="430" y="720" width="90" height="64" class="current-box"/>
+  <rect x="520" y="720" width="90" height="64" class="upcoming-box"/>
+  <rect x="610" y="720" width="90" height="64" class="upcoming-box"/>
+  <text x="205" y="752" class="value">3</text>
+  <text x="295" y="752" class="value">1</text>
+  <text x="385" y="752" class="value">5</text>
+  <text x="475" y="752" class="value">12</text>
+  <text x="565" y="752" class="value">2</text>
+  <text x="655" y="752" class="value">11</text>
+  <text x="160" y="855" class="panel-body">The root is smaller than ‘12’,</text>
+  <text x="160" y="895" class="panel-body">so take ‘1’ out and insert ‘12’</text>
+  <rect x="1000" y="690" width="90" height="70" class="heap-box"/>
+  <rect x="900" y="830" width="90" height="70" class="heap-box"/>
+  <rect x="1100" y="830" width="90" height="70" class="heap-box"/>
+  <text x="1045" y="725" class="value">3</text>
+  <text x="945" y="865" class="value">5</text>
+  <text x="1145" y="865" class="value">12</text>
+  <path d="M1030 760 945 825" class="heap-arrow"/>
+  <path d="M1060 760 1145 825" class="heap-arrow"/>
+
+  <!-- Step 3 -->
+  <rect x="60" y="990" width="1280" height="320" class="panel"/>
+  <text x="90" y="1042" class="step-no">03</text>
+  <text x="92" y="1064" class="step-word">Step</text>
+  <text x="160" y="1040" class="panel-title">Given array:</text>
+  <rect x="160" y="1080" width="90" height="64" class="processed-box"/>
+  <rect x="250" y="1080" width="90" height="64" class="processed-box"/>
+  <rect x="340" y="1080" width="90" height="64" class="processed-box"/>
+  <rect x="430" y="1080" width="90" height="64" class="processed-box"/>
+  <rect x="520" y="1080" width="90" height="64" class="current-box"/>
+  <rect x="610" y="1080" width="90" height="64" class="upcoming-box"/>
+  <text x="205" y="1112" class="value">3</text>
+  <text x="295" y="1112" class="value">1</text>
+  <text x="385" y="1112" class="value">5</text>
+  <text x="475" y="1112" class="value">12</text>
+  <text x="565" y="1112" class="value">2</text>
+  <text x="655" y="1112" class="value">11</text>
+  <text x="160" y="1225" class="panel-body">Skip ‘2’, as it is not bigger</text>
+  <text x="160" y="1255" class="panel-body">than the root ‘3’</text>
+  <rect x="1000" y="1050" width="90" height="70" class="heap-box"/>
+  <rect x="900" y="1190" width="90" height="70" class="heap-box"/>
+  <rect x="1100" y="1190" width="90" height="70" class="heap-box"/>
+  <text x="1045" y="1085" class="value">3</text>
+  <text x="945" y="1225" class="value">5</text>
+  <text x="1145" y="1225" class="value">12</text>
+  <path d="M1030 1120 945 1185" class="heap-arrow"/>
+  <path d="M1060 1120 1145 1185" class="heap-arrow"/>
+
+  <!-- Step 4 -->
+  <rect x="60" y="1350" width="1280" height="320" class="panel"/>
+  <text x="90" y="1402" class="step-no">04</text>
+  <text x="92" y="1424" class="step-word">Step</text>
+  <text x="160" y="1400" class="panel-title">Given array:</text>
+  <rect x="160" y="1440" width="90" height="64" class="processed-box"/>
+  <rect x="250" y="1440" width="90" height="64" class="processed-box"/>
+  <rect x="340" y="1440" width="90" height="64" class="processed-box"/>
+  <rect x="430" y="1440" width="90" height="64" class="processed-box"/>
+  <rect x="520" y="1440" width="90" height="64" class="processed-box"/>
+  <rect x="610" y="1440" width="90" height="64" class="current-box"/>
+  <text x="205" y="1472" class="value">3</text>
+  <text x="295" y="1472" class="value">1</text>
+  <text x="385" y="1472" class="value">5</text>
+  <text x="475" y="1472" class="value">12</text>
+  <text x="565" y="1472" class="value">2</text>
+  <text x="655" y="1472" class="value">11</text>
+  <text x="160" y="1575" class="panel-body">The root is smaller than ‘11’,</text>
+  <text x="160" y="1615" class="panel-body">so take ‘3’ out and insert ‘11’</text>
+  <rect x="1000" y="1410" width="90" height="70" class="heap-box"/>
+  <rect x="900" y="1550" width="90" height="70" class="heap-box"/>
+  <rect x="1100" y="1550" width="90" height="70" class="heap-box"/>
+  <text x="1045" y="1445" class="value">5</text>
+  <text x="945" y="1585" class="value">11</text>
+  <text x="1145" y="1585" class="value">12</text>
+  <path d="M1030 1480 945 1545" class="heap-arrow"/>
+  <path d="M1060 1480 1145 1545" class="heap-arrow"/>
+
+  <rect x="90" y="1700" width="1220" height="90" class="result-card"/>
+  <text x="125" y="1740" class="result-title">Min heap of size K keeps only the current best K values</text>
+  <text x="125" y="1770" class="result-body">At the end, the heap stores [5, 11, 12] — the 3 largest elements seen in the array.</text>
+</svg>
