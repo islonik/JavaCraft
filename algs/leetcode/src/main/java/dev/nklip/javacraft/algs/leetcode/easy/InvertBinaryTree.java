@@ -3,6 +3,13 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 import dev.nklip.javacraft.algs.leetcode.model.TreeNode;
 import java.util.Stack;
 
+/*
+ * 226. Invert Binary Tree
+ *
+ * LeetCode: https://leetcode.com/problems/invert-binary-tree/
+ *
+ * Given the root of a binary tree, invert the tree, and return its root.
+ */
 public class InvertBinaryTree {
 
     public TreeNode invertTree(TreeNode root) {

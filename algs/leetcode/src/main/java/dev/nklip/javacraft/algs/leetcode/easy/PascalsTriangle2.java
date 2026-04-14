@@ -3,11 +3,13 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
+/*
  * 119. Pascal's Triangle II
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/pascals-triangle-ii/
+ *
  * Given an integer rowIndex, return the rowIndexth (0-indexed) row of the Pascal's triangle.
- * <p>
+ *
  * In Pascal's triangle, each number is the sum of the two numbers directly above it as shown:
  * First six rows:
  *         1

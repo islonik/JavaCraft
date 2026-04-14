@@ -2,11 +2,13 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 
 import dev.nklip.javacraft.algs.leetcode.model.TreeNode;
 
-/**
+/*
  * 104. Maximum Depth of Binary Tree
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/maximum-depth-of-binary-tree/
+ *
  * Given the root of a binary tree, return its maximum depth.
- * <p>
+ *
  * A binary tree's maximum depth is the number of nodes along the longest path from the root node down to the farthest leaf node.
  */
 public class MaximumDepthOfBinaryTree {

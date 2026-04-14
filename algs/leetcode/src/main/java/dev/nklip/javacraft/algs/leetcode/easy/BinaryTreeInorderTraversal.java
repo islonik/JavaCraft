@@ -3,20 +3,24 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 import java.util.*;
 import dev.nklip.javacraft.algs.leetcode.model.TreeNode;
 
-/**
+/*
  * 94. Binary Tree Inorder Traversal
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/binary-tree-inorder-traversal/
+ *
  * Given the root of a binary tree, return the inorder traversal of its nodes' values.
+ *
  * For example:
+ *
  * Tree:
  *       1
  *        \
  *         2
  *        /
  *       3
- * <p>
+ *
  * Step-by-step traversal:
- * <p>
+ *
  * 1) Start at node 1
  * 2) Go left → none
  * 3) Visit 1

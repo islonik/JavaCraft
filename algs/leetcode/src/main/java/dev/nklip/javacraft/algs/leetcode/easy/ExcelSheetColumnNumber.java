@@ -1,13 +1,15 @@
 package dev.nklip.javacraft.algs.leetcode.easy;
 
-/**
+/*
  * 171. Excel Sheet Column Number
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/excel-sheet-column-number/
+ *
  * Given a string columnTitle that represents the column title as appears in an Excel sheet,
  * return its corresponding column number.
- * <p>
+ *
  * For example:
- * <p>
+ *
  * A -> 1
  * B -> 2
  * C -> 3

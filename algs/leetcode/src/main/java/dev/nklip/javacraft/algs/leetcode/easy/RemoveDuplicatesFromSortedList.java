@@ -2,9 +2,11 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 
 import dev.nklip.javacraft.algs.leetcode.model.ListNode;
 
-/**
+/*
  * 83. Remove Duplicates from Sorted List
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/remove-duplicates-from-sorted-list/
+ *
  * Given the head of a sorted linked list, delete all duplicates such that each element appears only once.
  * Return the linked list sorted as well.
  */

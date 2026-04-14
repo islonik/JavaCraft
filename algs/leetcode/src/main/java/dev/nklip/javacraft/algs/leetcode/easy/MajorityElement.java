@@ -2,11 +2,13 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 
 import java.util.Arrays;
 
-/**
+/*
  * 169. Majority Element
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/majority-element/
+ *
  * Given an array nums of size n, return the majority element.
- * <p>
+ *
  * The majority element is the element that appears more than ⌊n / 2⌋ times.
  * You may assume that the majority element always exists in the array.
  */

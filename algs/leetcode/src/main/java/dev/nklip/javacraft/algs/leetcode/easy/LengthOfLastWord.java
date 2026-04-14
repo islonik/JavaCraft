@@ -1,10 +1,12 @@
 package dev.nklip.javacraft.algs.leetcode.easy;
 
-/**
+/*
  * 58. Length of Last Word
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/length-of-last-word/
+ *
  * Given a string s consisting of words and spaces, return the length of the last word in the string.
- * <p>
+ *
  * A word is a maximal substring consisting of non-space characters only.
  */
 public class LengthOfLastWord {

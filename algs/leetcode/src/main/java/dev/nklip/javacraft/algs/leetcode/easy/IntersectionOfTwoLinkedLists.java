@@ -4,28 +4,30 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import dev.nklip.javacraft.algs.leetcode.model.ListNode;
 
-/**
+/*
  * 160. Intersection of Two Linked Lists
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/intersection-of-two-linked-lists/
+ *
  * Given the heads of two singly linked-lists headA and headB, return the node at which the two lists intersect.
  * If the two linked lists have no intersection at all, return null.
- * <p>
+ *
  * For example, the following two linked lists begin to intersect at node 8:
- * <p>
+ *
  * A: 4 → 1
  *          ↘
  *            8 → 4 → 5
  *          ↗
  * B: 5 → 6 → 1
- * <p>
+ *
  * The test cases are generated such that there are no cycles anywhere in the entire linked structure.
- * <p>
+ *
  * Note that the linked lists must retain their original structure after the function returns.
- * <p>
+ *
  * Custom Judge:
- * <p>
+ *
  * The inputs to the judge are given as follows (your program is not given these inputs):
- * <p>
+ *
  * intersectVal - The value of the node where the intersection occurs. This is 0 if there is no intersected node.
  * listA - The first linked list.
  * listB - The second linked list.

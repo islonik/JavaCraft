@@ -2,9 +2,11 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 
 import java.math.BigInteger;
 
-/**
+/*
  * 67. Add Binary
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/add-binary/
+ *
  * Given two binary strings a and b, return their sum as a binary string.
  */
 public class AddBinary {

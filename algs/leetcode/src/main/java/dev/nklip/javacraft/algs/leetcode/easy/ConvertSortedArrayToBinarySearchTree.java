@@ -2,12 +2,14 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 
 import dev.nklip.javacraft.algs.leetcode.model.TreeNode;
 
-/**
+/*
  * 108. Convert Sorted Array to Binary Search Tree
- * <p>
+ *
+ * LeetCode: https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/
+ *
  * Given an integer array nums where the elements are sorted in ascending order,
  * convert it to a height-balanced binary search tree.
- * <p>
+ *
  * Height-Balanced - a height-balanced binary tree is a binary tree in which
  * the depth of the two subtrees of every node never differs by more than one.
  */

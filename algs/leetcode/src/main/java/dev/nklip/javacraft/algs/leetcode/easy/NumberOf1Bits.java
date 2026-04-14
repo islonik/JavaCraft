@@ -3,9 +3,10 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 /*
  * 191. Number of 1 Bits
  *
+ * LeetCode: https://leetcode.com/problems/number-of-1-bits/
+ *
  * Given a positive integer n, write a function that returns
  * the number of set bits in its binary representation (also known as the Hamming weight).
- *
  */
 public class NumberOf1Bits {
 

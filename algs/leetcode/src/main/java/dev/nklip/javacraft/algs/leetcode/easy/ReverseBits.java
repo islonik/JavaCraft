@@ -3,6 +3,8 @@ package dev.nklip.javacraft.algs.leetcode.easy;
 /*
  * 190. Reverse Bits
  * 
+ * LeetCode: https://leetcode.com/problems/reverse-bits/
+ * 
  * Reverse bits of a given 32 bits signed integer.
  * 
  * Example 1:
@@ -33,7 +35,6 @@ package dev.nklip.javacraft.algs.leetcode.easy;
  * | 2147483644 | 01111111111111111111111111111100 |
  * | 1073741822 | 00111111111111111111111111111110 |
  * └------------┴----------------------------------┘
- *
  */
 public class ReverseBits {
 
