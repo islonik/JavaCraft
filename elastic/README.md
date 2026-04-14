@@ -1,251 +1,187 @@
 # Elasticsearch
 
-An Elasticsearch-backed search and user-votes service. Exposes multiple full-text query
-strategies via REST, ingests user click events, and surfaces popular and trending activity.
+`elastic` is a multi-module Elasticsearch-backed service built around two main use cases:
 
-**Stack:** Spring Boot, Elasticsearch 8.x, Spring Security, Swagger/OpenAPI, Cucumber (BDD)
+- content search across several dataset indexes
+- Reddit-style post submission, voting, and ranked feeds
 
-> **First-time setup:** call the `AdminController` endpoints once to create all required
-> indexes before using `SearchController` or `UserVoteController`.
-> See [elastic-app → Quick Start](elastic-app/README.md#1-quick-start).
+The runtime lives in `elastic-app`, shared models live in `elastic-api`, and higher-level
+integration coverage lives in `elastic-testing`.
 
----
+**Stack:** Spring Boot, Elasticsearch, Kibana, Spring Security, Swagger/OpenAPI, Cucumber
 
-**Sub-modules:** [elastic-api](elastic-api/README.md) · [elastic-app](elastic-app/README.md) · [elastic-testing](elastic-testing/README.md)
-
-| Sub-module | Responsibility |
-|---|---|
-| [elastic-api](elastic-api/README.md) | Shared request/response models, enums, validation annotations, constants |
-| [elastic-app](elastic-app/README.md) | Spring Boot application — search, votes, admin APIs, configuration |
-| [elastic-testing](elastic-testing/README.md) | Cucumber integration tests + dataset downloaders |
-
----
+**Docs:** [ARCHITECTURE.md](ARCHITECTURE.md) · [elastic-api](elastic-api/README.md) · [elastic-app](elastic-app/README.md) · [elastic-testing](elastic-testing/README.md)
 
 ## Contents
 1. [Quick Start](#1-quick-start)
-2. [Architecture](#2-architecture)
-3. [Scheduler](#3-scheduler)
-4. [Error Handling](#4-error-handling)
-5. [CORS — Swagger "Failed to fetch"](#5-cors--swagger-failed-to-fetch)
-6. [Dev Console Queries](#6-dev-console-queries)
-7. [Tests](#7-tests)
-
----
+2. [Module Map](#2-module-map)
+3. [API Surface](#3-api-surface)
+4. [Local Runtime](#4-local-runtime)
+5. [Scheduler and Error Handling](#5-scheduler-and-error-handling)
+6. [Tests](#6-tests)
 
 ## 1. Quick Start
 <sub>[Back to top](#elasticsearch)</sub>
 
-**Prerequisites:** You need to have Elasticsearch running on `localhost:9200` with parameters.
+Prerequisites:
 
-User either official documentation - ([Local development installation](https://www.elastic.co/docs/deploy-manage/deploy/self-managed/local-development-installation-quickstart))
-or Docker
+- Docker
+- JDK + Maven
 
-### Docker local stack
-
-The repo now includes a local Elastic Stack compose file that mirrors the currently running
-Docker Desktop setup (`es-local-dev`, `kibana-local-settings`, `kibana-local-dev`):
+### Start Elasticsearch and Kibana
 
 ```bash
 docker compose -f elastic/compose.yaml up -d
-docker compose -f elastic/compose.yaml down
 ```
 
-By default it starts:
+By default the local stack exposes:
 
 | URL | Description |
-|-----|-------------|
+|---|---|
 | http://localhost:9200 | Elasticsearch |
 | http://localhost:5601 | Kibana |
 
-The compose file uses default ports and passwords for Docker Desktop stack, but
-you can still override them with environment variables such as `ES_LOCAL_PASSWORD`,
-`KIBANA_LOCAL_PASSWORD`, `ES_LOCAL_PORT`, and `KIBANA_LOCAL_PORT`.
+### Start the application
 
 ```bash
 mvn -pl elastic/elastic-app spring-boot:run
 ```
 
+Application URLs:
+
 | URL | Description |
-|-----|-------------|
+|---|---|
 | http://localhost:8001/swagger-ui/index.html | Swagger UI |
 | http://localhost:8001/v3/api-docs | OpenAPI JSON |
 
-For index creation commands and full configuration see
-[elastic-app → Quick Start](elastic-app/README.md#1-quick-start).
+### Create the required indexes
 
-### Docker — verify security settings
+Before using the APIs, create the indexes you need through the admin endpoints:
+
+- `PUT /api/admin/indexes/posts`
+- `PUT /api/admin/indexes/user-votes`
+- `PUT /api/admin/indexes/books`
+- `PUT /api/admin/indexes/companies`
+- `PUT /api/admin/indexes/movies`
+- `PUT /api/admin/indexes/music`
+- `PUT /api/admin/indexes/people`
+
+Practical bootstrap order:
+
+- for search demos: create the content indexes you plan to query
+- for post/vote/ranking demos: create `posts` and `user-votes`
+
+Full endpoint details and payload examples live in [elastic-app → API Reference](elastic-app/README.md#3-api-reference).
+
+## 2. Module Map
+<sub>[Back to top](#elasticsearch)</sub>
+
+| Module | Responsibility |
+|---|---|
+| [elastic-api](elastic-api/README.md) | Shared DTOs, enums, validation annotations, API constants |
+| [elastic-app](elastic-app/README.md) | Spring Boot runtime: controllers, services, Elasticsearch client config, scheduler |
+| [elastic-testing](elastic-testing/README.md) | Cucumber integration tests, downloader utilities, dataset-oriented test support |
+
+## 3. API Surface
+<sub>[Back to top](#elasticsearch)</sub>
+
+| Area | Base path | What it does |
+|---|---|---|
+| Admin | `/api/admin` | Creates Elasticsearch indexes for content, posts, and user votes |
+| Search | `/api/services/search` | Generic wildcard fan-out search plus dedicated `wildcard`, `fuzzy`, `interval`, and `span` endpoints |
+| Votes | `/api/services/user-votes` | Accepts `UPVOTE`, `DOWNVOTE`, and `NOVOTE`, stores one vote doc per `(userId, postId)` |
+| Posts | `/api/services/posts` | Creates new post documents with generated IDs and initial ranking fields |
+| Post ranking | `/api/services/posts/ranking` | Reads ranked feeds: `best`, `new`, `hot`, `rising`, `top`, and `top/{window}` |
+
+Search notes:
+
+- `SearchService.search()` uses Elasticsearch `msearch` and fans out wildcard queries across metadata-defined fields
+- queryable fields are driven by `elastic-app/src/main/resources/metadata.json`
+- dedicated search endpoints use explicit query factories for wildcard, fuzzy, interval, and span queries
+
+Ranking notes:
+
+- `top` sorts by denormalized `karma`
+- `best` uses the Wilson score lower bound
+- `hot` uses a Reddit-style time-decayed score
+- `rising` emphasizes recent vote velocity
+- `top/{window}` supports `day`, `week`, `month`, and `year`
+
+## 4. Local Runtime
+<sub>[Back to top](#elasticsearch)</sub>
+
+The repo-local Docker stack is defined in [compose.yaml](compose.yaml).
+
+Default local behavior:
+
+- Elasticsearch image: `docker.elastic.co/elasticsearch/elasticsearch:9.3.1-arm64`
+- Kibana image: `docker.elastic.co/kibana/kibana:9.3.1-arm64`
+- Elasticsearch security: enabled
+- Elasticsearch HTTP SSL: disabled
+- default Elasticsearch credentials:
+  - user: `elastic`
+  - password: `FverGoe0`
+- default Kibana system password: `JgI820Ee`
+
+Important application defaults from [elastic-app/src/main/resources/application.yaml](elastic-app/src/main/resources/application.yaml):
+
+- app port: `8001`
+- Elasticsearch host: `localhost:9200`
+- SSL to Elasticsearch: disabled by default
+- client timeouts and retry/backoff are configured in the custom Elasticsearch transport
+- scheduler is enabled by default
+
+To stop the local stack:
 
 ```bash
-docker inspect es-local-dev --format '{{range .Config.Env}}{{println .}}{{end}}' \
-  | grep -E 'xpack.security.enabled|xpack.security.http.ssl.enabled|ELASTIC_PASSWORD'
+docker compose -f elastic/compose.yaml down
 ```
 
-Expected output:
+If you need different local ports, passwords, or image tags, override the compose environment variables such as:
 
-```
-xpack.security.enabled=true
-xpack.security.http.ssl.enabled=false
-ELASTIC_PASSWORD=FverGoe0
-```
+- `ES_LOCAL_VERSION`
+- `ES_LOCAL_PORT`
+- `KIBANA_LOCAL_PORT`
+- `ES_LOCAL_PASSWORD`
+- `KIBANA_LOCAL_PASSWORD`
 
----
-
-## 2. Architecture
+## 5. Scheduler and Error Handling
 <sub>[Back to top](#elasticsearch)</sub>
 
-```mermaid
-flowchart TD
-    Client["HTTP Client"]
-    AC["AdminController\n/api/admin"]
-    SC["SearchController\n/api/services/search"]
-    UHC["UserVoteController\n/api/services/user-votes"]
-    AS["AdminService"]
-    SS["SearchService"]
-    MS["MetadataService\nmetadata.json"]
-    QF["QueryFactories\nFuzzy · Interval · Span · Wildcard"]
-    UHS["UserVoteService"]
-    UHIS["UserVoteIngestionService"]
-    UHPS["UserVotePopularService"]
-    UHTS["UserVoteTrendingService"]
-    SCHED["SchedulerJobs\nhourly cleanup"]
-    ES[("Elasticsearch\nlocalhost:9200")]
+Scheduler behavior:
 
-    Client -->|PUT indexes| AC
-    Client -->|POST search| SC
-    Client -->|POST/GET/DELETE votes| UHC
-    AC --> AS
-    SC --> SS
-    SS --> MS
-    SS --> QF
-    UHC --> UHS
-    UHC --> UHIS
-    UHC --> UHPS
-    UHC --> UHTS
-    AS -->|create indexes| ES
-    SS -->|search / msearch| ES
-    UHS --> ES
-    UHIS -->|upsert user-votes| ES
-    UHPS -->|query user-votes| ES
-    UHTS -->|query user-votes| ES
-    SCHED -->|delete docs older than 180 days| ES
-```
+- `SchedulerJobs` runs hourly with cron `0 0 * * * *`
+- the job is enabled when `scheduler.enabled=true`
+- it removes `user-votes` documents older than `365` days
 
-Full API reference and index mappings: [elastic-app → API Reference](elastic-app/README.md#3-api-reference).
+Error handling behavior:
 
----
+- validation and malformed-request errors return `400`
+- `IOException` returns `503`
+- all other unhandled errors return `500`
 
-## 3. Scheduler
-<sub>[Back to top](#elasticsearch)</sub>
+Security note:
 
-`SchedulerJobs` runs a cleanup task every hour (`0 0 * * * *`) when `scheduler.enabled=true`.
-It deletes all documents from the `user-votes` index where `updated` is older than 180 days.
+- the app currently allows anonymous access to all endpoints
+- CSRF is disabled
+- HTTP basic support is configured, but no route currently requires authentication
 
-Disable for local development:
-
-```yaml
-scheduler:
-  enabled: false
-```
-
----
-
-## 4. Error Handling
-<sub>[Back to top](#elasticsearch)</sub>
-
-`ErrorExceptionHandler` (`@ControllerAdvice`) catches all `Throwable` exceptions and returns
-`HTTP 500` with the exception message as a JSON body. The full stack trace is logged at `ERROR`
-level. Invalid request bodies (`@Valid` failures) return `400` before reaching the handler.
-
----
-
-## 5. CORS — Swagger "Failed to fetch"
-<sub>[Back to top](#elasticsearch)</sub>
-
-If Swagger UI returns:
-
-```
-Failed to fetch.
-Possible Reasons: CORS / Network Failure / URL scheme must be "http" or "https"
-```
-
-This is typically caused by an ad-blocking browser extension intercepting the request.
-
-**Fix:**
-1. Disable the ad-blocking extension for `localhost`.
-2. Restart the application, refresh the browser, and clear the cache.
-3. Retry from Swagger UI.
-
----
-
-## 6. Dev Console Queries
-<sub>[Back to top](#elasticsearch)</sub>
-
-Useful Kibana Dev Console (or any ES REST client) snippets for the `user-votes` index.
-
-### Upsert a document
-
-```json
-POST /user-votes/_update/did-1-People-nl84439
-{
-  "script": {
-    "source": "ctx._source.count++; ctx._source.updated = params['updated'];",
-    "params": { "updated": "2024-01-08T18:16:41.531Z" }
-  },
-  "upsert": {
-    "searchType": "People",
-    "count": 1,
-    "searchPattern": "John",
-    "userId": "nl84439",
-    "recordId": "did-1",
-    "updated": "2024-01-08T18:16:41.531Z"
-  }
-}
-```
-
-### Get a document by ID
-
-```json
-GET /user-votes/_doc/did-1-People-nl84439
-```
-
-### Top 10 documents for a user, sorted by count
-
-```json
-GET /user-votes/_search
-{
-  "query": { "match": { "userId": "nl84439" } },
-  "size": 10,
-  "sort": { "count": { "order": "desc" } }
-}
-```
-
-### Inspect field mappings
-
-```json
-GET /user-votes/_mapping
-```
-
-### Delete a document
-
-```json
-DELETE /user-votes/_doc/did-1-People-nl84439
-```
-
----
-
-## 7. Tests
+## 6. Tests
 <sub>[Back to top](#elasticsearch)</sub>
 
 ```bash
-# unit tests only (no Docker required)
+# shared API models and validation
 mvn -pl elastic/elastic-api test
+
+# Spring Boot application tests
 mvn -pl elastic/elastic-app test
 
-# integration tests (Docker required for Testcontainers)
+# Cucumber + Testcontainers integration tests
 mvn -pl elastic/elastic-testing test
 ```
 
-See each sub-module for detailed coverage:
-- [elastic-api → (no runtime tests)](elastic-api/README.md)
+See module-specific docs for more detail:
+
+- [elastic-api → Models / Validation](elastic-api/README.md)
 - [elastic-app → Tests](elastic-app/README.md#9-tests)
 - [elastic-testing → Tests](elastic-testing/README.md#5-tests)
