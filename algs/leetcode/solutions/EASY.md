@@ -798,14 +798,7 @@ public class ReverseLinkedListExample {
 
 ## 5.2. Illustration
 
-![1](images/easy/5_reverse_linked_list_1.webp)
-![2](images/easy/5_reverse_linked_list_2.webp)
-![3](images/easy/5_reverse_linked_list_3.webp)
-![4](images/easy/5_reverse_linked_list_4.webp)
-![5](images/easy/5_reverse_linked_list_5.webp)
-![6](images/easy/5_reverse_linked_list_6.webp)
-![7](images/easy/5_reverse_linked_list_7.webp)
-![8](images/easy/5_reverse_linked_list_8.webp)
+![Reverse linked list](images/easy/5_reverse_linked_list.svg)
 
 ## 5.3. Complexity
 

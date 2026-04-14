@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2200" viewBox="0 0 1180 2200" role="img" aria-labelledby="title desc">
+  <title id="title">Reverse linked list illustration</title>
+  <desc id="desc">An eight-step vertical walkthrough of reversing the linked list 1 to 2 to 3 to 4 to 5 in place using prev, current, and next pointers.</desc>
+
+  <defs>
+    <style>
+      .bg { fill: #edf5fb; }
+      .card { fill: #f8fbff; stroke: #c8d9eb; stroke-width: 2; }
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .subtitle { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #49647d; }
+      .section { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .body { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #35506a; }
+      .small { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #4c6780; }
+      .mono { font: 700 16px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+      .legend { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .pipe { fill: #ffffff; stroke: #d4e1ef; stroke-width: 2; rx: 18; ry: 18; }
+      .panel { fill: #ffffff; stroke: #c8d9eb; stroke-width: 2; rx: 22; ry: 22; }
+      .panel-final { fill: #f7fbff; stroke: #2d8a4e; stroke-width: 3; rx: 22; ry: 22; }
+      .panel-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; }
+      .panel-body { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #43617b; }
+      .panel-mono { font: 700 15px "SFMono-Regular", Consolas, monospace; fill: #17324b; }
+      .node-text { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #17324b; text-anchor: middle; dominant-baseline: middle; }
+      .null-text { font: 700 15px "SFMono-Regular", Consolas, monospace; fill: #667d94; text-anchor: middle; dominant-baseline: middle; }
+      .reversed-box { fill: #fff0e6; stroke: #d77d3d; stroke-width: 3; rx: 10; ry: 10; }
+      .current-box { fill: #e7f0ff; stroke: #2f6fcd; stroke-width: 3; rx: 10; ry: 10; }
+      .next-box { fill: #e8f7ee; stroke: #2d8a4e; stroke-width: 3; rx: 10; ry: 10; }
+      .remaining-box { fill: #ffffff; stroke: #9db6d0; stroke-width: 2; rx: 10; ry: 10; }
+      .null-box { fill: #eef2f6; stroke: #c5d0dc; stroke-width: 2; rx: 10; ry: 10; }
+      .head-box { fill: #dff5e7; stroke: #2d8a4e; stroke-width: 3; rx: 10; ry: 10; }
+      .forward-line { stroke: #7f93aa; stroke-width: 1.1; fill: none; marker-end: url(#arrowGray); }
+      .reverse-line { stroke: #d77d3d; stroke-width: 1.1; fill: none; marker-end: url(#arrowOrange); }
+      .pointer-label { font: 700 13px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .prev-label { fill: #c97030; }
+      .current-label { fill: #2f6fcd; }
+      .next-label { fill: #2d8a4e; }
+      .result-card { fill: #17324b; rx: 20; ry: 20; }
+      .result-title { font: 700 22px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .result-body { font: 500 18px "Segoe UI", Arial, sans-serif; fill: #d8e6f5; }
+    </style>
+
+    <marker id="arrowGray" markerWidth="12" markerHeight="12" refX="12" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#7f93aa"/>
+    </marker>
+
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="12" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#d77d3d"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="2200" class="bg"/>
+  <rect x="25" y="28" width="1130" height="2144" class="card" rx="28" ry="28"/>
+
+  <text x="60" y="84" class="title">Reverse Linked List In Place</text>
+  <text x="60" y="118" class="subtitle">Keep three pointers: prev, current, and next. Flip one link, then slide the pointers forward until current becomes null.</text>
+
+  <rect x="60" y="150" width="1060" height="102" class="pipe"/>
+  <text x="100" y="188" class="section">Rule</text>
+  <text x="100" y="218" class="body">Save <tspan class="mono">next = current.next</tspan>, redirect <tspan class="mono">current.next = prev</tspan>, move <tspan class="mono">prev = current</tspan>, then move <tspan class="mono">current = next</tspan>.</text>
+
+  <text x="60" y="304" class="section">Example: head = [1, 2, 3, 4, 5]</text>
+  <rect x="100" y="328" width="150" height="40" class="reversed-box"/>
+  <text x="175" y="353" class="legend" text-anchor="middle">reversed part</text>
+  <rect x="270" y="328" width="130" height="40" class="current-box"/>
+  <text x="335" y="353" class="legend" text-anchor="middle">current</text>
+  <rect x="420" y="328" width="130" height="40" class="next-box"/>
+  <text x="485" y="353" class="legend" text-anchor="middle">saved next</text>
+  <rect x="570" y="328" width="140" height="40" class="remaining-box"/>
+  <text x="640" y="353" class="legend" text-anchor="middle">remaining</text>
+  <rect x="730" y="328" width="90" height="40" class="null-box"/>
+  <text x="775" y="353" class="legend" text-anchor="middle">null</text>
+
+  <!-- Step 1 -->
+  <rect x="60" y="390" width="1060" height="180" class="panel"/>
+  <text x="100" y="428" class="panel-title">Step 1. Initialize pointers</text>
+  <text x="100" y="456" class="panel-body">Start with <tspan class="panel-mono">prev = null</tspan> and <tspan class="panel-mono">current = 1</tspan>. Every link still points forward.</text>
+  <text x="450" y="490" class="pointer-label prev-label">prev</text>
+  <text x="550" y="490" class="pointer-label current-label">current</text>
+  <rect x="420" y="505" width="60" height="48" class="null-box"/>
+  <rect x="520" y="505" width="60" height="48" class="current-box"/>
+  <rect x="620" y="505" width="60" height="48" class="remaining-box"/>
+  <rect x="720" y="505" width="60" height="48" class="remaining-box"/>
+  <rect x="820" y="505" width="60" height="48" class="remaining-box"/>
+  <rect x="920" y="505" width="60" height="48" class="remaining-box"/>
+  <rect x="1020" y="505" width="60" height="48" class="null-box"/>
+  <text x="450" y="529" class="null-text">null</text>
+  <text x="550" y="529" class="node-text">1</text>
+  <text x="650" y="529" class="node-text">2</text>
+  <text x="750" y="529" class="node-text">3</text>
+  <text x="850" y="529" class="node-text">4</text>
+  <text x="950" y="529" class="node-text">5</text>
+  <text x="1050" y="529" class="null-text">null</text>
+  <path d="M580 529 L620 529" class="forward-line"/>
+  <path d="M680 529 L720 529" class="forward-line"/>
+  <path d="M780 529 L820 529" class="forward-line"/>
+  <path d="M880 529 L920 529" class="forward-line"/>
+  <path d="M980 529 L1020 529" class="forward-line"/>
+
+  <!-- Step 2 -->
+  <rect x="60" y="590" width="1060" height="180" class="panel"/>
+  <text x="100" y="628" class="panel-title">Step 2. Save next before changing the link</text>
+  <text x="100" y="656" class="panel-body">Store <tspan class="panel-mono">next = 2</tspan> so we do not lose the rest of the list when <tspan class="panel-mono">1.next</tspan> is flipped.</text>
+  <text x="550" y="690" class="pointer-label current-label">current</text>
+  <text x="650" y="690" class="pointer-label next-label">next</text>
+  <rect x="420" y="705" width="60" height="48" class="null-box"/>
+  <rect x="520" y="705" width="60" height="48" class="current-box"/>
+  <rect x="620" y="705" width="60" height="48" class="next-box"/>
+  <rect x="720" y="705" width="60" height="48" class="remaining-box"/>
+  <rect x="820" y="705" width="60" height="48" class="remaining-box"/>
+  <rect x="920" y="705" width="60" height="48" class="remaining-box"/>
+  <rect x="1020" y="705" width="60" height="48" class="null-box"/>
+  <text x="450" y="729" class="null-text">null</text>
+  <text x="550" y="729" class="node-text">1</text>
+  <text x="650" y="729" class="node-text">2</text>
+  <text x="750" y="729" class="node-text">3</text>
+  <text x="850" y="729" class="node-text">4</text>
+  <text x="950" y="729" class="node-text">5</text>
+  <text x="1050" y="729" class="null-text">null</text>
+  <path d="M580 729 L620 729" class="forward-line"/>
+  <path d="M680 729 L720 729" class="forward-line"/>
+  <path d="M780 729 L820 729" class="forward-line"/>
+  <path d="M880 729 L920 729" class="forward-line"/>
+  <path d="M980 729 L1020 729" class="forward-line"/>
+
+  <!-- Step 3 -->
+  <rect x="60" y="790" width="1060" height="180" class="panel"/>
+  <text x="100" y="828" class="panel-title">Step 3. Reverse node 1 and advance</text>
+  <text x="100" y="856" class="panel-body">Set <tspan class="panel-mono">1.next = null</tspan>, then move <tspan class="panel-mono">prev = 1</tspan> and <tspan class="panel-mono">current = 2</tspan>.</text>
+  <text x="550" y="890" class="pointer-label prev-label">prev</text>
+  <text x="650" y="890" class="pointer-label current-label">current</text>
+  <rect x="420" y="905" width="60" height="48" class="null-box"/>
+  <rect x="520" y="905" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="905" width="60" height="48" class="current-box"/>
+  <rect x="720" y="905" width="60" height="48" class="remaining-box"/>
+  <rect x="820" y="905" width="60" height="48" class="remaining-box"/>
+  <rect x="920" y="905" width="60" height="48" class="remaining-box"/>
+  <rect x="1020" y="905" width="60" height="48" class="null-box"/>
+  <text x="450" y="929" class="null-text">null</text>
+  <text x="550" y="929" class="node-text">1</text>
+  <text x="650" y="929" class="node-text">2</text>
+  <text x="750" y="929" class="node-text">3</text>
+  <text x="850" y="929" class="node-text">4</text>
+  <text x="950" y="929" class="node-text">5</text>
+  <text x="1050" y="929" class="null-text">null</text>
+  <path d="M520 929 L480 929" class="reverse-line"/>
+  <path d="M680 929 L720 929" class="forward-line"/>
+  <path d="M780 929 L820 929" class="forward-line"/>
+  <path d="M880 929 L920 929" class="forward-line"/>
+  <path d="M980 929 L1020 929" class="forward-line"/>
+
+  <!-- Step 4 -->
+  <rect x="60" y="990" width="1060" height="180" class="panel"/>
+  <text x="100" y="1028" class="panel-title">Step 4. Reverse node 2 and advance</text>
+  <text x="100" y="1056" class="panel-body">Save <tspan class="panel-mono">next = 3</tspan>, set <tspan class="panel-mono">2.next = 1</tspan>, then move <tspan class="panel-mono">prev = 2</tspan> and <tspan class="panel-mono">current = 3</tspan>.</text>
+  <text x="650" y="1090" class="pointer-label prev-label">prev</text>
+  <text x="750" y="1090" class="pointer-label current-label">current</text>
+  <rect x="420" y="1105" width="60" height="48" class="null-box"/>
+  <rect x="520" y="1105" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="1105" width="60" height="48" class="reversed-box"/>
+  <rect x="720" y="1105" width="60" height="48" class="current-box"/>
+  <rect x="820" y="1105" width="60" height="48" class="remaining-box"/>
+  <rect x="920" y="1105" width="60" height="48" class="remaining-box"/>
+  <rect x="1020" y="1105" width="60" height="48" class="null-box"/>
+  <text x="450" y="1129" class="null-text">null</text>
+  <text x="550" y="1129" class="node-text">1</text>
+  <text x="650" y="1129" class="node-text">2</text>
+  <text x="750" y="1129" class="node-text">3</text>
+  <text x="850" y="1129" class="node-text">4</text>
+  <text x="950" y="1129" class="node-text">5</text>
+  <text x="1050" y="1129" class="null-text">null</text>
+  <path d="M520 1129 L480 1129" class="reverse-line"/>
+  <path d="M620 1129 L580 1129" class="reverse-line"/>
+  <path d="M780 1129 L820 1129" class="forward-line"/>
+  <path d="M880 1129 L920 1129" class="forward-line"/>
+  <path d="M980 1129 L1020 1129" class="forward-line"/>
+
+  <!-- Step 5 -->
+  <rect x="60" y="1190" width="1060" height="180" class="panel"/>
+  <text x="100" y="1228" class="panel-title">Step 5. Reverse node 3 and advance</text>
+  <text x="100" y="1256" class="panel-body">Now <tspan class="panel-mono">3.next = 2</tspan>. The reversed part becomes <tspan class="panel-mono">3 -&gt; 2 -&gt; 1</tspan>, and <tspan class="panel-mono">current</tspan> moves to 4.</text>
+  <text x="750" y="1290" class="pointer-label prev-label">prev</text>
+  <text x="850" y="1290" class="pointer-label current-label">current</text>
+  <rect x="420" y="1305" width="60" height="48" class="null-box"/>
+  <rect x="520" y="1305" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="1305" width="60" height="48" class="reversed-box"/>
+  <rect x="720" y="1305" width="60" height="48" class="reversed-box"/>
+  <rect x="820" y="1305" width="60" height="48" class="current-box"/>
+  <rect x="920" y="1305" width="60" height="48" class="remaining-box"/>
+  <rect x="1020" y="1305" width="60" height="48" class="null-box"/>
+  <text x="450" y="1329" class="null-text">null</text>
+  <text x="550" y="1329" class="node-text">1</text>
+  <text x="650" y="1329" class="node-text">2</text>
+  <text x="750" y="1329" class="node-text">3</text>
+  <text x="850" y="1329" class="node-text">4</text>
+  <text x="950" y="1329" class="node-text">5</text>
+  <text x="1050" y="1329" class="null-text">null</text>
+  <path d="M520 1329 L480 1329" class="reverse-line"/>
+  <path d="M620 1329 L580 1329" class="reverse-line"/>
+  <path d="M720 1329 L680 1329" class="reverse-line"/>
+  <path d="M880 1329 L920 1329" class="forward-line"/>
+  <path d="M980 1329 L1020 1329" class="forward-line"/>
+
+  <!-- Step 6 -->
+  <rect x="60" y="1390" width="1060" height="180" class="panel"/>
+  <text x="100" y="1428" class="panel-title">Step 6. Reverse node 4 and advance</text>
+  <text x="100" y="1456" class="panel-body">Flip <tspan class="panel-mono">4.next = 3</tspan>. The reversed chain grows again, and <tspan class="panel-mono">current</tspan> moves to 5.</text>
+  <text x="850" y="1490" class="pointer-label prev-label">prev</text>
+  <text x="950" y="1490" class="pointer-label current-label">current</text>
+  <rect x="420" y="1505" width="60" height="48" class="null-box"/>
+  <rect x="520" y="1505" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="1505" width="60" height="48" class="reversed-box"/>
+  <rect x="720" y="1505" width="60" height="48" class="reversed-box"/>
+  <rect x="820" y="1505" width="60" height="48" class="reversed-box"/>
+  <rect x="920" y="1505" width="60" height="48" class="current-box"/>
+  <rect x="1020" y="1505" width="60" height="48" class="null-box"/>
+  <text x="450" y="1529" class="null-text">null</text>
+  <text x="550" y="1529" class="node-text">1</text>
+  <text x="650" y="1529" class="node-text">2</text>
+  <text x="750" y="1529" class="node-text">3</text>
+  <text x="850" y="1529" class="node-text">4</text>
+  <text x="950" y="1529" class="node-text">5</text>
+  <text x="1050" y="1529" class="null-text">null</text>
+  <path d="M520 1529 L480 1529" class="reverse-line"/>
+  <path d="M620 1529 L580 1529" class="reverse-line"/>
+  <path d="M720 1529 L680 1529" class="reverse-line"/>
+  <path d="M820 1529 L780 1529" class="reverse-line"/>
+  <path d="M980 1529 L1020 1529" class="forward-line"/>
+
+  <!-- Step 7 -->
+  <rect x="60" y="1590" width="1060" height="180" class="panel"/>
+  <text x="100" y="1628" class="panel-title">Step 7. Reverse node 5</text>
+  <text x="100" y="1656" class="panel-body">Set <tspan class="panel-mono">5.next = 4</tspan>. Now <tspan class="panel-mono">prev = 5</tspan> and <tspan class="panel-mono">current = null</tspan>, so the loop stops.</text>
+  <text x="950" y="1690" class="pointer-label prev-label">prev</text>
+  <text x="1050" y="1690" class="pointer-label current-label">current</text>
+  <rect x="420" y="1705" width="60" height="48" class="null-box"/>
+  <rect x="520" y="1705" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="1705" width="60" height="48" class="reversed-box"/>
+  <rect x="720" y="1705" width="60" height="48" class="reversed-box"/>
+  <rect x="820" y="1705" width="60" height="48" class="reversed-box"/>
+  <rect x="920" y="1705" width="60" height="48" class="reversed-box"/>
+  <rect x="1020" y="1705" width="60" height="48" class="null-box"/>
+  <text x="450" y="1729" class="null-text">null</text>
+  <text x="550" y="1729" class="node-text">1</text>
+  <text x="650" y="1729" class="node-text">2</text>
+  <text x="750" y="1729" class="node-text">3</text>
+  <text x="850" y="1729" class="node-text">4</text>
+  <text x="950" y="1729" class="node-text">5</text>
+  <text x="1050" y="1729" class="null-text">null</text>
+  <path d="M520 1729 L480 1729" class="reverse-line"/>
+  <path d="M620 1729 L580 1729" class="reverse-line"/>
+  <path d="M720 1729 L680 1729" class="reverse-line"/>
+  <path d="M820 1729 L780 1729" class="reverse-line"/>
+  <path d="M920 1729 L880 1729" class="reverse-line"/>
+
+  <!-- Step 8 -->
+  <rect x="60" y="1790" width="1060" height="180" class="panel-final"/>
+  <text x="100" y="1828" class="panel-title">Step 8. Return prev as the new head</text>
+  <text x="100" y="1856" class="panel-body">The reversed list is <tspan class="panel-mono">5 -&gt; 4 -&gt; 3 -&gt; 2 -&gt; 1 -&gt; null</tspan>. Return <tspan class="panel-mono">prev</tspan>.</text>
+  <text x="950" y="1890" class="pointer-label next-label">new head</text>
+  <rect x="420" y="1905" width="60" height="48" class="null-box"/>
+  <rect x="520" y="1905" width="60" height="48" class="reversed-box"/>
+  <rect x="620" y="1905" width="60" height="48" class="reversed-box"/>
+  <rect x="720" y="1905" width="60" height="48" class="reversed-box"/>
+  <rect x="820" y="1905" width="60" height="48" class="reversed-box"/>
+  <rect x="920" y="1905" width="60" height="48" class="head-box"/>
+  <rect x="1020" y="1905" width="60" height="48" class="null-box"/>
+  <text x="450" y="1929" class="null-text">null</text>
+  <text x="550" y="1929" class="node-text">1</text>
+  <text x="650" y="1929" class="node-text">2</text>
+  <text x="750" y="1929" class="node-text">3</text>
+  <text x="850" y="1929" class="node-text">4</text>
+  <text x="950" y="1929" class="node-text">5</text>
+  <text x="1050" y="1929" class="null-text">null</text>
+  <path d="M520 1929 L480 1929" class="reverse-line"/>
+  <path d="M620 1929 L580 1929" class="reverse-line"/>
+  <path d="M720 1929 L680 1929" class="reverse-line"/>
+  <path d="M820 1929 L780 1929" class="reverse-line"/>
+  <path d="M920 1929 L880 1929" class="reverse-line"/>
+
+  <rect x="60" y="2010" width="1060" height="112" class="result-card"/>
+  <text x="100" y="2054" class="result-title">Why it is in-place</text>
+  <text x="100" y="2088" class="result-body">We only move three pointers and reuse the existing nodes, so the algorithm reverses the list in O(n) time and O(1) extra space.</text>
+</svg>
