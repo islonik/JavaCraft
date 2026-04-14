@@ -1,32 +1,47 @@
 # Virtual File Server
 
-A shared in-memory file system emulator accessed over TCP. Multiple clients connect
-simultaneously, browse a shared directory tree, manage files and directories, and
-coordinate access via distributed locking.
+`vfs` is a multi-module Java project that exposes a shared in-memory file tree over TCP.
+Multiple terminal clients can connect to one server, navigate the same directory structure,
+create and manage nodes, and coordinate access with per-node locks.
 
-**Stack:** Java 25, Spring Boot, Spring Framework, Protobuf v2, Netty
+The system is intentionally simple:
+
+- single server process
+- in-memory state only
+- no persistence across restarts
+- session-based locking, not distributed consensus
+
+**Modules:** `vfs-core`, `vfs-client`, `vfs-server`  
+**Stack:** Java 25, Spring Boot, Netty, Protocol Buffers
+
+For the deeper runtime design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Contents
 1. [Quick Start](#1-quick-start)
-2. [Architecture](#2-architecture)
+2. [Module Layout](#2-module-layout)
 3. [Protocol](#3-protocol)
 4. [Commands](#4-commands)
-5. [File System](#5-file-system)
-6. [Locking](#6-locking)
-7. [Session Management](#7-session-management)
-8. [Configuration](#8-configuration)
-9. [Find and terminate a running server process](#9-find-and-terminate-a-running-server-process)
-10. [Dependency management](#10-dependency-management)
-11. [Tests](#11-tests)
-
----
+5. [File System And Locking](#5-file-system-and-locking)
+6. [Configuration](#6-configuration)
+7. [Local Operations](#7-local-operations)
+8. [Tests](#8-tests)
 
 ## 1. Quick Start
+<sub>[Back to top](#virtual-file-server)</sub>
 
 ### Build
 
+From the repo root:
+
 ```bash
-mvn -pl vfs package
+mvn -f vfs/pom.xml package
+```
+
+From the module directory:
+
+```bash
+cd vfs
+mvn package
 ```
 
 ### Run the server
@@ -35,302 +50,215 @@ mvn -pl vfs package
 java -jar vfs/server/target/VFS.jar
 ```
 
-The server listens on `localhost:4499` by default.
+Default address: `localhost:4499`
 
-### Connect a client
+### Run the client
 
 ```bash
 java -jar vfs/client/target/VFS-client.jar
 ```
 
-Once the client REPL starts, type:
+### Connect
 
+The client command parser accepts both forms:
+
+```text
+connect localhost:4499 alice
+connect localhost 4499 alice
 ```
-connect localhost:4499 yourlogin
+
+### Example session
+
+```text
+connect localhost:4499 alice
+mkdir docs
+cd docs
+mkfile notes.txt
+print
+whoami
+quit
+exit
 ```
 
----
-
-## 2. Architecture
+## 2. Module Layout
 <sub>[Back to top](#virtual-file-server)</sub>
 
-```mermaid
-flowchart TD
-    subgraph client ["vfs-client (plain Java REPL)"]
-        REPL["CommandLine\n(stdin loop)"]
-        NM["NetworkManager"]
-        NC["NettyClient"]
-        NCH["NettyClientHandler"]
-    end
+| Module | Responsibility |
+| --- | --- |
+| `vfs-core` | shared protocol, command parsing, request/response factories, shared exceptions/utilities |
+| `vfs-client` | interactive CLI client, Netty client bootstrap, response handling |
+| `vfs-server` | Spring Boot server, command execution, in-memory tree, locking, session timeout |
 
-    subgraph core ["vfs-core (shared)"]
-        CP["CommandParser"]
-        RF["RequestFactory / ResponseFactory"]
-        PROTO["Protocol.proto\n(User, Request, Response)"]
-    end
+Key code paths:
 
-    subgraph server ["vfs-server (Spring Boot)"]
-        NS["NettyServer\n(port 4499)"]
-        SH["ServerHandler"]
-        CMD["Command impls\n(cd, mkdir, mkfile, …)"]
-        NSvc["NodeService\n(in-memory tree)"]
-        LS["LockService\n(ConcurrentHashMap)"]
-        USS["UserSessionService\n(UUID sessions)"]
-        TJ["TimeoutJob\n(@Scheduled every 1 min)"]
-        FS[("In-memory\nNode tree")]
-    end
-
-    REPL -->|user input| NM
-    NM --> NC
-    NC --> NCH
-    NCH -->|Request proto| NS
-    NS --> SH
-    SH --> CMD
-    CMD --> NSvc
-    CMD --> LS
-    CMD --> USS
-    NSvc --> FS
-    LS --> FS
-    USS -->|broadcast| NCH
-    TJ -->|evict idle sessions| USS
-```
-
----
+- `vfs-core/src/main/resources/protocol.proto` defines the wire protocol
+- `vfs-core` generates `Protocol.java` during Maven `generate-sources`
+- `vfs-client` provides the REPL and Netty client pipeline
+- `vfs-server` hosts the shared tree and all command implementations
 
 ## 3. Protocol
 <sub>[Back to top](#virtual-file-server)</sub>
 
-Communication uses Protobuf v2 messages framed with Netty's `ProtobufVarint32` codec.
+Communication uses Protocol Buffers with Netty varint framing.
+The schema lives in [vfs/core/src/main/resources/protocol.proto](core/src/main/resources/protocol.proto).
 
 ### Messages
 
 #### `User`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Assigned session UUID |
-| `login` | `string` | Username provided at `connect` |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `id` | `string` | session id |
+| `login` | `string` | user login |
 
 #### `Request`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `user` | `User` | Identifies the caller |
-| `command` | `string` | Raw command string (e.g. `mkdir /home/alice/docs`) |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `user` | `User` | caller identity |
+| `command` | `string` | raw command text |
 
 #### `Response`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `code` | `ResponseType` | Status enum (see below) |
-| `message` | `string` | Human-readable result or error text |
-| `specificCode` | `string` | Optional — carries session UUID on `SUCCESS_CONNECT` |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `code` | `ResponseType` | result status |
+| `message` | `string` | human-readable output |
+| `specificCode` | `string` | optional extra value; used for the assigned session id on connect |
 
-#### `ResponseType` enum
+#### `ResponseType`
 
 | Value | Meaning |
-|-------|---------|
-| `OK` | Command executed successfully |
-| `FAIL` | Command failed |
-| `SUCCESS_CONNECT` | Login accepted; `specificCode` contains the session UUID |
-| `FAIL_CONNECT` | Login rejected |
-| `SUCCESS_QUIT` | Session closed cleanly |
-| `FAIL_QUIT` | Session teardown failed |
+| --- | --- |
+| `OK` | command succeeded |
+| `FAIL` | command failed |
+| `SUCCESS_CONNECT` | login accepted |
+| `FAIL_CONNECT` | login rejected |
+| `SUCCESS_QUIT` | session closed |
+| `FAIL_QUIT` | session close failed |
 
-### Netty pipeline
+### Connect handshake
 
-Both client and server share the same codec chain:
+On the first request, the client sends a placeholder user id (`0`).
+If login succeeds:
 
-```
-ProtobufVarint32FrameDecoder
-    → ProtobufDecoder
-    → ProtobufVarint32LengthFieldPrepender
-    → ProtobufEncoder
-    → Handler  (ServerHandler / NettyClientHandler)
-```
-
----
+- `specificCode` contains the real session UUID
+- `message` contains the current working directory path
 
 ## 4. Commands
 <sub>[Back to top](#virtual-file-server)</sub>
 
+### Client-local commands
+
 | Command | Syntax | Description |
-|---------|--------|-------------|
-| `connect` | `connect server:port login` | Open a session; creates `/home/{login}/` |
-| `quit` | `quit` | Close the session; removes `/home/{login}/` |
-| `cd` | `cd <directory>` | Change current working directory |
-| `mkdir` | `mkdir <directory>` | Create a new directory |
-| `mkfile` | `mkfile <file>` | Create a new file |
-| `rm` | `rm <node>` | Remove a file or directory |
-| `rename` | `rename <node> <name>` | Rename a node |
-| `copy` | `copy <node> <directory>` | Copy a node into a directory |
-| `move` | `move <node> <directory>` | Move a node into a directory |
-| `print` | `print` | Print the full directory tree from root |
-| `lock` | `lock [-r] <node>` | Lock a node (`-r` = recursive) |
-| `unlock` | `unlock [-r] <node>` | Unlock a node (`-r` = recursive) |
-| `whoami` | `whoami` | Display current session login and UUID |
-| `help` | `help` | List all available commands |
+| --- | --- | --- |
+| `connect` | `connect <host>:<port> <login>` | open a socket and request a server session |
+| `connect` | `connect <host> <port> <login>` | equivalent space-separated form |
+| `exit` | `exit` | close the client process; if connected, sends `quit` first |
 
----
+### Server-backed commands
 
-## 5. File System
+| Command | Syntax | Description |
+| --- | --- | --- |
+| `quit` | `quit` | disconnect from the server and remove the user home directory |
+| `cd` | `cd <directory>` | change current working directory |
+| `mkdir` | `mkdir <directory>` | create a directory |
+| `mkfile` | `mkfile <file>` | create a file |
+| `rm` | `rm <node>` | remove a node |
+| `rename` | `rename <node> <name>` | rename a node |
+| `copy` | `copy <node> <directory>` | deep-copy a node into a directory |
+| `move` | `move <node> <directory>` | move a node into a directory |
+| `print` | `print` | print the tree starting from the current directory |
+| `lock` | `lock [-r] <node>` | lock one node or a subtree |
+| `unlock` | `unlock [-r] <node>` | unlock one node or a subtree |
+| `whoami` | `whoami` | print the current login |
+| `help` | `help` | print command help |
+
+## 5. File System And Locking
 <sub>[Back to top](#virtual-file-server)</sub>
 
-The file tree lives entirely in JVM memory — there is no persistence across server restarts.
+### File tree
 
-### Structure
+The tree exists only in server memory.
+At startup the server creates:
 
-```
+```text
 /
-└── home/
-    ├── alice/        ← created on connect, removed on quit
-    └── bob/
+└── home
 ```
 
-### `Node` model
+On successful connect, the server creates:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `UUID` | Unique node identifier |
-| `name` | `String` | Node name |
-| `type` | `NodeTypes` | `DIR` or `FILE` |
-| `parent` | `Node` | Parent node reference (`null` for root) |
-| `children` | `Set<Node>` | Child nodes (empty for files) |
+```text
+/home/<login>
+```
+
+On `quit` or timeout, that home directory is removed.
 
 ### Path rules
 
-- Delimiter: `/` (configurable via `application.yaml`)
-- Root: `/`
-- Home base: `/home/`
-- User home: `/home/{login}/`
-- Paths are resolved relative to the current working directory unless prefixed with `/`.
+- `/` is the root
+- paths are relative to the current working directory unless they start with `/`
+- `.` resolves to the current node
+- `..` resolves to the parent node
+- duplicate child names under the same parent are rejected
 
----
+### Node model
 
-## 6. Locking
+Each node stores:
+
+- `name`
+- `type` as `DIR` or `FILE`
+- `parent`
+- ordered child list
+
+`print` sorts directories and files before rendering the tree.
+
+### Locking
+
+Locks are tracked in memory by `LockService` with a `ConcurrentHashMap<Node, NodeLock>`.
+
+- locks are owned by the session user
+- `-r` applies the operation recursively
+- a restart clears all locks
+- mutating commands consult the lock state before changing the tree
+
+## 6. Configuration
 <sub>[Back to top](#virtual-file-server)</sub>
 
-`LockService` maintains a `ConcurrentHashMap<Node, NodeLock>` that tracks locked nodes.
+Server configuration lives in [vfs/server/src/main/resources/application.yaml](server/src/main/resources/application.yaml).
 
-- **`lock <node>`** — locks a single node owned by the caller; fails if already locked by another session.
-- **`lock -r <node>`** — recursively locks the node and all its descendants.
-- **`unlock <node>`** / **`unlock -r <node>`** — symmetric release; only the locking session may unlock.
-- Locked nodes reject `rm`, `rename`, `move`, and `copy` from other sessions.
-- Locks are held in memory; a server restart clears all locks.
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `delimiter` | `/` | path separator |
+| `server.name` | `localhost` | bind address |
+| `server.port` | `4499` | TCP port |
+| `server.pool` | `100` | configured network pool size |
+| `server.timeout` | `10` | idle timeout in minutes for logged-in sessions |
 
----
+`TimeoutJob` also removes empty pre-login sessions after one minute.
 
-## 7. Session Management
+## 7. Local Operations
 <sub>[Back to top](#virtual-file-server)</sub>
 
-`UserSessionService` manages active sessions in a `ConcurrentHashMap<String, UserSession>` keyed by session UUID.
-
-| Event | Action |
-|-------|--------|
-| `connect` | Register session, create `/home/{login}/`, notify all connected clients |
-| `quit` | Remove session, delete `/home/{login}/`, notify all connected clients |
-| Timeout | `TimeoutJob` evicts sessions idle longer than `server.timeout` minutes |
-| Any command | Resets the inactivity timer (`Timer`) for the session |
-
-`notifyUsers()` broadcasts a presence update to every connected client when the user list changes.
-
-### Session lifecycle
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant SH as ServerHandler
-    participant USS as UserSessionService
-    participant NSvc as NodeService
-
-    C->>SH: Request{command: "connect localhost:4499 alice"}
-    SH->>USS: register(session)
-    SH->>NSvc: create /home/alice/
-    SH->>C: Response{SUCCESS_CONNECT, specificCode=UUID}
-    USS-->>C: notifyUsers() broadcast
-
-    Note over C,SH: ... session active, timer resets on each command ...
-
-    C->>SH: Request{command: "quit"}
-    SH->>USS: remove(session)
-    SH->>NSvc: delete /home/alice/
-    SH->>C: Response{SUCCESS_QUIT}
-    USS-->>C: notifyUsers() broadcast
-```
-
----
-
-## 8. Configuration
-<sub>[Back to top](#virtual-file-server)</sub>
-
-`vfs/server/src/main/resources/application.yaml`:
-
-```yaml
-delimiter:
-  /                    # path separator used in the in-memory tree
-
-server:
-  name: localhost      # server hostname
-  port: 4499           # TCP port Netty listens on
-  pool: 100            # Netty worker thread pool size
-  timeout: 10          # inactivity timeout in minutes before auto-disconnect
-```
-
----
-
-## 9. Find and terminate a running server process
-<sub>[Back to top](#virtual-file-server)</sub>
+### Find and stop a running server
 
 ```bash
-# 1. Find the process on the server port
 lsof -i tcp:4499
-
-# 2. Kill it
 kill -9 <PID>
 ```
 
----
-
-## 10. Dependency management
+## 8. Tests
 <sub>[Back to top](#virtual-file-server)</sub>
 
-### Overview of dependencies
+Run the full VFS module test suite:
 
 ```bash
-mvn dependency:tree
+mvn -f vfs/pom.xml test
 ```
 
-### To find unused dependencies
+The test suite covers:
 
-```bash
-mvn dependency:analyze
-```
-
-### To check new dependencies
-
-```bash
-mvn versions:display-dependency-updates
-```
-
----
-
-## 11. Tests
-<sub>[Back to top](#virtual-file-server)</sub>
-
-Run all tests for this module:
-
-```bash
-mvn -pl vfs test
-```
-
-### Coverage summary
-
-| Module | Tests | Line coverage |
-|--------|------:|--------------:|
-| vfs-core | 22 |        100% ✅ |
-| vfs-client | 45 |       96.7% ✅ |
-| vfs-server | 68 |       89.3% ✅ |
-| **Total** | **135** |     **95.7%** |
-
-> [!TIP]
-> Prototol.java is excluded from code coverage, as it's a generated java file.
+- core command parsing and protocol factories
+- client command flow and Netty client helpers
+- server node management, locking, timeout, and session behavior
