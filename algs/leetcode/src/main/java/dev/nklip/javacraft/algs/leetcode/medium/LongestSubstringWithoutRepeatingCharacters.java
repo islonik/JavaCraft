@@ -1,5 +1,8 @@
 package dev.nklip.javacraft.algs.leetcode.medium;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /*
  * 3. Longest Substring Without Repeating Characters
  *
@@ -9,8 +12,30 @@ package dev.nklip.javacraft.algs.leetcode.medium;
  */
 public class LongestSubstringWithoutRepeatingCharacters {
 
-    // using array
+    // using sliding window with last seen chars - O(n)
     public int lengthOfLongestSubstring(String inputString) {
+        Map<Character, Integer> lastSeen = new HashMap<>();
+        int leftIndex = 0;
+        int maxLength = 0;
+
+        for (int i = 0; i < inputString.length(); i++) {
+            char key = inputString.charAt(i);
+
+            // if a char already was seen in the sliding window...
+            if (lastSeen.containsKey(key) && lastSeen.get(key) >= leftIndex) {
+                // shrink sliding window size
+                leftIndex = lastSeen.get(key) + 1;
+            }
+            // increase sliding window size
+            lastSeen.put(inputString.charAt(i), i);
+
+            maxLength = Math.max(maxLength, i - leftIndex + 1);
+        }
+        return maxLength;
+    }
+
+    // using brute force with char array - O(n^2)
+    public int lengthOfLongestSubstringBruteForce(String inputString) {
         int longest = 0;
 
         int current = 0;
@@ -61,8 +86,8 @@ public class LongestSubstringWithoutRepeatingCharacters {
         }
     }
 
-    // using StringBuilder
-    public int lengthOfLongestSubstring2(String inputString) {
+    // using brute force with string builder - O(n^2)
+    public int lengthOfLongestSubstringBruteForce2(String inputString) {
         int longest = 0;
         StringBuilder temp = new StringBuilder();
         for (int i = 0; i < inputString.length(); i++) {

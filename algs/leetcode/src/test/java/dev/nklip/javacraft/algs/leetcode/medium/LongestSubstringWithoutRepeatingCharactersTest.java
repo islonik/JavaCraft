@@ -13,7 +13,8 @@ public class LongestSubstringWithoutRepeatingCharactersTest {
         // Explanation: The answer is "abc", with the length of 3.
         // Note that "bca" and "cab" are also correct answers.
         Assertions.assertEquals(3, solution.lengthOfLongestSubstring("abcabcbb"));
-        Assertions.assertEquals(3, solution.lengthOfLongestSubstring2("abcabcbb"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce("abcabcbb"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce2("abcabcbb"));
     }
 
     @Test
@@ -23,7 +24,8 @@ public class LongestSubstringWithoutRepeatingCharactersTest {
 
         // Explanation: The answer is "b", with the length of 1.
         Assertions.assertEquals(1, solution.lengthOfLongestSubstring("bbbbb"));
-        Assertions.assertEquals(1, solution.lengthOfLongestSubstring2("bbbbb"));
+        Assertions.assertEquals(1, solution.lengthOfLongestSubstringBruteForce("bbbbb"));
+        Assertions.assertEquals(1, solution.lengthOfLongestSubstringBruteForce2("bbbbb"));
     }
 
     @Test
@@ -34,7 +36,8 @@ public class LongestSubstringWithoutRepeatingCharactersTest {
         // Explanation: The answer is "wke", with the length of 3.
         // Notice that the answer must be a substring, "pwke" is a subsequence and not a substring.
         Assertions.assertEquals(3, solution.lengthOfLongestSubstring("pwwkew"));
-        Assertions.assertEquals(3, solution.lengthOfLongestSubstring2("pwwkew"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce("pwwkew"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce2("pwwkew"));
     }
 
     @Test
@@ -43,7 +46,8 @@ public class LongestSubstringWithoutRepeatingCharactersTest {
                 = new LongestSubstringWithoutRepeatingCharacters();
 
         Assertions.assertEquals(3, solution.lengthOfLongestSubstring("dvdf"));
-        Assertions.assertEquals(3, solution.lengthOfLongestSubstring2("dvdf"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce("dvdf"));
+        Assertions.assertEquals(3, solution.lengthOfLongestSubstringBruteForce2("dvdf"));
     }
 
     @Test
@@ -52,6 +56,7 @@ public class LongestSubstringWithoutRepeatingCharactersTest {
                 = new LongestSubstringWithoutRepeatingCharacters();
 
         Assertions.assertEquals(2, solution.lengthOfLongestSubstring("cdd"));
-        Assertions.assertEquals(2, solution.lengthOfLongestSubstring2("cdd"));
+        Assertions.assertEquals(2, solution.lengthOfLongestSubstringBruteForce("cdd"));
+        Assertions.assertEquals(2, solution.lengthOfLongestSubstringBruteForce2("cdd"));
     }
 }

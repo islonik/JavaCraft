@@ -245,7 +245,7 @@ Key signals that Sliding Window is the right approach:
 ## 2.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/contains-duplicate-ii/
+* https://leetcode.com/problems/contains-duplicate-ii/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/longest-harmonious-subsequence/
 * https://leetcode.com/problems/maximum-average-subarray-i/
 * https://leetcode.com/problems/defuse-the-bomb/
@@ -255,7 +255,7 @@ Key signals that Sliding Window is the right approach:
 * https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/
 
 **Medium**
-* https://leetcode.com/problems/longest-substring-without-repeating-characters/
+* https://leetcode.com/problems/longest-substring-without-repeating-characters/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/repeated-dna-sequences/
 * https://leetcode.com/problems/minimum-size-subarray-sum/
 * https://leetcode.com/problems/longest-repeating-character-replacement/
