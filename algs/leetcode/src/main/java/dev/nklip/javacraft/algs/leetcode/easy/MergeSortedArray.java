@@ -16,34 +16,17 @@ package dev.nklip.javacraft.algs.leetcode.easy;
  */
 public class MergeSortedArray {
     public void merge(int[] nums1, int m, int[] nums2, int n) {
-        int y = 0;
-        for (int i = 0; i < nums1.length; i++) {
-            // swap numbers
-            if (nums2.length > 0 && i < m) {
-                swap(nums1, i, nums2);
-            }
-            // copy from nums2
-            if (i >= m) {
-                nums1[i] = nums2[y++];
-            }
-        }
-    }
+        int i = m - 1; // last real element in nums1 array
+        int j = n - 1; // last real element in nums2 array
+        int nums1Length = nums1.length - 1;
 
-    private void swap(int[] nums1, int id, int[] nums2) {
-        if (nums1[id] > nums2[0]) {
-            int temp = nums1[id];
-            nums1[id] = nums2[0];
-            nums2[0] = temp;
-
-            // shift 1 element to make sure array is still sorted
-            for (int i = 0; i < nums2.length - 1; i++) {
-                if (nums2[i] > nums2[i + 1]) {
-                    int temp2 = nums2[i];
-                    nums2[i] = nums2[i + 1];
-                    nums2[i + 1] = temp2;
-                } else {
-                    break;
-                }
+        while (j >= 0) {
+            if (i >= 0 && nums1[i] > nums2[j]) {
+                // copy last number from num1
+                nums1[nums1Length--] = nums1[i--];
+            } else {
+                // copy last number from num2
+                nums1[nums1Length--] = nums2[j--];
             }
         }
     }

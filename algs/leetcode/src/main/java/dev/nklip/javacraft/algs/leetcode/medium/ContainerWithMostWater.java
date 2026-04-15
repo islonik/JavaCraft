@@ -48,9 +48,9 @@ public class ContainerWithMostWater {
             int rightHeight = heights[j];
             int height = Math.min(leftHeight, rightHeight);
             int waterVolume = height * (j - i);
-            if (maxWaterVolume < waterVolume) {
-                maxWaterVolume = waterVolume;
-            }
+
+            maxWaterVolume = Math.max(maxWaterVolume, waterVolume);
+
             if (leftHeight <= rightHeight) {
                 i++;
             } else {

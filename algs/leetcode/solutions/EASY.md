@@ -62,14 +62,14 @@ Key signals that Two Pointers is the right approach:
 ## 1.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/remove-duplicates-from-sorted-array/
-* https://leetcode.com/problems/remove-element/
-* https://leetcode.com/problems/merge-sorted-array/
-* https://leetcode.com/problems/valid-palindrome/
-* https://leetcode.com/problems/linked-list-cycle/
-* https://leetcode.com/problems/intersection-of-two-linked-lists/
+* https://leetcode.com/problems/remove-duplicates-from-sorted-array/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/remove-element/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/merge-sorted-array/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/valid-palindrome/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/linked-list-cycle/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/intersection-of-two-linked-lists/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/happy-number/
-* https://leetcode.com/problems/palindrome-linked-list/
+* https://leetcode.com/problems/palindrome-linked-list/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/move-zeroes/
 * https://leetcode.com/problems/reverse-string/
 * https://leetcode.com/problems/reverse-vowels-of-a-string/
@@ -86,8 +86,8 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target/
 
 **Medium**
-* https://leetcode.com/problems/container-with-most-water/
-* https://leetcode.com/problems/3sum/
+* https://leetcode.com/problems/container-with-most-water/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/3sum/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/3sum-closest/
 * https://leetcode.com/problems/4sum/
 * https://leetcode.com/problems/remove-nth-node-from-end-of-list/
