@@ -17,6 +17,7 @@ public class HappyNumberTest {
         // 62 + 82 = 100
         // 12 + 02 + 02 = 1
         Assertions.assertTrue(solution.isHappy(19));
+        Assertions.assertTrue(solution.isHappyUseSet(19));
     }
 
     @Test
@@ -24,5 +25,6 @@ public class HappyNumberTest {
         HappyNumber solution = new HappyNumber();
 
         Assertions.assertFalse(solution.isHappy(2));
+        Assertions.assertFalse(solution.isHappyUseSet(2));
     }
 }

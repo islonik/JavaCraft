@@ -1,9 +1,6 @@
 package dev.nklip.javacraft.algs.leetcode.easy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 /*
  * 1. Two Sum
@@ -17,53 +14,23 @@ import java.util.List;
  *
  * You can return the answer in any order.
  */
-@SuppressWarnings("Duplicates")
 public class TwoSum {
 
+    // canonical solution - O(n) time, O(n) space
     public int[] twoSum(int[] nums, int target) {
-        int []output = new int[2];
-
-        HashMap<Integer, List<Integer>> temp = new LinkedHashMap<>();
+        Map<Integer, Integer> seen = new HashMap<>();
         for (int i = 0; i < nums.length; i++) {
-            int currNum = nums[i];
-
-            List<Integer> list = new ArrayList<>();
-            if (temp.containsKey(currNum)) {
-                list = temp.get(currNum);
+            int complement = target - nums[i];
+            if (seen.containsKey(complement)) {
+                return new int[] { seen.get(complement), i };
             }
-            list.add(i);
-            temp.put(currNum, list);
+            seen.put(nums[i], i);
         }
-
-        for (int firstValue : temp.keySet()) {
-            List<Integer> firstPos = temp.get(firstValue);
-
-            int lookingFor = target - firstValue;
-
-            if (temp.containsKey(lookingFor)) {
-
-                List<Integer> secondPos = temp.get(lookingFor);
-
-                if (firstValue != lookingFor) {
-                    output[0] = firstPos.getFirst();
-                    output[1] = secondPos.getFirst();
-                    break;
-                } else {
-                    if (secondPos.size() > 1) {
-                        output[0] = firstPos.getFirst();
-                        output[1] = secondPos.getLast();
-                        break;
-                    }
-                }
-            }
-
-        }
-
-        return output;
+        return new int[0];
     }
 
-    // simple - O(n2) time complexity
-    public int[] twoSum2(int[] nums, int target) {
+    // simple brute force - O(n2) time complexity
+    public int[] twoSumUseBruteForce(int[] nums, int target) {
         int []output = new int[2];
 
         for (int i = 0; i < nums.length; i++) {

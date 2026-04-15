@@ -21,26 +21,38 @@ import java.util.Set;
  */
 public class HappyNumber {
 
+    // Floyd's cycle detection (tortoise & hare) — O(log n) time, O(1) space
     public boolean isHappy(int n) {
-        String input = String.valueOf(n);
+        int slow = n;
+        int fast = sumOfSquares(n);
 
-        Set<Integer> set = new HashSet<>();
-        while (true) {
-            int sum = 0;
-            for (int i = 0; i < input.length(); i++) {
-                int singleInt = input.charAt(i) - '0';
-                int squareInt = singleInt * singleInt;
-                sum += squareInt;
-            }
-            if (sum == 1) {
-                return true;
-            }
-            if (set.contains(sum)) {
-                return false;
-            }
-            set.add(sum);
-            input = String.valueOf(sum);
+        while (fast != 1 && slow != fast) {
+            slow = sumOfSquares(slow);
+            fast = sumOfSquares(sumOfSquares(fast));
         }
+        return fast == 1;
+    }
+
+    // HashSet cycle detection — O(log n) time, O(log n) space
+    public boolean isHappyUseSet(int n) {
+        Set<Integer> seen = new HashSet<>();
+        while (n != 1 && seen.add(n)) {
+            n = sumOfSquares(n);
+        }
+        return n == 1;
+    }
+
+    private int sumOfSquares(int n) {
+        int sum = 0;
+        while (n > 0) {
+            // take the latest int char
+            int d = n % 10;
+            // reduce n by 10
+            n /= 10;
+            // find the sum of squares
+            sum += d * d;
+        }
+        return sum;
     }
 
 }

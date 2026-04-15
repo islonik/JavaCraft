@@ -78,7 +78,7 @@ public class TwoSumTest {
         int target = 0;
 
         int []expectedResult = {0,2};
-        int []actualResult = solution.twoSum2(nums, target);
+        int []actualResult = solution.twoSumUseBruteForce(nums, target);
         Assertions.assertEquals(expectedResult[0], actualResult[0]);
         Assertions.assertEquals(expectedResult[1], actualResult[1]);
     }
