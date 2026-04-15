@@ -70,7 +70,7 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/intersection-of-two-linked-lists/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/happy-number/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/palindrome-linked-list/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/move-zeroes/
+* https://leetcode.com/problems/move-zeroes/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/reverse-string/
 * https://leetcode.com/problems/reverse-vowels-of-a-string/
 * https://leetcode.com/problems/is-subsequence/
