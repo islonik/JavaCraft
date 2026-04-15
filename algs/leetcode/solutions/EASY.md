@@ -373,7 +373,7 @@ Key signals that Binary Search is the right approach:
 ### 3.1.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/search-insert-position/
+* https://leetcode.com/problems/search-insert-position/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/first-bad-version/
 * https://leetcode.com/problems/guess-number-higher-or-lower/
 * https://leetcode.com/problems/binary-search/
@@ -696,7 +696,7 @@ Key signals that Fast and Slow Pointers is the right approach:
 ## 4.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/linked-list-cycle/
+* https://leetcode.com/problems/linked-list-cycle/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/happy-number/
 * https://leetcode.com/problems/palindrome-linked-list/
 * https://leetcode.com/problems/middle-of-the-linked-list/
@@ -819,7 +819,7 @@ Key signals that In-Place Reversal is the right approach:
 ## 5.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/reverse-linked-list/
+* https://leetcode.com/problems/reverse-linked-list/ ![Implemented](images/assets/implemented.svg)
 
 **Medium**
 * https://leetcode.com/problems/swap-nodes-in-pairs/
@@ -871,7 +871,7 @@ Use cyclic sort when:
 ## 6.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/missing-number/
+* https://leetcode.com/problems/missing-number/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/
 * https://leetcode.com/problems/set-mismatch/
 

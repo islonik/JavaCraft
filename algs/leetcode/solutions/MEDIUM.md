@@ -229,11 +229,11 @@ Key signals that DFS is the right approach:
 ## 2.5. LeetCode problems
 
 **Easy**
-* https://leetcode.com/problems/binary-tree-inorder-traversal/
-* https://leetcode.com/problems/symmetric-tree/
-* https://leetcode.com/problems/path-sum/
-* https://leetcode.com/problems/binary-tree-preorder-traversal/
-* https://leetcode.com/problems/binary-tree-postorder-traversal/
+* https://leetcode.com/problems/binary-tree-inorder-traversal/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/symmetric-tree/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/path-sum/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/binary-tree-preorder-traversal/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/binary-tree-postorder-traversal/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/maximum-depth-of-n-ary-tree/
 * https://leetcode.com/problems/flood-fill/
 
@@ -244,7 +244,7 @@ Key signals that DFS is the right approach:
 * https://leetcode.com/problems/permutations/
 * https://leetcode.com/problems/permutations-ii/
 * https://leetcode.com/problems/subsets/
-* https://leetcode.com/problems/word-search/
+* https://leetcode.com/problems/word-search/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/subsets-ii/
 * https://leetcode.com/problems/validate-binary-search-tree/
 * https://leetcode.com/problems/path-sum-ii/
