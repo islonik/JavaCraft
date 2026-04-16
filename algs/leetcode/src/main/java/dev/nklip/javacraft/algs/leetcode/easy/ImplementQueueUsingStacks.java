@@ -10,12 +10,13 @@ import java.util.Stack;
  * Implement a first in first out (FIFO) queue using only two stacks.
  * The implemented queue should support all the functions of a normal queue (push, peek, pop, and empty).
  *
- * Implement the MyQueue class:
+ * Implement the ImplementQueueUsingStacks class:
  *
- * void push(int x) Pushes element x to the back of the queue.
- * int pop() Removes the element from the front of the queue and returns it.
- * int peek() Returns the element at the front of the queue.
- * boolean empty() Returns true if the queue is empty, false otherwise.
+ * 1) void push(int x) Pushes element x to the back of the queue.
+ * 2) int pop() Removes the element from the front of the queue and returns it.
+ * 3) int peek() Returns the element at the front of the queue.
+ * 4) boolean empty() Returns true if the queue is empty, false otherwise.
+ *
  * Notes:
  *
  * You must use only standard operations of a stack,
@@ -25,21 +26,31 @@ import java.util.Stack;
  */
 public class ImplementQueueUsingStacks {
 
-    private final Stack<Integer> stack = new Stack<>();
+    private final Stack<Integer> inbox = new Stack<>();
+    private final Stack<Integer> outbox = new Stack<>();
 
     public void push(int x) {
-        stack.push(x);
+        inbox.push(x);
     }
 
     public int pop() {
-        return stack.removeFirst();
+        shiftIfCan();
+        return outbox.pop();
     }
 
     public int peek() {
-        return stack.getFirst();
+        shiftIfCan();
+        return outbox.peek();
     }
 
     public boolean empty() {
-        return stack.isEmpty();
+        return inbox.isEmpty();
+    }
+
+    private void shiftIfCan() {
+        // move a single element from inbox to outbox
+        while (outbox.isEmpty() && !inbox.isEmpty()) {
+            outbox.push(inbox.peek());
+        }
     }
 }

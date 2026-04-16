@@ -13,7 +13,7 @@ public class MajorityElementTest {
 
         MajorityElement solution = new MajorityElement();
         Assertions.assertEquals(3, solution.majorityElement(array));
-        Assertions.assertEquals(3, solution.majorityElementMoore(array2));
+        Assertions.assertEquals(3, solution.majorityElementUsingSort(array2));
     }
 
     @Test
@@ -23,7 +23,7 @@ public class MajorityElementTest {
 
         MajorityElement solution = new MajorityElement();
         Assertions.assertEquals(2, solution.majorityElement(array));
-        Assertions.assertEquals(2, solution.majorityElementMoore(array2));
+        Assertions.assertEquals(2, solution.majorityElementUsingSort(array2));
     }
 
     @Test
@@ -33,6 +33,6 @@ public class MajorityElementTest {
 
         MajorityElement solution = new MajorityElement();
         Assertions.assertEquals(2, solution.majorityElement(array));
-        Assertions.assertEquals(2, solution.majorityElementMoore(array2));
+        Assertions.assertEquals(2, solution.majorityElementUsingSort(array2));
     }
 }

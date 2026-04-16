@@ -16,46 +16,21 @@ import dev.nklip.javacraft.algs.leetcode.model.TreeNode;
 public class ConvertSortedArrayToBinarySearchTree {
 
     public TreeNode sortedArrayToBST(int[] nums) {
-        int rootId = nums.length / 2;
-        TreeNode rootNode = new TreeNode(nums[rootId]);
-
-        arrayToBST(nums, rootNode);
-
-        return rootNode;
+        return buildBST(nums, 0, nums.length - 1);
     }
 
-    private void leftArrayToBST(int[] nums, TreeNode root) {
-        int rootId = nums.length / 2;
-
-        root.left = new TreeNode(nums[rootId]);
-
-        arrayToBST(nums, root.left);
-    }
-
-    private void rightArrayToBST(int[] nums, TreeNode root) {
-        int rootId = nums.length / 2;
-
-        root.right = new TreeNode(nums[rootId]);
-
-        arrayToBST(nums, root.right);
-    }
-
-    private void arrayToBST(int []nums, TreeNode root) {
-        // prepare left array
-        int []leftArray = new int[nums.length / 2];
-        System.arraycopy(nums, 0, leftArray, 0, leftArray.length);
-
-        // prepare right array
-        int rightArrayStart = (nums.length / 2) + 1;
-        int []rightArray = new int[nums.length - rightArrayStart];
-        System.arraycopy(nums, rightArrayStart, rightArray, 0, rightArray.length);
-
-        if (leftArray.length > 0) {
-            leftArrayToBST(leftArray, root);
+    private TreeNode buildBST(int []nums, int left, int right) {
+        if (left > right) {
+            return null;
         }
-        if (rightArray.length > 0) {
-            rightArrayToBST(rightArray, root);
-        }
+        // find root index value
+        int mid = left + (right - left) / 2;
+        TreeNode node = new TreeNode(nums[mid]);
+
+        node.left = buildBST(nums, left, mid - 1);
+        node.right = buildBST(nums, mid + 1, right);
+
+        return node;
     }
 
 }

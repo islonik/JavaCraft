@@ -7,22 +7,26 @@ public class ImplementStackUsingQueuesTest {
 
     @Test
     void testCase1() {
-        ImplementStackUsingQueues<Integer> myStack = new ImplementStackUsingQueues<>();
+        ImplementStackUsingQueues<Integer> stackImpl = new ImplementStackUsingQueues<>();
 
-        Assertions.assertTrue(myStack.empty());
+        Assertions.assertTrue(stackImpl.empty());
 
-        myStack.push(1);
-        Assertions.assertEquals(1, myStack.top());
-        Assertions.assertFalse(myStack.empty());
+        stackImpl.push(1);
+        Assertions.assertEquals(1, stackImpl.top());
+        Assertions.assertFalse(stackImpl.empty());
 
-        myStack.push(2);
-        Assertions.assertEquals(2, myStack.top());
-        Assertions.assertFalse(myStack.empty());
+        stackImpl.push(2);
+        Assertions.assertEquals(2, stackImpl.top());
+        Assertions.assertFalse(stackImpl.empty());
 
-        Assertions.assertEquals(2, myStack.pop());
+        stackImpl.push(3);
+        Assertions.assertEquals(3, stackImpl.top());
+        Assertions.assertFalse(stackImpl.empty());
 
-        Assertions.assertEquals(1, myStack.top());
-        Assertions.assertFalse(myStack.empty());
+        Assertions.assertEquals(3, stackImpl.pop());
+        Assertions.assertEquals(2, stackImpl.pop());
+        Assertions.assertEquals(1, stackImpl.top());
+        Assertions.assertFalse(stackImpl.empty());
     }
 
 }

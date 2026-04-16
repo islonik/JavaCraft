@@ -8,6 +8,7 @@ public class PalindromeLinkedListTest {
 
     @Test
     public void testCase1() {
+        // 1 -> 2 -> 2 -> 1
         ListNode node1 = new ListNode(1);
         ListNode node2 = new ListNode(2);
         ListNode node3 = new ListNode(2);
@@ -19,17 +20,20 @@ public class PalindromeLinkedListTest {
 
         PalindromeLinkedList solution = new PalindromeLinkedList();
 
+        Assertions.assertTrue(solution.isPalindromeUseTextToFindPalindrome(node1));
         Assertions.assertTrue(solution.isPalindrome(node1));
     }
 
     @Test
     public void testCase2() {
+        // 1 -> 2
         ListNode node1 = new ListNode(1);
 
         node1.next = new ListNode(2);
 
         PalindromeLinkedList solution = new PalindromeLinkedList();
 
+        Assertions.assertFalse(solution.isPalindromeUseTextToFindPalindrome(node1));
         Assertions.assertFalse(solution.isPalindrome(node1));
     }
 }

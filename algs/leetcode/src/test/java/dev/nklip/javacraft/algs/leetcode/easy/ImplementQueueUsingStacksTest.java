@@ -6,16 +6,16 @@ import org.junit.jupiter.api.Test;
 public class ImplementQueueUsingStacksTest {
     @Test
     public void testCase1() {
-        ImplementQueueUsingStacks solution = new ImplementQueueUsingStacks();
+        ImplementQueueUsingStacks queueImpl = new ImplementQueueUsingStacks();
 
-        Assertions.assertTrue(solution.empty());
-        solution.push(1);
-        Assertions.assertFalse(solution.empty());
-        Assertions.assertEquals(1, solution.peek());
-        solution.push(2);
-        Assertions.assertEquals(1, solution.peek());
-        Assertions.assertEquals(1, solution.pop());
-        Assertions.assertEquals(2, solution.peek());
-        Assertions.assertFalse(solution.empty());
+        Assertions.assertTrue(queueImpl.empty());
+        queueImpl.push(1);
+        Assertions.assertFalse(queueImpl.empty());
+        Assertions.assertEquals(1, queueImpl.peek());
+        queueImpl.push(2);
+        Assertions.assertEquals(1, queueImpl.peek());
+        Assertions.assertEquals(1, queueImpl.pop());
+        Assertions.assertEquals(2, queueImpl.peek());
+        Assertions.assertFalse(queueImpl.empty());
     }
 }

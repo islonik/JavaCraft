@@ -13,7 +13,42 @@ import java.util.Objects;
  * Given the head of a singly linked list, return true if it is a palindrome or false otherwise.
  */
 public class PalindromeLinkedList {
+
+    // Time: O(n), Space: O(1)
     public boolean isPalindrome(ListNode head) {
+        ListNode slow = head;
+        ListNode fast = head;
+
+        // 1. find middle list for slow
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        // 2. find the second half of the middle for slow
+        ListNode prev = null;
+        while (slow != null) {
+            ListNode next = slow.next;
+            slow.next = prev;
+            prev = slow;
+            slow = next;
+        }
+
+        // 3. Compare head and prev
+        ListNode left = head;
+        ListNode right = prev;
+        while (right != null && left != null) {
+            if (left.val != right.val) {
+                return false;
+            }
+            right = right.next;
+            left = left.next;
+        }
+        return true;
+    }
+
+    // Time: O(n), Space: O(n)
+    public boolean isPalindromeUseTextToFindPalindrome(ListNode head) {
         List<Integer> charList = new ArrayList<>();
 
         while (head != null) {

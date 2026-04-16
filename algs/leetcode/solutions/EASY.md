@@ -698,7 +698,7 @@ Key signals that Fast and Slow Pointers is the right approach:
 **Easy**
 * https://leetcode.com/problems/linked-list-cycle/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/happy-number/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/palindrome-linked-list/
+* https://leetcode.com/problems/palindrome-linked-list/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/middle-of-the-linked-list/
 
 **Medium**
