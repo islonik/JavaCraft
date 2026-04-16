@@ -71,8 +71,8 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/happy-number/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/palindrome-linked-list/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/move-zeroes/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/reverse-string/
-* https://leetcode.com/problems/reverse-vowels-of-a-string/
+* https://leetcode.com/problems/reverse-string/ ![Implemented](images/assets/implemented.svg)
+* https://leetcode.com/problems/reverse-vowels-of-a-string/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/is-subsequence/
 * https://leetcode.com/problems/assign-cookies/
 * https://leetcode.com/problems/valid-palindrome-ii/
