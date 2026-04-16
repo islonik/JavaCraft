@@ -6,7 +6,8 @@ import dev.nklip.javacraft.modules.hello.HelloService;
 
 public class App {
 
-    public static void main(String[] args) {
+    @SuppressWarnings("unused")
+    static void main(String[] args) {
         App app = new App();
         Util.printMessage(app.resolveMessage());
     }
