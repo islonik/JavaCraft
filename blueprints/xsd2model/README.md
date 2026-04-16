@@ -1,4 +1,5 @@
 # xsd2model
+<sub>[Back to blueprints](../README.md#blueprints)</sub>
 
 Demonstrates XSD-to-Java code generation with JAXB and round-trip serialization to both XML and JSON.
 

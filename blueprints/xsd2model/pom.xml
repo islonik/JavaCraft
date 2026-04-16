@@ -5,7 +5,7 @@
 
     <parent>
         <groupId>dev.nklip.javacraft</groupId>
-        <artifactId>javacraft</artifactId>
+        <artifactId>blueprints</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -94,7 +94,7 @@
                         <source>src/main/resources/schemas/Request.xsd</source>
                         <source>src/main/resources/schemas/Response.xsd</source>
                     </sources>
-                    <outputDirectory>${project.build.directory}/generated-classes</outputDirectory>
+                    <outputDirectory>target/generated-classes</outputDirectory>
                     <clearOutputDir>false</clearOutputDir>
                 </configuration>
             </plugin>

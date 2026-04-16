@@ -1,4 +1,5 @@
-# BDD BMI Module
+# BDD Module
+<sub>[Back to blueprints](../README.md#blueprints)</sub>
 
 This module demonstrates Behavior-Driven Development (BDD) with Cucumber and Spring Boot
 using a BMI calculator domain.

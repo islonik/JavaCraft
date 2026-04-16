@@ -1,4 +1,5 @@
 # Java Platform Module System (JPMS)
+<sub>[Back to blueprints](../README.md#blueprints)</sub>
 
 A hands-on demonstration of Java 9+ JPMS covering qualified exports, `transitive` requires,
 the Service Provider Interface (SPI) pattern via `ServiceLoader`, and strong encapsulation
