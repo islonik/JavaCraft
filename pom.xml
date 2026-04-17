@@ -105,12 +105,9 @@
         <module>algs</module>
         <module>blueprints</module>
         <module>echo</module>
-        <module>elastic</module>
-        <module>linker</module>
         <module>mathparser</module>
-        <module>openflights</module>
+        <module>microservices</module>
         <module>ses</module>
-        <module>soap2rest</module>
         <module>tic-tac-toe</module>
         <module>vfs</module>
         <module>xlspaceship</module>

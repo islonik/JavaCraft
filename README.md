@@ -3,12 +3,9 @@
 * [algs](algs/README.md) - Algorithms
 * [blueprints](blueprints/README.md) - Architectural blueprints
 * [echo](echo/README.md) - Different Server types
-* [elastic](elastic/README.md) - rest to elasticsearch
-* [linker](linker/README.md) - Simple short to full url transformer
 * [mathparser](mathparser/README.md) - Complex Math parser with GUI
-* [openflights](openflights/README.md) - OpenFlights
+* [microservices](microservices/README.md) - Microservices
 * [SES](ses/README.md) - Simple Event System
-* [soap2rest](soap2rest/README.md) - soap to rest
 * [tic-tac-toe](tic-tac-toe/README.md) - Tic-tac-toe game with GUI
 * [vfs](vfs/README.md) - Virtual File Server
 * [xlspaceship](xlspaceship/README.md) - Battleship game

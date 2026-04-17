@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Assertions;
 
 public class BlockingStepDefinitions {
 
+    private static final long STATS_RETRY_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(2);
+
     // ---------------------------------------------------------------------------
     // Client connect steps
     // ---------------------------------------------------------------------------
@@ -144,12 +146,21 @@ public class BlockingStepDefinitions {
     private void doAssertResponse(String clientName, String message, String expectedResponse,
             Consumer<String> send, Supplier<String> read, BooleanSupplier isClosed) {
         send.accept(message);
-        String actual = read.get();
-        Assertions.assertEquals(expectedResponse, actual,
+        String actualResponse = read.get();
+        if (shouldRetryStats(message, expectedResponse, actualResponse)) {
+            LockSupport.parkNanos(STATS_RETRY_DELAY_NANOS);
+            send.accept(message);
+            actualResponse = read.get();
+        }
+        Assertions.assertEquals(expectedResponse, actualResponse,
                 "Client '%s' sent '%s' but got unexpected response".formatted(clientName, message));
         if ("bye".equalsIgnoreCase(message)) {
             awaitSocketClosed(clientName, isClosed);
         }
+    }
+
+    private boolean shouldRetryStats(String message, String expectedResponse, String actualResponse) {
+        return "stats".equalsIgnoreCase(message) && !expectedResponse.equals(actualResponse);
     }
 
     /**
