@@ -73,7 +73,7 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/move-zeroes/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/reverse-string/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/reverse-vowels-of-a-string/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/is-subsequence/
+* https://leetcode.com/problems/is-subsequence/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/assign-cookies/
 * https://leetcode.com/problems/valid-palindrome-ii/
 * https://leetcode.com/problems/backspace-string-compare/
