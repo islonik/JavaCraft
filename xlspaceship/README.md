@@ -1,4 +1,5 @@
 # XL-Spaceship
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 A battleship-style guessing game where you play against an AI opponent.
 Two Spring Boot instances communicate over REST — one for the human player, one for the AI.
@@ -9,12 +10,12 @@ Two Spring Boot instances communicate over REST — one for the human player, on
 
 ---
 
-**Sub-modules:** [engine](engine/) · [server](server/)
+**Sub-modules:** [engine](engine) · [server](server)
 
 | Sub-module | ArtifactId | Responsibility |
 |---|---|---|
-| [engine](engine/) | `xlspaceship-engine` | Game logic, board, ships, AI, models — no Spring Web dependency |
-| [server](server/) | `xlspaceship-server` | Spring Boot app — controllers, HTTP validation, Thymeleaf views, static JS/CSS |
+| [engine](engine) | `xlspaceship-engine` | Game logic, board, ships, AI, models — no Spring Web dependency |
+| [server](server) | `xlspaceship-server` | Spring Boot app — controllers, HTTP validation, Thymeleaf views, static JS/CSS |
 
 ---
 

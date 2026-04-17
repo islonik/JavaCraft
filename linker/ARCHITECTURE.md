@@ -172,7 +172,7 @@ Field notes:
 ## 6. Local Infrastructure
 <sub>[Back to top](#linker-architecture)</sub>
 
-The repo-local Docker stack is defined in [compose.yaml](/Users/nikita.lipatov/projects/GitHub/JavaCraft/linker/compose.yaml).
+The repo-local Docker stack is defined in [compose.yaml](compose.yaml).
 
 It uses:
 

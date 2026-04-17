@@ -1,4 +1,5 @@
 # OpenFlights
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 An OpenFlights-based ingestion system that reads `.dat` datasets, publishes typed Kafka
 messages, consumes them, and stores the normalized result in PostgreSQL.
@@ -119,8 +120,8 @@ Kafka topic layout:
 
 The route consumer also uses `8` listener threads by default. Those defaults can be adjusted in:
 
-- [application.yaml](/Users/nikita.lipatov/projects/GitHub/JavaCraft/openflights/openflights-kafka-producer/src/main/resources/application.yaml)
-- [application.yaml](/Users/nikita.lipatov/projects/GitHub/JavaCraft/openflights/openflights-kafka-consumer/src/main/resources/application.yaml)
+- Producer [application.yaml](openflights-kafka-producer/src/main/resources/application.yaml)
+- Consumer [application.yaml](openflights-kafka-consumer/src/main/resources/application.yaml)
 
 ### Admin cleanup
 
@@ -160,7 +161,7 @@ That split keeps repositories focused on SQL execution and keeps presentation lo
 | `openflights-app` | admin/operational HTTP endpoints for persisted data |
 | `openflights-testing` | Cucumber end-to-end tests with Testcontainers |
 
-For the full runtime and data-model breakdown, see [ARCHITECTURE.md](/Users/nikita.lipatov/projects/GitHub/JavaCraft/openflights/ARCHITECTURE.md).
+For the full runtime and data-model breakdown, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 5. Testing Notes
 <sub>[Back to top](#openflights)</sub>
@@ -178,7 +179,7 @@ The full-ingestion Cucumber scenario currently expects the final PostgreSQL data
 - routeEquipmentCodes: `93231`
 
 Those values are asserted directly in
-[OpenFlightsIngestion.feature](/Users/nikita.lipatov/projects/GitHub/JavaCraft/openflights/openflights-testing/src/test/resources/features/OpenFlightsIngestion.feature)
+[OpenFlightsIngestion.feature](openflights-testing/src/test/resources/features/OpenFlightsIngestion.feature)
 and cross-checked by the calculator test support.
 
 Per-type and total ingestion timings reported by the Cucumber suite are observational only. They vary

@@ -1,4 +1,5 @@
 # Elasticsearch
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 `elastic` is a multi-module Elasticsearch-backed service built around two main use cases:
 

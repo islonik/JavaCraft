@@ -1,4 +1,5 @@
 # Virtual File Server
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 `vfs` is a multi-module Java project that exposes a shared in-memory file tree over TCP.
 Multiple terminal clients can connect to one server, navigate the same directory structure,

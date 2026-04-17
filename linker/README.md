@@ -1,4 +1,5 @@
 # Linker
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 A URL shortening service built with Spring Boot and MongoDB Atlas Local. It stores long URLs,
 generates collision-safe short IDs, redirects users, and tracks redirect analytics.
@@ -64,7 +65,7 @@ mvn -pl linker spring-boot:run
 | http://localhost:8100/swagger-ui/index.html | Swagger UI |
 | http://localhost:8100/v3/api-docs | OpenAPI JSON |
 
-For the detailed runtime/data-flow view, see [ARCHITECTURE.md](/Users/nikita.lipatov/projects/GitHub/JavaCraft/linker/ARCHITECTURE.md).
+For the detailed runtime/data-flow view, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -205,7 +206,7 @@ flowchart TD
 ## 6. Configuration
 <sub>[Back to top](#linker)</sub>
 
-[application.yaml](/Users/nikita.lipatov/projects/GitHub/JavaCraft/linker/src/main/resources/application.yaml):
+[application.yaml](src/main/resources/application.yaml):
 
 ```yaml
 host: http://localhost:8100/api/v1/links
@@ -223,7 +224,7 @@ spring:
       uri: mongodb://localhost:27017/?directConnection=true/links
 ```
 
-The local Docker setup in [compose.yaml](/Users/nikita.lipatov/projects/GitHub/JavaCraft/linker/compose.yaml)
+The local Docker setup in [compose.yaml](compose.yaml)
 matches that default local MongoDB port.
 
 The key runtime properties are:

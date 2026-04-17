@@ -1,4 +1,5 @@
 # Soap to Rest (soap2rest)
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 `soap2rest` demonstrates a strangler-style migration where an existing SOAP contract is kept stable while the backend behavior is implemented by a REST application.
 

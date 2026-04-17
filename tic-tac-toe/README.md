@@ -1,4 +1,5 @@
 # Tic-Tac-Toe
+<sub>[Back to JavaCraft](../README.md#micro-java-samples)</sub>
 
 A two-player Tic-Tac-Toe desktop game with a Swing GUI, a configurable AI opponent,
 and customisable player symbols.
@@ -116,23 +117,23 @@ The board is a 3×3 array of `Player` references (null = empty). Cells are numbe
 
 ### Model
 
-| Class | Role |
-|-------|------|
-| `TicTacToe` | Game instance — wires together two `Player`s, the `GameField`, and the `AI`; exposes `makeHumanMove()` and `makeComputerMove()` |
-| `GameField` | 3×3 `Player` array; `setPlayer(player, cell)` places a move, `getWinner()` checks all 8 winning lines |
-| `ArtificialIntelligence` | Stateful AI brain — see [AI Strategy](#ai-strategy) |
-| `Player` | Name + `isComputer` flag |
+| Class | Role                                                                                                                                                         |
+|-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TicTacToe` | Game instance — wires together two `Player`s, the `GameField`, and the `AI`; exposes `makeHumanMove()` and `makeComputerMove()`                              |
+| `GameField` | 3×3 `Player` array; `setPlayer(player, cell)` places a move, `getWinner()` checks all 8 winning lines                                                        |
+| `ArtificialIntelligence` | Stateful AI brain                                                                                                                                            |
+| `Player` | Name + `isComputer` flag                                                                                                                                     |
 | `GameSettings` | Singleton — tracks whose turn it is, whether the second player is a computer, and whether the current game is odd-numbered (controls first-move alternation) |
 
 ### View
 
-| Class | Role |
-|-------|------|
+| Class | Role                                                                                                      |
+|-------|-----------------------------------------------------------------------------------------------------------|
 | `GUI` | Main `JFrame` — 3×3 grid of `Cell` buttons, menu bar (New Game / Options / Image / About), win/draw dialogs |
-| `Cell` | `JButton` subclass with `isAlreadyPressed` flag and a 1–9 `type` index |
-| `Options` | Settings dialog — player names, human vs. computer toggle, first-move preference |
-| `ImageOptions` | Symbol picker — 14 icon choices per player (see [Image Customisation](#image-customisation)) |
-| `About` | Info dialog — game version (1.0.0) and JVM / OS details |
+| `Cell` | `JButton` subclass with `isAlreadyPressed` flag and a 1–9 `type` index                                    |
+| `Options` | Settings dialog — player names, human vs. computer toggle, first-move preference                          |
+| `ImageOptions` | Symbol picker — 14 icon choices per player (see [Image Customisation](src/main/resources/img))            |
+| `About` | Info dialog — game version (1.0.0) and JVM / OS details                                                   |
 
 ### Controller
 
