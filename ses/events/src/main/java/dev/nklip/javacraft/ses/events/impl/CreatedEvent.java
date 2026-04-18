@@ -2,6 +2,8 @@ package dev.nklip.javacraft.ses.events.impl;
 
 import dev.nklip.javacraft.ses.events.EventStatus;
 import dev.nklip.javacraft.ses.events.Priority;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Event emitted immediately after a new task is created.
@@ -11,7 +13,19 @@ import dev.nklip.javacraft.ses.events.Priority;
  */
 public class CreatedEvent extends BaseEvent {
 
-    public CreatedEvent(int taskId, Priority priority, String title, String financeCode, int estimate) {
-        super(taskId, priority, title, financeCode, estimate, EventStatus.CREATED);
+    public CreatedEvent(
+            UUID eventId,
+            int taskId,
+            Priority priority,
+            String title,
+            String financeCode,
+            int estimate,
+            Instant occurredAt,
+            String actor,
+            String correlationId,
+            long streamVersion
+    ) {
+        super(eventId, taskId, priority, title, financeCode, estimate, EventStatus.CREATED,
+                occurredAt, actor, correlationId, streamVersion);
     }
 }

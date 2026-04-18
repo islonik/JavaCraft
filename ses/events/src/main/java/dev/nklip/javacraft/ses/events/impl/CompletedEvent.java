@@ -2,6 +2,8 @@ package dev.nklip.javacraft.ses.events.impl;
 
 import dev.nklip.javacraft.ses.events.EventStatus;
 import dev.nklip.javacraft.ses.events.Priority;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Event emitted when the worker finishes processing a task.
@@ -11,8 +13,20 @@ import dev.nklip.javacraft.ses.events.Priority;
  */
 public class CompletedEvent extends BaseEvent {
 
-    public CompletedEvent(int taskId, Priority priority, String title, String financeCode, int estimate) {
-        super(taskId, priority, title, financeCode, estimate, EventStatus.COMPLETED);
+    public CompletedEvent(
+            UUID eventId,
+            int taskId,
+            Priority priority,
+            String title,
+            String financeCode,
+            int estimate,
+            Instant occurredAt,
+            String actor,
+            String correlationId,
+            long streamVersion
+    ) {
+        super(eventId, taskId, priority, title, financeCode, estimate, EventStatus.COMPLETED,
+                occurredAt, actor, correlationId, streamVersion);
     }
 
 }

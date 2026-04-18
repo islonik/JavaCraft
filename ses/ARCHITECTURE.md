@@ -6,101 +6,71 @@
 1. [Goal](#1-goal)
 2. [Runtime Topology](#2-runtime-topology)
 3. [Module Map](#3-module-map)
-4. [Event Lifecycle](#4-event-lifecycle)
-5. [Simulator Pipeline](#5-simulator-pipeline)
-6. [Package Map](#6-package-map)
-7. [Testing Strategy](#7-testing-strategy)
-8. [Current Tradeoffs](#8-current-tradeoffs)
+4. [Write Side](#4-write-side)
+5. [Read Side](#5-read-side)
+6. [Projection Flow](#6-projection-flow)
+7. [Why JDBC and Native SQL](#7-why-jdbc-and-native-sql)
+8. [Package Map](#8-package-map)
+9. [Testing Strategy](#9-testing-strategy)
+10. [Current Tradeoffs](#10-current-tradeoffs)
 
 ## 1. Goal
 <sub>[Back to top](#ses-architecture)</sub>
 
-`ses` is a small in-memory workflow simulator.
+`ses` is a compact event-sourced work request service.
 
-Its main architectural rule is simple:
+Its core rules are:
 
-- workflow threads do not mutate shared workflow state directly
-- every state transition is published as an event
-- read-side state is derived by listening to those events
+- commands append facts to an append-only `event_store`
+- current state is rebuilt from ordered event history
+- read-side projections are derived asynchronously
+- in-memory `EventsMonitor` is a cache, not the source of truth
 
-That split gives the module two clear responsibilities:
-
-- `ses-events`
-  owns the event model and the in-memory publish/subscribe infrastructure
-- `ses-simulator`
-  owns task generation, validation, execution, reporting, and Spring bootstrapping
+The rebuild keeps the original event kernel and event family while replacing the old simulator runtime
+with a Spring Boot + PostgreSQL service.
 
 ## 2. Runtime Topology
 <sub>[Back to top](#ses-architecture)</sub>
 
 ```mermaid
 flowchart LR
-    app["SesApplication"]
-    launcher["WorkerLauncher"]
-    creator["Creator"]
-    validator["Validator"]
-    worker["Worker"]
-    reporter["Reporter"]
-    creationQ[("creationQueue")]
-    validationQ[("validationQueue")]
-    wrapper["EventNotifierWrapper"]
+    client["REST / SSE client"]
+    controller["Controllers"]
+    command["WorkRequestCommandService"]
+    policy["BudgetPolicyService"]
+    store["EventStoreRepository"]
+    eventStore[("event_store")]
+    notify["PostgreSQL NOTIFY"]
+    listener["ProjectionListener"]
+    projector["ProjectionCoordinator"]
+    applier["ProjectionApplier"]
+    requestProjection[("work_request_projection")]
+    budgetProjection[("budget_projection")]
+    checkpoint[("projection_checkpoint")]
     notifier["EventNotifier"]
     monitor["EventsMonitor"]
-    finance["FinanceService"]
-    dao["FinanceDao"]
+    sse["ProjectionSsePublisher"]
+    stream["SSE subscribers"]
 
-    app --> launcher
-    launcher --> creator
-    launcher --> validator
-    launcher --> worker
-    launcher --> reporter
-
-    creator --> creationQ
-    validator --> creationQ
-    validator --> validationQ
-    worker --> validationQ
-
-    creator --> wrapper
-    validator --> wrapper
-    worker --> wrapper
-    wrapper --> notifier
+    client --> controller
+    controller --> command
+    command --> policy
+    command --> store
+    store --> eventStore
+    store --> notify
+    notify --> listener
+    listener --> projector
+    projector --> applier
+    applier --> requestProjection
+    applier --> budgetProjection
+    applier --> checkpoint
+    projector --> notifier
     notifier --> monitor
-
-    validator --> finance
-    finance --> dao
-    reporter --> monitor
-```
-
-Runtime notes:
-
-- the whole simulator runs in a single JVM
-- both queues are in-memory `PriorityBlockingQueue<Task>` instances
-- `FinanceDao` is in-memory too; there is no external database
-- `EventsMonitor` is a projection of the latest event per `taskId`, not the workflow source of truth
-
-### Startup sequence
-
-```mermaid
-sequenceDiagram
-    participant App as SesApplication
-    participant Config as SesSimulatorConfiguration
-    participant Context as AnnotationConfigApplicationContext
-    participant Launcher as WorkerLauncher
-    participant Creator
-    participant Validator
-    participant Worker
-    participant Reporter
-
-    App->>Context: create Spring context with Config
-    Context-->>App: initialized bean graph
-    App->>Context: registerShutdownHook()
-    App->>Context: getBean(WorkerLauncher)
-    Context-->>App: launcher
-    App->>Launcher: launch()
-    Launcher->>Creator: start thread
-    Launcher->>Validator: start thread
-    Launcher->>Worker: start thread
-    Launcher->>Reporter: start thread
+    projector --> sse
+    sse --> stream
+    controller --> requestProjection
+    controller --> budgetProjection
+    controller --> eventStore
 ```
 
 ## 3. Module Map
@@ -108,110 +78,177 @@ sequenceDiagram
 
 | Module | ArtifactId | Responsibility | Depends on |
 |---|---|---|---|
-| `ses/events` | `ses-events` | event contracts, event types, listener registry, event dispatch, latest-state monitor | Spring context, SLF4J API |
-| `ses/simulator` | `ses-simulator` | task pipeline, finance validation, Spring bootstrapping, command-line entrypoint | `ses-events`, Spring context, SLF4J Simple |
+| `ses/events` | `ses-events` | event contracts, event types, notifier, listener registry, in-memory latest-event monitor | Spring context, SLF4J API |
+| `ses/api` | `ses-api` | REST and SSE DTO contracts | `ses-events`, Jakarta Validation |
+| `ses/app` | `ses-app` | Spring Boot runtime, event store, command logic, projections, replay, SSE, OpenAPI | `ses-api`, `ses-events`, Spring Boot, Liquibase, PostgreSQL |
+| `ses/testing` | `ses-testing` | Testcontainers PostgreSQL, Cucumber scenarios, live projection/SSE verification | `ses-app`, `ses-api`, Spring Boot Test, Cucumber |
 
 ```mermaid
 graph TD
     events["ses-events"]
-    simulator["ses-simulator"]
+    api["ses-api"]
+    app["ses-app"]
+    testing["ses-testing"]
 
-    simulator --> events
+    api --> events
+    app --> api
+    app --> events
+    testing --> app
+    testing --> api
 ```
 
-## 4. Event Lifecycle
+## 4. Write Side
 <sub>[Back to top](#ses-architecture)</sub>
 
-Every task moves through the simulator by producing typed events.
+The write model is explicit and transition-driven.
 
-The stable identity is `taskId`, not title:
+Valid command outcomes:
 
-- titles are display labels only
-- different tasks may share the same title
-- `EventsMonitor` stores the latest event by `taskId`
+1. `CREATE`
+   appends `CreatedEvent`
+2. `APPROVE`
+   appends `AcceptedEvent` when the budget policy passes
+3. `APPROVE` with insufficient budget
+   appends `RejectedEvent` with a policy reason
+4. `REJECT`
+   appends `RejectedEvent` with an operator reason
+5. `START`
+   appends `RunningEvent`
+6. `COMPLETE`
+   appends `CompletedEvent`
 
-### Accepted path
+Invalid transitions append nothing and return a conflict-style response.
+
+The authoritative event store shape is:
+
+- `id`
+- `event_id`
+- `task_id`
+- `stream_version`
+- `event_type`
+- `status`
+- `payload jsonb`
+- `metadata jsonb`
+- `occurred_at`
+
+`(task_id, stream_version)` is unique to preserve optimistic ordering.
+
+## 5. Read Side
+<sub>[Back to top](#ses-architecture)</sub>
+
+The read side is the query-facing model derived from event history.
+
+It is intentionally separate from the write side:
+
+- commands append immutable facts to `event_store`
+- queries read current state from projections instead of re-running domain transitions on every request
+- the timeline endpoint reads ordered history directly from `event_store`
+
+The main read models are:
+
+- `work_request_projection`
+  current state of each work request, including latest status, actor, reason, and stream version
+- `budget_projection`
+  current reserved and remaining budget per budget code
+- `EventsMonitor`
+  in-memory latest-event cache for demo visibility and fan-out, not a durable read model
+
+Read-side behavior follows a CQRS-style contract:
+
+- `GET /api/v1/work-requests/{requestId}` reads the current projected request state
+- `GET /api/v1/work-requests` reads the projected request list with filters
+- `GET /api/v1/projections/budgets` reads the projected budget view
+- `GET /api/v1/work-requests/{requestId}/timeline` reads ordered event history from the event store
+- `GET /api/v1/projections/stream` emits projection updates over SSE
+
+Important read-side rules:
+
+- the read side is eventually consistent with the write side
+- projections can always be rebuilt from the append-only event log
+- read models are disposable and reproducible; event history is the source of truth
+- SSE publishes projection updates, not raw event-store rows
+
+## 6. Projection Flow
+<sub>[Back to top](#ses-architecture)</sub>
 
 ```mermaid
 sequenceDiagram
-    participant Creator
-    participant Wrapper as EventNotifierWrapper
-    participant Notifier as EventNotifier
+    participant API as REST command
+    participant Store as EventStoreRepository
+    participant DB as PostgreSQL
+    participant Listener as ProjectionListener
+    participant Coordinator as ProjectionCoordinator
+    participant Applier as ProjectionApplier
+    participant Requests as work_request_projection
+    participant Budgets as budget_projection
+    participant Checkpoint as projection_checkpoint
     participant Monitor as EventsMonitor
-    participant CreationQ as creationQueue
-    participant Validator
-    participant Finance as FinanceService
-    participant Dao as FinanceDao
-    participant ValidationQ as validationQueue
-    participant Worker
+    participant SSE as SSE subscribers
 
-    Creator->>Wrapper: createdEvent(task)
-    Wrapper->>Notifier: notify(CreatedEvent)
-    Notifier->>Monitor: store latest event for taskId
-    Creator->>CreationQ: add(task)
-
-    Validator->>CreationQ: poll()
-    Validator->>Finance: isEnoughMoney(code, estimate)
-    Finance->>Dao: find finance code
-    Validator->>Finance: updateFinance(code, estimate)
-    Finance->>Dao: store reduced capacity
-    Validator->>Wrapper: acceptedEvent(task)
-    Wrapper->>Notifier: notify(AcceptedEvent)
-    Notifier->>Monitor: replace latest event for taskId
-    Validator->>ValidationQ: add(task)
-
-    Worker->>ValidationQ: poll()
-    Worker->>Wrapper: runningEvent(task)
-    Wrapper->>Notifier: notify(RunningEvent)
-    Notifier->>Monitor: replace latest event for taskId
-    Worker->>Wrapper: completedEvent(task)
-    Wrapper->>Notifier: notify(CompletedEvent)
-    Notifier->>Monitor: replace latest event for taskId
+    API->>Store: append(event)
+    Store->>DB: insert into event_store
+    Store->>DB: pg_notify(channel, eventId)
+    DB-->>Listener: notification wake-up
+    Listener->>Coordinator: catchUpFromLastApplied()
+    Coordinator->>DB: fetch events after checkpoint
+    loop each unread event
+        Coordinator->>Applier: apply(stored event)
+        Applier->>Requests: upsert current request state
+        Applier->>Budgets: recalculate reserved / remaining
+        Applier->>Checkpoint: save last applied event id
+        Coordinator->>Monitor: refresh latest event via EventNotifier
+        Coordinator->>SSE: publish projection update
+    end
 ```
 
-### Rejected path
+Important projection rules:
 
-```mermaid
-sequenceDiagram
-    participant Creator
-    participant CreationQ as creationQueue
-    participant Validator
-    participant Finance as FinanceService
-    participant Wrapper as EventNotifierWrapper
-    participant Notifier as EventNotifier
-    participant Monitor as EventsMonitor
+- `LISTEN/NOTIFY` is only a wake-up signal
+- projector recovery always starts from the saved checkpoint
+- timeline reads come directly from `event_store`
+- admin rebuild truncates and replays projections but never rewrites event history
 
-    Creator->>CreationQ: add(task)
-    Validator->>CreationQ: poll()
-    Validator->>Finance: isEnoughMoney(code, estimate)
-    Validator->>Wrapper: rejectedEvent(task)
-    Wrapper->>Notifier: notify(RejectedEvent)
-    Notifier->>Monitor: replace latest event for taskId
-    Note over Validator: task is dropped from the pipeline
-```
-
-## 5. Simulator Pipeline
+## 7. Why JDBC and Native SQL
 <sub>[Back to top](#ses-architecture)</sub>
 
-The simulator stages are intentionally narrow:
+SES intentionally uses JDBC with explicit SQL as its persistence style.
 
-1. `Creator`
-   creates random tasks and publishes `CreatedEvent`
-2. `Validator`
-   checks finance capacity, publishes `AcceptedEvent` or `RejectedEvent`, and forwards only accepted tasks
-3. `Worker`
-   publishes `RunningEvent`, simulates work with sleeps, then publishes `CompletedEvent`
-4. `Reporter`
-   periodically asks `EventsMonitor` for the current task snapshot and prints it
+This is not an accidental low-level implementation choice. It follows directly from the architecture:
 
-`WorkerLauncher` is the orchestration boundary:
+- the source of truth is an append-only event log, not a mutable aggregate table
+- event rows contain `payload jsonb` and `metadata jsonb`, which are persisted and queried as PostgreSQL-native structures
+- projections are maintained with explicit SQL upserts and recalculations
+- projector wake-up uses PostgreSQL `LISTEN/NOTIFY`
+- replay and catch-up depend on strict ordering by stored event id and stream version
 
-- creates the four long-lived worker loops
-- connects them to the two queues
-- shares the finance and event services
-- owns executor startup and shutdown
+JPA is a poor fit here for structural reasons:
 
-## 6. Package Map
+- SES does not manage a rich entity graph with lazy relations, cascades, or dirty checking
+- the main write operation is `insert one immutable event row`, not `load entity -> mutate entity -> flush`
+- timeline and replay queries are log-oriented and order-sensitive rather than entity-oriented
+- budget evaluation reads the latest event per task and inspects JSON payload fields
+- projection rebuilds intentionally execute database-shaped operations such as `insert ... on conflict do update`
+
+Using JDBC keeps those mechanics explicit and honest:
+
+- the SQL that defines projection behavior is visible in the repository layer instead of hidden behind ORM translation
+- PostgreSQL-specific features such as `jsonb`, `pg_notify`, `distinct on`, and conflict-upsert syntax can be used directly
+- replay logic is easier to reason about because row ordering, checkpoint reads, and batch fetches are controlled explicitly
+- the code maps closely to the event-sourcing model: append facts, read ordered history, rebuild projections
+
+Using JPA here would add framework machinery without solving the core problems of this module:
+
+- entity state management would not replace the need for native SQL against the event store
+- projection maintenance would still need handcrafted SQL for correctness and performance
+- PostgreSQL notification handling would still sit outside the ORM model
+- the real business invariants live in event ordering and projection application, not in entity lifecycle callbacks
+
+In short:
+
+- if SES were centered on CRUD-style domain entities, JPA would be a reasonable default
+- because SES is centered on an append-only event store, replay, SQL projections, and PostgreSQL-native features, JDBC and native SQL are the clearer and more appropriate choice
+
+## 8. Package Map
 <sub>[Back to top](#ses-architecture)</sub>
 
 ### `ses-events`
@@ -219,64 +256,53 @@ The simulator stages are intentionally narrow:
 | Package | Responsibility |
 |---|---|
 | `dev.nklip.javacraft.ses.events` | event contracts, statuses, priorities, notifier, monitor, subscription manager |
-| `dev.nklip.javacraft.ses.events.impl` | concrete event types and the Spring adapter implementation |
+| `dev.nklip.javacraft.ses.events.impl` | concrete workflow events and Spring adapter implementation |
 
-Key classes:
-
-| Class | Purpose |
-|---|---|
-| `Event` | common contract for workflow events |
-| `EventNotifier` | fan-out point that dispatches one event to subscribed listeners |
-| `EventsSubscriptionsManager` | thread-safe listener registry keyed by event class |
-| `EventsMonitor` | latest-state projection keyed by `taskId` |
-| `BaseEvent` | shared event state, equality, and ordering rules |
-
-### `ses-simulator`
+### `ses-api`
 
 | Package | Responsibility |
 |---|---|
-| `dev.nklip.javacraft.ses.simulator` | entrypoint and top-level launcher |
-| `dev.nklip.javacraft.ses.simulator.config` | Spring component scan bootstrap |
-| `dev.nklip.javacraft.ses.simulator.flow` | creator, validator, worker, reporter loop stages |
-| `dev.nklip.javacraft.ses.simulator.service` | queue access, finance rules, task-to-event translation |
-| `dev.nklip.javacraft.ses.simulator.db` | in-memory finance repository |
-| `dev.nklip.javacraft.ses.simulator.model` | `Task` and `FinanceCode` model objects |
+| `dev.nklip.javacraft.ses.api.command` | command request DTOs |
+| `dev.nklip.javacraft.ses.api.query` | query/SSE/rebuild response DTOs |
+| `dev.nklip.javacraft.ses.api.shared` | shared API error model |
 
-Key classes:
+### `ses-app`
 
-| Class | Purpose |
+| Package | Responsibility |
 |---|---|
-| `SesApplication` | command-line entrypoint |
-| `SesSimulatorConfiguration` | Java-based Spring bootstrap |
-| `WorkerLauncher` | starts and stops the four pipeline threads |
-| `EventNotifierWrapper` | converts `Task` into concrete event objects |
-| `FinanceService` | business rules around finance capacity |
-| `QueueService` | owns the two shared in-memory queues |
+| `dev.nklip.javacraft.ses.app.controller` | HTTP endpoints for commands, queries, budgets, rebuild, and SSE |
+| `dev.nklip.javacraft.ses.app.domain` | command-side rules and budget policy |
+| `dev.nklip.javacraft.ses.app.projection` | projection repositories and catch-up / rebuild orchestration |
+| `dev.nklip.javacraft.ses.app.query` | query-side services over projections and timeline history |
+| `dev.nklip.javacraft.ses.app.sse` | live projection stream fan-out |
+| `dev.nklip.javacraft.ses.app.store` | append-only event store access and event serialization |
+| `dev.nklip.javacraft.ses.app.web` | REST exception mapping |
 
-## 7. Testing Strategy
+### `ses-testing`
+
+| Package | Responsibility |
+|---|---|
+| `dev.nklip.javacraft.ses.testing.cucumber` | end-to-end feature runner and steps |
+| `dev.nklip.javacraft.ses.testing.cucumber.config` | shared PostgreSQL test container bootstrap |
+| `dev.nklip.javacraft.ses.testing` | live LISTEN/NOTIFY and SSE integration tests |
+
+## 9. Testing Strategy
 <sub>[Back to top](#ses-architecture)</sub>
 
-Testing is split along the same module boundary:
+Testing follows the module boundaries:
 
-- `ses-events` tests cover event ordering, event dispatch, latest-state projection, enum/value behavior, and the Spring subscription adapter
-- `ses-simulator` tests cover:
-  - queue and finance model behavior
-  - task/event translation
-  - launcher wiring
-  - Spring bootstrap
-  - flow-loop behavior for `Creator`, `Reporter`, `Validator`, and `Worker`
+- `ses-events`
+  metadata-bearing event behavior, identity, fan-out, and monitor state
+- `ses-app`
+  command transitions, event append rules, replay idempotence, rebuild correctness, and projection catch-up
+- `ses-testing`
+  HTTP happy paths, denial/rejection flows, invalid transitions, rebuild via API, live projection wake-up, and SSE delivery
 
-The loop tests intentionally use Mockito spies to stub `busyWait(...)`:
-
-- that keeps them deterministic
-- avoids real sleeps
-- still exercises the real `run()` method logic
-
-## 8. Current Tradeoffs
+## 10. Current Tradeoffs
 <sub>[Back to top](#ses-architecture)</sub>
 
-- the system is intentionally in-memory only; restarting the JVM loses all task and finance state
-- threads communicate through in-memory queues rather than a durable message broker
-- workflow timing is random, which is good for simulation but not for deterministic runtime behavior
-- the reporter writes directly to stdout instead of using a structured reporting or metrics layer
-- the monitor stores only the latest event per task, not the full event history
+- projections are eventually consistent with the command side
+- the service uses PostgreSQL `LISTEN/NOTIFY` as wake-up only, not as a durable queue
+- `EventsMonitor` stores only the latest event per task, not the full history
+- runtime scope is intentionally PostgreSQL-only; Debezium and a dedicated dashboard are deferred
+- `ses-simulator` remains on disk for historical reference but is no longer part of the active module graph

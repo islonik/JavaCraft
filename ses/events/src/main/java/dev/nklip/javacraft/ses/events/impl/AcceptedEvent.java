@@ -2,6 +2,8 @@ package dev.nklip.javacraft.ses.events.impl;
 
 import dev.nklip.javacraft.ses.events.EventStatus;
 import dev.nklip.javacraft.ses.events.Priority;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Event emitted when validation approves a task and forwards it to the worker queue.
@@ -11,8 +13,20 @@ import dev.nklip.javacraft.ses.events.Priority;
  */
 public class AcceptedEvent extends BaseEvent {
 
-    public AcceptedEvent(int taskId, Priority priority, String title, String financeCode, int estimate) {
-        super(taskId, priority, title, financeCode, estimate, EventStatus.ACCEPTED);
+    public AcceptedEvent(
+            UUID eventId,
+            int taskId,
+            Priority priority,
+            String title,
+            String financeCode,
+            int estimate,
+            Instant occurredAt,
+            String actor,
+            String correlationId,
+            long streamVersion
+    ) {
+        super(eventId, taskId, priority, title, financeCode, estimate, EventStatus.ACCEPTED,
+                occurredAt, actor, correlationId, streamVersion);
     }
 
 }

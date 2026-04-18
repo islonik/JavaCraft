@@ -1,5 +1,8 @@
 package dev.nklip.javacraft.ses.events;
 
+import java.time.Instant;
+import java.util.UUID;
+
 /**
  * Common contract for every event emitted by the {@code ses} workflow.
  *
@@ -19,6 +22,16 @@ package dev.nklip.javacraft.ses.events;
  */
 public interface Event extends Comparable<Event> {
 
+    UUID getEventId();
+
+    Instant getOccurredAt();
+
+    String getActor();
+
+    String getCorrelationId();
+
+    long getStreamVersion();
+
     int getTaskId();
 
     Priority getPriority();
@@ -27,8 +40,16 @@ public interface Event extends Comparable<Event> {
 
     String getFinanceCode();
 
+    default String getBudgetCode() {
+        return getFinanceCode();
+    }
+
     int getEstimate();
 
     EventStatus getStatus();
+
+    default String getReason() {
+        return null;
+    }
 
 }

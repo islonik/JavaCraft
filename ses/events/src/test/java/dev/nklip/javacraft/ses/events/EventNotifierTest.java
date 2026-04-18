@@ -3,6 +3,7 @@ package dev.nklip.javacraft.ses.events;
 import dev.nklip.javacraft.ses.events.impl.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +22,16 @@ public class EventNotifierTest {
     public void testNotify() {
         EventNotifier eventNotifier = new EventNotifier(this.eventsSubscriptionsManager);
 
-        AcceptedEvent acceptedEvent = new AcceptedEvent(29, Priority.MAJOR, "Spring #29", "2024-1/4", 5);
-        CompletedEvent completedEvent = new CompletedEvent(27, Priority.BLOCKER, "Spring #27", "2023-4/4", 20);
-        CreatedEvent createdEvent = new CreatedEvent(282, Priority.BLOCKER, "Spring #28-2/2", "2024-1/4", 15);
-        RejectedEvent rejectedEvent = new RejectedEvent(26, Priority.CRITICAL, "Spring #26", "2024-1/4", 40);
-        RunningEvent runningEvent = new RunningEvent(281, Priority.MINOR, "Spring #28-1/2", "2024-1/4", 25);
+        AcceptedEvent acceptedEvent = TestEvents.acceptedEvent(UUID.fromString("00000000-0000-0000-0000-000000000501"),
+                29, Priority.MAJOR, "Spring #29", "2024-1/4", 5, "alice", 1);
+        CompletedEvent completedEvent = TestEvents.completedEvent(UUID.fromString("00000000-0000-0000-0000-000000000502"),
+                27, Priority.BLOCKER, "Spring #27", "2023-4/4", 20, "bob", 2);
+        CreatedEvent createdEvent = TestEvents.createdEvent(UUID.fromString("00000000-0000-0000-0000-000000000503"),
+                282, Priority.BLOCKER, "Spring #28-2/2", "2024-1/4", 15, "carol", 1);
+        RejectedEvent rejectedEvent = TestEvents.rejectedEvent(UUID.fromString("00000000-0000-0000-0000-000000000504"),
+                26, Priority.CRITICAL, "Spring #26", "2024-1/4", 40, "dave", 2, "Budget denied");
+        RunningEvent runningEvent = TestEvents.runningEvent(UUID.fromString("00000000-0000-0000-0000-000000000505"),
+                281, Priority.MINOR, "Spring #28-1/2", "2024-1/4", 25, "erin", 2);
 
         Assertions.assertEquals(0, storage.size());
 
@@ -44,9 +50,11 @@ public class EventNotifierTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     public void testNotifyContinuesWhenOneListenerFails() {
         EventNotifier eventNotifier = new EventNotifier(this.eventsSubscriptionsManager);
-        AcceptedEvent acceptedEvent = new AcceptedEvent(29, Priority.MAJOR, "Spring #29", "2024-1/4", 5);
+        AcceptedEvent acceptedEvent = TestEvents.acceptedEvent(UUID.fromString("00000000-0000-0000-0000-000000000506"),
+                29, Priority.MAJOR, "Spring #29", "2024-1/4", 5, "alice", 1);
 
         EventListener<Event> failingListener = event -> {
             throw new IllegalStateException("Expected test exception");
@@ -66,7 +74,8 @@ public class EventNotifierTest {
             }
         };
         EventNotifier eventNotifier = new EventNotifier(brokenManager);
-        AcceptedEvent acceptedEvent = new AcceptedEvent(29, Priority.MAJOR, "Spring #29", "2024-1/4", 5);
+        AcceptedEvent acceptedEvent = TestEvents.acceptedEvent(UUID.fromString("00000000-0000-0000-0000-000000000507"),
+                29, Priority.MAJOR, "Spring #29", "2024-1/4", 5, "alice", 1);
 
         Assertions.assertDoesNotThrow(() -> eventNotifier.notify(acceptedEvent));
     }

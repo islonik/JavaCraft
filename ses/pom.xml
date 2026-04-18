@@ -15,7 +15,9 @@
 
     <modules>
         <module>events</module>
-        <module>simulator</module>
+        <module>api</module>
+        <module>app</module>
+        <module>testing</module>
     </modules>
 
     <dependencies>

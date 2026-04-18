@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory projection of the latest known event for every task.
@@ -53,6 +53,10 @@ public class EventsMonitor {
         return storage.values().stream()
                 .sorted()
                 .toList();
+    }
+
+    public void clear() {
+        storage.clear();
     }
 
 }
