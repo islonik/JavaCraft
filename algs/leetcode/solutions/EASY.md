@@ -77,7 +77,7 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/assign-cookies/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/valid-palindrome-ii/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/backspace-string-compare/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/middle-of-the-linked-list/
+* https://leetcode.com/problems/middle-of-the-linked-list/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/squares-of-a-sorted-array/
 * https://leetcode.com/problems/duplicate-zeros/
 * https://leetcode.com/problems/check-if-n-and-its-double-exist/
@@ -699,7 +699,7 @@ Key signals that Fast and Slow Pointers is the right approach:
 * https://leetcode.com/problems/linked-list-cycle/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/happy-number/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/palindrome-linked-list/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/middle-of-the-linked-list/
+* https://leetcode.com/problems/middle-of-the-linked-list/ ![Implemented](images/assets/implemented.svg)
 
 **Medium**
 * https://leetcode.com/problems/remove-nth-node-from-end-of-list/
