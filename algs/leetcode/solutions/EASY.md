@@ -76,7 +76,7 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/is-subsequence/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/assign-cookies/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/valid-palindrome-ii/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/backspace-string-compare/
+* https://leetcode.com/problems/backspace-string-compare/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/middle-of-the-linked-list/
 * https://leetcode.com/problems/squares-of-a-sorted-array/
 * https://leetcode.com/problems/duplicate-zeros/
