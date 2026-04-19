@@ -1,0 +1,27 @@
+server:
+  port: 8053
+
+spring:
+  application:
+    name: ewrs-app
+  datasource:
+    url: jdbc:postgresql://localhost:5434/ewrs
+    username: ewrs
+    password: ewrs
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    dev.nklip.javacraft.ewrs: INFO

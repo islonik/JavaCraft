@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">EWRS Dashboard</title>
+    <link rel="stylesheet" th:href="@{/dashboard/dashboard.css(v=${assetVersion})}">
+</head>
+<body th:attr="data-api-base=${dashboardApiBasePath}">
+<div class="page-shell">
+    <header class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Simple Event System</p>
+            <h1 th:text="${pageTitle}">EWRS Dashboard</h1>
+            <p class="hero-text">
+                A read-only control room for work-request projections, budget pressure, projector lag,
+                and event history.
+            </p>
+        </div>
+        <div class="hero-actions">
+            <a class="action-link" href="/swagger-ui.html">Swagger</a>
+            <a class="action-link action-link-secondary" href="/api-docs">OpenAPI</a>
+        </div>
+    </header>
+
+    <section class="metric-grid" aria-label="Summary metrics">
+        <article class="metric-card accent-card">
+            <span class="metric-label">Total Requests</span>
+            <strong class="metric-value" id="metric-total">0</strong>
+        </article>
+        <article class="metric-card">
+            <span class="metric-label">Open Requests</span>
+            <strong class="metric-value" id="metric-open">0</strong>
+        </article>
+        <article class="metric-card metric-card-completed">
+            <span class="metric-label">Completed</span>
+            <strong class="metric-value" id="metric-completed">0</strong>
+        </article>
+        <article class="metric-card metric-card-rejected">
+            <span class="metric-label">Rejected</span>
+            <strong class="metric-value" id="metric-rejected">0</strong>
+        </article>
+        <article class="metric-card">
+            <span class="metric-label">Stored Events</span>
+            <strong class="metric-value" id="metric-events">0</strong>
+        </article>
+        <article class="metric-card">
+            <span class="metric-label">Projection Lag</span>
+            <strong class="metric-value" id="metric-lag">0</strong>
+        </article>
+    </section>
+
+    <p class="status-banner" id="status-banner">
+        Loading dashboard data from the EWRS read side...
+    </p>
+
+    <section class="panel-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Current Shape</p>
+                    <h2>Status Distribution</h2>
+                </div>
+            </div>
+            <div class="chart" id="status-chart"></div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Projector</p>
+                    <h2>Projection Health</h2>
+                </div>
+            </div>
+            <dl class="health-list">
+                <div>
+                    <dt>Last Applied Event Id</dt>
+                    <dd id="health-last-applied">0</dd>
+                </div>
+                <div>
+                    <dt>Latest Stored Event Id</dt>
+                    <dd id="health-latest-stored">0</dd>
+                </div>
+            </dl>
+            <p class="panel-note">
+                Lag is computed as the gap between the latest stored event and the last applied projector checkpoint.
+            </p>
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Budget Read Model</p>
+                    <h2>Reserved vs Remaining Budget</h2>
+                </div>
+            </div>
+            <div class="chart" id="budget-chart"></div>
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Event Store</p>
+                    <h2>Events Over Time</h2>
+                </div>
+            </div>
+            <div class="chart" id="event-volume-chart"></div>
+        </article>
+    </section>
+
+    <section class="panel-grid lower-grid">
+        <article class="panel panel-wide">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Read Model</p>
+                    <h2>Recent Work Requests</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="requests-table">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Budget</th>
+                        <th>Priority</th>
+                        <th>Updated</th>
+                        <th>Timeline</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recent-requests-body">
+                    <tr>
+                        <td colspan="7" class="empty-cell">No projected requests yet.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-header timeline-header">
+                <div>
+                    <p class="panel-kicker">Event Drill-Down</p>
+                    <h2>Work Request Timeline</h2>
+                </div>
+                <form class="timeline-form" id="timeline-form">
+                    <label for="timeline-request-id">Request Id</label>
+                    <input id="timeline-request-id" name="requestId" type="number" min="1" placeholder="1000">
+                    <button type="submit">Load</button>
+                </form>
+            </div>
+            <div class="chart" id="timeline-chart"></div>
+            <div class="timeline-events" id="timeline-events">
+                <p class="empty-timeline">Select a request to inspect its event history.</p>
+            </div>
+        </article>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script th:src="@{/dashboard/dashboard.js(v=${assetVersion})}" defer></script>
+</body>
+</html>

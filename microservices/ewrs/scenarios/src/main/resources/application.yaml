@@ -1,0 +1,24 @@
+server:
+  port: 8054
+
+spring:
+  application:
+    name: ewrs-scenarios
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+ewrs:
+  scenarios:
+    target-base-url: http://localhost:8053
+    connect-timeout: 2s
+    read-timeout: 10s
+    projection-timeout: 10s
+    poll-interval: 100ms
+
+logging:
+  level:
+    dev.nklip.javacraft.ewrs: INFO

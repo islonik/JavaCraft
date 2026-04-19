@@ -1,0 +1,279 @@
+databaseChangeLog:
+  - changeSet:
+      id: ewrs-001-sequence
+      author: nklip
+      changes:
+        - createSequence:
+            sequenceName: work_request_id_seq
+            startValue: 1000
+            incrementBy: 1
+
+  - changeSet:
+      id: ewrs-002-event-store
+      author: nklip
+      changes:
+        - createTable:
+            tableName: event_store
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: task_id
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stream_version
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: occurred_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: event_store
+            columnNames: task_id, stream_version
+            constraintName: uk_event_store_task_stream_version
+        - createIndex:
+            tableName: event_store
+            indexName: idx_event_store_task_id
+            columns:
+              - column:
+                  name: task_id
+        - createIndex:
+            tableName: event_store
+            indexName: idx_event_store_occurred_at
+            columns:
+              - column:
+                  name: occurred_at
+
+  - changeSet:
+      id: ewrs-003-budget-reference
+      author: nklip
+      changes:
+        - createTable:
+            tableName: budget_reference
+            columns:
+              - column:
+                  name: budget_code
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: initial_budget
+                  type: integer
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: budget_reference
+            columns:
+              - column:
+                  name: budget_code
+                  value: OPS-2026
+              - column:
+                  name: initial_budget
+                  valueNumeric: 120
+        - insert:
+            tableName: budget_reference
+            columns:
+              - column:
+                  name: budget_code
+                  value: PLATFORM-2026
+              - column:
+                  name: initial_budget
+                  valueNumeric: 250
+        - insert:
+            tableName: budget_reference
+            columns:
+              - column:
+                  name: budget_code
+                  value: RND-2026
+              - column:
+                  name: initial_budget
+                  valueNumeric: 180
+
+  - changeSet:
+      id: ewrs-004-work-request-projection
+      author: nklip
+      changes:
+        - createTable:
+            tableName: work_request_projection
+            columns:
+              - column:
+                  name: task_id
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: priority
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: budget_code
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_work_request_projection_budget
+                    referencedTableName: budget_reference
+                    referencedColumnNames: budget_code
+              - column:
+                  name: estimate
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requested_by
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_actor
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reason
+                  type: varchar(512)
+              - column:
+                  name: last_event_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_occurred_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stream_version
+                  type: bigint
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: work_request_projection
+            indexName: idx_work_request_projection_status
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            tableName: work_request_projection
+            indexName: idx_work_request_projection_budget_code
+            columns:
+              - column:
+                  name: budget_code
+
+  - changeSet:
+      id: ewrs-005-budget-projection
+      author: nklip
+      changes:
+        - createTable:
+            tableName: budget_projection
+            columns:
+              - column:
+                  name: budget_code
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_budget_projection_reference
+                    referencedTableName: budget_reference
+                    referencedColumnNames: budget_code
+              - column:
+                  name: initial_budget
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reserved_amount
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: remaining_budget
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_updated_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: |
+              insert into budget_projection (budget_code, initial_budget, reserved_amount, remaining_budget, last_updated_at)
+              select budget_code, initial_budget, 0, initial_budget, current_timestamp
+              from budget_reference
+              order by budget_code;
+
+  - changeSet:
+      id: ewrs-006-projection-checkpoint
+      author: nklip
+      changes:
+        - createTable:
+            tableName: projection_checkpoint
+            columns:
+              - column:
+                  name: projection_name
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: last_event_store_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: projection_checkpoint
+            columns:
+              - column:
+                  name: projection_name
+                  value: ewrs-projector
+              - column:
+                  name: last_event_store_id
+                  valueNumeric: 0

@@ -6,6 +6,7 @@ Full-stack Spring Boot services, each with its own persistence layer, Docker inf
 ## Modules
 
 - [ess](ess/README.md) - Elasticsearch-backed content search and Reddit-style post voting with ranked feeds
+- [ewrs](ewrs/README.md) - Event-Sourced Work Request Service
 - [linker](linker/README.md) - URL shortening service with collision-safe IDs, redirects, and analytics backed by MongoDB
 - [openflights](openflights/README.md) - OpenFlights dataset ingestion pipeline via Kafka into PostgreSQL with admin HTTP endpoints
 - [soap2rest](soap2rest/README.md) - Strangler-style SOAP-to-REST migration with synchronous and async JMS flows

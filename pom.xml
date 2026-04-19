@@ -107,7 +107,6 @@
         <module>echo</module>
         <module>mathparser</module>
         <module>microservices</module>
-        <module>ses</module>
         <module>tic-tac-toe</module>
         <module>vfs</module>
         <module>xlspaceship</module>

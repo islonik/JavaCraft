@@ -5,7 +5,6 @@
 * [echo](echo/README.md) - Different Server types
 * [mathparser](mathparser/README.md) - Complex Math parser with GUI
 * [microservices](microservices/README.md) - Microservices
-* [SES](ses/README.md) - Simple Event System
 * [tic-tac-toe](tic-tac-toe/README.md) - Tic-tac-toe game with GUI
 * [vfs](vfs/README.md) - Virtual File Server
 * [xlspaceship](xlspaceship/README.md) - Battleship game

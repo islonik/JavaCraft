@@ -1,0 +1,25 @@
+server:
+  port: 8056
+
+spring:
+  application:
+    name: ewrs-dashboard
+  datasource:
+    url: jdbc:postgresql://localhost:5434/ewrs
+    username: ewrs
+    password: ewrs
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    enabled: false
+  thymeleaf:
+    cache: false
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    dev.nklip.javacraft.ewrs: INFO
