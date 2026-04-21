@@ -78,7 +78,7 @@ Key signals that Two Pointers is the right approach:
 * https://leetcode.com/problems/valid-palindrome-ii/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/backspace-string-compare/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/middle-of-the-linked-list/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/squares-of-a-sorted-array/
+* https://leetcode.com/problems/squares-of-a-sorted-array/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/duplicate-zeros/
 * https://leetcode.com/problems/check-if-n-and-its-double-exist/
 * https://leetcode.com/problems/merge-strings-alternately/
