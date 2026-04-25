@@ -247,7 +247,7 @@ Key signals that Sliding Window is the right approach:
 **Easy**
 * https://leetcode.com/problems/contains-duplicate-ii/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/longest-harmonious-subsequence/
-* https://leetcode.com/problems/maximum-average-subarray-i/
+* https://leetcode.com/problems/maximum-average-subarray-i/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/defuse-the-bomb/
 * https://leetcode.com/problems/substrings-of-size-three-with-distinct-characters/
 * https://leetcode.com/problems/minimum-difference-between-highest-and-lowest-of-k-scores/
