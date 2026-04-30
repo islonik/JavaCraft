@@ -252,7 +252,7 @@ Key signals that Sliding Window is the right approach:
 * https://leetcode.com/problems/substrings-of-size-three-with-distinct-characters/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/minimum-difference-between-highest-and-lowest-of-k-scores/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/find-the-k-beauty-of-a-number/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/
+* https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/ ![Implemented](images/assets/implemented.svg)
 
 **Medium**
 * https://leetcode.com/problems/longest-substring-without-repeating-characters/ ![Implemented](images/assets/implemented.svg)
