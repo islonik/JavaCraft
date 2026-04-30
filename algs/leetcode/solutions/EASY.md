@@ -251,7 +251,7 @@ Key signals that Sliding Window is the right approach:
 * https://leetcode.com/problems/defuse-the-bomb/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/substrings-of-size-three-with-distinct-characters/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/minimum-difference-between-highest-and-lowest-of-k-scores/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/find-the-k-beauty-of-a-number/
+* https://leetcode.com/problems/find-the-k-beauty-of-a-number/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/minimum-recolors-to-get-k-consecutive-black-blocks/
 
 **Medium**
