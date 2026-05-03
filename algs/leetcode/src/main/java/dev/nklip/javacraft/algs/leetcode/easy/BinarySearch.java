@@ -13,8 +13,29 @@ package dev.nklip.javacraft.algs.leetcode.easy;
  */
 public class BinarySearch {
 
-    // Time - O(log n); Space - O(log n) because of the call stack
+    // Time - O(log n); Space - O(1)
     public int search(int[] nums, int target) {
+        int leftIndex = 0;
+        int rightIndex = nums.length - 1;
+
+        while (leftIndex <= rightIndex) {
+            int midIndex = rightIndex - (rightIndex - leftIndex) / 2;
+
+            int value = nums[midIndex];
+            if (value == target) {
+                return midIndex;
+            } else if (value > target) {
+                leftIndex = 0;
+                rightIndex = midIndex - 1;
+            } else {
+                leftIndex = midIndex + 1;
+            }
+        }
+        return -1;
+    }
+
+    // Time - O(log n); Space - O(log n) because of the call stack
+    public int searchRecursive(int[] nums, int target) {
         int midIndex = nums.length / 2;
 
         if (nums[midIndex] == target) {
