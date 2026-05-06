@@ -69,12 +69,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${junit5.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-spring</artifactId>
                 <version>${cucumber.version}</version>
@@ -98,13 +92,6 @@
                 <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
-            <dependency>
-                <groupId>org.junit.platform</groupId>
-                <artifactId>junit-platform-suite</artifactId>
-                <version>${junit-platform-suite.version}</version>
-                <scope>test</scope>
-            </dependency>
-
             <!--
             WireMock Java is distributed in two flavours:
             1) a standard JAR containing just WireMock

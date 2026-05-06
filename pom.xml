@@ -55,7 +55,7 @@
 
         <!-- serialization / networking -->
         <jackson.version>2.21.3</jackson.version>
-        <netty.version>4.2.12.Final</netty.version>
+        <netty.version>4.2.13.Final</netty.version>
         <protobuf.version>4.34.1</protobuf.version>
 
         <!-- utilities -->
@@ -111,6 +111,13 @@
         <module>vfs</module>
         <module>xlspaceship</module>
     </modules>
+
+    <developers>
+        <developer>
+            <name>Lipatov Nikita</name>
+            <timezone>+4</timezone>
+        </developer>
+    </developers>
 
     <!--
         A BOM (Bill Of Materials) is a pom-only dependency that does not put code on any classpath by itself.
