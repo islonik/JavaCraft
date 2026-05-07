@@ -26,7 +26,7 @@ The architecture separates game logic from the web tier and uses HTTP as the pro
 
 | Module | ArtifactId | Responsibility | Depends on |
 |---|---|---|---|
-| `engine` | `xlspaceship-engine` | Game logic, board, ships, AI, models | Spring AOP only |
+| `engine` | `xlspaceship-engine` | Game logic, board, ships, AI, models | Spring context, Jakarta Validation |
 | `server` | `xlspaceship-server` | Controllers, Thymeleaf views, static assets, Spring Boot app | `xlspaceship-engine` |
 
 ```mermaid

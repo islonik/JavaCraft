@@ -8,12 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @Slf4j
 @SpringBootApplication
@@ -21,11 +17,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
         "dev.nklip.javacraft.xlspaceship.engine",
         "dev.nklip.javacraft.xlspaceship.server"
 })
-@EnableAutoConfiguration(exclude = {
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class
-})
-@EnableAspectJAutoProxy
 @OpenAPIDefinition(info = @Info(
         title = "Battleship game",
         version = "1.0",
@@ -36,7 +27,7 @@ public class Application implements ApplicationRunner {
     @Autowired
     private LocalPlayerService localPlayerService;
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         log.info("XL Spaceship Application has started.");
         SpringApplication.run(Application.class, args);
     }
