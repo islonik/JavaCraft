@@ -25,7 +25,6 @@ public class BinarySearch {
             if (value == target) {
                 return midIndex;
             } else if (value > target) {
-                leftIndex = 0;
                 rightIndex = midIndex - 1;
             } else {
                 leftIndex = midIndex + 1;

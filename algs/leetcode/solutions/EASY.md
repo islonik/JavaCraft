@@ -377,7 +377,7 @@ Key signals that Binary Search is the right approach:
 * https://leetcode.com/problems/first-bad-version/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/guess-number-higher-or-lower/ ![Implemented](images/assets/implemented.svg)
 * https://leetcode.com/problems/binary-search/ ![Implemented](images/assets/implemented.svg)
-* https://leetcode.com/problems/find-smallest-letter-greater-than-target/
+* https://leetcode.com/problems/find-smallest-letter-greater-than-target/ ![Implemented](images/assets/implemented.svg)
 
 **Medium**
 * https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/
