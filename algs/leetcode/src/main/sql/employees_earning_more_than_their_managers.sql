@@ -1,5 +1,7 @@
 -- 181. Employees Earning More Than Their Managers
 --
+-- LeetCode: https://leetcode.com/problems/combine-two-tables/
+--
 -- Table: Employee
 --
 -- +-------------+---------+
