@@ -129,7 +129,7 @@ sequenceDiagram
 ## 6. Ship Types
 <sub>[Back to top](#xlspaceship-architecture)</sub>
 
-Each game places 5 ships randomly on the board. Ships have multiple rotation variants (forms).
+Each game places 5 ships randomly on the board. Ships have multiple orientation variants.
 
 | Ship | Size (WxH) | Forms | Health |
 |---|---|---|---|
@@ -140,7 +140,7 @@ Each game places 5 ships randomly on the board. Ships have multiple rotation var
 | Angle | 3x4 | 4 | 6 |
 
 Ship placement:
-1. A random form variant is selected.
+1. A random ship orientation is selected.
 2. A random position is tried (up to 20 attempts).
 3. Collision detection checks surrounding cells as a buffer zone.
 4. If random placement fails, an iterative brute-force search finds the first valid position.

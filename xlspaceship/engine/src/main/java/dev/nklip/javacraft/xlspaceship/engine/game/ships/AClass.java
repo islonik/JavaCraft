@@ -1,45 +1,36 @@
 package dev.nklip.javacraft.xlspaceship.engine.game.ships;
 
-import dev.nklip.javacraft.xlspaceship.engine.game.Cell;
+import java.util.List;
+import java.util.Map;
 
-public class AClass extends Spaceship {
+public final class AClass extends Spaceship {
 
-    private static final int WIDTH = 3;
-    private static final int HEIGHT = 4;
+    private static final Map<ShipOrientation, List<String>> SHAPE_TEMPLATES = Map.of(
+            ShipOrientation.NORTH, List.of(
+                    ".*.",
+                    "*.*",
+                    "***",
+                    "*.*"
+            ),
+            ShipOrientation.EAST, List.of(
+                    ".***",
+                    "*.*.",
+                    ".***"
+            ),
+            ShipOrientation.SOUTH, List.of(
+                    "*.*",
+                    "***",
+                    "*.*",
+                    ".*."
+            ),
+            ShipOrientation.WEST, List.of(
+                    "***.",
+                    ".*.*",
+                    "***."
+            )
+    );
 
-    public AClass(int form) {
-        super(form, WIDTH, HEIGHT);
+    public AClass(ShipOrientation orientation) {
+        super(orientation, SHAPE_TEMPLATES);
     }
-
-    @Override
-    protected Cell[][] formA() {
-        ship[0] = string2cells(".*.");
-        ship[1] = string2cells("*.*");
-        ship[2] = string2cells("***");
-        ship[3] = string2cells("*.*");
-        return ship;
-    }
-    @Override
-    protected Cell[][] formB() {
-        ship[0] = string2cells(".***");
-        ship[1] = string2cells("*.*.");
-        ship[2] = string2cells(".***");
-        return ship;
-    }
-    @Override
-    protected Cell[][] formC() {
-        ship[0] = string2cells("*.*");
-        ship[1] = string2cells("***");
-        ship[2] = string2cells("*.*");
-        ship[3] = string2cells(".*.");
-        return ship;
-    }
-    @Override
-    protected Cell[][] formD() {
-        ship[0] = string2cells("***.");
-        ship[1] = string2cells(".*.*");
-        ship[2] = string2cells("***.");
-        return ship;
-    }
-
 }

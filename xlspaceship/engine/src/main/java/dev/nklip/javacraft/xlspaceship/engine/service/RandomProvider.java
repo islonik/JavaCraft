@@ -1,20 +1,21 @@
 package dev.nklip.javacraft.xlspaceship.engine.service;
 
+import dev.nklip.javacraft.xlspaceship.engine.game.ships.ShipOrientation;
 import org.springframework.stereotype.Service;
-
 import java.util.Random;
 
 @Service
 public class RandomProvider {
 
     private static final Random greatRandom = new Random(); // should be thread safe
+    private static final ShipOrientation[] ORIENTATIONS = ShipOrientation.values();
 
     public int generateAI() {
         return greatRandom.nextInt(2000) + 1;
     }
 
-    public int generateForm() {
-        return greatRandom.nextInt(4) + 1;
+    public ShipOrientation generateOrientation() {
+        return ORIENTATIONS[greatRandom.nextInt(ORIENTATIONS.length)];
     }
 
     public int generatePlayer() {

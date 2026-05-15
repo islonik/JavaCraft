@@ -6,6 +6,7 @@ import dev.nklip.javacraft.xlspaceship.engine.game.GameStatus;
 import dev.nklip.javacraft.xlspaceship.engine.game.GameTurn;
 import dev.nklip.javacraft.xlspaceship.engine.game.Board;
 import dev.nklip.javacraft.xlspaceship.engine.game.BoardStatus;
+import dev.nklip.javacraft.xlspaceship.engine.game.ships.ShipOrientation;
 import dev.nklip.javacraft.xlspaceship.engine.game.ships.Winger;
 import dev.nklip.javacraft.xlspaceship.engine.model.ErrorResponse;
 import dev.nklip.javacraft.xlspaceship.engine.model.SalvoRequest;
@@ -471,7 +472,7 @@ public class UserControllerTest {
 
         BoardStatus myStatus = new BoardStatus();
         myStatus.setUserId("nikilipa");
-        Winger winger1 = new Winger( 1);
+        Winger winger1 = new Winger( ShipOrientation.NORTH);
         Board board = new Board();
         board.printSpaceship(0, 0, winger1);
         myStatus.setBoard(board);

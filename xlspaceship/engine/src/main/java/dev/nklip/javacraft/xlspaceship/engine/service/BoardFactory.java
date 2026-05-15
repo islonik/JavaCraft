@@ -26,11 +26,11 @@ public class BoardFactory {
         Board board = new Board();
 
         List<Spaceship> spaceshipList = new ArrayList<>();
-        spaceshipList.add(new BClass(randomProvider.generateForm())); // 10 lives
-        spaceshipList.add(new Winger(randomProvider.generateForm())); // 9 lives
-        spaceshipList.add(new SClass(randomProvider.generateForm())); // 8 lives
-        spaceshipList.add(new AClass(randomProvider.generateForm())); // 8 lives
-        spaceshipList.add(new Angle(randomProvider.generateForm()));  // 6 lives
+        spaceshipList.add(new BClass(randomProvider.generateOrientation())); // 10 lives
+        spaceshipList.add(new Winger(randomProvider.generateOrientation())); // 9 lives
+        spaceshipList.add(new SClass(randomProvider.generateOrientation())); // 8 lives
+        spaceshipList.add(new AClass(randomProvider.generateOrientation())); // 8 lives
+        spaceshipList.add(new Angle(randomProvider.generateOrientation()));  // 6 lives
 
         while (true) {
             boolean isSet = false;

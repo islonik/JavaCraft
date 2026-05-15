@@ -1,5 +1,6 @@
 package dev.nklip.javacraft.xlspaceship.server;
 
+import dev.nklip.javacraft.xlspaceship.engine.game.ships.ShipOrientation;
 import dev.nklip.javacraft.xlspaceship.engine.service.RandomProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,7 @@ public class MocksConfiguration {
 
         when(randomProvider.generateAI()).thenReturn(1000);
         when(randomProvider.generatePlayer()).thenReturn(1);
-        when(randomProvider.generateForm()).thenReturn(1);
+        when(randomProvider.generateOrientation()).thenReturn(ShipOrientation.NORTH);
         when(randomProvider.generateUp10()).thenReturn(3,6, 9);
         when(randomProvider.generateUp16()).thenReturn(0);
         when(randomProvider.generateCell(anyInt())).thenReturn(// x, y

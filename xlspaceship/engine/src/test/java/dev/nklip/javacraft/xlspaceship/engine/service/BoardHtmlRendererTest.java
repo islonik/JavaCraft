@@ -2,6 +2,7 @@ package dev.nklip.javacraft.xlspaceship.engine.service;
 
 import dev.nklip.javacraft.xlspaceship.engine.game.Board;
 import dev.nklip.javacraft.xlspaceship.engine.game.BoardStatus;
+import dev.nklip.javacraft.xlspaceship.engine.game.ships.ShipOrientation;
 import dev.nklip.javacraft.xlspaceship.engine.game.ships.Winger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ public class BoardHtmlRendererTest {
 
     private BoardStatus createBoardStatus() {
         Board board = new Board();
-        board.printSpaceship(0, 0, new Winger(1));
+        board.printSpaceship(0, 0, new Winger(ShipOrientation.NORTH));
         Assertions.assertEquals(Board.MISS, board.shot(5, 5));
         Assertions.assertEquals(Board.HIT, board.shot(0, 0));
 

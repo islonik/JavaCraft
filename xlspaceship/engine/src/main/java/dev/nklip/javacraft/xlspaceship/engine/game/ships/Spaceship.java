@@ -1,42 +1,43 @@
 package dev.nklip.javacraft.xlspaceship.engine.game.ships;
 
 import dev.nklip.javacraft.xlspaceship.engine.game.Cell;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 
-public abstract class Spaceship {
+/**
+ * Closed ship hierarchy for the built-in XL-Spaceship fleet.
+ *
+ * <p>Each concrete ship supplies one immutable shape template per orientation,
+ * and the selected {@link ShipOrientation} determines the active width, height,
+ * and cell layout.
+ */
+public abstract sealed class Spaceship permits AClass, Angle, BClass, SClass, Winger {
 
-    protected int form; // 1 - A; 2 - B; 3 - C; 4 - D;
     @Getter
-    protected int width;
+    private final ShipOrientation orientation;
     @Getter
-    protected int height;
+    private final int width;
+    @Getter
+    private final int height;
 
-    protected Cell[][] ship;
+    private final Map<ShipOrientation, List<String>> shapeTemplates;
+    private final List<Cell> cells = new ArrayList<>();
 
-    protected List<Cell> cells = new ArrayList<>();
+    protected Spaceship(ShipOrientation orientation, Map<ShipOrientation, List<String>> shapeTemplates) {
+        this.orientation = Objects.requireNonNull(orientation, "Ship orientation must not be null");
+        this.shapeTemplates = copyTemplates(shapeTemplates);
 
-    @SuppressWarnings("SuspiciousNameCombination")
-    public Spaceship(int form, int concreteWidth, int concreteHeight) {
-        this.form = form;
-
-        if (form == 1 || form == 3) {
-            width = concreteWidth;
-            height = concreteHeight;
-            ship = new Cell[concreteHeight][concreteWidth];
-        } else {
-            // turn ship or change form
-            width = concreteHeight;
-            height = concreteWidth;
-            ship = new Cell[concreteWidth][concreteHeight];
-        }
+        List<String> activeRows = this.shapeTemplates.get(orientation);
+        this.height = activeRows.size();
+        this.width = activeRows.getFirst().length();
     }
 
     public void addCell(Cell cell) {
-        if (cell.getValue().equals("*")) {
+        if ("*".equals(cell.getValue())) {
             cells.add(cell);
         }
     }
@@ -48,40 +49,23 @@ public abstract class Spaceship {
     public int getHealth() {
         int health = 0;
         for (Cell cell : cells) {
-            if (cell.getValue().equals("*")) {
+            if ("*".equals(cell.getValue())) {
                 health++;
             }
         }
         return health;
     }
 
-    protected abstract Cell[][] formA();
-    protected abstract Cell[][] formB();
-    protected abstract Cell[][] formC();
-    protected abstract Cell[][] formD();
-
     public List<Cell> shape() {
-        switch (form) {
-            case 1:
-                ship = formA();
-                break;
-            case 2:
-                ship = formB();
-                break;
-            case 3:
-                ship = formC();
-                break;
-            default:
-                ship = formD();
-        }
-        List<Cell> cellList = new ArrayList<>();
-        for (int i = 0; i < height; i++) {
-            cellList.addAll(Arrays.asList(ship[i]).subList(0, width));
+        List<String> activeRows = shapeTemplates.get(orientation);
+        List<Cell> cellList = new ArrayList<>(width * height);
+        for (String row : activeRows) {
+            cellList.addAll(Arrays.asList(toCells(row)));
         }
         return cellList;
     }
 
-    public Cell[] string2cells(String value) {
+    protected static Cell[] toCells(String value) {
         Cell[] cells = new Cell[value.length()];
         for (int i = 0; i < value.length(); i++) {
             cells[i] = new Cell(Character.toString(value.charAt(i)));
@@ -89,4 +73,29 @@ public abstract class Spaceship {
         return cells;
     }
 
+    private static Map<ShipOrientation, List<String>> copyTemplates(Map<ShipOrientation, List<String>> shapeTemplates) {
+        Objects.requireNonNull(shapeTemplates, "Ship shape templates must not be null");
+
+        java.util.EnumMap<ShipOrientation, List<String>> copiedTemplates = new java.util.EnumMap<>(ShipOrientation.class);
+        for (ShipOrientation orientation : ShipOrientation.values()) {
+            List<String> rows = shapeTemplates.get(orientation);
+            if (rows == null || rows.isEmpty()) {
+                throw new IllegalArgumentException("Missing rows for ship orientation " + orientation);
+            }
+            validateRows(orientation, rows);
+            copiedTemplates.put(orientation, List.copyOf(rows));
+        }
+        return Map.copyOf(copiedTemplates);
+    }
+
+    private static void validateRows(ShipOrientation orientation, List<String> rows) {
+        int expectedWidth = rows.getFirst().length();
+        for (String row : rows) {
+            if (row.length() != expectedWidth) {
+                throw new IllegalArgumentException(
+                        "Inconsistent row width for orientation " + orientation + ": " + rows
+                );
+            }
+        }
+    }
 }

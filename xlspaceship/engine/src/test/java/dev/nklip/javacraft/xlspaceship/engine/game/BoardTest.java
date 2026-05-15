@@ -1,6 +1,6 @@
 package dev.nklip.javacraft.xlspaceship.engine.game;
 
-import dev.nklip.javacraft.xlspaceship.engine.game.ships.Spaceship;
+import dev.nklip.javacraft.xlspaceship.engine.game.ships.ShipOrientation;
 import dev.nklip.javacraft.xlspaceship.engine.game.ships.Winger;
 import dev.nklip.javacraft.xlspaceship.engine.service.RandomProvider;
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +39,7 @@ public class BoardTest {
     public void testSetSpaceshipCase01() {
 
         Board board = new Board();
-        Winger winger = new Winger(1);
+        Winger winger = new Winger(ShipOrientation.NORTH);
 
         board.printSpaceship(0, 0, winger);
 
@@ -70,7 +70,7 @@ public class BoardTest {
     public void testSetSpaceshipCase02() {
 
         Board board = new Board();
-        Winger winger = new Winger( 2);
+        Winger winger = new Winger(ShipOrientation.EAST);
 
         board.printSpaceship(0, 0, winger);
 
@@ -100,7 +100,7 @@ public class BoardTest {
     @Test
     public void testSetSpaceshipCase03() {
         Board board = new Board();
-        Winger winger = new Winger( 1);
+        Winger winger = new Winger(ShipOrientation.NORTH);
 
         int x = 16 - winger.getWidth();
         int y = 16 - winger.getHeight();
@@ -135,11 +135,11 @@ public class BoardTest {
     public void testSetSpaceshipCase04() {
         Board board = new Board();
         RandomProvider randomProvider = Mockito.mock(RandomProvider.class);
-        SingleCellShip spaceship = new SingleCellShip();
+        Winger spaceship = new Winger(ShipOrientation.NORTH);
 
         for (int x = 0; x < Board.SIZE; x++) {
             for (int y = 0; y < Board.SIZE; y++) {
-                if (x < Board.SIZE - 2 || y < Board.SIZE - 2) {
+                if (x < Board.SIZE - 4 || y < Board.SIZE - 6) {
                     board.update(x, y, Board.MISS);
                 }
             }
@@ -148,16 +148,18 @@ public class BoardTest {
         Mockito.when(randomProvider.generateCell(Mockito.anyInt())).thenReturn(0);
 
         Assertions.assertTrue(board.setSpaceship(randomProvider, spaceship));
-        Assertions.assertEquals("*", board.getValue(Board.SIZE - 1, Board.SIZE - 1));
-        Assertions.assertEquals(1, spaceship.getHealth());
-        Mockito.verify(randomProvider, Mockito.atLeastOnce()).generateCell(Board.SIZE);
+        Assertions.assertEquals("*", board.getValue(13, 11));
+        Assertions.assertEquals("*", board.getValue(14, 13));
+        Assertions.assertEquals(9, spaceship.getHealth());
+        Mockito.verify(randomProvider, Mockito.atLeastOnce()).generateCell(Board.SIZE - spaceship.getWidth() + 1);
+        Mockito.verify(randomProvider, Mockito.atLeastOnce()).generateCell(Board.SIZE - spaceship.getHeight() + 1);
     }
 
     @Test
     public void testIsSettableCase01() {
         Board board = new Board();
-        Winger winger1 = new Winger( 1);
-        Winger winger2 = new Winger( 2);
+        Winger winger1 = new Winger(ShipOrientation.NORTH);
+        Winger winger2 = new Winger(ShipOrientation.EAST);
 
         Assertions.assertTrue(board.isSettable(0, 0, winger1));
         board.printSpaceship(0, 0, winger1);
@@ -192,8 +194,8 @@ public class BoardTest {
     @Test
     public void testIsSettableCase02() {
         Board board = new Board();
-        Winger winger1 = new Winger( 1);
-        Winger winger2 = new Winger( 2);
+        Winger winger1 = new Winger(ShipOrientation.NORTH);
+        Winger winger2 = new Winger(ShipOrientation.EAST);
 
         Assertions.assertTrue(board.isSettable(16 - winger1.getWidth(), 16 - winger1.getHeight(), winger1));
         board.printSpaceship(0, 0, winger1);
@@ -228,8 +230,8 @@ public class BoardTest {
     @Test
     public void testIsSettableCase03() {
         Board board = new Board();
-        Winger topWinger = new Winger(1);
-        Winger bottomWinger = new Winger(1);
+        Winger topWinger = new Winger(ShipOrientation.NORTH);
+        Winger bottomWinger = new Winger(ShipOrientation.NORTH);
 
         board.printSpaceship(0, 6, bottomWinger);
 
@@ -261,7 +263,7 @@ public class BoardTest {
     @Test
     public void testIsSettableCase04() {
         Board board = new Board();
-        Winger winger = new Winger(1);
+        Winger winger = new Winger(ShipOrientation.NORTH);
 
         Assertions.assertFalse(board.isSettable(14, 0, winger));
 
@@ -291,7 +293,7 @@ public class BoardTest {
     @Test
     public void testClearResetsSpaceshipLives() {
         Board board = new Board();
-        Winger winger = new Winger(1);
+        Winger winger = new Winger(ShipOrientation.NORTH);
 
         board.printSpaceship(0, 0, winger);
         Assertions.assertEquals(9, winger.getHealth());
@@ -333,34 +335,6 @@ public class BoardTest {
         //Assertions.assertEquals(16, x);
         String value = Integer.toString(x, 16);
         Assertions.assertEquals("f", value);
-    }
-
-    private static final class SingleCellShip extends Spaceship {
-
-        private SingleCellShip() {
-            super(1, 1, 1);
-        }
-
-        @Override
-        protected Cell[][] formA() {
-            ship[0] = string2cells("*");
-            return ship;
-        }
-
-        @Override
-        protected Cell[][] formB() {
-            return formA();
-        }
-
-        @Override
-        protected Cell[][] formC() {
-            return formA();
-        }
-
-        @Override
-        protected Cell[][] formD() {
-            return formA();
-        }
     }
 
 }
