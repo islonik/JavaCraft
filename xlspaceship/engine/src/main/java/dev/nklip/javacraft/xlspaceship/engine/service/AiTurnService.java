@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AiTurnService {
 
-    private static final ExecutorService executors = Executors.newFixedThreadPool(10);
+    private static final ExecutorService executors = Executors.newVirtualThreadPerTaskExecutor();
 
     private final LocalPlayerService localPlayerService;
     private final RandomProvider randomProvider;
