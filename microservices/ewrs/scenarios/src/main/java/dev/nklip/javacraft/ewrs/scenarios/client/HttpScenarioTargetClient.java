@@ -43,21 +43,21 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
         this.objectMapper = objectMapper;
 
         HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(properties.getConnectTimeout())
+                .connectTimeout(properties.connectTimeout())
                 // Keep the driver on plain HTTP/1.1 so local test runs do not depend on
                 // h2/h2c negotiation behavior of the JDK client against the embedded server.
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
 
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(properties.getReadTimeout());
+        factory.setReadTimeout(properties.readTimeout());
         this.requestFactory = factory;
     }
 
     @Override
     public WorkRequestResponse create(CreateWorkRequest request) {
         try {
-            return exchange(HttpMethod.POST, "/api/v1/work-requests", request, WorkRequestResponse.class);
+            return exchange(HttpMethod.POST, "/api/v1/work-requests", request);
         } catch (RestClientResponseException e) {
             throw unexpectedResponse("/api/v1/work-requests", e);
         }
@@ -67,7 +67,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public WorkRequestResponse approve(int requestId, ApproveWorkRequest request) {
         String path = "/api/v1/work-requests/%s/approve".formatted(requestId);
         try {
-            return exchange(HttpMethod.POST, path, request, WorkRequestResponse.class);
+            return exchange(HttpMethod.POST, path, request);
         } catch (RestClientResponseException e) {
             throw unexpectedResponse(path, e);
         }
@@ -77,7 +77,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public WorkRequestResponse reject(int requestId, RejectWorkRequest request) {
         String path = "/api/v1/work-requests/%s/reject".formatted(requestId);
         try {
-            return exchange(HttpMethod.POST, path, request, WorkRequestResponse.class);
+            return exchange(HttpMethod.POST, path, request);
         } catch (RestClientResponseException e) {
             throw unexpectedResponse(path, e);
         }
@@ -87,7 +87,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public WorkRequestResponse start(int requestId, StartWorkRequest request) {
         String path = "/api/v1/work-requests/%s/start".formatted(requestId);
         try {
-            return exchange(HttpMethod.POST, path, request, WorkRequestResponse.class);
+            return exchange(HttpMethod.POST, path, request);
         } catch (RestClientResponseException e) {
             throw unexpectedResponse(path, e);
         }
@@ -97,7 +97,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public WorkRequestResponse complete(int requestId, CompleteWorkRequest request) {
         String path = "/api/v1/work-requests/%s/complete".formatted(requestId);
         try {
-            return exchange(HttpMethod.POST, path, request, WorkRequestResponse.class);
+            return exchange(HttpMethod.POST, path, request);
         } catch (RestClientResponseException e) {
             throw unexpectedResponse(path, e);
         }
@@ -107,7 +107,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public ErrorResponse startExpectingConflict(int requestId, StartWorkRequest request) {
         String path = "/api/v1/work-requests/%s/start".formatted(requestId);
         try {
-            WorkRequestResponse response = exchange(HttpMethod.POST, path, request, WorkRequestResponse.class);
+            WorkRequestResponse response = exchange(HttpMethod.POST, path, request);
             throw new ScenarioExecutionException("""
                     Expected START for work request %s to fail with HTTP 409, but it succeeded with status %s
                     """.stripIndent().formatted(requestId, response.status()));
@@ -123,7 +123,7 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     public @Nullable WorkRequestResponse getRequestIfAvailable(int requestId) {
         String path = "/api/v1/work-requests/%s".formatted(requestId);
         try {
-            return exchange(HttpMethod.GET, path, null, WorkRequestResponse.class);
+            return exchange(HttpMethod.GET, path, null);
         } catch (RestClientResponseException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return null;
@@ -151,12 +151,12 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
         return resolveTargetBaseUrl();
     }
 
-    private <T> T exchange(HttpMethod method, String path, @Nullable Object body, Class<T> responseType) {
+    private WorkRequestResponse exchange(HttpMethod method, String path, @Nullable Object body) {
         RestClient.RequestBodySpec requestSpec = restClient().method(method).uri(path);
         if (body != null) {
             requestSpec.body(body);
         }
-        T response = requestSpec.retrieve().body(responseType);
+        WorkRequestResponse response = requestSpec.retrieve().body(WorkRequestResponse.class);
         if (response == null) {
             throw new ScenarioExecutionException("Received an empty response from " + path);
         }
@@ -179,8 +179,8 @@ public class HttpScenarioTargetClient implements ScenarioTargetClient {
     }
 
     private String resolveTargetBaseUrl() {
-        if (StringUtils.hasText(properties.getTargetBaseUrl())) {
-            return properties.getTargetBaseUrl().trim();
+        if (StringUtils.hasText(properties.targetBaseUrl())) {
+            return properties.targetBaseUrl().trim();
         }
 
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();

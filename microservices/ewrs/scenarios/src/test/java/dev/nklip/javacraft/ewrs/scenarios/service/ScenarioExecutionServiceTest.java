@@ -122,10 +122,13 @@ class ScenarioExecutionServiceTest {
     }
 
     private static ScenariosProperties testProperties() {
-        ScenariosProperties properties = new ScenariosProperties();
-        properties.setProjectionTimeout(Duration.ofMillis(200));
-        properties.setPollInterval(Duration.ofMillis(1));
-        return properties;
+        return new ScenariosProperties(
+                "http://localhost:8053",
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(10),
+                Duration.ofMillis(200),
+                Duration.ofMillis(1)
+        );
     }
 
     private static WorkRequestResponse response(int requestId, EventStatus status, long streamVersion) {

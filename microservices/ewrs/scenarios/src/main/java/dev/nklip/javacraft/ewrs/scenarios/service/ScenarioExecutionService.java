@@ -211,7 +211,7 @@ public class ScenarioExecutionService {
             List<EventStatus> expectedTimeline,
             boolean expectedConflictObserved
     ) {
-        long deadline = System.nanoTime() + properties.getProjectionTimeout().toNanos();
+        long deadline = System.nanoTime() + properties.projectionTimeout().toNanos();
         EventStatus expectedStatus = expectedTimeline.getLast();
 
         while (System.nanoTime() <= deadline) {
@@ -265,7 +265,7 @@ public class ScenarioExecutionService {
 
     private void sleepBeforeRetry() {
         try {
-            Thread.sleep(properties.getPollInterval().toMillis());
+            Thread.sleep(properties.pollInterval().toMillis());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ScenarioExecutionException("Interrupted while waiting for EWRS projections", e);
