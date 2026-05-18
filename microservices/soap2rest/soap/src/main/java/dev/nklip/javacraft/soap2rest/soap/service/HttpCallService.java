@@ -1,86 +1,85 @@
 package dev.nklip.javacraft.soap2rest.soap.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.http.HttpClient;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 @Service
 public class HttpCallService {
 
     public static final String AUTH_TOKEN_HEADER_NAME = "X-API-KEY";
 
-    @Value("${rest-app.host}")
-    String host;
+    private final String host;
+    private final String port;
+    private final RestClient restClient;
 
-    @Value("${rest-app.port}")
-    String port;
-
-    RestTemplate restTemplate;
-    ObjectMapper objectMapper;
-
-    public HttpCallService() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
+    public HttpCallService(
+            @Value("${rest-app.host}") String host,
+            @Value("${rest-app.port}") String port,
+            @Value("${rest-app.auth-token:57AkjqNuz44QmUHQuvVo}") String authToken,
+            @Value("${rest-app.timeout.connect:2s}") Duration connectTimeout,
+            @Value("${rest-app.timeout.read:10s}") Duration readTimeout
+    ) {
+        this.host = host;
+        this.port = port;
+        this.restClient = createRestClient(baseHost(), authToken, connectTimeout, readTimeout);
     }
 
     public String baseHost() {
         return host + ":" + port;
     }
 
-    MultiValueMap<String, String> getHeaders() {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.set(AUTH_TOKEN_HEADER_NAME, "57AkjqNuz44QmUHQuvVo");
-        return headers;
-    }
-
-    public<T> ResponseEntity<T> put(String methodUrl, Class<T> objectType, Object object) throws JsonProcessingException {
-        MultiValueMap<String, String> headers = getHeaders();
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(object), headers);
-
-        // like that http://localhost:8081/api/v1/smart/1/gas
-        String url = "%s%s".formatted(baseHost(), methodUrl);
-        return restTemplate.exchange(
-                url,
-                HttpMethod.PUT,
-                entity,
-                objectType
-        );
+    public <T> ResponseEntity<T> put(String methodUrl, Class<T> objectType, Object object)
+            throws JsonProcessingException {
+        return restClient.method(HttpMethod.PUT)
+                .uri(methodUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(object)
+                .retrieve()
+                .toEntity(objectType);
     }
 
     public ResponseEntity<String> delete(String methodUrl) {
-        MultiValueMap<String, String> headers = getHeaders();
-
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
-
-        // like that http://localhost:8081/api/v1/smart/1/gas
-        String url = "%s%s".formatted(baseHost(), methodUrl);
-        return restTemplate.exchange(
-                url,
-                HttpMethod.DELETE,
-                entity,
-                String.class
-        );
+        return restClient.method(HttpMethod.DELETE)
+                .uri(methodUrl)
+                .retrieve()
+                .toEntity(String.class);
     }
 
-    public<T> ResponseEntity<T> get(String methodUrl, Class<T> type) {
-        MultiValueMap<String, String> headers = getHeaders();
+    public <T> ResponseEntity<T> get(String methodUrl, Class<T> type) {
+        return restClient.method(HttpMethod.GET)
+                .uri(methodUrl)
+                .retrieve()
+                .toEntity(type);
+    }
 
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+    private static RestClient createRestClient(
+            String baseUrl,
+            String authToken,
+            Duration connectTimeout,
+            Duration readTimeout
+    ) {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(connectTimeout)
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
 
-        // like that http://localhost:8081/api/v1/smart/1/gas
-        String url = "%s%s".formatted(baseHost(), methodUrl);
-        return restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                type
-        );
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(readTimeout);
+
+        return RestClient.builder()
+                .requestFactory(requestFactory)
+                .baseUrl(baseUrl)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(AUTH_TOKEN_HEADER_NAME, authToken)
+                .build();
     }
 }

@@ -6,6 +6,10 @@ spring:
 rest-app:
   host: http://localhost
   port: 8081
+  auth-token: 57AkjqNuz44QmUHQuvVo # one of the hard-coded API keys from rest-app (usually this security lives separately)
+  timeout:
+    connect: 2s
+    read: 10s
 logging:
   level:
     root: INFO
