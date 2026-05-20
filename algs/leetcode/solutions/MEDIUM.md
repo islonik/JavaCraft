@@ -562,7 +562,7 @@ This approach is quite useful when dealing with intervals, overlapping items or 
 
 **Easy**
 * https://leetcode.com/problems/meeting-rooms/
-* https://leetcode.com/problems/points-that-intersect-with-cars/
+* https://leetcode.com/problems/points-that-intersect-with-cars/ ![Implemented](images/assets/implemented.svg)
 
 **Medium**
 * https://leetcode.com/problems/merge-intervals/
